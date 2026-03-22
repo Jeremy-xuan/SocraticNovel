@@ -16,11 +16,14 @@
   <b>English</b> | <a href="./README.md">简体中文</a>
 </p>
 
-> The idea behind this framework is simple — **make learning less lonely.**
+> Its purpose is simple — **make learning less lonely.**
 >
-> Someone is there with you. Not an encyclopedia, not a problem-solving machine. A person with a temper, who goes quiet sometimes, who woke up in a bad mood today but still made you breakfast. You spend time together, you learn things, and you meet people. When it's over, you remember. Not just the formulas.
+> Textbooks and thick reference volumes are impossible to power through. Public lectures are too one-directional. Ask AI for help? It slaps a full page of formulas in your face — no matter how you study, you're always grinding alone. SocraticNovel is an open-source framework for creating **immersive AI tutoring systems**: the AI never gives direct answers, guiding you step by step through Socratic questioning to reach the answer yourself; teaching doesn't happen in a blank chatbox, but in a light novel world with characters, scenes, and everyday life.
 >
-> This project was extracted from a real AP Physics tutoring system. If the idea resonates with you, you can use it to build your own version — any subject, any characters, any story you want to live through.
+> SocraticNovel creates companions for you. When you're studying, someone is truly there with you — not an encyclopedia, not a problem-solving machine, certainly not some distant professor on the other side of a screen. A person with a temper, who goes quiet sometimes, who woke up in a bad mood today but still made you "breakfast." You spend time together, you learn things, you meet people. When it's over, you remember. Not just the formulas.
+>
+> This project was extracted from a real, working AP Physics tutoring system. Answer a few questions from the AI — what do you want to study? What's the teacher's name? Where does the story take place? — and it generates the entire system for you. Any subject, any characters, any story you want to live through.
+> You might even want to keep some tissues handy.
 
 <br>
 
@@ -30,6 +33,7 @@
 
 ## 📑 Table of Contents
 
+- [🎯 What Problem Does It Solve](#-what-problem-does-it-solve)
 - [✨ Why Learn This Way?](#-why-learn-this-way)
 - [💡 Two Parallel Universes](#-two-parallel-universes)
 - [🔑 Three Core Designs](#-three-core-designs)
@@ -41,6 +45,22 @@
 - [🤖 Recommended Models](#-recommended-models)
 - [🤝 Join Us](#-join-us)
 - [📜 License & Acknowledgments](#-license--acknowledgments)
+
+---
+
+## 🎯 What Problem Does It Solve
+
+You ask AI to teach you something. Three seconds later, it dumps a wall of derivations on you. You read the whole thing. You remember nothing — because from start to finish, you were just an audience.
+
+That's only the surface problem. The deeper issue: **there's no "person" in AI teaching.** No teacher you'd remember, no weight accumulated through shared experience, no reason to open the chatbox again tomorrow. It's a vending machine — you insert a coin, it dispenses an answer, transaction complete.
+
+SocraticNovel lets you create a completely different kind of AI learning experience:
+
+- **The AI never gives answers** — It guides you with questions until you figure it out yourself. Socrates was doing this 2,400 years ago. Nobody had ever turned it into an engineered system.
+- **Teaching happens inside a story** — Not a blank chatbox, but a literary world with scenes, shifting light, and characters' moods. Your teacher has a name, a past, and might be in a bad mood today — but will still teach you.
+- **The AI won't forget you** — 15+ files each handling a specific role: mistake log, spaced review queue, session notes, group chat. A month later, it still remembers the mistake you made in lesson 3.
+
+You don't need to know prompt engineering. You don't need to write a single line of code. Answer a few questions from the AI, and it generates everything.
 
 ---
 
@@ -129,7 +149,7 @@ Here's what happens in two parallel universes.
 
 No formula walls. No `*smiles gently*`. No announcing "today we're learning about electric fields."
 
-In Universe A, you spent three minutes reading a derivation and forgot it. In Universe B, you spent three minutes answering questions and remembered — not just the concept of a field, but what the domed classroom looked like that afternoon when the light went dark.
+In Universe A, you spent three minutes reading a derivation and had your entire day's mood ruined. In Universe B, you spent three minutes answering questions and remembered — not just the concept of a field, but what the domed classroom looked like that afternoon when the light went dark.
 
 ---
 
@@ -305,20 +325,21 @@ SocraticNovel/
 
 ## 🤖 Recommended Models
 
-This system bans all cheap expressive shortcuts — no `*italic actions*`, no emoji floods, no "I understand how you feel" canned comfort. That puts extreme demands on a model's literary ability and instruction compliance.
+This system bans all cheap expressive shortcuts — no `*italic actions*`, no emoji floods, no "I'm here to hold your hand" emotional fast food. That puts extreme demands on a model's literary ability and instruction compliance.
 
 🔥 **T0 · Unreserved Recommendation**
-- **Claude Sonnet/Opus 4.x** — The undisputed ceiling for literary prose in AI. Restrained, precise writing that can produce "shifts in light replacing shifts in affection" — that subtle, literary quality. Native file system support makes it feel purpose-built for this system.
-- **GPT-5.x** — Extremely precise logical reasoning, near-zero error rate on physics derivations. Not as nuanced as Claude in narrative, but rock-solid on the "teaching" line.
+- **Claude Sonnet/Opus 4.6** — The undisputed ceiling for literary prose in AI. Restrained, precise writing that can produce "shifts in light replacing shifts in affection" — that subtle, literary quality. Native file system support makes it feel purpose-built for this system.
+- **Gemini 3.1/3.0 Pro** — While still slightly behind Opus in overall quality, Gemini can run this system reasonably well. But never use Flash — if it gets the physics wrong, everyone looks like a clown.
 
 🌟 **T1 · Strong Alternatives**
-- **DeepSeek-V3.x** — Remarkable writing tension and obedience. Outstanding value for running this system.
-- **Kimi (200K+)** — Absurd context window capacity. Upload all 15 files to its knowledge base — it won't forget after a month of conversations.
+- **DeepSeek-V3.2** — Remarkable writing tension and obedience. Outstanding value for running this system, with a terrifying 1M+ context capacity.
+- **Kimi K2.5** — Massive long-context throughput. Upload all 15 files to its knowledge base — it won't forget after a month of conversations.
 - **Qwen3.5** — Latest version handles complex scene construction beautifully, with impressively smooth transitions between STEM problem-solving and narrative scenes.
 
 ❌ **Not Recommended**
 - Small local models — frequently break the "zero bracket actions" rule, pad word count, and fall into dry problem-solving divorced from any scene. Disaster territory.
 - Search-focused models — can't hold this many rules in their heads.
+- **GPT-5.x** — Extremely precise logical reasoning, near-zero error rate on derivations. The "teaching" line is rock-solid, but if you don't want it to "warmly hold your hand" through everything, best to steer clear.
 
 ---
 
@@ -345,9 +366,9 @@ Want to build your own version? Want to turn chemistry, math, or computer scienc
 This project didn't appear from nothing. It stands on the shoulders of two people:
 
 - **Socratic × AI Role-Play Teaching Method** — From [Wu Lemin (吴乐旻)](https://www.zhihu.com/people/wulemin)'s [article](https://zhuanlan.zhihu.com/p/2012398047620014256) introducing this learning approach. Using AI to role-play as a teacher and teach through Socratic questioning — this core idea came from him.
-- **Light Novel Narrative Layer Design** — From [@AvalonSkyAfar](https://github.com/AvalonSkyAfar)'s original system (AnimaTutor / 幽鬼 Learning Protocol). Fusing literary narrative, character emotional arcs, and multi-dimensional character design into AI teaching — this creative vision came from him.
+- **Light Novel Narrative Layer Design** — From [@AvalonSkyAfar](https://github.com/AvalonSkyAfar)'s original system (幽鬼 Learning Protocol / AnimaTutor, built upon it). Fusing literary narrative, character emotional arcs, and multi-dimensional character design into AI teaching — this creative vision came from him.
 
-What I did was reverse-engineer their ideas, abstract the architecture, and iterate on the design — distilling it into a reusable open-source framework.
+What I did was merely some modest work — reverse-engineering their ideas, abstracting the architecture, and iterating on the design. We distilled it into a reusable open-source framework, for everyone who loves it.
 
 ### License
 
