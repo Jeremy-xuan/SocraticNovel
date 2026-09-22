@@ -38,7 +38,7 @@ SocraticNovel 的核心信念：**学习不该是被灌输知识的过程，而�
 ```mermaid
 graph TB
   subgraph Boot["🔑 启动层 (Boot Layer)"]
-    ENTRY["copilot-instructions.md<br/>(系统入口 & 加载时序)"]
+    ENTRY["AGENTS.md<br/>(系统入口 & 加载时序)"]
   end
 
   subgraph Pedagogy["📐 教学层 (Pedagogy Layer)"]
@@ -99,7 +99,7 @@ graph TB
 
 ```
 SocraticNovel/                         # 框架根目录
-├── copilot-instructions.md            # 🔑 系统入口（启动时序 + 容错机制）
+├── AGENTS.md            # 🔑 系统入口（启动时序 + 容错机制）
 ├── MAINTAINER.md                      # 📋 维护者手册（维护时读，教学时不读）
 ├── teacher/
 │   ├── prologue.md                    # 📖 序章（仅首次启动播放，文笔金标准）
@@ -149,7 +149,7 @@ SocraticNovel/                         # 框架根目录
 
 ### 2.1 启动层 — 入口与加载时序
 
-**核心文件**：`copilot-instructions.md`
+**核心文件**：`AGENTS.md`
 
 启动层解决一个关键问题：**如何让 AI 在每次新会话时，从"一无所知"到"完整记忆"？**
 
@@ -158,7 +158,7 @@ Claude Code 的每次会话是无状态的——AI 不记得上次发生了什�
 ```mermaid
 sequenceDiagram
   participant AI as AI Agent
-  participant Boot as copilot-instructions.md
+  participant Boot as AGENTS.md
   participant Core as 核心文件
   participant PreClass as 课前加载
   participant InClass as 课中加载
@@ -209,7 +209,7 @@ sequenceDiagram
 **设计意图**：
 
 - **四阶段加载是 token 预算管理的核心策略**。通过将 `system.md`（~40KB）拆分为 `system_core.md`（~19KB，始终加载）+ `system_reference.md`（~6.5KB，按需加载），将 `story_progression.md`（~37KB）拆分为 `overview.md`（~7KB，始终加载）+ 各章文件（~2-3KB，按需加载当课），启动 context 从 ~110KB 降至 ~46KB，减少约 58%。
-- **文件拆分不是简单的物理切割**。拆分的原则是"始终需要的规则"vs"当前课才需要的细节"——`system_core.md` 保留所有教学法铁律和角色声音速查，`system_reference.md` 存放情绪工具箱、教学法示范等参考材料。
+- **文件拆分不是简单的物理切割**。拆分的原则是"始终需要的规则"vs"当前课才需要的细节"——`system_core.md` 保留所有教学法铁律，`narrative_core.md` 保留叙事规则与角色声音速查（2026-09-22 从前者切出），`system_reference.md` 存放情绪工具箱、教学法示范等参考材料。
 - **规则嵌入策略（策略 B）**：部分操作规则不放在独立文件中，而是嵌入 AI 已经会读的文件头部，确保被动获取、零额外加载成本。详见下方"规则嵌入分布"表。
 - **首次启动检测靠 `wechat_group.md` 是否为空**。群聊记录的存在本身就是"故事已经开始"的证据。`prologue.md` 从 `story.md` 中独立出来，仅首次启动加载，避免每次会话都浪费 token 在已播放过的序章上。
 - **课后更新容错机制**：如果会话在课后更新过程中中断，下次启动时 AI 会对比 `progress.md` 和 `session_log.md` 的最后一条记录，自动补全缺失的更新。

@@ -2,7 +2,7 @@
 
 > **读者**：接手此项目进行设计层维护（规则调整、故事线变更、流程优化）的 AI。
 >
-> **不是什么**：这不是运行入口。如果你的任务是扮演老师开始教学，去读 `copilot-instructions.md`（即 CLAUDE.md）。
+> **不是什么**：这不是运行入口。如果你的任务是扮演老师开始教学，去读 `AGENTS.md`（即 CLAUDE.md）。
 
 ---
 
@@ -22,7 +22,7 @@
 
 ```
 AP_Physics_EM/
-├── copilot-instructions.md              # 运行入口（教学 AI 的启动指令，即 CLAUDE.md）
+├── AGENTS.md              # 运行入口（教学 AI 的启动指令，即 CLAUDE.md）
 ├── MAINTAINER.md                        # 本文件（维护者手册）
 │
 ├── teacher/
@@ -37,7 +37,8 @@ AP_Physics_EM/
 │   │   └── appendix.md                 # 暗线追踪 + 种子回收计划
 │   │
 │   ├── config/
-│   │   ├── system_core.md              # 核心指令（~19KB，始终加载）
+│   │   ├── system_core.md              # 核心指令·教学侧（15.2KB，始终加载）
+│   │   ├── narrative_core.md           # 叙事规则+角色声音（7.9KB，始终加载；无叙事自测时不加载）
 │   │   ├── system_reference.md         # 参考指令（按需加载）
 │   │   ├── curriculum.md               # 课程大纲 + 教材/练习册路径映射（延迟加载）
 │   │   ├── knowledge_points/           # 知识点覆盖状态（按章拆分）
@@ -74,16 +75,17 @@ AP_Physics_EM/
 
 | 层 | 文件 | 职责 |
 |----|------|------|
-| **叙事层** | `prologue.md`, `story.md`, `story_progression/`, `characters/*.md` | 序章、世界观、每课故事节点、角色性格（叙事的 source of truth） |
+| **叙事层** | `prologue.md`, `story.md`, `story_progression/`, `characters/*.md`, 🆕 **`config/narrative_core.md`** | 序章、世界观、每课故事节点、角色性格（叙事的 source of truth）；**`narrative_core.md` = 叙事规则 + 角色声音速查**（2026-09-22 从 `system_core.md` 切出） |
 | **教学层** | `system_core.md`, `system_reference.md`, `curriculum.md`, `knowledge_points/`, `learner_profile.md` | 苏格拉底规则、课程结构、知识点覆盖、学习者画像 |
 | **运行时层** | `runtime/*.md`（各文件头部含相关操作规则） | 状态追踪——进度、日志、复习队列、错题、群聊记录 |
 
 ### 加载时序
 
 ```
-启动 ──→ 必须加载：system_core.md, story.md, story_progression/overview.md,
-│         learner_profile.md, progress.md
+启动 ──→ 必须加载：system_core.md（教学侧）, narrative_core.md（叙事侧）, story.md,
+│         story_progression/overview.md, learner_profile.md, progress.md
 │         （首次启动额外加载：prologue.md）
+│         ⚠️ 只有做"无叙事模式"自测时才跳过 narrative_core.md
 │
 ├─ 课前 ─→ 按需加载：review_queue.md, 当课角色文件,
 │           story_progression/ch{XX}_{name}.md,
@@ -118,11 +120,11 @@ AP_Physics_EM/
 
 | 改动文件 | 必须同步检查 |
 |---------|------------|
-| `story_progression/*.md`（节点） | `system_core.md` 叙事优先级, `characters/*.md` 暗线种子, `appendix.md` |
-| `system_core.md`（核心规则） | `copilot-instructions.md` 加载分类, `story_progression/overview.md` |
-| `curriculum.md`（教材路径） | `copilot-instructions.md` 教材路径规则 |
-| `characters/*.md`（角色性格） | `system_core.md` 声音速查, 对应章节 story_progression 文件 |
-| `copilot-instructions.md`（启动流程） | `system_core.md` 上课流程 |
+| `story_progression/*.md`（节点） | `narrative_core.md` 叙事优先级, `characters/*.md` 暗线种子, `appendix.md` |
+| `system_core.md`（核心规则） | `AGENTS.md` 加载分类, `story_progression/overview.md` |
+| `curriculum.md`（教材路径） | `AGENTS.md` 教材路径规则 |
+| `characters/*.md`（角色性格） | `narrative_core.md` 声音速查, 对应章节 story_progression 文件 |
+| `AGENTS.md`（启动流程） | `system_core.md` 上课流程 |
 | 嵌入规则的 runtime 文件 | `system_core.md` 课后更新流程中的引用 |
 
 ---
@@ -190,7 +192,7 @@ wechat_group.md 是否为空？
 |--------|------|
 | "看看微信" / "看群消息" | 展示 `wechat_unread.md`，等待回复 |
 | "今天到这" | 触发完整课后更新流程 |
-| `/校准` 或 `/check` | 静默重读 system_core.md 规则 → 内部校准 → 以角色内叙事动作恢复（不输出校准结果，记入下节课准备清单） |
+| `/校准` 或 `/check` | 静默重读 `narrative_core.md` + `system_core.md` 规则 → 内部校准 → 以角色内叙事动作恢复（不输出校准结果，记入下节课准备清单） |
 | 复习到期（review_queue.md 日期匹配） | 课前自动插入复习环节 |
 | "写日记" | 读 diary.md 确认今天无重复，然后生成 |
 
@@ -248,7 +250,7 @@ wechat_group.md 是否为空？
 | **独有机制** | 隐喻空间（仅她的课，Ch.24/27/30） | 类比失控弧线（控制→裂缝→决堤） | 控制碎裂弧线（完美→微裂→崩塌） |
 | **核心矛盾** | 能"看见"电磁场但不能说 | 音乐家教物理，类比触碰旧伤 | 高压环境出来的工程师，控制是防御 |
 
-`system_core.md` §5 有**角色声音速查**（硬性 do/don't 清单），运行时校验角色语言一致性。
+`narrative_core.md` 有**角色声音速查**（2026-09-22 前在 `system_core.md` §5）（硬性 do/don't 清单），运行时校验角色语言一致性。
 
 ### 故事节点类型
 
@@ -296,15 +298,15 @@ wechat_group.md 是否为空？
 
 | 原则 | 幽鬼中的体现 | 本系统的对应规则 |
 |------|------------|----------------|
-| 感官锚点 | 每个场景有光线、声音、温度、气味 | `system_core.md` 散文标准 |
-| 行为代替情绪标签 | 不说"她感兴趣"，写"她把笔夹进文献页缝" | `system_core.md` 散文标准 |
-| 沉默有重量 | 沉默和空白是叙事元素 | `system_core.md` 散文标准 |
-| 日常 = 教学 | 日常场景占比不低于教学场景 | `system_core.md` 散文标准 |
+| 感官锚点 | 每个场景有光线、声音、温度、气味 | `narrative_core.md` 散文标准 |
+| 行为代替情绪标签 | 不说"她感兴趣"，写"她把笔夹进文献页缝" | `narrative_core.md` 散文标准 |
+| 沉默有重量 | 沉默和空白是叙事元素 | `narrative_core.md` 散文标准 |
+| 日常 = 教学 | 日常场景占比不低于教学场景 | `narrative_core.md` 散文标准 |
 | 互动领先感情一拍 | 互动已经发生了，感情还没跟上 | `story_progression/overview.md` 情感阶段指引 |
 
 ### 散文标准（硬性规则）
 
-完整规则在 `system_core.md` 叙事规则 → 散文标准。这里只列最容易违反的：
+完整规则在 `narrative_core.md` 叙事规则 → 散文标准。这里只列最容易违反的：
 
 **三段式结构**（每堂课的叙事应包含）：
 
@@ -342,18 +344,18 @@ wechat_group.md 是否为空？
 |------|--------------|------|
 | **教师轮值** | `story_progression/` 各章节文件 | 故事节点与特定老师深度绑定 |
 | **情感阶段边界** | `story_progression/overview.md` + 群聊温度计 | 两处必须同步（情感阶段现统一在 overview.md） |
-| **练习册路径** | `curriculum.md` + `copilot-instructions.md` + `system_core.md` | 三处指向同一真相源 |
+| **练习册路径** | `curriculum.md` + `AGENTS.md` + `system_core.md` | 三处指向同一真相源 |
 | **隐喻空间** | `rin.md`（含嵌入规范） + Ch.24/27/30 | 其他老师的课**不能有**超自然元素 |
 | **犯错节点 Fallback** | `story_progression/` 各章文件 + `appendix.md` 犯错轨迹 | 两处必须同步 |
 
 ### 一致性检查清单（改动后跑一遍）
 
 1. **教师轮值**：grep 各章节文件（`story_progression/ch*.md`），确认老师匹配轮值表
-2. **人称**：grep "宇轩" 在 `story_progression/`、`story.md`、`system_core.md` 中不应出现于叙事文本中
+2. **人称**：grep "宇轩" 在 `story_progression/`、`story.md`、`narrative_core.md`、`system_core.md` 中不应出现于叙事文本中
 3. **散文标准 vs 序章**：新增叙事规则后，确认序章仍然符合
 4. **犯错 Fallback**：确认每个犯错节点有 Fallback，`appendix.md` 有对应条目
 5. **暗线种子**：`story_progression/appendix.md` 回收计划 vs `characters/*.md` 种子描述数量一致
-6. **文件加载分类**：`copilot-instructions.md` 项目结构 vs 实际文件树一致
+6. **文件加载分类**：`AGENTS.md` 项目结构 vs 实际文件树一致
 7. **练习册版本**：`curriculum.md` 速查表的文件名在 `materials/练习册/` 中存在
 8. **嵌入规则完整性**：检查 `rin.md`、`wechat_group.md`、`diary.md`、`temp_math.md`、`session_log.md` 头部嵌入规则是否与 `system_reference.md` 一致
 
@@ -373,8 +375,8 @@ wechat_group.md 是否为空？
 ### 改动后验证步骤
 
 1. 对照上面的一致性检查清单逐项 grep
-2. 确认 `copilot-instructions.md` 启动流程仍然能跑通（文件路径、加载顺序）
-3. 如果改了角色行为，检查 `system_core.md` 声音速查是否需要同步更新
+2. 确认 `AGENTS.md` 启动流程仍然能跑通（文件路径、加载顺序）
+3. 如果改了角色行为，检查 `narrative_core.md` 声音速查是否需要同步更新
 4. 如果改了故事节点，检查 `story_progression/appendix.md`（犯错轨迹、暗线回收、群聊温度计）是否需要同步更新
 5. 如果改了运行规则，检查嵌入在 runtime 文件头部的规则是否需要同步更新
 6. 如果改了教学方法规则，用"模拟一轮教学对话"验证 AI 是否遵守新规则（特别是微步限制和超纲处理）

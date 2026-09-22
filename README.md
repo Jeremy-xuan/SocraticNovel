@@ -249,7 +249,7 @@ SocraticNovel 不一样。15+ 个文件各司其职——学习进度、课堂�
 1. 把 [`META_PROMPT.md`](./META_PROMPT.md) 喂给 Claude Code（或其他支持文件读写的 AI）
 2. AI 会问你一系列问题：你想学什么？老师叫什么名字？什么性格？故事发生在哪里？
 3. 你回答完，AI 自动生成整套文件系统（50+ 个文件）
-4. 在生成的目录下对 Claude Code 说："开始吧"（AI 自动读取 `copilot-instructions.md`）
+4. 在生成的目录下对 Claude Code 说："开始吧"（AI 自动读取 `AGENTS.md`）
 
 你不需要写任何 prompt。你只需要回答问题。
 
@@ -257,7 +257,7 @@ SocraticNovel 不一样。15+ 个文件各司其职——学习进度、课堂�
 
 1. 克隆本仓库
 2. 在 `AP_Physics_EM/` 目录下启动 Claude Code
-3. 说："开始吧"（AI 自动读取 `copilot-instructions.md`）
+3. 说："开始吧"（AI 自动读取 `AGENTS.md`）
 4. 你会看到观测站的序章。故事开始了。
 
 适合想直接体验效果、或者正好在学 AP 物理的人。
@@ -291,7 +291,7 @@ SocraticNovel 不一样。15+ 个文件各司其职——学习进度、课堂�
 ┌─────────────────────────────────────────────────────┐
 │                    每次新会话                          │
 │                                                       │
-│  copilot-instructions.md → 三级加载 → 课前准备（内部，不可见）│
+│  AGENTS.md → 三级加载 → 课前准备（内部，不可见）│
 │                                                       │
 │  ┌─────────────┐    ┌──────────┐    ┌──────────────┐ │
 │  │ 群聊为空？    │─是→│ 播放序章  │──→│ 群聊破冰     │ │
@@ -325,7 +325,7 @@ SocraticNovel/
 ├── 📄 苏格拉底教学法方法论.md         # ★ 教学法核心（25篇文献 + 实验验证）
 │
 ├── 📁 [AP_Physics_EM/](./AP_Physics_EM/)     # ★ 实战案例：AP 物理 C 电磁学
-│   ├── copilot-instructions.md      # 系统入口（三级加载时序）
+│   ├── AGENTS.md      # 系统入口（三级加载时序）
 │   ├── MAINTAINER.md                # AI 维护者手册
 │   ├── teacher/
 │   │   ├── prologue.md              # 序章（独立文件，首次启动播放）
@@ -411,7 +411,7 @@ SocraticNovel/
 |------|------|---------|
 | **v2.2** | 2025-03-24 | 苏格拉底教学法方法论独立文档：基于 25 篇文献研究 + 2 轮实验教学验证。新增三条铁律、B+C 防模式切换机制、S1-S5 五级支持梯度、6 种学生类型预案、P0-P5 教学五阶段。META_PROMPT 改为"从方法论文档嵌入"模式。system_core.md 全面重写苏格拉底规则 |
 | **v2.1** | 2025-03-24 | META_PROMPT 提示词工程大修：学科适配原则、Phase 5 检查点、Phase 6 测试阶段、代码块用途标注、多会话进度保存 |
-| **v2.0** | 2025-03-24 | 架构重构：system.md → system_core + reference 双层；story_progression / knowledge_points 按章拆分；CLAUDE.md → copilot-instructions.md；Context 瘦身 ~58%；新增命名奖励原则、教学陷阱、防漂移 /校准；AP_Physics_EM 演示同步 + 公开仓库脱敏 |
+| **v2.0** | 2025-03-24 | 架构重构：system.md → system_core + reference 双层；story_progression / knowledge_points 按章拆分；CLAUDE.md → AGENTS.md；Context 瘦身 ~58%；新增命名奖励原则、教学陷阱、防漂移 /校准；AP_Physics_EM 演示同步 + 公开仓库脱敏 |
 | **v1.0** | 2025-03-21 | 初始开源发布：ARCHITECTURE.md + META_PROMPT.md + AP_Physics_EM 演示系统 |
 
 ---

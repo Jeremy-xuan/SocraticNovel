@@ -109,7 +109,7 @@ SocraticNovel 的整个教学法设计——三条铁律、B+C 机制、P0-P5、
 
 ```
 AP_Physics_EM/
-├── copilot-instructions.md          # 系统入口。Claude Code 自动读取。
+├── AGENTS.md          # 系统入口。Claude Code 自动读取。
 │                                     # 定义三级加载顺序和文件路径。
 │                                     # ⚠️ 是运行时的唯一入口点。
 ├── MAINTAINER.md                    # 维护者手册（维护时读，教学时不读）
@@ -171,7 +171,7 @@ AP_Physics_EM/
 ### 文件依赖关系
 
 ```
-copilot-instructions.md
+AGENTS.md
   ├── [必须] system_core.md          ← 每次都加载
   ├── [必须] story.md                ← 每次都加载
   ├── [必须] story_progression/overview.md
@@ -209,7 +209,7 @@ SocraticNovel 的一个关键设计：**把操作规则嵌入 AI 已经会读取
 
 ### 4.1 启动层（Boot Layer）
 
-**入口点**：`copilot-instructions.md`（在 Claude Code 中自动读取为 CLAUDE.md）
+**入口点**：`AGENTS.md`（在 Claude Code 中自动读取为 CLAUDE.md）
 
 **三级加载机制**：
 
@@ -270,11 +270,11 @@ SocraticNovel 的一个关键设计：**把操作规则嵌入 AI 已经会读取
 
 **角色**：
 - `characters/{name}.md` — 每位老师的完整人设：性格、过去、语言习惯、do/don't 规则
-- 角色声音的 do/don't 同时硬编码在 `system_core.md §5`（运行时快速查阅）
+- 角色声音的 do/don't 同时硬编码在 `narrative_core.md` 的「角色声音速查」（运行时快速查阅）
 
 **文笔标准**：
 - `prologue.md` — **文笔金标准**。全系统叙事输出不得低于此水平。
-- `system_core.md §4` — 散文标准、红线、情绪工具箱索引
+- `narrative_core.md` §4 — 散文标准、红线、情绪工具箱索引
 - `system_reference.md` — 情绪工具箱完整版 + 过渡场景规则详细版
 
 ### 4.4 运行时层（Runtime Layer）
@@ -388,14 +388,14 @@ META_PROMPT.md（1259 行）是 SocraticNovel 的**系统生成器**。它不直
 | **3** | 角色创建 | 用户设计 | characters/*.md, story.md | 角色性格、过去、声音规则 |
 | **4** | 课程结构 | 教材 + 用户确认 | curriculum.md, KP 文件 | 章节划分、轮值表 |
 | **5** | 故事线编织 | 用户确认 | story_progression/ 所有文件 | 情感阶段、故事节点 |
-| **6** | 系统生成 | 全部上述 | system_core.md, copilot-instructions.md, 等 | 技术集成 |
+| **6** | 系统生成 | 全部上述 | system_core.md, AGENTS.md, 等 | 技术集成 |
 
 ### 关键规则
 
 1. **苏格拉底教学法从配套方法论文档嵌入**（v2.2 变更）：生成器从 `苏格拉底教学法方法论.md` 读取完整方法论，学科适配后写入 system_core.md §1。结构和逻辑不允许改动，只允许替换学科示例。
 2. **学科适配原则**：META_PROMPT 中的所有示例以 STEM/物理 为背景。生成器必须根据用户学科改写具体措辞。四条核心规则是通用骨架，但"具象"的含义因学科而异。
 3. **每阶段 Checkpoint**：每完成一个模块后让用户 review，不一口气生成所有文件。
-4. **写作规则自动继承**：散文标准、情绪工具箱、叙事红线是框架固有规则，自动写入 system_core.md。
+4. **写作规则自动继承**：散文标准、情绪工具箱、叙事红线是框架固有规则，自动写入 `narrative_core.md`。
 5. **故事设计完全由用户决定**：角色、世界观、情感阶段——生成器不自作主张。
 
 ### 文件标记系统
@@ -636,7 +636,7 @@ META_PROMPT 中的代码块有三种标记：
 
 **症状**：叙事风格逐渐退化——出现斜体动作、方括号、情绪标签
 **根因**：Context 积累中早期的高质量叙事被冲淡
-**防护**：`/校准` 命令 + 叙事红线写入 system_core.md（始终加载）
+**防护**：`/校准` 命令 + 叙事红线写入 `narrative_core.md`（始终加载）
 
 ### 10.6 角色声音混淆
 
@@ -731,7 +731,7 @@ META_PROMPT 中的代码块有三种标记：
   → 读本文件 §3（文件地图）
 
 我需要理解运行时行为？
-  → 读 copilot-instructions.md（启动入口）→ system_core.md（流程部分）
+  → 读 AGENTS.md（启动入口）→ system_core.md（流程部分）
 
 我需要理解设计决策的原因？
   → 读 SOCRATIC_DESIGN.md 或 NARRATIVE_DESIGN.md
