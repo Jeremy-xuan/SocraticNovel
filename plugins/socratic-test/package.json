@@ -1,0 +1,18 @@
+{
+  "name": "socratic-test",
+  "version": "0.0.1",
+  "description": "SocraticNovel loading-drill plugin: registers one system-prompt section to prove the third-party plugin load path (P1 engine smoke test).",
+  "type": "module",
+  "main": "./index.mjs",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "exports": {
+    ".": "./index.mjs",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": ["index.mjs", "cordis.patch.yml", "README.md"]
+}

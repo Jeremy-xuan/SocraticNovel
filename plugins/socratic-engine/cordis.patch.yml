@@ -1,0 +1,4 @@
+# socratic-engine bundle patch: mount the P1 teaching-engine plugin.
+- insert:
+    - id: socratic-engine
+      name: socratic-engine

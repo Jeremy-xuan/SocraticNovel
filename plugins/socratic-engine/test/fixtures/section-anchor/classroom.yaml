@@ -1,0 +1,64 @@
+# ============================================================================
+# fixture · section-anchor —— 段级切片（M2-SCHEMA v0.2，P1-1）专用
+#
+# 用途：证明 `section` 能从一个文件切出多块（_anchor.md 四拆），且
+#   ① 切到下一个**同级或更高级**标题为止（三级标题不断段）；
+#   ② 标题不存在 → 报错并列出实际标题清单；
+#   ③ `## 教学取向` 这种带前缀的写法容错。
+#
+# 🔴 本 fixture 的 _anchor.md 是**为测试另写的**，不是 cs-os 的真实文件；
+#    真实教室的四块见 code/classrooms/cs-os/classroom.yaml。
+# ============================================================================
+format: socratic-classroom/0
+
+classroom:
+  id: fixture-section-anchor
+  title: 段级切片 fixture
+
+phases:
+  - { id: open, name: 开场 }
+  - { id: close, name: 收尾 }
+
+blocks:
+  # ① 每回合注入（带 `##` 前缀写法 → 容错）
+  - id: anchor.rules
+    path: _anchor.md
+    section: "## 教学取向"
+    layer: discipline
+    position: { target: chat, depth: 0 }
+    frequency: { every: turn }
+    wrap: { style: system-reminder }
+
+  # ② 每回合注入（不带前缀写法）
+  - id: anchor.lesson_ban
+    path: _anchor.md
+    section: 本课不许违反项（每讲更新）
+    layer: discipline
+    position: { target: chat, depth: 0 }
+    frequency: { every: turn }
+    wrap: { style: system-reminder }
+
+  # ③ 系统段（常驻层）
+  - id: anchor.voice
+    path: _anchor.md
+    section: 角色声音速查（生成任何台词前看一眼）
+    layer: persona
+    position: { target: system, order: 11000 }
+    frequency: { every: once }
+
+  # ④ 每 5 回合
+  - id: anchor.check
+    path: _anchor.md
+    section: 教学检查（需要校准时使用）
+    layer: anchor
+    position: { target: chat, depth: 0 }
+    frequency: { every: n_turns, n: 5 }
+    wrap: { style: system-reminder }
+
+  # ⑤ 无 section 的对照块：整文件读入（兼容性）
+  - id: anchor.whole
+    path: _anchor.md
+    layer: discipline
+    position: { target: chat, depth: 0 }
+    frequency: { every: on_demand }
+    wrap: { style: system-reminder }

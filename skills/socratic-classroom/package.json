@@ -1,0 +1,6 @@
+{
+  "name": "socratic-classroom-skill",
+  "private": true,
+  "description": "DSH 技能包：把「苏格拉底式教室」交给任何一台装了 DSH 的机器。本文件只为把 validate 脚本的模块类型固定为 CommonJS（不依赖上层目录是否声明 type），并让 require('yaml') 解析到包内自带的解析器。",
+  "type": "commonjs"
+}

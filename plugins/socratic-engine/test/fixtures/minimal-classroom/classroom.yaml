@@ -1,0 +1,48 @@
+format: socratic-classroom/0
+classroom:
+  id: probe-cs-os
+  version: 0.1.0
+  title: 最小演练教室（P1 骨架 fixture）
+blocks:
+  # ① 常驻层：叙事规则 → 系统段（一次性）
+  - id: narrative-core
+    path: narrative.md
+    layer: persona
+    position: { target: system, order: 2100 }
+    frequency: { every: once }
+
+  # ② 纪律层：每回合贴尾自查清单（A2 的最小实现）
+  - id: anchor
+    path: _anchor.md
+    layer: discipline
+    position: { target: chat, depth: 0 }
+    frequency: { every: turn }
+    wrap: { style: system-reminder }
+
+  # ⑤ 锚定层：每 3 回合注入一次知识锚（A3 的最小实现）
+  - id: knowledge-anchor
+    path: knowledge_anchor.md
+    layer: anchor
+    position: { target: chat, depth: 0 }
+    frequency: { every: n_turns, n: 3 }
+    wrap: { style: system-reminder }
+
+  # ④ 状态层：每回合渲染的模板化状态（A4 的最小实现，{{var}} 替换）
+  - id: state-brief
+    text: |
+      当前状态：相位={{phase}}，第 {{turn}} 回合，教室={{classroom}}。
+    layer: state
+    position: { target: chat, depth: 0 }
+    frequency: { every: turn }
+    render: { enabled: true }
+    wrap: { style: system-reminder }
+
+  # 相位门示例：只在 quiz 相位注入（B1 的最小实现）
+  - id: quiz-rules
+    text: |
+      现在是随堂提问相位：一次只问一个问题，学生答错不直接给答案，降一档再问。
+    layer: discipline
+    position: { target: chat, depth: 0 }
+    frequency: { every: turn }
+    phase: { phases: [quiz] }
+    wrap: { style: system-reminder }

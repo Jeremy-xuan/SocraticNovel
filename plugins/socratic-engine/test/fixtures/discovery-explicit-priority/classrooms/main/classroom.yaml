@@ -1,0 +1,14 @@
+# 教室包 manifest（S2 发现 fixture）——最小合法 M1 v0 子集
+format: socratic-classroom/0
+classroom:
+  id: main
+  title: "discovery fixture main"
+blocks:
+  - id: hello
+    layer: context
+    text: "hello from main"
+    position:
+      target: chat
+      depth: 0
+    frequency:
+      every: turn

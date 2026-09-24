@@ -1,0 +1,426 @@
+#!/usr/bin/env node
+'use strict'
+
+/**
+ * socratic-classroom 自检（validate）
+ *
+ * 用法：
+ *   node validate                # 检查本技能包自带的教室副本（./classroom）
+ *   node validate <教室目录>      # 检查指定教室目录
+ *
+ * 检查四件事（任一项有问题 → 退出码非零，绝不静默）：
+ *   ① 教室缺哪些必需文件（入口/教学法/纪律便条/课程表/知识点/世界观/角色/运行记录）
+ *   ② classroom.yaml 里声明的每份材料，磁盘上是否真的存在
+ *   ③ 声明里提到的讲次序号有没有超出教室声明的讲数；声明讲数与实际故事节点数是否一致
+ *   ④ 教材正文（materials/ch{NN}.md）还缺哪几讲
+ *
+ * 退出码：0 = 全部通过；1 = 查出问题；2 = 用法/目标错误（连检查都做不了）。
+ *
+ * 依赖：只用 Node 内置模块，外加一个 YAML 解析器（见 node_modules/yaml，随包附带，
+ *       来源与理由写在同目录 README.md「依赖来源」一节）。
+ */
+
+const fs = require('node:fs')
+const path = require('node:path')
+
+const MANIFEST_FORMAT = 'socratic-classroom/0'
+
+// ── 参数 ────────────────────────────────────────────────────────────────────
+
+const here = __dirname
+const arg = process.argv[2]
+const target = arg ? path.resolve(arg) : path.join(here, 'classroom')
+
+if (arg === '-h' || arg === '--help') {
+  const header = fs.readFileSync(__filename, 'utf8').split('*/')[0]
+  console.log(header.replace(/^\/\*\*?/, '').split(/\r?\n/).map((line) => line.replace(/^\s*\*\s?/, '')).join('\n').trim())
+  process.exit(0)
+}
+
+const problems = [] // 每条：{ section, text }
+const notes = [] // 说明性文字（非问题）
+const add = (section, text) => problems.push({ section, text })
+
+function rel(p) {
+  return path.relative(target, p) || '.'
+}
+
+function exists(p) {
+  return fs.existsSync(p)
+}
+
+function isFile(p) {
+  try {
+    return fs.statSync(p).isFile()
+  } catch {
+    return false
+  }
+}
+
+function isDir(p) {
+  try {
+    return fs.statSync(p).isDirectory()
+  } catch {
+    return false
+  }
+}
+
+/** 讲次文件名统一用两位数字（与教室 manifest 格式的 {NN} 约定一致）。 */
+function lessonFileName(prefix, n, ext = '.md') {
+  return `${prefix}${String(n).padStart(2, '0')}${ext}`
+}
+
+// ── 目标目录 ────────────────────────────────────────────────────────────────
+
+console.log('socratic-classroom 自检')
+console.log('='.repeat(64))
+console.log(`教室目录：${target}`)
+
+if (!isDir(target)) {
+  console.error(`\n错误：教室目录不存在或不是目录：${target}`)
+  console.error('（用法：node validate [教室目录]；不给参数时检查本技能包自带的 ./classroom）')
+  process.exit(2)
+}
+
+// ── 读 classroom.yaml ───────────────────────────────────────────────────────
+
+const manifestPath = path.join(target, 'classroom.yaml')
+let manifest = null
+let manifestError = null
+
+if (!isFile(manifestPath)) {
+  manifestError = '文件不存在'
+} else {
+  let YAML
+  try {
+    YAML = require('yaml')
+  } catch (error) {
+    console.error(`\n错误：找不到 YAML 解析器（require('yaml') 失败）：${error.message}`)
+    console.error(`查找位置：${path.join(here, 'node_modules', 'yaml')}`)
+    console.error('本技能包应自带该依赖（见 README.md「依赖来源」）。缺了它就无法检查 classroom.yaml，故直接失败，不跳过检查。')
+    process.exit(2)
+  }
+  try {
+    manifest = YAML.parse(fs.readFileSync(manifestPath, 'utf8'))
+  } catch (error) {
+    manifestError = `YAML 解析失败：${error.message}`
+  }
+}
+
+let lessons = null
+let classroomId = '(未读出)'
+let classroomTitle = ''
+
+if (manifest && manifestError === null) {
+  if (typeof manifest !== 'object' || manifest === null || Array.isArray(manifest)) {
+    manifestError = '根节点不是映射'
+    manifest = null
+  } else if (manifest.format !== MANIFEST_FORMAT) {
+    manifestError = `format 必须是 ${MANIFEST_FORMAT}（得到 ${JSON.stringify(manifest.format)}）`
+  } else {
+    const classroom = manifest.classroom
+    if (typeof classroom !== 'object' || classroom === null) {
+      manifestError = '顶层缺 classroom 映射'
+    } else {
+      if (typeof classroom.id === 'string' && classroom.id) classroomId = classroom.id
+      if (typeof classroom.title === 'string') classroomTitle = classroom.title
+      const declared = classroom.lessons
+      if (declared === undefined || declared === null) {
+        notes.push('classroom.lessons 未声明 → 无法做讲数相关检查（③④ 跳过）')
+      } else if (!Number.isInteger(declared) || declared < 1) {
+        manifestError = `classroom.lessons 必须是 >=1 的整数（得到 ${JSON.stringify(declared)}）`
+      } else {
+        lessons = declared
+      }
+    }
+  }
+}
+
+if (manifestError !== null) {
+  add('② classroom.yaml', `${rel(manifestPath)}：${manifestError}`)
+} else {
+  console.log(`教室标识：${classroomId}${classroomTitle ? ' · ' + classroomTitle : ''}`)
+  console.log(`声明讲数：${lessons === null ? '(未声明)' : lessons + ' 讲'}`)
+}
+
+// ── ① 必需文件 ──────────────────────────────────────────────────────────────
+
+const REQUIRED = [
+  ['教室入口', 'AGENTS.md'],
+  ['教学法', 'system_core.md'],
+  ['纪律便条', '_anchor.md'],
+  ['课程表', 'curriculum.md'],
+  ['知识点', 'knowledge_points.md'],
+  ['世界观·场景', 'world/setting.md'],
+  ['世界观·隐喻', 'world/metaphor.md'],
+  ['教室清单', 'classroom.yaml'],
+  ['故事·总览', 'story/overview.md'],
+  ['运行记录', 'runtime/progress.md'],
+  ['运行记录', 'runtime/learner_profile.md'],
+  ['运行记录', 'runtime/session_log.md'],
+  ['运行记录', 'runtime/session_archive.md'],
+  ['运行记录', 'runtime/review_queue.md'],
+  ['运行记录', 'runtime/mistake_log.md'],
+  ['运行记录', 'runtime/diary.md'],
+  ['运行记录', 'runtime/wechat_group.md'],
+]
+
+console.log('\n[①] 必需文件')
+let missingRequired = 0
+for (const [label, relPath] of REQUIRED) {
+  if (!isFile(path.join(target, relPath))) {
+    add('① 必需文件', `${label} 缺失：${relPath}`)
+    missingRequired++
+  }
+}
+
+// 角色：characters/ 下至少一个人格文件
+const charactersDir = path.join(target, 'characters')
+let characterFiles = []
+if (!isDir(charactersDir)) {
+  add('① 必需文件', '角色目录缺失：characters/')
+  missingRequired++
+} else {
+  characterFiles = fs.readdirSync(charactersDir).filter((name) => name.endsWith('.md'))
+  if (characterFiles.length === 0) {
+    add('① 必需文件', '角色目录里没有任何 .md 人格文件：characters/')
+    missingRequired++
+  }
+}
+
+// 故事/教材目录本身
+for (const [label, relPath] of [['故事目录', 'story'], ['教材目录', 'materials']]) {
+  if (!isDir(path.join(target, relPath))) {
+    add('① 必需文件', `${label}缺失：${relPath}/`)
+    missingRequired++
+  }
+}
+
+if (missingRequired === 0) {
+  console.log(`  ✓ ${REQUIRED.length} 个必需文件齐全，角色 ${characterFiles.length} 份，story/ 与 materials/ 目录存在`)
+} else {
+  console.log(`  ✗ 缺 ${missingRequired} 项（逐条见下方问题清单）`)
+}
+
+// ── ② classroom.yaml 声明的材料是否真的存在 ─────────────────────────────────
+
+console.log('\n[②] classroom.yaml 声明的材料')
+
+if (manifestError !== null) {
+  console.log('  ✗ 跳过：classroom.yaml 读不出来（见上方问题清单）')
+} else {
+  const declaredPaths = []
+
+  const blocks = manifest.blocks
+  if (!Array.isArray(blocks)) {
+    add('② 声明材料', 'blocks 必须是数组')
+  } else {
+    const seenIds = new Set()
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i]
+      const at = `blocks[${i}]`
+      if (typeof block !== 'object' || block === null) {
+        add('② 声明材料', `${at} 不是映射`)
+        continue
+      }
+      const id = typeof block.id === 'string' && block.id ? block.id : null
+      if (id === null) add('② 声明材料', `${at} 缺 id（非空字符串）`)
+      else if (seenIds.has(id)) add('② 声明材料', `块 id 重复：${id}`)
+      else seenIds.add(id)
+      const where = id === null ? at : `${at}(${id})`
+
+      if (typeof block.path !== 'string' || !block.path) {
+        add('② 声明材料', `${where} 缺 path（非空字符串）`)
+        continue
+      }
+      declaredPaths.push({ where, relPath: block.path })
+
+      const absolute = path.isAbsolute(block.path) ? block.path : path.join(target, block.path)
+      if (!isFile(absolute)) {
+        add('② 声明材料', `${where} 声明的文件不存在：${block.path}`)
+      } else if (typeof block.section === 'string' && block.section) {
+        // 与引擎同款规则：声明的段标题必须在文件里存在，否则该块静默失效
+        const want = block.section.replace(/^#+\s*/, '').trim()
+        const headings = fs
+          .readFileSync(absolute, 'utf8')
+          .split(/\r?\n/)
+          .map((line) => line.match(/^(#{1,6})\s+(.*?)\s*$/))
+          .filter((m) => m !== null)
+          .map((m) => m[2])
+        if (!headings.includes(want)) {
+          add('② 声明材料', `${where} 的 section ${JSON.stringify(block.section)} 在 ${block.path} 里不存在（该文件实际标题：${headings.join(' / ') || '（无标题）'}）`)
+        }
+      }
+    }
+  }
+
+  // runtime_store 声明的 progress 文件
+  const store = manifest.runtime_store
+  if (store !== undefined && store !== null) {
+    if (typeof store !== 'object' || Array.isArray(store)) {
+      add('② 声明材料', 'runtime_store 必须是映射')
+    } else if (typeof store.progress === 'string' && store.progress) {
+      declaredPaths.push({ where: 'runtime_store', relPath: store.progress })
+      const absolute = path.isAbsolute(store.progress) ? store.progress : path.join(target, store.progress)
+      if (!isFile(absolute)) {
+        add('② 声明材料', `runtime_store.progress 声明的文件不存在：${store.progress}`)
+      }
+    } else {
+      add('② 声明材料', 'runtime_store.progress 必填（非空字符串）')
+    }
+  }
+
+  const bad = problems.filter((p) => p.section === '② 声明材料').length
+  if (bad === 0) {
+    console.log(`  ✓ ${declaredPaths.length} 条声明路径全部存在于磁盘`)
+  } else {
+    console.log(`  ✗ ${bad} 条声明有问题（逐条见下方问题清单）`)
+  }
+}
+
+// ── ③ 讲次序号上界与讲数一致性 ──────────────────────────────────────────────
+
+console.log('\n[③] 讲次序号与讲数')
+
+if (manifestError !== null || lessons === null) {
+  console.log(`  ✗ 跳过：${manifestError !== null ? 'classroom.yaml 读不出来' : 'classroom.lessons 未声明'}`)
+} else {
+  let issues = 0
+
+  // 声明讲数 vs 实际故事节点数
+  const storyDir = path.join(target, 'story')
+  const storyCount = isDir(storyDir)
+    ? fs.readdirSync(storyDir).filter((name) => /^ch\d+\.md$/.test(name)).length
+    : 0
+  if (storyCount !== lessons) {
+    add('③ 讲次', `声明 ${lessons} 讲，但 story/ 里只有 ${storyCount} 个故事节点文件（ch{NN}.md）——两者必须一致`)
+    issues++
+  }
+
+  // 每个讲次门的上界
+  const blocks = Array.isArray(manifest.blocks) ? manifest.blocks : []
+  let gated = 0
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i]
+    if (typeof block !== 'object' || block === null) continue
+    const id = typeof block.id === 'string' && block.id ? block.id : `blocks[${i}]`
+    const gate = block.lesson
+    if (gate === undefined || gate === null) continue
+    gated++
+    if (typeof gate !== 'object' || Array.isArray(gate)) {
+      add('③ 讲次', `块 ${id} 的 lesson 必须是映射：{current:true, of:N} / {list:[..]} / {range:[a,b]}`)
+      issues++
+      continue
+    }
+    if (gate.current === true) {
+      if (gate.of === undefined) continue
+      if (!Number.isInteger(gate.of) || gate.of < 1) {
+        add('③ 讲次', `块 ${id} 的 lesson.of 必须是 >=1 的整数（得到 ${JSON.stringify(gate.of)}）`)
+        issues++
+        continue
+      }
+      if (gate.of > lessons) {
+        add('③ 讲次', `块 ${id} 声明第 ${gate.of} 讲，但教室声明的讲数只有 ${lessons} —— 这个门永远不会命中，块会静默不注入`)
+        issues++
+      }
+    } else if (Array.isArray(gate.list)) {
+      if (gate.list.length === 0) {
+        add('③ 讲次', `块 ${id} 的 lesson.list 不能是空数组`)
+        issues++
+        continue
+      }
+      const bad = gate.list.filter((n) => !Number.isInteger(n) || n < 1)
+      if (bad.length > 0) {
+        add('③ 讲次', `块 ${id} 的 lesson.list 里有非 >=1 整数：${JSON.stringify(bad)}`)
+        issues++
+        continue
+      }
+      const over = gate.list.filter((n) => n > lessons)
+      if (over.length > 0) {
+        add('③ 讲次', `块 ${id} 的 lesson.list 引用第 ${over.join('、')} 讲，超出教室声明的 ${lessons} 讲`)
+        issues++
+      }
+    } else if (Array.isArray(gate.range)) {
+      if (gate.range.length !== 2) {
+        add('③ 讲次', `块 ${id} 的 lesson.range 必须是 [起, 止] 两个元素`)
+        issues++
+        continue
+      }
+      const [from, to] = gate.range
+      if (!Number.isInteger(from) || !Number.isInteger(to) || from < 1 || to < 1) {
+        add('③ 讲次', `块 ${id} 的 lesson.range 必须都是 >=1 的整数（得到 ${JSON.stringify(gate.range)}）`)
+        issues++
+        continue
+      }
+      if (from > to) {
+        add('③ 讲次', `块 ${id} 的 lesson.range 起点大于终点：${JSON.stringify(gate.range)}`)
+        issues++
+        continue
+      }
+      if (to > lessons) {
+        add('③ 讲次', `块 ${id} 的 lesson.range 上界第 ${to} 讲，超出教室声明的 ${lessons} 讲`)
+        issues++
+      }
+    } else {
+      add('③ 讲次', `块 ${id} 的 lesson 无法识别（可用键：current/list/range/of）：${JSON.stringify(gate)}`)
+      issues++
+    }
+  }
+
+  if (issues === 0) {
+    console.log(`  ✓ 声明 ${lessons} 讲 ＝ story/ 实际 ${storyCount} 个节点；${gated} 个讲次门全部落在 1–${lessons} 内`)
+  } else {
+    console.log(`  ✗ ${issues} 处讲次问题（逐条见下方问题清单）`)
+  }
+}
+
+// ── ④ 教材正文缺口 ──────────────────────────────────────────────────────────
+
+console.log('\n[④] 教材正文（materials/ch{NN}.md）')
+
+if (lessons === null) {
+  console.log(`  ✗ 跳过：${manifestError !== null ? 'classroom.yaml 读不出来' : 'classroom.lessons 未声明'} → 无法知道该有哪几讲`)
+} else {
+  const missing = []
+  const present = []
+  for (let n = 1; n <= lessons; n++) {
+    const name = lessonFileName('ch', n)
+    if (isFile(path.join(target, 'materials', name))) present.push(n)
+    else missing.push(n)
+  }
+  if (missing.length === 0) {
+    console.log(`  ✓ 第 1–${lessons} 讲正文齐全（${present.length} 份）`)
+  } else {
+    console.log(`  ✗ 缺 ${missing.length} 讲正文：第 ${missing.join('、')} 讲`)
+    add('④ 教材正文', `缺 ${missing.length} 讲正文（共声明 ${lessons} 讲，已有 ${present.length} 讲）：第 ${missing.join('、')} 讲 —— 期望文件 materials/${lessonFileName('ch', missing[0])}`)
+  }
+}
+
+// ── 问题清单 ────────────────────────────────────────────────────────────────
+
+console.log('\n' + '='.repeat(64))
+
+if (notes.length > 0) {
+  console.log('说明：')
+  for (const note of notes) console.log(`  · ${note}`)
+}
+
+if (problems.length === 0) {
+  console.log('结论：全部通过（退出码 0）')
+  process.exit(0)
+}
+
+console.log(`结论：发现 ${problems.length} 个问题（退出码 1）`)
+console.log('')
+let index = 0
+for (const section of ['① 必需文件', '② 声明材料', '③ 讲次', '④ 教材正文']) {
+  const group = problems.filter((p) => p.section === section)
+  if (group.length === 0) continue
+  console.log(`${section}（${group.length}）`)
+  for (const problem of group) {
+    index++
+    console.log(`  ${String(index).padStart(2, ' ')}. ${problem.text}`)
+  }
+  console.log('')
+}
+process.exit(1)

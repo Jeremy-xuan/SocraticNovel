@@ -1,0 +1,35 @@
+{
+  "name": "socratic-engine",
+  "version": "0.0.1",
+  "description": "SocraticNovel P1 teaching-engine plugin for DeepSeek Harness: manifest-driven classroom injection (position+frequency), phase store, teaching tools. Skeleton.",
+  "type": "module",
+  "main": "./index.mjs",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "exports": {
+    ".": "./index.mjs",
+    "./lib/manifest.mjs": "./lib/manifest.mjs",
+    "./lib/injector.mjs": "./lib/injector.mjs",
+    "./lib/phasestore.mjs": "./lib/phasestore.mjs",
+    "./lib/diagram.mjs": "./lib/diagram.mjs",
+    "./lib/diagramstore.mjs": "./lib/diagramstore.mjs",
+    "./lib/mermaid-parse.mjs": "./lib/mermaid-parse.mjs",
+    "./lib/mermaid-worker.mjs": "./lib/mermaid-worker.mjs",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "jsdom": "^30.1.1",
+    "mermaid": "^11.17.2",
+    "yaml": "^2.6.1"
+  },
+  "files": [
+    "index.mjs",
+    "lib",
+    "README.md",
+    "cordis.patch.yml"
+  ]
+}
