@@ -18,7 +18,7 @@
 
 > Its purpose is simple — **make learning less lonely.**
 >
-> Textbooks and thick reference volumes are impossible to power through. Public lectures are too one-directional. Ask AI for help? It slaps a full page of formulas in your face — no matter how you study, you're always grinding alone. SocraticNovel is an open-source framework for creating **immersive AI tutoring systems**: the AI never gives direct answers, guiding you step by step through Socratic questioning to reach the answer yourself; teaching doesn't happen in a blank chatbox, but in a light novel world with characters, scenes, and everyday life.
+> Textbooks and thick reference volumes are impossible to power through. Public lectures are too one-directional. Ask AI for help? It slaps a full page of formulas in your face — no matter how you study, you're always grinding alone. SocraticNovel is an open-source framework for creating **immersive AI tutoring systems**: the AI chooses questions, explanations, and demonstrations based on what you actually understand; teaching doesn't happen in a blank chatbox, but in a light novel world with characters, scenes, and everyday life.
 >
 > SocraticNovel creates companions for you. When you're studying, someone is truly there with you — not an encyclopedia, not a problem-solving machine, certainly not some distant professor on the other side of a screen. A person with a temper, who goes quiet sometimes, who woke up in a bad mood today but still made you "breakfast." You spend time together, you learn things, you meet people. When it's over, you remember. Not just the formulas.
 >
@@ -27,7 +27,7 @@
 
 <br>
 
-> *"The best teacher never gives you the answer. She just makes you suddenly realize — you knew it all along."*
+> *"A good teacher knows when to ask and when to explain."*
 
 ---
 
@@ -56,7 +56,7 @@ That's only the surface problem. The deeper issue: **there's no "person" in AI t
 
 SocraticNovel lets you create a completely different kind of AI learning experience:
 
-- **The AI never gives answers** — It guides you with questions until you figure it out yourself. Socrates was doing this 2,400 years ago. Nobody had ever turned it into an engineered system.
+- **The AI reasons with you** — It asks when a step can be worked out, explains missing facts, and moves forward once you grasp the key idea.
 - **Teaching happens inside a story** — Not a blank chatbox, but a literary world with scenes, shifting light, and characters' moods. Your teacher has a name, a past, and might be in a bad mood today — but will still teach you.
 - **The AI won't forget you** — 15+ files each handling a specific role: mistake log, spaced review queue, session notes, group chat. A month later, it still remembers the mistake you made in lesson 3.
 
@@ -80,7 +80,7 @@ Good teaching — whether tutoring, mentoring, or apprenticeship — always has 
 
 SocraticNovel exists to fix this. It's an open-source framework for building immersive learning systems. Two core principles:
 
-1. **Socratic Method** — The AI never gives direct answers. Every step of knowledge delivery happens through questions. You're not watching a derivation — you're being guided to complete it yourself.
+1. **Adaptive guided teaching** — The AI responds to your reasoning, then chooses whether to ask, explain, correct, demonstrate, or go deeper.
 2. **Light Novel Narrative Layer** — Teaching doesn't happen in a blank chatbox. It happens in a literary world with real scenes, shifting light, and fictional teachers with distinct personalities. Characters aren't skins — they're people with pasts, contradictions, and moods.
 
 **This is not a visual novel. You don't need to "roleplay."** Just be a real student — work on problems, think, occasionally complain. The story moves on its own. You don't manage relationships, pick dialogue options, or pretend to care about the plot. When you're studying, you're studying — the story runs in the background, using the same time you're already spending.
@@ -111,40 +111,19 @@ Here's what happens in two parallel universes.
 
 **✅ Universe B: SocraticNovel**
 
-> Ritsu stands by the window, holding a cup of tea, in no hurry to begin. You've already sat down. The domed classroom's light is low today — 3 PM, the sun just dipped behind the ridge, and the copper walls shifted from gold to dark bronze.
+> Ritsu stands by the window with a cup of tea. The light in the domed classroom is fading. He draws a positive charge on the board, then a small circle beside it.
 >
-> He glances at you and smiles — the unhurried kind.
+> “Suppose this circle is a test charge. If we remove it and put another one there later, can the source charge still exert a force on it?”
 >
-> "Do you have WiFi at home?"
+> **You:** “Yes. The source charge is still there.”
 >
-> You didn't expect that. "Yes."
+> “Right.” He draws short arrows around the source charge. “That is the key idea. The other charge can be absent for a while; we use an electric field to describe how the source charge would act on a positive test charge at each position.”
 >
-> "Can you see it?"
+> **You:** “Do we have to place a test charge there for the field to exist?”
 >
-> "No."
->
-> "But you know it's there."
->
-> He sets the cup on the table — white porcelain, tea stains baked permanently into the inner wall — and walks slowly to the whiteboard.
->
-> "You've learned about gravity. Two objects with mass attract each other. So let me ask you — if you remove one object, what's left around the other one?"
->
-> You think for a moment. "Nothing? Gravity needs two objects to exist."
->
-> He doesn't deny you. He nods once, as if tasting your words.
->
-> "Force does need two objects. But I wasn't asking about force."
->
-> He draws a single, solitary dot on the whiteboard.
->
-> "I was asking about — **the space itself.**"
->
-> Three seconds of silence. The wind outside happened to stop.
->
-> "Just like WiFi. You can't see it. But it's there. **The space has been changed.**"
->
-> *(You thought you were talking about WiFi. You thought you were talking about gravity. Then you realized — you were already understanding electric fields. Not because someone told you the definition, but because you walked there yourself, from gravity to fields. Ritsu was just standing nearby.)*
+> Ritsu shakes his head and erases the test charge, leaving the source and the arrows. “No. A test charge helps us **detect** the field. Want to try predicting the force direction at another point?”
 
+There are questions here, along with confirmation, a name for the idea, and a direct explanation. The character is present, and the concept stays clear.
 ---
 
 No formula walls. No `*smiles gently*`. No announcing "today we're learning about electric fields."
@@ -161,7 +140,7 @@ In Universe A, you spent three minutes reading a derivation and had your entire 
 
 > **Knowledge isn't told — it's discovered inside a world with light, temperature, and silence.**
 
-The AI starts from everyday experience, guiding you step by step toward understanding through continuous questioning. Right answers get deeper follow-ups. Wrong answers aren't corrected — you get a simpler question that helps you find the error yourself.
+The AI may start from everyday experience or answer your question directly, depending on what helps you understand. When you find the key idea, the teacher confirms it and moves on. When you make a mistake, the teacher identifies the specific gap and helps you correct it.
 
 That's the Socratic method. It's been around for 2,400 years. Nobody had ever combined it with literary narrative.
 

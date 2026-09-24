@@ -1,4 +1,6 @@
-# AI_GUIDE.md — SocraticNovel 完整项目指南
+# AI_GUIDE.md — SocraticNovel 早期项目指南
+
+> **教学规则版本提示（2026-09-23）**：本文后续关于“绝不给答案”、P0–P5 必经阶段、S1–S5 梯度与“命名权归学生”的内容，记录的是早期 AP 物理方案，**不再作为当前教室或新教室的执行规则**。当前规则以 `苏格拉底教学法方法论.md`、`META_PROMPT.md` 和具体教室的 `AGENTS.md` / `system_core.md` 为准；角色与叙事设计仍可参考本文相应章节。
 
 > **读者**：AI 代理（Claude、GPT 系列、Gemini 等）
 >
