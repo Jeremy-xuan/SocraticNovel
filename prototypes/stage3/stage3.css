@@ -1,0 +1,382 @@
+/* ============================================================================
+ * 教室舞台 STAGE-3 · 按「真实界面参考」重做的设计令牌 + 三方向骨架
+ * ----------------------------------------------------------------------------
+ * 🔴 本文件所有数值都标了「依据哪张真实图」。凡量不到的写「量不到」，不编。
+ * 素材根：开源线/DSH定制/参考素材_真实界面/
+ * 上一版（STAGE-2）的结论凡被真实截图推翻的，这里一律按真实值写，并在
+ *   实现报告_STAGE3_按真实参考重做_2026-09-24.md 里逐条列出。
+ * ==========================================================================*/
+
+/* ===========================================================================
+ * 0 · 真实参数令牌（逐项标依据）
+ * ===========================================================================*/
+:root{
+  /* —— 文字列（依据 U1 = steam_store/store_09_9.jpg，1920×1080 官方商店截图）—— */
+  --band-l: 17.2%;          /* 文字列左边界 331/1920 */
+  --band-r: 19.8%;          /* 右边界 1539/1920=80.2% ⇒ 右边距 19.8% */
+
+  /* —— 字阶 ——
+     🔴 全部用 px（基准画布 1920×1080，由 JS 整体 scale）。
+     理由：舞台是固定尺寸画布；用 vh/百分比会在「容器高度 auto」处静默失效
+     （实测：font-size:4% 与 height:7.1% 都解析不出来，行高与字号全崩）。
+     依据 U1：当前行字面高（含描边）45px、旧行 44px ⇒ 4.1% 屏高。
+     CJK 字面 ≈ 0.92em（含 2px 描边后 ≈ 0.96em）⇒ font-size 47px。 */
+  --fs-body: 47px;
+  /* 依据 U1：相邻行顶差 80/85px ⇒ 7.4%–7.9% 屏高；82/47 ≈ 1.74 */
+  --lh-body: 1.74;
+  /* 依据 U1：换段处行顶差 ≈160px ≈ 2× 行距 ⇒ 段间距 = 一行空白 */
+  --para-gap: 1;            /* 单位：行（由 JS 插一个空行实现） */
+  /* 依据 U1：描边目视 ≈2–3px @1920；y=595 横扫描实测亮心两侧各有 2–3px 暗谷 */
+  --stroke: 2px;
+
+  /* —— 亮度阶梯（依据 U1：字心平均亮度 当前行 221.2 / 旧行 177.4 ⇒ 比值 0.80）—— */
+  --ink-cur: #ffffff;
+  --ink-old: #cccccc;       /* 255 × 0.80，取整 */
+  --ink-narr: #d8d8d8;      /* 旁白（无引号）比台词略暗，依据 U1 第 4 行目视 */
+
+  /* —— 青系强调（依据 U1 推进指示器 + U6 选择肢 + U4 回想卡）—— */
+  --cyan:      #37DBF7;     /* U6 选中条两端亮青竖边实测 rgb(55,219,247) */
+  --cyan-dim:  #3F787B;     /* U6 未选中条发丝线实测 rgb(63,120,123)（已随菜单压暗） */
+  --cyan-deep: #14546E;     /* U6 选中条填充实测 rgb(20,84,110) */
+  --hairline:  rgba(174,249,252,.42);  /* 花饰发丝色（沿用 STAGE-2 从 conf_frame 实测值，真实图证实存在） */
+
+  /* —— 选择肢（依据 U6 = video_frames/bili_hires/BV1HW4y1P7KB_hires_t005310.png，852×480）—— */
+  --ch-l: 5.3%;             /* 条左边界 45/852 */
+  --ch-r: 5.3%;             /* 条右边界 807/852=94.7% ⇒ 右距 5.3%（占屏 89.6%） */
+  --ch-h: 77px;             /* 条高 34/480 × 2.25 ≈ 77px @1920×1080 */
+  --ch-pitch: 101px;        /* pitch 44.8/480 × 2.25 ≈ 101px（间隙 24px） */
+  --ch-orn-w: 68px;         /* 两端卷草花饰每枚 ≈30/852 × 2.25 ≈ 68px */
+  --ch-title-h: 44px;       /* 标题「～选项 I ～」字面高 19/480 × 2.25 ≈ 43px */
+
+  /* —— 菜单 / 回想页压暗（依据 U6 边缘区 RGB ≈(15,20,25)~(34,44,53)）—— */
+  --menu-dim: rgba(3,6,9,.90);
+
+  /* —— 回想卡（依据 U4 = steam_community/steam_3807120591.jpg，1920×1200）—— */
+  --bl-l: 6.9%;             /* 卡左边界 132/1920 */
+  --bl-r: 5.6%;             /* 卡右边界 1813/1920 */
+  --bl-h: 196px;            /* 卡高 ≈218/1200 × 1080 = 196px */
+  --bl-pitch: 209px;        /* pitch ≈232/1200 × 1080 = 209px */
+  --bl-fill:     rgba(1,25,35,.92);   /* 实测 rgb(1,25,35) */
+  --bl-fill-cur: rgba(33,61,72,.94);  /* 当前卡实测 rgb(33,61,72) */
+  --bl-radius: 8px;         /* 目视小圆角（受描边渐变干扰，量不到精确 r） */
+
+  /* —— 書庫 / 存档（依据 U12 = video_frames/bilibili_covers/bili_BV1HW4y1P7KB.jpg，576×360）—— */
+  --lib-wood:   #4a2c17;
+  --lib-wood-2: #6b4423;
+  --lib-gold:   #c9a86a;
+  --lib-title-h: 81px;      /* 「书库」字面高 ≈27/360 × 1080 = 81px */
+
+  /* —— 字体（依据 U1 放大目视：中文版正文为无衬线/黑体；STAGE-2 从日文版资源推断为明朝体）—— */
+  --font-body: "PingFang SC","Hiragino Sans GB","Heiti SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-serif:"Songti SC","Source Han Serif SC","Noto Serif CJK SC",Georgia,serif;
+  --font-mono: ui-monospace,SFMono-Regular,Menlo,monospace;
+
+  /* —— 动效 —— */
+  --t-in: 420ms;
+  --ease: cubic-bezier(.22,.61,.36,1);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#05070a;overflow:hidden}
+body{font-family:var(--font-body);font-weight:400;-webkit-font-smoothing:antialiased}
+
+/* 固定 1920×1080 舞台 + 自适应 letterbox（由 JS 设 --k） */
+#fit{position:fixed;inset:0;overflow:hidden}
+#stage{
+  position:absolute;left:50%;top:50%;
+  width:1920px;height:1080px;
+  transform:translate(-50%,-50%) scale(var(--k,1));transform-origin:center center;
+  background:#05070a;overflow:hidden;
+}
+
+/* ---------------------------------------------------------------------------
+ * 场景层（依据 U1：真 16:9 宽幅背景 cover；画面本身不压暗）
+ * -------------------------------------------------------------------------*/
+.scene{position:absolute;inset:0;z-index:0}
+.scene__img{width:100%;height:100%;object-fit:cover;display:block}
+.scene__grade{position:absolute;inset:0;
+  background:radial-gradient(120% 90% at 50% 45%,transparent 40%,rgba(0,0,0,.55) 100%)}
+
+/* ---------------------------------------------------------------------------
+ * 发丝花饰（依据 U1：屏幕上下各一条居中的藤蔓/羽状曲线，近白，发丝级）
+ *   实测 U1 上花饰 y≈2%–8%、下花饰 y≈92%–98%；U6 里同款被菜单压暗到 meanLum≈60
+ * -------------------------------------------------------------------------*/
+.orn{position:absolute;left:0;right:0;height:7%;z-index:3;pointer-events:none;
+  display:grid;place-items:center;opacity:.85}
+.orn svg{width:46%;height:100%;overflow:visible}
+.orn--top{top:0}
+.orn--bot{bottom:0;transform:scaleY(-1)}
+.is-menu .orn{opacity:.32}
+
+/* ---------------------------------------------------------------------------
+ * 文本带：无底、无框、无投影（依据 U1 实测：文字带内外行亮度 76.0 vs 78.2/71.7
+ *   ⇒ 没有底板、没有压暗层）
+ * 锚点：**顶对齐**。三条独立真实帧一致 —— U1 首行 y=160（14.8%）、
+ *   U3 首行 y=165（15.3%）、U6 同源帧 BV…_t005328 首行 y=70/480（14.6%）
+ *   ⇒ 取 14.9%。行数增加时向下生长（U1 五行 → 末行 y=570，53%）。
+ * -------------------------------------------------------------------------*/
+.band{position:absolute;left:var(--band-l);right:var(--band-r);top:14.9%;z-index:5}
+.band__inner{position:relative}
+.band__inner li{list-style:none;
+  font-family:var(--font-body);
+  font-size:var(--fs-body);line-height:var(--lh-body);
+  letter-spacing:.01em;color:var(--ink-old);
+  /* 描边：U1 实测白字 + 2–3px 深色描边。用 8 向 text-shadow 环实现（比
+     -webkit-text-stroke 更能保住字面宽度，且不需要 paint-order） */
+  text-shadow:
+     2px 0 0 rgba(0,0,0,.82), -2px 0 0 rgba(0,0,0,.82),
+     0 2px 0 rgba(0,0,0,.82),  0 -2px 0 rgba(0,0,0,.82),
+     1.5px 1.5px 0 rgba(0,0,0,.82), -1.5px 1.5px 0 rgba(0,0,0,.82),
+     1.5px -1.5px 0 rgba(0,0,0,.82), -1.5px -1.5px 0 rgba(0,0,0,.82);
+  transition:color var(--t-in) var(--ease);
+}
+.band__inner li.is-cur{color:var(--ink-cur)}          /* 当前行亮白（U1：字心 221.2 vs 177.4） */
+.band__inner li.is-narr{color:var(--ink-narr)}
+.band__inner li.is-para{margin-top:calc(var(--fs-body) * var(--lh-body))}  /* 段间空一行（U1 ≈160px） */
+
+/* 推进指示器（依据 U1：青色梯形，跟在末行文字末尾，不是固定在角落；
+ *   实测包围盒 33×30px @1920，位于 x≈81.7%、y≈53.6%） */
+.adv{display:inline-block;width:33px;height:30px;margin-left:10px;vertical-align:-2px;
+  background:linear-gradient(90deg,#ffffff 0%,#7fe8ff 45%,#2ea8d8 100%);
+  clip-path:polygon(0 18%,100% 0,100% 100%,0 82%);opacity:.95;
+  animation:adv 1.4s var(--ease) infinite}
+@keyframes adv{0%,100%{opacity:.95}50%{opacity:.45}}
+
+/* 说话人（依据 U1/U2/U3/U10：真实界面【没有姓名牌】，姓名排在正文里，用「」包台词。
+ *   本原型按用户裁决：无框直排为默认；多角色同台时才启用姓名条 —— 见 .v-b/.v-c） */
+.speaker{display:none}
+
+/* ---------------------------------------------------------------------------
+ * 选择肢（依据 U6 实测）
+ * -------------------------------------------------------------------------*/
+.choices{position:absolute;inset:0;z-index:7;display:none}
+.is-choice .choices{display:block}
+.choices__dim{position:absolute;inset:0;background:var(--menu-dim)}
+.choices__title{
+  position:absolute;left:14.8%;top:15.2%;
+  font-size:var(--ch-title-h);line-height:1;letter-spacing:.06em;
+  color:#e8f4f7;text-shadow:0 2px 0 rgba(0,0,0,.8),0 -2px 0 rgba(0,0,0,.8),2px 0 0 rgba(0,0,0,.8),-2px 0 0 rgba(0,0,0,.8);
+}
+.choices__list{position:absolute;left:var(--ch-l);right:var(--ch-r);top:21.8%;
+  display:flex;flex-direction:column;gap:calc(var(--ch-pitch) - var(--ch-h))}
+/* 六条总高 = 6×77 + 5×24 = 582px；首条顶 236px（U6 首条顶 105/480 × 2.25）
+   末条底 818px（U6 末条底 340/480 × 2.25 = 765px）——本原型 6 条比 U6 稍高，
+   因为 U6 那帧只有 6 条且标题占位不同；数值取「条高 / pitch / 占屏宽」三项实测，
+   整块纵向位置按 U6 首条顶对齐。 */
+.choice{
+  position:relative;height:var(--ch-h);display:grid;place-items:center;
+  /* 未选中：几乎无填充（U6 实测条内 rgb(15,25,32) vs 菜单背景 rgb(15,20,25)，差≈5–7）
+     只有上下两条发丝线 */
+  background:rgba(30,150,180,.035);
+  border-top:1px solid var(--cyan-dim);border-bottom:1px solid var(--cyan-dim);
+}
+.choice__txt{font-size:calc(var(--fs-body) * .95);line-height:1;color:#f2f8fa;
+  text-shadow:0 2px 0 rgba(0,0,0,.85),0 -2px 0 rgba(0,0,0,.85),2px 0 0 rgba(0,0,0,.85),-2px 0 0 rgba(0,0,0,.85);
+  text-align:center;padding:0 6%}
+/* 两端卷草花饰（U6 实测每枚 ≈30/852 宽，压在条的左右端） */
+.choice__orn{position:absolute;top:50%;transform:translateY(-50%);
+  width:var(--ch-orn-w);height:146px;pointer-events:none;opacity:.9}
+.choice__orn svg{width:100%;height:100%;display:block;overflow:visible}
+.choice__orn--l{left:calc(var(--ch-orn-w) * -.78)}
+.choice__orn--r{right:calc(var(--ch-orn-w) * -.78);transform:translateY(-50%) scaleX(-1)}
+/* 选中：整条填充青 + 两端亮青竖边（U6 实测填充 rgb(20,84,110)、竖边 rgb(55,219,247)） */
+.choice.is-sel{background:var(--cyan-deep)}
+.choice.is-sel::before,.choice.is-sel::after{
+  content:"";position:absolute;top:0;bottom:0;width:10px;background:var(--cyan)}
+.choice.is-sel::before{left:0}
+.choice.is-sel::after{right:0}
+.choice.is-sel .choice__orn{opacity:1}
+
+/* ---------------------------------------------------------------------------
+ * 投影 / 板书区（三方向各用不同形态，见下）
+ * -------------------------------------------------------------------------*/
+.podium{position:absolute;z-index:4;display:none}
+.is-board .podium{display:block}
+
+/* ---------------------------------------------------------------------------
+ * 立绘（依据 U1/U2/U3：真实界面里立绘不带投影；非说话者压暗）
+ * -------------------------------------------------------------------------*/
+.cast{position:absolute;inset:0;z-index:2;pointer-events:none}
+.cast figure{position:absolute;bottom:-2%;margin:0;
+  transition:filter var(--t-in) var(--ease),transform var(--t-in) var(--ease)}
+.cast img{display:block;height:100%;width:auto}
+.cast figure{height:88%}
+.cast figure.is-off{filter:brightness(.55) saturate(.7)}
+.cast figure.is-on{filter:none}
+/* 槽位名角标（**只在外挂素材时出现**，见 stage3.js）：占位模式下不显示，
+   因为它正好落在正文区、只会变成噪声。 */
+.cast-badge{position:absolute;left:0;top:0;padding:2px 7px;border-radius:3px;
+  font-family:var(--font-mono);font-size:15px;letter-spacing:.06em;line-height:1.5;
+  color:rgba(255,255,255,.78);background:rgba(0,0,0,.42);white-space:nowrap}
+
+/* 姓名条（用户裁决：默认无框直排；多角色/需区分说话人时启用）。
+   形态取真实界面语汇里的【短册】——奶白纸面 + 淡黄发丝边 + 极小圆角，
+   不是上一版那个橙色渐变气泡（那个在真实界面里没有对应物）。 */
+.namebar{display:none;position:absolute;left:0;top:calc(-1 * var(--fs-body) * 1.9);
+  padding:.34em .95em .3em;font-size:calc(var(--fs-body) * .56);line-height:1;
+  letter-spacing:.14em;color:#2a2620;
+  background:linear-gradient(180deg,#FBF7E4,#F2EDD6);
+  border:1px solid #F2E9A8;border-radius:3px;
+  box-shadow:0 2px 0 rgba(0,0,0,.35)}
+.band__inner{position:relative}
+
+/* ---------------------------------------------------------------------------
+ * 方向 A · 夜读（无框直排 · 单声部）
+ *   形态：0 个容器。文字直接压在场景上。姓名条关闭。投影＝无底板的图。
+ * -------------------------------------------------------------------------*/
+.v-a .podium{left:24%;right:24%;top:56%;bottom:16%}
+.v-a .podium svg{filter:drop-shadow(0 2px 0 rgba(0,0,0,.7))}
+/* 立绘位置（2026-09-25 按目视复核重排）：
+   正文列横跨 x 17.2%–80.2%，所以三尊立绘一律摆到正文列**下方**、且不压住它的左边界。
+   实测：正文列底边在 652px（cast 屏）／815px（open 屏），立绘的可见剪影只占画布下部
+   （y 470–1040 / 1080），故 84% 高的立绘其剪影从 y≈617 起——正文列底边之外。 */
+.v-a .cast figure:nth-child(1){left:37%;height:84%}
+.v-a .cast figure:nth-child(2){left:8%;height:78%}
+.v-a .cast figure:nth-child(3){left:64%;height:74%}
+
+/* ---------------------------------------------------------------------------
+ * 方向 B · 讲台（双栏剧场 · 多声部）
+ *   形态：左侧「在场者栏」＋右侧常驻「黑板位」＋文字列收窄＋姓名条启用。
+ * -------------------------------------------------------------------------*/
+.v-b{--band-l:17.2%;--band-r:38.6%}       /* 正文列收窄，右侧让给黑板位 */
+.v-b .namebar{display:inline-block}
+.v-b .podium{
+  display:block;                             /* 黑板位是「常驻」，四屏都在 */
+  left:62%;right:3.4%;top:12%;bottom:11%;
+  background:linear-gradient(180deg,rgba(9,26,34,.94),rgba(6,18,25,.94));
+  border:1px solid var(--cyan-dim);border-radius:4px;padding:3.2% 3.4%;
+  color:#dff2f6}
+.v-b .podium::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--cyan-dim),transparent);
+  transition:background var(--t-in) var(--ease)}
+/* 板书屏：黑板位被点亮成焦点（其余屏是常驻的暗态） */
+.v-b.is-board .podium{border-color:var(--cyan);
+  box-shadow:0 0 0 1px rgba(55,219,247,.35),0 0 60px rgba(55,219,247,.10)}
+.v-b.is-board .podium::before{background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
+/* 立绘位置（2026-09-25 目视复核重排）：原来摆在 26%/41%/12%，
+   正落在正文列（x 17.2%–61.4%）里，跟台词大面积叠字 → 正文可读性优先。
+   现在三尊一律收进**左侧空带**（x 0–17.2%，正文列左边），且贴底摆在正文列下方，
+   多角色同台的构图保留（三尊并排、说话者亮）。 */
+.v-b .cast figure:nth-child(1){left:1%;height:44%}
+.v-b .cast figure:nth-child(2){left:6%;height:41%}
+.v-b .cast figure:nth-child(3){left:11%;height:43%}
+/* 在场者栏：从 y=16%（压在正文前两行上）下移到正文列底边之外 */
+.v-b .roster{position:absolute;left:1.6%;top:56%;z-index:6;display:flex;
+  flex-direction:column;gap:17px;pointer-events:none}
+.v-b .roster div{display:flex;align-items:center;gap:10px;
+  font-size:calc(var(--fs-body) * .42);letter-spacing:.1em;color:#9fb6bd}
+.v-b .roster i{display:block;width:44px;height:44px;border-radius:2px;
+  background:linear-gradient(180deg,#2b5561,#123039);border:1px solid var(--cyan-dim)}
+.v-b .roster .is-on i{border-color:var(--cyan);box-shadow:0 0 0 1px rgba(55,219,247,.5)}
+.v-b .roster .is-on{color:#eaf7fa}
+.v-b .roster{display:none}
+.is-cast.v-b .roster{display:flex}
+
+/* ---------------------------------------------------------------------------
+ * 方向 C · 書庫（全屏板书 · 讲义派）
+ *   形态：整屏切成「暖木框 + 奶白纸面」，正文写在纸面上（仍是旧行压暗），
+ *         对话区缩成底部一条无框直排带。材质语汇来自 U12（满屏木框书架）。
+ * -------------------------------------------------------------------------*/
+.v-c .paper{position:absolute;inset:3.4% 4.2% 22%;z-index:1;display:none;
+  background:linear-gradient(180deg,#FBF7E4,#F1EAD4);
+  border:14px solid transparent;border-radius:6px;
+  border-image:linear-gradient(180deg,#6b4423,#3a2210) 1;
+  box-shadow:inset 0 0 0 1px #F2E9A8}
+.is-board.v-c .paper{display:block}
+.v-c .podium{left:8%;right:8%;top:9%;bottom:34%;color:#2a2620}
+.v-c .podium h3{margin:0 0 .6em;font-family:var(--font-serif);font-size:calc(var(--fs-body)*1.05);
+  letter-spacing:.04em;font-weight:400}
+.v-c .podium ul{margin:0;padding:0 0 0 1.1em;font-size:calc(var(--fs-body)*.82);line-height:1.9;color:#4a4136}
+/* 立绘位置（2026-09-25 目视复核重排）：原来摆在 12%/78% 且 60–64% 高，
+   人整个压在下部对话带上。现在两尊都收进**右侧空带**（x 62% 起，对话带右界之外），
+   贴底摆、比原来矮一档，作为前景压边。 */
+.v-c .cast figure:nth-child(1){left:62%;height:44%}
+.v-c .cast figure:nth-child(2){left:86%;height:40%}
+.v-c .cast figure:nth-child(3){display:none}
+/* C 的常驻元素：顶部一条「章节书脊」——语汇来自 U12 書庫（每章一条书脊 + 既读圆点），
+   让 C 的四屏都能一眼认出是 C */
+.v-c .spines{position:absolute;left:4.2%;right:4.2%;top:0;height:5.6%;z-index:6;
+  display:flex;gap:5px;align-items:flex-end;padding:0 2px}
+.v-c .spines i{flex:1 1 0;display:block;border-radius:2px 2px 0 0;position:relative;
+  box-shadow:inset -1px 0 0 rgba(0,0,0,.45)}
+.v-c .spines i.done{height:88%}
+.v-c .spines i.cur{height:100%;box-shadow:inset -1px 0 0 rgba(0,0,0,.45),0 0 0 1px #c9a86a}
+.v-c .spines i.todo{height:74%;opacity:.55}
+.v-c .spines i.cur::after{content:"";position:absolute;left:50%;bottom:-26px;
+  width:16px;height:16px;margin-left:-8px;border-radius:50%;background:#e0603a}
+
+/* C 的常驻身份 ①：满屏木框（语汇来自 U12 書庫：整屏木框书架）——
+   四屏都在，所以 C 的每一屏都能一眼认出是 C */
+.v-c .frame{position:absolute;inset:0;z-index:8;pointer-events:none;
+  border:34px solid transparent;
+  border-image:linear-gradient(180deg,#7a4f28,#4a2c17 42%,#3a2210) 1;
+  box-shadow:inset 0 0 0 2px rgba(201,168,106,.55),inset 0 0 90px rgba(0,0,0,.55)}
+
+/* C 的选择肢：几何照抄 U6（条高 77 / pitch 101 / 占屏 89.6%），
+   但材质换成書庫的「奶白纸 + 金褐发丝边」，选中项用书脊语汇（金褐填充 + 既读橙点）。
+   🔴 这一处是**材质替换**，不是几何替换——几何仍是被真实图量出来的那三个数。 */
+.v-c .choices__list{top:24%}
+.v-c .choice{background:rgba(251,247,228,.90);
+  border-top:1px solid rgba(154,120,60,.85);border-bottom:1px solid rgba(154,120,60,.85)}
+.v-c .choice__txt{color:#2a2620;text-shadow:none;font-family:var(--font-serif)}
+.v-c .choice__orn svg{stroke:#8a6b3f}
+.v-c .choice.is-sel{background:linear-gradient(90deg,#c9a86a,#8a6b3f)}
+.v-c .choice.is-sel::before,.v-c .choice.is-sel::after{background:#e0603a}
+.v-c .choices__title{color:#F2E9A8;left:8%}
+
+/* C 的对话带：**顶对齐**（与 A/B 同一锚法），贴在纸下沿。
+   原来用 bottom:3.2% 贴底 → 行数一多就向上长，最后一行压到左下角取景标
+   （实测 band bottom 1046 vs tag top 1042 = 压 4px），而且内容比 A/B 长，
+   47px 字号在 84% 宽里要占 654px 高，顶对齐后会掉出 1080 画布（实测 bottom 1259）。
+   所以 C 这一屏**只把对话字号降一档到 40px**（几何与 A/B 仍同一套令牌），
+   块高压到 ≈490px，从 46% 起排 → 底边 ≈ 990px，取景标（1042）不被压、画布不裁切。 */
+.v-c .band{top:46%;bottom:auto;left:8%;right:8%}
+.v-c .band__inner li{font-size:40px}
+
+/* 屏幕左下角的取景标（只为截图时说明"这是哪一屏"，不是产品 UI） */
+.tag{position:absolute;left:2.2%;bottom:1.6%;z-index:9;
+  font-family:var(--font-mono);font-size:15px;letter-spacing:.08em;
+  color:rgba(255,255,255,.42);text-shadow:0 1px 0 rgba(0,0,0,.7)}
+
+/* ---------------------------------------------------------------------------
+ * 素材：自包含占位 + 外挂失败角标
+ *   默认（stage3.assets.js 的 mode:'placeholder'）场景与立绘都是 stage3.js
+ *   生成的内联 SVG（data: URI）——不发网络请求、不出现破图图标。
+ *   外挂真素材时若某个槽位加载失败，JS 会把那个槽位退回占位并挂一枚
+ *   .asset-missing 角标：**明确可见，不静默忽略**。
+ * -------------------------------------------------------------------------*/
+.scene{background:#05070a}                 /* 场景图解码前/缺失时的兜底底色 */
+/* 立绘占位的画布是 300×1080（窄长，≈真立绘比例）→ 84% 高时约 252px 宽，
+   不会再像早先 720 宽画布那样撑成 600px、把正文压掉。这里不再额外限制宽度。 */
+.asset-missing{
+  position:absolute;left:0;top:0;z-index:9;display:block;
+  max-width:46ch;padding:6px 10px;
+  font-family:var(--font-mono);font-size:15px;line-height:1.5;letter-spacing:.02em;
+  color:#ffd9d9;background:rgba(74,12,12,.92);border:1px solid #d4574f;border-radius:4px;
+  white-space:normal}
+
+/* ---------------------------------------------------------------------------
+ * 通用：面板/画廊页（index.html 用）
+ * -------------------------------------------------------------------------*/
+body.gallery{overflow:auto;background:#0a0a0a;color:#f2f2f2}
+body.gallery #fit{position:static;display:block}
+body.gallery #stage{display:none}
+.gwrap{max-width:1280px;margin:0 auto;padding:56px 28px 96px}
+.gwrap h1{font-size:26px;font-weight:400;margin:0 0 10px}
+.gwrap p{color:#a8a8a8;font-size:14px;line-height:1.85;max-width:82ch}
+.gwrap h2{font-size:12px;font-weight:400;letter-spacing:.2em;color:#6f6f6f;margin:38px 0 14px}
+.gwrap a{color:#f2f2f2}
+.gwrap code{font-family:var(--font-mono);font-size:12.5px;background:#141414;border:1px solid #1f1f1f;border-radius:4px;padding:1px 5px}
+.gwrap table{width:100%;border-collapse:collapse;font-size:13px}
+.gwrap th,.gwrap td{text-align:left;padding:9px 14px 9px 0;border-bottom:1px solid #1f1f1f;color:#a8a8a8;vertical-align:top}
+.gwrap th{color:#6f6f6f;font-weight:400;font-size:11.5px;letter-spacing:.14em;font-family:var(--font-mono)}
+.gwrap td.k{color:#f2f2f2}
+.ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:1px;background:#1f1f1f;border:1px solid #1f1f1f;border-radius:8px;overflow:hidden}
+.ggrid figure{margin:0;background:#0a0a0a;padding:14px}
+.ggrid img{width:100%;display:block;border:1px solid #2c2c2c;border-radius:6px}
+.ggrid figcaption{margin-top:10px;font-size:12.5px;color:#a8a8a8;line-height:1.7}
+.ggrid figcaption b{font-weight:400;color:#f2f2f2;display:block;margin-bottom:3px}
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0}
+.pills a{display:inline-block;border:1px solid #2c2c2c;border-radius:999px;padding:8px 16px;
+  text-decoration:none;font-size:13px;letter-spacing:.02em}
+.pills a:hover{border-color:#4a4a4a}

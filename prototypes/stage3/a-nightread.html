@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>方向 A · 夜读 ｜ 教室舞台 STAGE-3</title>
+<link rel="stylesheet" href="stage3.css">
+</head>
+<body>
+<!-- 给一个人安静读课用。四屏：?scene=open | board | choice | cast（浏览器里按 1/2/3/4 切）
+     场景与立绘的 src 由 stage3.js 在运行期注入：默认是内联 SVG 占位（自包含、无第三方素材），
+     要换成真素材只改 stage3.assets.js（唯一配置点）。 -->
+<div id="fit"><div id="stage" class="v-a is-open">
+
+  <div class="scene">
+    <img class="scene__img" alt="场景">
+    <div class="scene__grade"></div>
+  </div>
+
+  <div class="cast">
+    <figure><img alt="立绘 1"></figure>
+    <figure><img alt="立绘 2"></figure>
+    <figure><img alt="立绘 3"></figure>
+  </div>
+
+  <div class="orn orn--top" aria-hidden="true"><svg viewBox="0 0 240 16" fill="none" stroke="#AEF9FC" stroke-width="0.7" stroke-linecap="round"><path d="M0 12C30 12 48 3 78 8C96 11 112 11 120 5C128 11 144 11 162 8C192 3 210 12 240 12"/><path d="M120 5C114 1 108 1 104 4M120 5C126 1 132 1 136 4"/><path d="M78 8C72 4 64 4 60 7M162 8C168 4 176 4 180 7"/><path d="M40 10C36 6 30 6 27 9M200 10C204 6 210 6 213 9"/></svg></div>
+  <div class="orn orn--bot" aria-hidden="true"><svg viewBox="0 0 240 16" fill="none" stroke="#AEF9FC" stroke-width="0.7" stroke-linecap="round"><path d="M0 12C30 12 48 3 78 8C96 11 112 11 120 5C128 11 144 11 162 8C192 3 210 12 240 12"/><path d="M120 5C114 1 108 1 104 4M120 5C126 1 132 1 136 4"/><path d="M78 8C72 4 64 4 60 7M162 8C168 4 176 4 180 7"/><path d="M40 10C36 6 30 6 27 9M200 10C204 6 210 6 213 9"/></svg></div>
+
+  <div class="podium"></div>
+
+  <div class="band">
+    <div class="namebar" aria-hidden="true"></div>
+    <div class="band__inner"></div>
+  </div>
+
+  <div class="choices">
+    <div class="choices__dim"></div>
+    <div class="choices__title"></div>
+    <div class="choices__list"></div>
+  </div>
+
+  <div id="tag" class="tag"></div>
+</div></div>
+<script src="stage3.assets.js"></script>
+<script src="stage3.js"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+# psd2moc3 —— 仅忽略运行产物与第三方/外部证据，不忽略自研脚本/README
+
+# 运行产物（由脚本生成；真 .moc3 / 改名图层 / 视觉证据不随仓库分发）
+out/
+# 第三方 image2live2d / psd2live / umamo 源码（由 00_fetch_prior_art.sh 下载，Apache-2.0/GPL-3.0，不入库）
+# 外部宿主 clients/live2d-host 的 evidence/ 也落入 out/evidence，一并忽略
+# Python 字节码
+__pycache__/
+*.pyc

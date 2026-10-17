@@ -1,0 +1,6 @@
+# STAGE-3 原型 · 本地运行产物
+# shots/ 由 tools_shots.cjs 生成（12 屏截图），是验收产物不是源文件，不入库。
+shots/
+
+# 系统垃圾文件
+.DS_Store

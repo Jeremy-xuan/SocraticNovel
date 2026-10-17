@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>教室舞台 STAGE-3 · 三个方向（自包含骨架）</title>
+<style>
+/* 沿用项目「面向用户的 HTML」口径（xAI 设计语言）：近黑单面 / 发丝线承重·不用投影 /
+   交互一律药丸 / 卡片 8px 圆角 / 全部字重 400 / 数字与标签走等宽体。
+   层级只靠 字号 · 字距 · 字色阶梯 · 字面 —— 不靠加粗。 */
+:root{
+  --bg:#0a0a0a; --ink:#f2f2f2; --ink-2:#a8a8a8; --ink-3:#6f6f6f;
+  --line:#1f1f1f; --line-2:#2c2c2c; --warn:#e8c39a; --ok:#7fd6c0;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB",system-ui,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-weight:400;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1280px;margin:0 auto;padding:56px 28px 96px}
+h1{font-size:26px;font-weight:400;letter-spacing:.01em;margin:0 0 10px}
+.sub{color:var(--ink-2);font-size:14px;line-height:1.85;margin:0 0 8px;max-width:84ch}
+.meta{color:var(--ink-3);font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;margin-top:14px}
+hr{border:0;border-top:1px solid var(--line);margin:36px 0}
+h2{font-size:12px;font-weight:400;letter-spacing:.2em;color:var(--ink-3);margin:40px 0 16px}
+h3{font-size:16px;font-weight:400;letter-spacing:.02em;margin:0 0 6px}
+p{color:var(--ink-2);font-size:13.5px;line-height:1.85;max-width:84ch}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:10px 14px 10px 0;border-bottom:1px solid var(--line);color:var(--ink-2);vertical-align:top}
+th{color:var(--ink-3);font-weight:400;font-size:11.5px;letter-spacing:.14em;font-family:var(--mono)}
+td.k{color:var(--ink);white-space:nowrap}
+code{font-family:var(--mono);font-size:12.5px;color:var(--ink);background:#141414;border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+.note{border:1px solid #3a2a1c;border-radius:8px;padding:14px 16px;margin:18px 0;color:var(--warn);font-size:13px;line-height:1.85}
+.note.ok{border-color:#1e3a34;color:var(--ok)}
+.dir{border:1px solid var(--line);border-radius:8px;padding:20px 22px;margin:0 0 18px}
+.dir .who{font-size:13px;color:var(--ok);letter-spacing:.02em;margin:0 0 8px}
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 0}
+.pills a{display:inline-block;border:1px solid var(--line-2);border-radius:999px;padding:8px 16px;color:var(--ink);text-decoration:none;font-size:13px;letter-spacing:.02em}
+.pills a:hover{border-color:#4a4a4a}
+ul.check{list-style:none;padding:0;margin:0;border-top:1px solid var(--line)}
+ul.check li{border-bottom:1px solid var(--line);padding:12px 0;font-size:13.5px;color:var(--ink-2);line-height:1.8}
+ul.check li b{font-weight:400;color:var(--ink)}
+/* 12 屏在线画廊：每个格子是一个活的原型 iframe（1920×1080 等比缩到格宽），
+   不引用任何截图文件——所以本目录没有 shots/ 也不会出现破图。 */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-top:14px}
+.grid figure{margin:0;background:var(--bg);padding:14px}
+.grid .live{position:relative;display:block;border:1px solid var(--line-2);border-radius:6px;overflow:hidden;background:#05070a}
+.grid .live iframe{display:block;width:1920px;height:1080px;border:0;
+  transform:scale(calc(1 / 4.4));transform-origin:top left}
+.grid .live .win{position:absolute;left:0;top:0;width:calc(100% / 4.4);height:calc(100% / 4.4)}
+.grid figcaption{margin-top:11px;font-size:12.5px;color:var(--ink-2);line-height:1.7}
+.grid figcaption b{font-weight:400;color:var(--ink);display:block;margin-bottom:4px}
+.grid figcaption em{font-style:normal;color:var(--ink-3);font-family:var(--mono);font-size:11px;display:block;margin-top:5px;letter-spacing:.03em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>教室舞台 STAGE-3 · 三个方向（自包含骨架）</h1>
+  <p class="sub">
+    同一份课程内容（操作系统 · 第 3 讲「进程」），三种界面形态：<b>无框直排 / 分栏剧场 / 整屏换材质</b>。
+    每个方向四屏：开场、板书、选择肢、多角色同台，共 <b>12 屏</b>。
+  </p>
+  <p class="sub">
+    本批次是<b>安全骨架</b>：默认<b>零第三方素材</b>——场景与立绘由 <code>stage3.js</code> 生成内联 SVG 占位，
+    不发任何网络请求、不出现破图图标；要换成真素材只改 <code>stage3.assets.js</code> 这一个配置点。
+  </p>
+  <p class="meta">STAGE-3 ｜ 原型，不含真实模型与真实工具调用 ｜ 纯前端 · 零外链 · 零新依赖 · file:// 可直接打开</p>
+
+  <div class="note ok">
+    <b>这一页怎么用</b>：下面的 12 个格子是<b>活的原型</b>（iframe 里跑的就是三个页面的四屏），
+    不是截图——所以本目录<b>不需要 <code>shots/</code></b>。想全屏看某一屏，点格子下面那行文件名，
+    或直接开 <code>a-nightread.html?scene=choice</code> 这样的地址。
+  </div>
+
+  <div class="note">
+    <b>素材开关</b>：<code>stage3.assets.js</code> 是<b>唯一</b>的素材配置点，两种模式——
+    ① <code>mode:'placeholder'</code>（默认）全部用内联 SVG 占位；
+    ② <code>mode:'external'</code> 用 <code>slots</code> 里填了路径的槽位，<b>没填的继续用占位</b>。
+    外挂路径加载失败时不会静默忽略：该槽位退回占位并显示「素材缺失：&lt;路径&gt;」角标，同时打 <code>console.error</code>。
+    不改文件临时切换：URL 加 <code>?assets=placeholder</code>，或 <code>?assets=&lt;目录&gt;/</code>。
+  </div>
+
+  <h2>〇 · 三个方向：一句话定位</h2>
+
+  <div class="dir">
+    <h3>A · 夜读</h3>
+    <p class="who">给谁用：一个人安静读课（自学、复习、看长段讲解）｜气质：电影感、沉浸、安静</p>
+    <p>
+      形态是<b>零个容器</b>——文字直接压在场景上，无框、无底、无投影。姓名条<b>关闭</b>：
+      说话人靠「」引号与立绘亮度差区分。投影走「<b>无底板的图</b>」——线描关系图直接浮在画面上。
+    </p>
+    <div class="pills">
+      <a href="a-nightread.html?scene=open">打开 A（?scene=open）</a>
+      <a href="a-nightread.html?scene=board">?scene=board</a>
+      <a href="a-nightread.html?scene=choice">?scene=choice</a>
+      <a href="a-nightread.html?scene=cast">?scene=cast</a>
+    </div>
+  </div>
+
+  <div class="dir">
+    <h3>B · 讲台</h3>
+    <p class="who">给谁用：多人同台的课堂（老师＋学生同时在场，需要一眼看出谁在说话）｜气质：剧场感、多声部、有秩序</p>
+    <p>
+      正文列<b>收窄到 17.2%–61.4%</b>，右侧让给一块<b>常驻的黑板位</b>（四屏都在，板书屏时被点亮成焦点）；
+      左侧一条<b>在场者栏</b>（三枚小像＋姓名，说话者亮）。姓名条<b>启用</b>——形态是<b>短册</b>（奶白纸面＋淡黄发丝边）。
+    </p>
+    <div class="pills">
+      <a href="b-podium.html?scene=open">打开 B（?scene=open）</a>
+      <a href="b-podium.html?scene=board">?scene=board</a>
+      <a href="b-podium.html?scene=choice">?scene=choice</a>
+      <a href="b-podium.html?scene=cast">?scene=cast</a>
+    </div>
+  </div>
+
+  <div class="dir">
+    <h3>C · 書庫</h3>
+    <p class="who">给谁用：要看板书、要翻查的复习（把一讲铺开成一屏）｜气质：讲义感、有实体材质</p>
+    <p>
+      形态是<b>整屏材质切换</b>：满屏木框＋顶部一条「章节书脊」（每讲一条书脊、当前讲一枚橙红既读点）；
+      板书屏铺满<b>奶白纸面</b>，正文写在纸面上；对话缩成底部一条无框直排带（仍然旧行压暗）。
+    </p>
+    <div class="pills">
+      <a href="c-library.html?scene=open">打开 C（?scene=open）</a>
+      <a href="c-library.html?scene=board">?scene=board</a>
+      <a href="c-library.html?scene=choice">?scene=choice</a>
+      <a href="c-library.html?scene=cast">?scene=cast</a>
+    </div>
+  </div>
+
+  <hr>
+
+  <h2>一 · 开场（同内容，三种形态）</h2>
+  <div class="grid">
+    <figure>
+      <span class="live"><span class="win"><iframe src="a-nightread.html?scene=open" title="A 开场" scrolling="no" loading="lazy"></iframe></span></span>
+      <figcaption><b>A · 开场 —— 文字直接压在画面上</b>
+        该看什么：找「框」。<b>找不到框</b>就对了——没有底板、没有边框、没有投影；上面几行偏灰、最后一行纯白，
+        末行末尾跟一枚青色小梯形。
+        <em>a-nightread.html?scene=open</em></figcaption>
+    </figure>
+    <figure>
+      <span class="live"><span class="win"><iframe src="b-podium.html?scene=open" title="B 开场" scrolling="no" loading="lazy"></iframe></span></span>
+      <figcaption><b>B · 开场 —— 左边说话人、中间人、右边黑板</b>
+        该看什么：正文列右边那块<b>暗青面板</b>（黑板位，本屏无板书也是常驻的），
+        以及正文列左上角那张<b>奶白小纸牌</b>（姓名条，短册形态）。
+        <em>b-podium.html?scene=open</em></figcaption>
+    </figure>
+    <figure>
+      <span class="live"><span class="win"><iframe src="c-library.html?scene=open" title="C 开场" scrolling="no" loading="lazy"></iframe></span></span>
+      <figcaption><b>C · 开场 —— 满屏木框＋顶部书脊条</b>
+        该看什么：屏幕四边的<b>暖木框</b>，顶部一排<b>彩色书脊</b>（当前讲有一枚橙红圆点），
+        对话被压到底部一条窄带。
+        <em>c-library.html?scene=open</em></figcaption>
+    </figure>
+  </div>
+
+  <h2>二 · 板书 / 投影</h2>
+  <div class="grid">
+    <figure>
+      <span class="live"><span class="win"><iframe src="a-nightread.html?scene=board" title="A 板书" scrolling="no" loading="lazy"></iframe></span></span>
+      <figcaption><b>A · 投影＝无底板的图</b>
+        该看什么：画面下半那两张<b>线描方框</b>——它们直接浮在场景上，<b>背后没有卡片</b>。
+        <em>a-nightread.html?scene=board</em></figcaption>
+    </figure>
+    <figure>
+      <span class="live"><span class="win"><iframe src="b-podium.html?scene=board" title="B 板书" scrolling="no" loading="lazy"></iframe></span></span>
+      <figcaption><b>B · 板书＝黑板位被点亮</b>
+        该看什么：右侧面板的<b>青色上边线与外发光</b>（其余三屏它是暗的）；正文列被挤到左侧窄栏。
+        <em>b-podium.html?scene=board</em></figcaption>
+    </figure>
+    <figure>
+      <span class="live"><span class="win"><iframe src="c-library.html?scene=board" title="C 板书" scrolling="no" loading="lazy"></iframe></span></span>
+      <figcaption><b>C · 板书＝整屏换成奶白纸</b>
+        该看什么：这一屏的<b>底色整体变亮</b>（纸面＋暖木框），人物站在纸前面，对话掉到底部。
+        <em>c-library.html?scene=board</em></figcaption>
+    </figure>
+  </div>
+
+  <h2>三 · 选择肢</h2>
+  <div class="grid">
+    <figure>
+      <span class="live"><span class="win"><iframe src="a-nightread.html?scene=choice" title="A 选择肢" scrolling="no" loading="lazy"></iframe></span></span>
+      <figcaption><b>A · 选择肢 —— 单列六条</b>
+        该看什么：<b>单列六条</b>、条几乎占满屏宽、<b>每条两端各一枚卷草花饰</b>、第一条<b>整条填成青色</b>且两端有亮青竖边。
+        <em>a-nightread.html?scene=choice</em></figcaption>
+    </figure>
+    <figure>
+      <span class="live"><span class="win"><iframe src="b-podium.html?scene=choice" title="B 选择肢" scrolling="no" loading="lazy"></iframe></span></span>
+      <figcaption><b>B · 选择肢 —— 菜单把黑板也压暗</b>
+        该看什么：背景里那块黑板<b>还在</b>，只是被菜单压暗层盖住了——这是「常驻」的证据。
+        <em>b-podium.html?scene=choice</em></figcaption>
+    </figure>
+    <figure>
+      <span class="live"><span class="win"><iframe src="c-library.html?scene=choice" title="C 选择肢" scrolling="no" loading="lazy"></iframe></span></span>
+      <figcaption><b>C · 选择肢 —— 几何不变、材质换掉</b>
+        该看什么：六条仍是同样的高度与间距，但<b>变成奶白纸上的金褐框</b>，选中那条是金褐填充＋两端橙红边。
+        <em>c-library.html?scene=choice</em></figcaption>
+    </figure>
+  </div>
+
+  <h2>四 · 多角色同台</h2>
+  <div class="grid">
+    <figure>
+      <span class="live"><span class="win"><iframe src="a-nightread.html?scene=cast" title="A 多角色" scrolling="no" loading="lazy"></iframe></span></span>
+      <figcaption><b>A · 多角色 —— 靠亮度和引号，不靠姓名条</b>
+        该看什么：三个人都在，<b>只有正在说话的那个是亮的</b>，另外两个压暗；姓名写在正文里（「岸：……」「真澄：……」）。
+        <em>a-nightread.html?scene=cast</em></figcaption>
+    </figure>
+    <figure>
+      <span class="live"><span class="win"><iframe src="b-podium.html?scene=cast" title="B 多角色" scrolling="no" loading="lazy"></iframe></span></span>
+      <figcaption><b>B · 多角色 —— 谁在说，三处同时告诉你</b>
+        该看什么：① 左上那张<b>奶白姓名牌</b>；② 最左边<b>在场者栏</b>里亮起来的那一格；
+        ③ 三个立绘里亮着的那个。三处冗余。
+        <em>b-podium.html?scene=cast</em></figcaption>
+    </figure>
+    <figure>
+      <span class="live"><span class="win"><iframe src="c-library.html?scene=cast" title="C 多角色" scrolling="no" loading="lazy"></iframe></span></span>
+      <figcaption><b>C · 多角色 —— 书脊条＋木框，人物站在场景里</b>
+        该看什么：即使这一屏没有纸面，<b>木框与书脊条还在</b>——所以 C 的四屏都能一眼认出是 C。
+        <em>c-library.html?scene=cast</em></figcaption>
+    </figure>
+  </div>
+
+  <hr>
+
+  <h2>五 · 设计令牌（本骨架保留的数值，逐项标依据）</h2>
+  <table>
+    <thead><tr><th>项</th><th>取值</th><th>依据（原取证件）</th><th>本原型怎么写</th></tr></thead>
+    <tbody>
+      <tr><td class="k">对话框</td><td><b>不存在</b>（文字带内外行亮度 76.0 vs 78.2/71.7 ⇒ 无底板、无压暗层）</td><td>官方商店截图 U1</td><td>不写任何框、底、投影</td></tr>
+      <tr><td class="k">文字列左边界</td><td>17.2%（x=331/1920）</td><td>U1</td><td><code>--band-l:17.2%</code></td></tr>
+      <tr><td class="k">文字列右边界</td><td>80.2%（x=1539/1920，剔除推进指示器后）</td><td>U1</td><td><code>--band-r:19.8%</code></td></tr>
+      <tr><td class="k">文本带纵向锚点</td><td>顶对齐 ≈14.6%–15.3%（三条独立帧一致）</td><td>U1／U3</td><td><code>top:14.9%</code></td></tr>
+      <tr><td class="k">字面高（含描边）</td><td>当前行 45px、旧行 44px ⇒ 4.1% 屏高</td><td>U1</td><td><code>--fs-body:47px</code></td></tr>
+      <tr><td class="k">行距</td><td>相邻行顶差 80–85px ⇒ 7.4%–7.9%</td><td>U1／U3</td><td><code>--lh-body:1.74</code>（≈82px）</td></tr>
+      <tr><td class="k">段间距</td><td>≈160px ≈ 两倍行距（中间空一行）</td><td>U1</td><td>段落加 <code>margin-top: 一行</code></td></tr>
+      <tr><td class="k">描边</td><td>白字＋深色描边，≈2–3px @1920</td><td>U1</td><td>8 向 <code>text-shadow</code> 环，2px</td></tr>
+      <tr><td class="k">旧行 / 当前行亮度</td><td>字心平均 177.4 / 221.2 ⇒ 比值 0.80，<b>字号完全相同</b></td><td>U1</td><td>旧行 <code>#cccccc</code>、当前行 <code>#ffffff</code></td></tr>
+      <tr><td class="k">姓名条</td><td><b>不存在</b>（姓名排在正文里，用「」包台词）</td><td>四张对话画面</td><td>默认关；B 启用短册形态（用户裁决）</td></tr>
+      <tr><td class="k">推进指示器</td><td>青色梯形，跟在末行末尾（包围盒 33×30px）</td><td>U1</td><td>33×30px，末行行内</td></tr>
+      <tr><td class="k">发丝花饰</td><td>上下各一条居中藤蔓，近白，发丝级</td><td>U1／U2／U3／U6</td><td>SVG 1px 线，46% 宽</td></tr>
+      <tr><td class="k">选择肢·条高</td><td>34px @852×480 ⇒ 77px @1920×1080</td><td>选择肢帧 U6</td><td><code>--ch-h:77px</code></td></tr>
+      <tr><td class="k">选择肢·pitch</td><td>44.8px @852 ⇒ 101px（间隙 24px）</td><td>U6</td><td><code>--ch-pitch:101px</code></td></tr>
+      <tr><td class="k">选择肢·占屏宽</td><td>x 45→807 / 852 ⇒ <b>89.6%</b></td><td>U6</td><td><code>--ch-l/--ch-r:5.3%</code></td></tr>
+      <tr><td class="k">选择肢·选中填充</td><td>rgb(20,84,110)，两端亮青竖边 rgb(55,219,247)</td><td>U6</td><td><code>--cyan-deep</code> / <code>--cyan</code></td></tr>
+      <tr><td class="k">选择肢·两端花饰</td><td>每枚 ≈30px @852 ⇒ 68px</td><td>U6</td><td><code>--ch-orn-w:68px</code></td></tr>
+      <tr><td class="k">菜单压暗</td><td>边缘区 RGB ≈(15,20,25)~(34,44,53)</td><td>U6</td><td><code>rgba(3,6,9,.90)</code></td></tr>
+      <tr><td class="k">回想卡</td><td>左右占屏 87.6%；卡高 ≈218px@1200；pitch ≈232px；当前卡 rgb(33,61,72)</td><td>社区截图 U4</td><td>见令牌块 <code>--bl-*</code>（本轮未做回想屏）</td></tr>
+      <tr><td class="k">書庫</td><td>满屏木框书架＋每章一条书脊＋顶部「书库」＋书脊上橙红圆点</td><td>封面图 U12（仅 576×360）</td><td>C 的木框／书脊条／橙点</td></tr>
+      <tr><td class="k">正文字族</td><td>中文版真实截图里是<b>无衬线（黑体）</b>＋重描边</td><td>U1 放大目视</td><td><code>--font-body</code> 走黑体栈</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <b>量不到的（不许拿资源实测冒充真实界面）</b>：① 系统菜单 / 配置界面的真实截图一张都没拿到，所以配置页的任何数值本原型都不写；
+    ② 書庫素材只有 576×360，够看清结构、<b>不够量数值</b>，所以 C 的木框宽度／书脊比例是目视取的；
+    ③ 回想卡的小圆角半径受描边渐变干扰，<b>量不到精确 r</b>，本原型取目视值 8px 并标注；
+    ④ 官方排版参数（字号／行距／margin 的数值）不在数据里，只能从真实截图量。
+  </div>
+
+  <hr>
+
+  <h2>六 · 本骨架批次做了什么（安全化）</h2>
+  <ul class="check">
+    <li><b>去第三方素材</b>：不复制 <code>assets/</code>、<code>shots/</code>、<code>probe/</code> 与量测脚本。场景与立绘改由 <code>stage3.js</code> 生成内联 SVG 占位，<b>默认无第三方图片也能完整展示 A/B/C 三种形态</b>。</li>
+    <li><b>唯一配置点</b>：素材开关收进 <code>stage3.assets.js</code>（<code>mode</code> ＋ <code>slots</code>），三个页面按固定顺序加载它。外挂路径加载失败 → 该槽位退回占位 ＋ 显示「素材缺失」角标 ＋ <code>console.error</code>，<b>不静默忽略</b>。</li>
+    <li><b>index 不再引用缺失文件</b>：12 屏改为活的原型 iframe，本目录没有 <code>shots/</code> 也不会出现破图。</li>
+    <li><b>验收</b>：<code>tools_selfcheck.mjs</code> 做静态自检（零依赖，随时可跑）；<code>tools_shots.cjs</code> 做 12 屏浏览器断言（零 <code>console.error</code>／<code>pageerror</code>／<code>requestfailed</code>），并明确打印当前是占位模式还是外挂模式。</li>
+  </ul>
+
+  <h2>七 · 还差什么（分类，只列不做判断）</h2>
+  <ul class="check">
+    <li><b>美术</b>：占位立绘只有 3 个剪影槽位，做不了「三个不同的人同台」；多角色同台要真落地，先得有第 2、3 张角色卡与对应立绘。</li>
+    <li><b>美术</b>：场景占位是程序生成的渐变；C 方向的木框、书脊、短册目前是 CSS 手绘，正式做要出图。</li>
+    <li><b>字体</b>：中文正文用哪个黑体没定；真实界面是<b>位图字体</b>（自带描边、字距可控），网页端拿不到同等控制力，2px 描边环是近似做法。</li>
+    <li><b>动效</b>：本轮只做了推进指示器的闪烁。「文字逐字出现」「旧行压暗的过渡」「选择肢的选中滑动」都没有对应实拍证据，属未取证。</li>
+    <li><b>机制</b>：选择肢目前是「元层面」的六条，要不要把「自由输入」做成第七条、以及选完怎么回到对话，没有定。</li>
+    <li><b>内容</b>：C 方向顶部书脊条现在写死「本讲＝第 3 讲」，接真教室时要读 <code>runtime/progress.md</code> 的 <code>current_lesson</code>。</li>
+    <li><b>接线</b>：落点沿用既有取证（会话视图加 tab ／ shell overlay ／ 输入区 ／ 右侧面板 tab），本轮未推翻，也没有新发现。</li>
+  </ul>
+
+  <hr>
+
+  <h2>八 · 素材与来源</h2>
+  <p>
+    设计令牌里的几何与亮度数值，来自上一轮对真实界面截图（官方商店截图、社区截图、视频抽帧）的量测，
+    取证件不在本目录内。本批次<b>不包含任何第三方游戏／角色素材及其衍生图</b>：
+    场景与立绘是程序生成的内联 SVG 占位，只标注槽位名，不模仿任何具体作品的角色形象。
+  </p>
+
+</div>
+</body>
+</html>

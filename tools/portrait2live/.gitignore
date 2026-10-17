@@ -1,0 +1,11 @@
+# portrait2live —— 仅忽略运行产物，不忽略自研脚本/README/分层配置契约
+
+# 运行产物（由脚本生成；示例输入立绘与全部 out/ 不随仓库分发）
+out/
+logs/
+# 示例输入立绘是 00_gen_source_portrait.py 用代码绘制的，可由脚本重新生成，故不入库
+src_assets/portrait_flat.png
+src_assets/portrait_nearest.png
+# Python 字节码
+__pycache__/
+*.pyc
