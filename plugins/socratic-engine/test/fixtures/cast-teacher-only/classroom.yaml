@@ -1,0 +1,26 @@
+format: socratic-classroom/0
+classroom:
+  id: teacher-only-probe
+  title: cast 只声明老师（T8A 硬约束 fixture：行为必须与"没有 cast"完全一致）
+
+phases:
+  - { id: open }
+  - { id: probe }
+  - { id: close }
+
+blocks:
+  - id: anchor
+    text: |
+      本回合锚（fixture）。
+    layer: discipline
+    position: { target: chat, depth: 0 }
+    frequency: { every: turn }
+    wrap: { style: system-reminder }
+
+cast:
+  roles:
+    - id: komari
+      file: characters/komari.md
+      name: 小鞠知花
+      role: teacher
+      enabled: true

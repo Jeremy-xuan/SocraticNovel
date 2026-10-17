@@ -18,6 +18,14 @@
     "./lib/diagramstore.mjs": "./lib/diagramstore.mjs",
     "./lib/mermaid-parse.mjs": "./lib/mermaid-parse.mjs",
     "./lib/mermaid-worker.mjs": "./lib/mermaid-worker.mjs",
+    "./lib/animation.mjs": "./lib/animation.mjs",
+    "./lib/animationstore.mjs": "./lib/animationstore.mjs",
+    "./lib/animtemplates.mjs": "./lib/animtemplates.mjs",
+    "./lib/prep.mjs": "./lib/prep.mjs",
+    "./lib/prepstore.mjs": "./lib/prepstore.mjs",
+    "./lib/expression.mjs": "./lib/expression.mjs",
+    "./lib/expressionstore.mjs": "./lib/expressionstore.mjs",
+    "./lib/expression-table.json": "./lib/expression-table.json",
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json"
   },
@@ -31,5 +39,8 @@
     "lib",
     "README.md",
     "cordis.patch.yml"
-  ]
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  }
 }

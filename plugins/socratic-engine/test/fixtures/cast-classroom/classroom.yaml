@@ -1,0 +1,88 @@
+format: socratic-classroom/0
+classroom:
+  id: cast-probe
+  version: 0.1.0
+  title: cast/cue 校验 fixture（T8A · 数据层，不含任何行为）
+
+phases:
+  - { id: open, name: 开场 }
+  - { id: probe, name: 提问 }
+  - { id: check, name: 检查 }
+  - { id: review, name: 复盘 }
+  - { id: close, name: 收束 }
+
+runtime_store:
+  dir: runtime/
+  progress: runtime/progress.md
+  lesson_key: current_lesson
+
+blocks:
+  - id: anchor
+    text: |
+      本回合锚（fixture）。
+    layer: discipline
+    position: { target: chat, depth: 0 }
+    frequency: { every: turn }
+    wrap: { style: system-reminder }
+
+# ══════════════════════════════════════════════════════════════════════════════
+# cast · 角色表（剧场术语）—— 谁在场／叫什么／人格文件在哪
+# ══════════════════════════════════════════════════════════════════════════════
+cast:
+
+  # 教室级出场规则（有启用中的同学 → 必填；字段全必填，引擎不内置默认值）
+  policy:
+    lessonQuota: 4                       # 每讲最多出场几次（用户口径 3–5）
+    minTurnGap: 5                        # 开场保护：前几回合不出场
+    allowedPhases: [probe, check, review] # 同学可出场的相位（open/close 不出场）
+
+  roles:
+
+    # 老师：在场但不参与认知风格匹配（故不写 style/styleLabel）
+    - id: komari
+      file: characters/komari.md
+      name: 小鞠知花
+      role: teacher
+      enabled: true
+
+    # 固定搭子（约束⑤：记得你上次错在哪）
+    - id: chengji
+      file: characters/chengji.md
+      name: 程霁
+      role: buddy
+      enabled: true
+      style: precise
+      styleLabel: 精确型
+
+    # 每讲客串（示例位：默认关闭）
+    - id: ache
+      file: characters/ache.md
+      name: 阿澈
+      role: guest
+      enabled: false
+      style: intuitive
+      styleLabel: 直觉型
+
+# ══════════════════════════════════════════════════════════════════════════════
+# cue · 出场提示（剧场术语）—— 什么条件下同学可以插一句
+# 🔴 数组顺序即优先级；这里声明的是**备料单**，不是脚本
+# ══════════════════════════════════════════════════════════════════════════════
+cue:
+
+  # 僵局判据参数（triggers 里有 when: stall → 必填）
+  stall:
+    nTurns: 3                            # 连续 N 回合无新知识点
+    shortWindow: 5                       # 取最近 N 条学生消息算长度中位数
+    shortRatio: 0.4                      # 本回合长度 < 中位数 × 0.4 → 计"变短"
+    shortFloor: 8                        # 中位数 < 8 字时不判"变短"（防误伤习惯短答的学生）
+    dontKnowPatterns:
+      high: ["不知道", "不会", "想不出来"]  # 命中 1 次即计僵局
+      mid: ["大概", "我不确定"]            # 须与 nTurns / shortRatio 共现才计
+    dontKnowExempt: ["不会影响", "不会导致"] # 误伤白名单（"不会影响"是正确技术表述）
+
+  triggers:
+    - when: stall
+      roles: [chengji]
+    - when: student-hit-known-wrong-step
+      source: runtime/wrong_step_library.md
+    - when: teacher-invite

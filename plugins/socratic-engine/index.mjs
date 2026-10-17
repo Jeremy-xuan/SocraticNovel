@@ -44,6 +44,33 @@ import { registerPostClass } from './lib/postclass.mjs'
 import { DIAGRAM_KIND_IDS } from './lib/diagram.mjs'
 import { drawDiagram } from './lib/diagramstore.mjs'
 import { createMermaidParser } from './lib/mermaid-parse.mjs'
+import { ANIMATIONS_SUBDIR, EXPECTED_RANGE_TEXT, TERMINAL_STATES, describeState, nowLabel } from './lib/animation.mjs'
+import {
+  animationNoticeSource,
+  buildAnimationNotice,
+  checkAnimationRuntime,
+  findByCacheKey,
+  listTasks,
+  markAnnounced,
+  pendingNotices,
+  settleRunningTasks,
+  startAnimationTask,
+  summarizeTasks,
+} from './lib/animationstore.mjs'
+import { TEMPLATE_IDS, checkTemplateArgs, describeTemplates } from './lib/animtemplates.mjs'
+import { describeDeclaration, loadDeclaration } from './lib/declaration.mjs'
+import { createExpressionStore } from './lib/expressionstore.mjs'
+import {
+  EXPRESSION_DISCIPLINE_RULES,
+  buildExpressToolDescription,
+  describeDimensions,
+  describeExpressionStatus,
+  describePathChoice,
+  expressToolParameters,
+  renderFaceParams,
+} from './lib/expression.mjs'
+import { describePrepPlan, prepItemsForLesson } from './lib/prep.mjs'
+import { cacheKeyForItem, prepPlan, warmUpPrep } from './lib/prepstore.mjs'
 
 export const name = 'socratic-engine'
 
@@ -67,9 +94,59 @@ export const DRAW_TOOL_DESCRIPTION =
   'nothing is written; a markdown fence or an ASCII sketch is refused too — pass the raw mermaid source, ' +
   'first line = the diagram type keyword (flowchart / sequenceDiagram / stateDiagram-v2 / ...).'
 
+// ── classroom_animate 的工具描述（ANIM-ORCH）──────────────────────────────────
+// 🔴 这份描述承担着**编排的一半**，不是普通说明文字：
+//    实测（evidence/exp1_script_time.json）模型把一个知识点写成 ManimCE 脚本要 **74–91 秒**，
+//    而渲染只要 **2–6 秒**（evidence/exp2_render_disk.json）。也就是说"学生干等"的 93 秒里
+//    有 97% 花在**模型写脚本**上，只有 3% 是渲染。
+//    → 所以真正要编排的不是"后台渲染"，而是**顺序**：先让学生听到讲解，再让工具去写/渲。
+//    描述里因此把 ORDER MATTERS 写成硬指令（动词优先、直接命令，不用"如果需要的话可以"这类条件措辞
+//    ——本项目实证：条件措辞会让模型犹豫，工具就不被调用，见实现报告_T3a §4）。
+export const ANIMATE_TOOL_DESCRIPTION =
+  'Start a teaching animation rendering in the background, then keep teaching while it renders. ' +
+  'Use it when the point is a change over time that a still picture cannot carry — a process being ' +
+  'interrupted and resumed, a queue draining in a different order, two numbers read off the same timeline. ' +
+  'ORDER MATTERS: explain that step to the student in your own words FIRST, in this same turn, and call ' +
+  'this tool after that text. Never make the tool call your opening move, and never leave the student ' +
+  'with nothing to read while an animation is being made. The engine writes your script to ' +
+  'runtime/animations/<task>/scene.py, starts the renderer as a separate process and returns at once ' +
+  'with a task id and a time estimate, so the render overlaps with your continued teaching. When it ' +
+  'finishes, the engine tells you at the start of a later turn that your animation is ready — play it ' +
+  'then, at the moment the lesson reaches that step. A script the engine cannot accept is refused with ' +
+  'the exact problem and nothing is started. ManimCE 0.21.0 only: one Scene subclass, Chinese labels ' +
+  'with font="PingFang SC", and NO LaTeX (Tex / MathTex / Numberline-with-numbers crash on this machine) — ' +
+  'write formulas and tick labels as plain Text. For a still diagram use classroom_draw instead.'
+
+// ── classroom_animate_template 的工具描述（ANIM-PREP）──────────────────────────
+// 🔴 这一条是本批的核心机制，描述里必须把**优先级**写死（动词优先，不用"如果需要的话可以"这类条件措辞
+//    ——本项目实证：条件措辞会让模型犹豫，工具就不被调用）：
+//      先取用备好的（命中课前预热）→ 其次套模板（等一小会儿）→ 最后才自己写脚本（明显更慢）。
+//    🔴 2026-09-24 改（ALIGN-EXEC-2）：原文案写"prepId，0 秒 / 模板几秒 / 自己写一分钟"这类秒数，
+//    与教室侧已改成的定性说法（"基本不用等"／"明显更慢"）**同一件事两个数** → 现统一为定性说法。
+//    （当时的实测数字：从零写脚本 60.5–73.8 秒、渲染 2–6 秒；出处见 evidence/ 与实现报告_ANIM-PREP。）
+export const ANIMATE_TEMPLATE_TOOL_DESCRIPTION =
+  'Get a teaching animation for this step WITHOUT writing Manim code yourself — this is the fast path ' +
+  'and it should be your first choice. Two ways to call it, in this order of preference: ' +
+  '(1) `prepId` — when this lesson\'s prepared animation list includes the step you are at, pass its id. ' +
+  'The engine already rendered it before class, so a cache hit returns the finished clip with no wait. ' +
+  'Read the prepared list from the engine block you were given at the start of the turn. ' +
+  '(2) `template` + `params` — when the step is not on the prepared list but its shape is one of the ' +
+  'templates: pass the template id and the parameters. The engine builds the ManimCE script from your ' +
+  'parameters and starts the same background renderer, so nothing is written by you and the clip is ' +
+  'ready quickly instead of taking much longer the way writing a script from scratch does. ' +
+  'ORDER MATTERS exactly as with classroom_animate: explain the step to the student FIRST, in this same ' +
+  'turn, then call this tool — never as your opening move. Only when neither way fits (a mechanism no ' +
+  'template can express) fall back to classroom_animate and write the script yourself. ' +
+  'Templates available:\n' +
+  describeTemplates()
+
+// ── 模板 id 列表（工具参数 enum；顺序即描述里的呈现顺序）─────────────────────
+export const ANIMATION_TEMPLATE_IDS = TEMPLATE_IDS
+
+
 export async function apply(
   ctx,
-  /** @type {{enabled?: boolean, classroomDir?: string, defaultPhase?: string, classroomSearchDepth?: number, runtimeDir?: string|(() => string|null)}} */ config = {},
+  /** @type {{enabled?: boolean, classroomDir?: string, classroomDeclaration?: string, defaultPhase?: string, classroomSearchDepth?: number, runtimeDir?: string|(() => string|null), animation?: {python?: string, manim?: string, quality?: 'l'|'m'|'h'|'p'|'k', spokenFirst?: boolean, gate?: string|null, gatePython?: string|null, blocking?: boolean, blockingTimeoutMs?: number, heartbeatStaleMs?: number}}} */ config = {},
 ) {
   if (config.enabled === false) return
   // 🔴 FIX-6（2026-09-24）：原来的形状是 `ctx.logger?.('[socratic-engine]', ...args)`——
@@ -225,6 +302,313 @@ export async function apply(
     log,
   })
 
+  // ---- 1.6) 教学动画（ANIM-ORCH）：配置、状态结算、就绪通报 ----
+  // 🔴 开关在**教室**（`classroom.yaml` 的顶层 `animation:` 段，见 lib/manifest.mjs 的
+  //    normalizeAnimation）：教室不声明 → 本段整块不生效，工具/纪律段/注入**一个都不加**，
+  //    行为与升级前逐字相同（本批的兼容红线）。
+  // 🔴 渲染器路径在**部署配置**（profile 的 config 或环境变量）：那是"这台机器上 manim 在哪"，
+  //    不是课程内容，不该写进教室包（教室包要能在别人机器上跑）。
+  const animCfg = config.animation ?? {}
+  const animationDeclared = current.manifest.animation?.enabled === true
+  const animEnv = {
+    python: animCfg.python ?? process.env.SOCRATIC_ANIMATION_PYTHON ?? null,
+    manim: animCfg.manim ?? process.env.SOCRATIC_ANIMATION_MANIM ?? null,
+    quality: animCfg.quality ?? 'l',
+    gate: animCfg.gate ?? process.env.SOCRATIC_ANIMATION_GATE ?? null,
+    gatePython: animCfg.gatePython ?? null,
+    blocking: animCfg.blocking === true,
+    blockingTimeoutMs: animCfg.blockingTimeoutMs,
+    heartbeatStaleMs: animCfg.heartbeatStaleMs,
+  }
+  const animationEnabled = animationDeclared
+  const animationRuntimeDir = () => (current ? join(current.dir, 'runtime') : null)
+  if (animationDeclared) {
+    // 🔴 教室声明了要用动画，但部署没配好渲染环境 → **装载时就报错**，不留到课堂上才炸。
+    //    （不静默降级成"没有动画"：那样教室作者会以为配好了，实际一次都不会生效。）
+    //    自检内容见 lib/animationstore.mjs 的 checkAnimationRuntime：两个可执行文件在不在、
+    //    闸门脚本在不在、**渲染器脚本自己语法通不通**（这一条实测踩过：语法错 → 渲染器静默死）。
+    const check = checkAnimationRuntime(animEnv)
+    if (!check.ok) {
+      throw new ManifestError(
+        `教室 ${current.manifest.classroom.id} 声明了 animation: 段，但渲染环境不可用：\n- ` +
+          check.problems.join('\n- ') +
+          '\n（渲染器路径来自 profile 的 socratic-engine config.animation，或环境变量 ' +
+          'SOCRATIC_ANIMATION_PYTHON / SOCRATIC_ANIMATION_MANIM / SOCRATIC_ANIMATION_GATE）',
+      )
+    }
+    log(
+      `教学动画已启用：python=${animEnv.python}｜manim=${animEnv.manim}｜画质=${animEnv.quality}｜` +
+        `闸门=${animEnv.gate ?? '未配置（不过闸门）'}` +
+        (animEnv.blocking ? '｜🔴 blocking=true（**仅对照实验用**：同步等渲染完才返回）' : '') +
+        '｜装载自检通过',
+    )
+  }
+
+  // ── ANIM-PREP ①：课前预热（用户原话里的"备课"）──────────────────────────────
+  // 🔴 这一节回答用户那句 *"下一轮对话要用到，这一轮开始的时候先让子代理开始跑？可能吗？"*：
+  //    可能，但**前提是"这一轮已经知道下一轮要用什么"**——而那只有**课程数据**能提供
+  //    （学生下一句问什么，模型猜不出来）。所以预热读的是教室 `classroom.yaml` 的 `prep:` 段
+  //    （形状与校验见 lib/prep.mjs），**不是**让模型猜。
+  //
+  // 🔴 触发时机（两处，都在**回合边界**上，不占教学热路径之外的任何东西）：
+  //    ① 装载后立刻起一次（＝课前/开课那一轮就开始跑）；
+  //    ② 每个回合开始时，若**讲次变了**就再起一次（＝上一讲结束时 postclass 把
+  //       `current_lesson` 推进到下一讲，下一回合开头就把下一讲的动画备上）。
+  //    为什么不放在 turn-stopping：那一处 postclass 与引擎的监听顺序没有契约，
+  //    讲次可能还没被推进 → 会预热到"上一讲"的清单。放在 pre-step（已重读讲次）无歧义。
+  //
+  // 🔴 预热**不调用任何模型**：脚本由模板从参数拼出来。这是它比"派子代理去写"强的地方。
+  let lastPreppedLesson = Symbol('never')
+  /** @type {{lesson:number|null, entries:object[]}|null} */
+  let lastPrepPlan = null
+  /** 备课清单已经注入给老师的是哪一讲（一讲只发一次；讲次变了重发）。 */
+  let prepListAnnouncedFor = Symbol('never')
+
+  async function warmUpCurrentLesson(reason) {
+    if (!animationEnabled) return null
+    const prepItems = current.manifest.prep?.items ?? []
+    if (prepItems.length === 0) return null
+    const runtimeDir = animationRuntimeDir()
+    if (runtimeDir === null) return null
+    const items = prepItemsForLesson(current.manifest, currentLesson)
+    if (items.length === 0) {
+      lastPreppedLesson = currentLesson
+      lastPrepPlan = { lesson: currentLesson, entries: [] }
+      log(`备课清单：第 ${currentLesson ?? '?'} 讲没有预先声明的动画（${reason}）`)
+      return lastPrepPlan
+    }
+    try {
+      const plan = await warmUpPrep({
+        runtimeDir,
+        baseDir: current.dir,
+        items,
+        lesson: currentLesson,
+        turn: phase.turnCount,
+        python: animEnv.python,
+        manim: animEnv.manim,
+        quality: animEnv.quality,
+        gate: animEnv.gate,
+        gatePython: animEnv.gatePython,
+        log,
+      })
+      lastPreppedLesson = currentLesson
+      lastPrepPlan = plan
+      log(
+        `备课预热（${reason}，第 ${currentLesson} 讲）：起 ${plan.started.length} 段` +
+          `（${plan.started.join(',') || '无'}）｜已在盘上/在跑 ${plan.entries.filter((e) => e.state !== 'missing').length} 段` +
+          (plan.skipped.length === 0 ? '' : `｜受并发闸推迟 ${plan.skipped.length} 段`),
+      )
+      return plan
+    } catch (cause) {
+      // 预热失败**不许拖垮课堂**：记日志、这一讲按"没有备好的动画"走（老师照样能现场起）。
+      log(`🔴 备课预热失败（不影响上课）：${cause?.message ?? cause}`)
+      return null
+    }
+  }
+
+  // 装载后立刻预热一次（＝"开课/课前就把它备上"）。清单为空时这一步什么都不做。
+  if (animationEnabled && (current.manifest.prep?.items ?? []).length > 0) {
+    await warmUpCurrentLesson('装载后')
+  }
+
+  /**
+   * 取"该告诉老师"的动画结果，并**当场标记已播报**（幂等：同一任务只说一次）。
+   * 返回 [{block, text}]。
+   */
+  async function collectAnimationNotices() {
+    if (!animationEnabled) return []
+    const runtimeDir = animationRuntimeDir()
+    if (runtimeDir === null) return []
+    const root = join(runtimeDir, ANIMATIONS_SUBDIR)
+    let pending
+    try {
+      pending = await pendingNotices(root)
+    } catch (cause) {
+      log(`🔴 读动画任务状态失败（本回合不通报）：${cause?.message ?? cause}`)
+      return []
+    }
+    if (pending.length === 0) return []
+    const out = []
+    for (const record of pending) {
+      // 🔴 先标记后返回：宁可"标记了但注入失败"（老师可自己查 classroom_animation_status），
+      //    也不要"每回合重复通报同一件事"（那会把老师的注意力从教学上拽走）。
+      try {
+        await markAnnounced(record.dir)
+      } catch (cause) {
+        log(`🔴 标记动画已播报失败（${record.taskId}）：${cause?.message ?? cause}`)
+      }
+      // 一条通报 = 一个任务：正文给模型看，source 上的机器可读字段给客户端看（见接线说明）
+      out.push({ text: buildAnimationNotice(record), source: animationNoticeSource(record) })
+    }
+    log(`动画通报 ${out.length} 条：${pending.map((p) => `${p.taskId}=${p.status?.state}`).join(',')}`)
+    return out
+  }
+
+  // 回合边界结算：把"渲染器已经死了但状态还停在 rendering"的任务前推成 failed。
+  // 🔴 为什么放在 turn-stopping 而不是注入时：注入是**每个 step** 都会走的路径，结算要读盘、
+  //    要判 pid，放在那里会把热路径变重；而 turn-stopping 每回合恰好一次，且此时
+  //    本回合的所有工具调用都已经落盘（与 lib/postclass.mjs 同一取证依据）。
+  // 🔴 通知型钩子（无 next），抛错会打断整个回合 → 与 postclass 同口径：只记日志、不抛。
+  ctx.on('agent/turn-stopping', async (payload) => {
+    if (!animationEnabled) return
+    const runtimeDir = animationRuntimeDir()
+    if (runtimeDir === null) return
+    try {
+      const root = join(runtimeDir, ANIMATIONS_SUBDIR)
+      const { settled, running } = await settleRunningTasks(root, {
+        heartbeatStaleMs: animEnv.heartbeatStaleMs,
+        log,
+      })
+      if (settled.length > 0 || running.length > 0) {
+        log(
+          `turn ${payload?.turn} 动画结算：新判死 ${settled.length} 个` +
+            `（${settled.map((s) => s.taskId).join(',') || '无'}）｜仍在跑 ${running.length} 个`,
+        )
+      }
+    } catch (cause) {
+      log(`🔴 动画任务结算失败（不影响本回合）：${cause?.message ?? cause}`)
+    }
+  })
+
+  // 动画纪律：教室声明了 animation 才注册（未声明 → 这一节根本不存在，行为不变）。
+  // 🔴 文案口径（动词优先、给禁令、**不写秒数**）：第 1 条是整条编排的关键。
+  //    🔴 2026-09-24 改（ALIGN-EXEC-2）：原文案把实测秒数写进模型看得见的文本
+  //    （"写脚本 74–91 秒 / 渲染 2–6 秒"、"命中缓存 0 秒"、"从零写脚本 60–74 秒"），
+  //    而教室侧的渠道纪律已改成**定性说法**（"基本不用等"／"明显更慢"）——
+  //    **同一件事两个数、模型每轮同时看到**，违反本项目"同一件事不能两个数"的口径。
+  //    现统一为教室那套定性说法；**实测数字只留在注释与本目录的报告/证据里**
+  //    （evidence/exp1_script_time.json、exp2_render_disk.json、ab-timeline.json），
+  //    不再出现在模型看得见的任何文本里。
+  //    唯一的例外见 §「classroom_animate_template」：渲染自身的耗时预估（EXPECTED_RANGE_TEXT）
+  //    是**另一件事**（这条片子渲完要多久，不是"你等多久"），只保留那一处、不在此重复。
+  if (animationEnabled) {
+    const rules = []
+    // 🔴 第 0 条（`animation.spokenFirst`，**默认关闭**）：**先开口，再备课**。
+    //    动机：实测学生空窗 17–66 秒，而其中绝大部分不是动画、也不是渲染，是模型**先闷头读教材**
+    //    （8 个 read 在第 3–16 秒发完，之后到第 53 秒才吐出第一句给学生看的话）。
+    //    "先讲后画"只约束工具的顺序，管不到这一段——所以做了这一条。
+    //    🔴 **但 n=1 的 A/B 没有显示它有效，方向还相反**（开=53.5 s、关=17.2 s 空窗；
+    //       evidence/ab-timeline.json）。会话间方差本来就很大（17–66 s），n=1 说明不了任何事。
+    //    → 故**默认关闭**：没有证据的行为变更不进默认路径；开关留着，等更大样本再定。
+    //       想开就把 config.animation.spokenFirst 设成 true。
+    if (animCfg.spokenFirst === true) {
+      rules.push(
+        '0. **先开口，再去备课。** 回合一开始，先用一两句话回应学生问的东西（说清你打算从哪儿讲起），',
+        '   **然后**再去读材料、画图、起动画。本机实测：先闷头读教材会把学生晾在那儿很久——',
+        '   那是他一句话都看不到的时间，比动画渲染本身长得多。',
+        '',
+      )
+    }
+    rules.push(
+      '1. **先讲后画。** 你决定用动画讲某一步时，**先在同一回合的正文里把这一步讲给学生**，',
+      '   然后再调工具。不许把工具调用当开场白：**写一段动画脚本比渲染本身慢得多**，',
+      '   先调工具就等于让学生对着空屏干等。',
+      '2. **优先级：取备好的 → 套模板 → 才自己写。** 按这个顺序选工具，不要跳级：',
+      '   a. 这一步在**本讲预先声明的动画清单**里（回合开头的引擎块里有清单与 `prepId`）→',
+      '      调 `classroom_animate_template` 并传 `prepId`。它在**上课前就渲好了**，命中缓存**基本不用等**。',
+      '   b. 不在清单里，但形状是某个模板（时间轴/甘特、状态机推移、条形对比）→',
+      '      调 `classroom_animate_template` 传 `template` + `params`。**你自己不写一行 Manim**，',
+      '      引擎按参数拼脚本，很快就能拿到片子（对照：从零写脚本**明显更慢**）。',
+      '   c. 只有"模板表达不了的过程动画"才用 `classroom_animate` 自己写脚本——那是最慢的一条路。',
+      '3. **起了就继续讲。** 工具立刻返回"已排队"，不要等它；渲染在后台独立进程里跑。',
+      '4. **好了再放。** 引擎会在后面某个回合的开头告诉你"你上一轮的动画已就绪"，',
+      '   那时在讲解走到那一步时把它放出来，并说清它讲的是哪一步。',
+      '5. **没成就换路，不许吊着学生。** 通报里若写 `blocked`（闸门判画面有缺陷）或 `failed`（没渲出来），',
+      '   不要对学生说"动画正在生成"然后不放——改用 `classroom_draw` 画一张板书图把这一步讲完。',
+      '6. **静态的图不要用动画。** 流程图/状态机/对比表这类不随时间变化的，直接用 `classroom_draw`。',
+      '',
+    )
+    ctx.systemPrompt.section({
+      name: 'socratic-engine:animation.discipline',
+      order: 10600, // 紧跟教室自己的教学法（system_core 用 10300、world 用 10400）
+      interpolate: false,
+      text: ['## 教学动画的使用纪律（引擎注入）', '', ...rules].join('\n'),
+    })
+  }
+
+  // ---- 1.7) 表情（EXPR-1）：老师自己指定 + 没指定时兜底 ----
+  // 🔴 用户拍板（2026-09-24 原话）：*"表情不规定，让 AI 自己决定和控制吧，加点自由度。"*
+  //    → **取消"固定按环节映射表情"**（面板原来那套 相位→表情下标），改成：
+  //      ① 老师用 `classroom_express` 自己指定（**首选**）；
+  //      ② 老师本回合没指定时，用它自己刚说过的话推一个情绪（**兜底，是推测**）。
+  // 🔴 两条**并列**的落地路径（不是主/备）：命名表情 / 逐参数直驱。
+  //    依据（主代理 2026-09-24 实测）：官方初音ミク 两版（`miku`／`miku_sample_t04`）
+  //    **命名表情个数 = 0**，但各有 17 个脸部参数（眼 6／眉 8／口 2／颊 1）
+  //    → 对这类模型"按 model.expression(name) 设表情"根本不成立，只剩逐参数。
+  // 🔴 表情清单**只能**来自渲染侧的能力发现产物（`config.expression.capabilityFile`），
+  //    引擎**不硬编码**任何表情名或参数名（研究件 R3 的告诫：他们那套在 8 个官方样本里 4 个会失效）。
+  // 🔴 未配置 `capabilityFile` → 本段整块不生效（不注册工具、不挂兜底），并**记一条日志**说明
+  //    通道是关的（不是静默失效：装载日志里看得到）。
+  const exprCfg = config.expression ?? {}
+  let expressionStore = null
+  /** 装载时读到的能力快照（用于工具描述；调用时还会重读，见 lib/expressionstore.mjs 的 mtime 缓存）。 */
+  let expressionAtLoad = null
+  // ---- 1.65) 部署声明（EXPR-5）：面板读的目录 == 引擎写的目录，且立绘模型名**一处声明** ----
+  // 🔴 为什么必须有这一步：面板按 `__DSH_CLASSROOM_UI_CONFIG__.root`（缺省＝代码常量）读教室文件，
+  //    引擎按 `config.classroomDir`（缺省＝工作区自动发现）写 `runtime/expression.md`。
+  //    **两边指不同目录时没有任何一处会出声**——引擎照写、面板照读（读不到就显示"还没有表情"），
+  //    表现成"引擎写了但面板看不到"，而日志与画面都不说这是配置错。
+  //    → 声明文件同时声明 `classroomRoot` 与 `portraitModel`：本引擎**核对**前者（不一致就带修法出声），
+  //      **读**后者（这样"改模型名"从"profile 与客户端两处手工对齐"变成"改一处"）。
+  // 🔴 未配置 `config.classroomDeclaration` → 一致性没有机核，**明说**（不静默），行为与改动前一致。
+  const declaration = await loadDeclaration({
+    file: config.classroomDeclaration,
+    workspaceRoot: discovery.workspaceRoot(),
+    classroomDir: current.dir,
+  })
+  for (const line of describeDeclaration(declaration, exprCfg.model)) log(line)
+  /** 立绘模型名：**声明优先**（一处声明、两侧读）；没声明时才退回 profile 的 config.expression.model。 */
+  const portraitModel =
+    declaration.ok === true && typeof declaration.portraitModel === 'string'
+      ? declaration.portraitModel
+      : exprCfg.model
+  if (typeof exprCfg.capabilityFile === 'string' && exprCfg.capabilityFile !== '') {
+    expressionStore = createExpressionStore({
+      capabilityFile: exprCfg.capabilityFile,
+      model: portraitModel,
+      runtimeDir: () => (current ? join(current.dir, 'runtime') : null),
+      getTurn: () => phase.turnCount,
+      log,
+    })
+    expressionAtLoad = await expressionStore.capability()
+    if (expressionAtLoad.ok) {
+      log(
+        `表情通道已启用：模型 ${expressionAtLoad.model}｜命名表情 ${expressionAtLoad.names.length} 个` +
+          `（${expressionAtLoad.names.join('/') || '无'}）｜参数 ${expressionAtLoad.parameters.length} 个` +
+          `（${describeDimensions(expressionAtLoad.dimensions)}）｜动作组 ${expressionAtLoad.motions.length} 个` +
+          `（${expressionAtLoad.motions.join('/') || '无'}）｜按名字可读性选中：${expressionAtLoad.path}` +
+          `（${expressionAtLoad.pathReadability?.kind ?? '?'}，均分 ${expressionAtLoad.pathReadability?.score?.toFixed(2) ?? '?'}）` +
+          `｜候选：${describePathChoice(expressionAtLoad.pathRanking, expressionAtLoad.path)}` +
+          `｜能力来源 ${expressionAtLoad.file}`,
+      )
+      if (expressionAtLoad.path !== 'named-expression') {
+        log(
+          `🔴 模型 ${expressionAtLoad.model} 走的是 **${expressionAtLoad.path}**` +
+            '（命名表情这条路对它不成立，或有更读得懂的一条）→ 客户端必须实现对应的那一条（见报告 §客户端接线说明）',
+        )
+      }
+    } else {
+      log(`🔴 表情通道**不可用**（会明说、不静默）：${expressionAtLoad.reason}`)
+    }
+    expressionStore.register(ctx)
+    // 🔴 渠道纪律（系统段）：**只挂工具、不给纪律时，老师一次都不会调**（EXPR-1 会话 A 实测：
+    //    `classroom_express` 0 次，而同一回合它调了 set_phase / draw / animate_template）。
+    //    这与 ANIM-ORCH 的实测同型，故照动画那一套补一段引擎自产的纪律。
+    //    🔴 只在本通道**启用**时注入（未配置 capabilityFile → 这一节根本不存在，行为不变）；
+    //       §口径是"不规定映射"——纪律只管"什么时候该说、怎么说"，不管"哪个环节配哪个表情"。
+    ctx.systemPrompt.section({
+      name: 'socratic-engine:expression.discipline',
+      order: 10650, // 紧跟教学动画纪律（10600）
+      interpolate: false,
+      text: ['## 表情的使用纪律（引擎注入）', '', ...EXPRESSION_DISCIPLINE_RULES].join('\n'),
+    })
+  } else {
+    log(
+      '表情通道未启用：profile 的 socratic-engine config.expression.capabilityFile 未配置' +
+        '（表情清单必须来自渲染侧能力发现，引擎不硬编码）',
+    )
+  }
+
   // ---- 2) 系统段注册（一次性） ----
   let registered = 0
   for (const block of current.manifest.blocks) {
@@ -275,7 +659,67 @@ export async function apply(
       log(`🔴 注入计划失败（本回合不注入任何块）：${cause?.message ?? cause}`)
       throw cause
     }
-    if (due.length === 0) return decision
+
+    // 🔴 ANIM-PREP：讲次一变就在本回合开头把**下一讲**的动画备上（"这一轮开始先让它跑"）。
+    //    放在这里而不是 turn-stopping：这一处刚重读过 progress.md，讲次没有歧义。
+    //    只在**讲次真的变了**时做（每回合都做＝每回合都读一遍教材文件，没必要）。
+    if (animationEnabled && currentLesson !== lastPreppedLesson) {
+      await warmUpCurrentLesson(`回合 ${payload.turn} 开头，讲次 → ${currentLesson}`)
+    }
+
+    // 🔴 ANIM-ORCH：把"上一轮的动画好了/被闸门拦了/渲失败了"作为**引擎自产的注入块**送到老师手里。
+    //    这是"就绪信息怎么传"的落点，也是本编排唯一真正新增的机制。
+    //    为什么走注入而不是让老师自己查：宿主是回合制的，模型不会无缘无故去查一个状态工具；
+    //    而"该放动画了"是一个**事件**，事件必须由引擎推过去（推一次，见 announcedAt 幂等门）。
+    const notices = await collectAnimationNotices()
+
+    // 🔴 ANIM-PREP：把"本讲预先备好了哪几段动画"作为**引擎自产的注入块**送到老师手里。
+    //    为什么必须有这一块（否则整条备课机制等于没做）：老师在课堂上**取用**的前提是
+    //    它知道有什么可取——`prepId` 是课程数据里的 id，模型不可能猜出来。
+    //    一讲只注入一次（讲次变了才重发），避免每回合重复占注意力。
+    let prepBlock = null
+    if (
+      animationEnabled &&
+      (current.manifest.prep?.items ?? []).length > 0 &&
+      prepListAnnouncedFor !== currentLesson &&
+      currentLesson !== null
+    ) {
+      const plan =
+        lastPrepPlan !== null && lastPrepPlan.lesson === currentLesson
+          ? lastPrepPlan
+          : await prepPlan({
+              runtimeDir: animationRuntimeDir(),
+              baseDir: current.dir,
+              items: prepItemsForLesson(current.manifest, currentLesson),
+              lesson: currentLesson,
+            })
+      if (plan.entries.length > 0) {
+        prepListAnnouncedFor = currentLesson
+        prepBlock = {
+          text: [
+            `本讲（第 ${currentLesson} 讲）预先备好的教学动画：`,
+            ...plan.entries.map(
+              (e) =>
+                `· \`${e.id}\` —— ${e.title}（模板 ${e.template}，${
+                  e.state === 'cached'
+                    ? '**已就绪**'
+                    : e.state === 'give-up'
+                      ? '**已放弃**（别等它）'
+                      : e.state === 'blocked' || e.state === 'failed'
+                        ? `**${e.state}**（别等它）`
+                        : '正在预热'
+                }）`,
+            ),
+            '→ 讲到清单里某一段对应的那一步时，**不要自己写 Manim 脚本**：调 `classroom_animate_template` 并传它的 `prepId`。',
+            '  课前已经渲好了，命中缓存基本不用等；标记"别等它"的那几段改用 `classroom_draw` 画板书图。',
+            '→ 清单里没有、但形状是某个模板的步骤，用 `classroom_animate_template` 传 `template` + `params`。',
+          ].join('\n'),
+          source: { kind: 'socratic-engine', form: 'prep-list', block: `prep-list:L${currentLesson}`, lesson: currentLesson },
+        }
+      }
+    }
+
+    if (due.length === 0 && notices.length === 0 && prepBlock === null) return decision
 
     const injected = due.map((d) =>
       createUserMessage({
@@ -283,7 +727,29 @@ export async function apply(
         source: { kind: 'socratic-engine', form: 'classroom-block', block: d.id },
       }),
     )
-    log(`turn ${payload.turn} 注入 ${injected.length} 块：${due.map((d) => d.id).join(',')}`)
+    if (prepBlock !== null) {
+      injected.push(
+        createUserMessage({
+          content: [{ type: 'text', text: prepBlock.text }],
+          source: prepBlock.source,
+        }),
+      )
+    }
+    for (const notice of notices) {
+      // 🔴 source 里带的是**跨端契约字段**（taskId/state/artifact/absPath/…）：
+      //    客户端据此在消息流里播片，**不解析正文中文**（见 接线说明_客户端播放.md）。
+      injected.push(
+        createUserMessage({
+          content: [{ type: 'text', text: notice.text }],
+          source: notice.source,
+        }),
+      )
+    }
+    log(
+      `turn ${payload.turn} 注入 ${injected.length} 块：${due.map((d) => d.id).join(',')}` +
+        (prepBlock === null ? '' : `｜备课清单 L${currentLesson}`) +
+        (notices.length === 0 ? '' : `｜动画通报 ${notices.map((n) => n.source.block).join(',')}`),
+    )
     return { kind: 'enter', messages: [...decision.messages, ...injected] }
   })
 
@@ -309,18 +775,24 @@ export async function apply(
             discovered: { type: 'integer', required: true },
             selectedBy: { type: 'string', required: true },
             ambiguity: { type: 'string', required: true },
+            expression: { type: 'string', required: true },
+            expressionFace: { type: 'string', required: true },
+            expressionMotion: { type: 'string', required: true },
+            expressionOrigin: { type: 'string', required: true },
           },
         },
         render: (_args, value) => [
           {
             type: 'text',
-            text: `教室 ${value.classroom}｜相位 ${value.phase}｜第 ${value.turn} 回合｜本轮要讲第 ${value.lesson} 讲｜候选 ${value.discovered} 个（来源 ${value.selectedBy}）`,
+            text: `教室 ${value.classroom}｜相位 ${value.phase}｜第 ${value.turn} 回合｜本轮要讲第 ${value.lesson} 讲｜候选 ${value.discovered} 个（来源 ${value.selectedBy}）` +
+              `｜表情：${describeExpressionStatus(value)}`,
           },
         ],
       },
       execute: async () => {
         const result = discovery.last()
         const selected = result?.selected ?? null
+        const expr = expressionStore?.status() ?? null
         return {
           classroom: current.manifest.classroom.id,
           phase: phase.phase,
@@ -331,6 +803,11 @@ export async function apply(
           discovered: result?.candidates.length ?? 0,
           selectedBy: selected?.source ?? 'none',
           ambiguity: result !== null && result.status === 'ambiguous' ? result.reason : '',
+          // 🔴 EXPR-1：表情状态也在这里说清（工具侧的口径；落盘口径见 runtime/expression.md）
+          expression: expr?.expression ?? '',
+          expressionFace: expr === null ? '' : renderFaceParams(expr.face ?? {}),
+          expressionMotion: expr?.motion ?? '',
+          expressionOrigin: expr?.origin ?? (expressionStore === null ? 'off' : 'unavailable'),
         }
       },
     }),
@@ -403,6 +880,64 @@ export async function apply(
       },
     }),
   )
+
+  // ---- 5.5) classroom_express 工具（EXPR-1：老师自己决定表情）----
+  // 🔴 形态裁定：**新增一个工具**，不复用 `classroom_set_phase` 的入参。理由：
+  //    ① 语义不同——相位是"课的环节"（值域来自教室声明、会落进 progress.md 的 current_phase 行），
+  //       表情是"这一回合教师的表现"，混进一个工具会让两者的值域与落盘互相污染；
+  //    ② 描述即渠道——本项目实证（T3a/T3b）：**工具描述写不写得像"该调它"决定它会不会被调用**；
+  //       两条并列路径（命名/逐参数）＋可用清单需要一整段描述，塞进 set_phase 的入参说明里会糊掉；
+  //    ③ 报错契约不同——表情要"非法名 → 报错并列出可用清单"，相位那套是"值域来自教室声明"。
+  // 🔴 描述在**装载时**把该模型实际有的清单写进去（老师在上下文里就能看到合法取值，
+  //    不必先错一次才知道）；调用时还会重读能力产物做校验（见 lib/expressionstore.mjs 的 mtime 缓存）。
+  if (expressionStore !== null) {
+    ctx.tools.register(
+      defineTool({
+        name: 'classroom_express',
+        description: buildExpressToolDescription(expressionAtLoad),
+        parameters: expressToolParameters(),
+        output: {
+          schema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              path: { type: 'string', required: true },
+              expression: { type: 'string', required: true },
+              face: { type: 'string', required: true },
+              motion: { type: 'string', required: true },
+              origin: { type: 'string', required: true },
+              emotion: { type: 'string', required: true },
+              turn: { type: 'integer', required: true },
+              model: { type: 'string', required: true },
+              available: { type: 'string', required: true },
+              availableCount: { type: 'integer', required: true },
+              dimensions: { type: 'string', required: true },
+              parameterCount: { type: 'integer', required: true },
+              motionCount: { type: 'integer', required: true },
+              persisted: { type: 'boolean', required: true },
+              file: { type: 'string', required: true },
+              note: { type: 'string', required: true },
+            },
+          },
+          render: (_args, value) => [
+            {
+              type: 'text',
+              text:
+                `本回合表情已定（走 ${value.path}）｜` +
+                (value.expression === '' ? '' : `命名表情 ${value.expression}｜`) +
+                (value.face === '' ? '' : `逐参数 ${value.face}｜`) +
+                (value.motion === '' ? '' : `动作 ${value.motion}｜`) +
+                `第 ${value.turn} 回合｜模型 ${value.model}（可用：命名表情 ${value.availableCount} 个／` +
+                `参数 ${value.parameterCount} 个／动作组 ${value.motionCount} 个）｜` +
+                `${value.persisted ? '已落盘' : '未落盘'}：${value.note}\n` +
+                `客户端（立绘面板）按 runtime/expression.md 的机器可读行应用；本回合没有指定时会由引擎兜底。`,
+            },
+          ],
+        },
+        execute: async (args) => expressionStore.specify(args),
+      }),
+    )
+  }
 
   // ---- 6) classroom_draw 工具（T3a：把白板真的画出来并落盘）----
   // 🔴 三段判据，缺一不可（每一段失败都**报错**，都不静默）：
@@ -511,4 +1046,406 @@ export async function apply(
       },
     }),
   )
+
+  // ---- 7) classroom_animate 工具（ANIM-ORCH：后台渲染 + 跨回合就绪）----
+  // 🔴 只在教室声明 `animation:` 时注册。未声明的教室**工具表里根本没有这个名字**——
+  //    这是"行为不变"最强的一种做法（比"注册了但一调就报错"干净：模型不会看见一个用不了的选项）。
+  if (animationEnabled) {
+    ctx.tools.register(
+      defineTool({
+        name: 'classroom_animate',
+        description: ANIMATE_TOOL_DESCRIPTION,
+        parameters: {
+          script: {
+            type: 'string',
+            required: true,
+            description:
+              'The complete ManimCE 0.21.0 Python source, raw — no markdown fence, no prose around it. ' +
+              'Exactly one class deriving from Scene. Chinese labels are fine with font="PingFang SC". ' +
+              'LaTeX is unavailable on this machine: use Text/MarkupText for formulas and tick labels. ' +
+              'Keep it short (one mechanism, ≤ 300 lines) — the engine refuses longer scripts instead of truncating.',
+          },
+          title: {
+            type: 'string',
+            required: true,
+            description:
+              'One-line title of the animation, used in the animation index so a reader can see what lesson 3 ' +
+              'animated (e.g. "长任务为什么把短任务堵在后面"). Single line, ≤ 120 characters.',
+          },
+          caption: {
+            type: 'string',
+            description:
+              'Optional one-paragraph note about what this animation is for (the misconception it targets, the ' +
+              'step it belongs to). ≤ 500 characters.',
+          },
+        },
+        output: {
+          schema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              taskId: { type: 'string', required: true },
+              state: { type: 'string', required: true },
+              status: { type: 'string', required: true },
+              artifact: { type: 'string', required: true },
+              scriptPath: { type: 'string', required: true },
+              title: { type: 'string', required: true },
+              sceneClass: { type: 'string', required: true },
+              lesson: { type: 'integer', required: true },
+              turn: { type: 'integer', required: true },
+              lines: { type: 'integer', required: true },
+              bytes: { type: 'integer', required: true },
+              expected: { type: 'string', required: true },
+              waitedMs: { type: 'integer', required: true },
+              time: { type: 'string', required: true },
+            },
+          },
+          render: (_args, value) => [
+            {
+              type: 'text',
+              text:
+                `动画任务 ${value.taskId}｜${value.state}｜${value.status}｜第 ${value.lesson} 讲 · 第 ${value.turn} 回合 · ${value.time}\n` +
+                `脚本 ${value.scriptPath}（${value.lines} 行 / ${value.bytes} B，类 ${value.sceneClass}）｜产物 ${value.artifact}` +
+                (value.waitedMs > 0 ? `｜同步等待 ${(value.waitedMs / 1000).toFixed(1)} s（对照模式）` : '') +
+                `\n👉 现在继续讲；渲染在后台跑，好了引擎会在后面的回合开头告诉你。`,
+            },
+          ],
+        },
+        execute: async (args) => {
+          if (current.manifest.animation?.enabled !== true) {
+            throw new Error(
+              `当前教室（${current.manifest.classroom.id}）没有声明 animation: 段，不接受教学动画；` +
+                '要画静态图请用 classroom_draw。',
+            )
+          }
+          const runtimeDir = animationRuntimeDir()
+          if (runtimeDir === null) throw new Error('classroom_animate：教室目录尚未确定')
+          const result = await startAnimationTask(args, {
+            runtimeDir,
+            lesson: currentLesson,
+            turn: phase.turnCount,
+            python: animEnv.python,
+            manim: animEnv.manim,
+            quality: animEnv.quality,
+            gate: animEnv.gate,
+            gatePython: animEnv.gatePython,
+            blocking: animEnv.blocking,
+            blockingTimeoutMs: animEnv.blockingTimeoutMs,
+          })
+          log(
+            `动画任务已起：${result.taskId}（pid ${result.runnerPid}，脚本 ${result.lines} 行）` +
+              (result.blocking ? `｜🔴 对照模式已等到 ${result.state}（${result.waitedMs} ms）` : '｜不阻塞，已返回'),
+          )
+          return {
+            taskId: result.taskId,
+            state: result.state,
+            status: describeState(result.state, { reason: result.status?.reason ?? null }),
+            artifact: result.artifact,
+            scriptPath: result.scriptPath,
+            title: result.title,
+            sceneClass: result.sceneClass,
+            lesson: result.lesson ?? 0,
+            turn: result.turn,
+            lines: result.lines,
+            bytes: result.bytes,
+            expected: EXPECTED_RANGE_TEXT,
+            waitedMs: result.waitedMs ?? 0,
+            time: result.time,
+          }
+        },
+      }),
+    )
+
+    // ---- 8) classroom_animate_template 工具（ANIM-PREP：取备好的 / 套模板）----
+    // 🔴 两条路共用一个工具，因为它们在老师眼里是**同一件事**（"给我这一步的动画"）：
+    //    · 传 `prepId`  → 取课程数据里预先声明、课前已预热好的那一段（命中缓存 0 秒）；
+    //    · 传 `template`+`params` → 引擎按参数拼脚本、起同一条渲染链路（几秒）。
+    //    两条路**都不写 Manim 代码**，这是它相对 classroom_animate 的全部价值。
+    ctx.tools.register(
+      defineTool({
+        name: 'classroom_animate_template',
+        description: ANIMATE_TEMPLATE_TOOL_DESCRIPTION,
+        parameters: {
+          prepId: {
+            type: 'string',
+            description:
+              'Id of a prepared animation declared by this lesson in the classroom data (the prepared list is ' +
+              'in the engine block you got at the start of the turn). Pass this alone — the engine already ' +
+              'rendered it before class, so a cache hit comes back with no wait. Do not pass template/params ' +
+              'together with prepId.',
+          },
+          template: {
+            type: 'string',
+            enum: TEMPLATE_IDS,
+            description:
+              'Template id, for a step that is not on the prepared list but whose shape a template can ' +
+              'express. See the template list in this tool\'s description. Requires `params`.',
+          },
+          params: {
+            type: 'json',
+            description:
+              'Parameters for the chosen template, as a JSON object — the shape per template is written in ' +
+              'this tool\'s description. Every number and label the animation shows goes here; the engine ' +
+              'turns them into the ManimCE script. A wrong or missing field is refused with the exact problem.',
+          },
+          title: {
+            type: 'string',
+            description:
+              'One-line title, used in the animation index. Required with `template`; ignored when `prepId` ' +
+              'is given (the declared title is used).',
+          },
+        },
+        output: {
+          schema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              taskId: { type: 'string', required: true },
+              state: { type: 'string', required: true },
+              status: { type: 'string', required: true },
+              artifact: { type: 'string', required: true },
+              title: { type: 'string', required: true },
+              template: { type: 'string', required: true },
+              prepId: { type: 'string', required: true },
+              cacheHit: { type: 'boolean', required: true },
+              lesson: { type: 'integer', required: true },
+              turn: { type: 'integer', required: true },
+              lines: { type: 'integer', required: true },
+              bytes: { type: 'integer', required: true },
+              expected: { type: 'string', required: true },
+              time: { type: 'string', required: true },
+            },
+          },
+          render: (_args, value) => [
+            {
+              type: 'text',
+              text:
+                (value.cacheHit
+                  ? `✅ 命中课前预热缓存（基本不用等）：${value.taskId}｜${value.status}\n`
+                  : `动画任务 ${value.taskId}｜${value.state}｜${value.status}（模板 ${value.template}，` +
+                    `脚本 ${value.lines} 行 / ${value.bytes} B）\n`) +
+                `第 ${value.lesson} 讲 · 第 ${value.turn} 回合 · ${value.time}｜产物 ${value.artifact}` +
+                (value.prepId === '' ? '' : `｜备课清单 ${value.prepId}`) +
+                `\n👉 现在继续讲；好了引擎会在后面的回合开头告诉你。`,
+            },
+          ],
+        },
+        execute: async (args) => {
+          const runtimeDir = animationRuntimeDir()
+          if (runtimeDir === null) throw new Error('classroom_animate_template：教室目录尚未确定')
+          const prepId = typeof args?.prepId === 'string' ? args.prepId.trim() : ''
+          const hasTemplate = typeof args?.template === 'string' && args.template !== ''
+
+          if (prepId === '' && !hasTemplate) {
+            throw new Error(
+              'classroom_animate_template 需要 `prepId`（取课前备好的那一段）**或** `template`+`params`' +
+                '（现场套模板）。两个都没给，所以什么都没有发生。\n' +
+                '本讲预先声明的动画清单在回合开头的引擎块里；要用模板请从下面这些里挑：\n' +
+                describeTemplates(),
+            )
+          }
+          if (prepId !== '' && hasTemplate) {
+            throw new Error(
+              'classroom_animate_template 不接受 `prepId` 与 `template` 同时给：' +
+                'prepId 取的是课程数据里声明好的那一段（模板与参数都在声明里），再传 template/params 会冲突。' +
+                '请二选一。',
+            )
+          }
+
+          /** @type {{template:string, params:unknown, title:string, caption:string,
+           *          prepId:string|null, cacheKey:string|null, lesson:number|null}} */
+          let spec
+          if (prepId !== '') {
+            const declared = (current.manifest.prep?.items ?? []).find((i) => i.id === prepId)
+            if (declared === undefined) {
+              const ids = (current.manifest.prep?.items ?? []).map((i) => i.id)
+              throw new Error(
+                `classroom_animate_template：本教室的备课清单里没有 prepId=${JSON.stringify(prepId)}。` +
+                  (ids.length === 0
+                    ? '本教室（classroom.yaml）根本没有声明 prep: 段——请改用 template+params 或 classroom_animate。'
+                    : `清单里的 id：${ids.join(' / ')}`),
+              )
+            }
+            // 缓存键：讲次 ＋ 教材内容哈希 ＋ 模板版本 ＋ 参数（算法见 lib/prep.mjs）
+            const { cacheKey } = await cacheKeyForItem({ baseDir: current.dir, item: declared })
+            const hit = await findByCacheKey(join(runtimeDir, ANIMATIONS_SUBDIR), cacheKey)
+            if (hit.ready !== null) {
+              const mp4 = hit.ready.status?.mp4 ?? `${hit.ready.taskId}.mp4`
+              log(`动画取用命中缓存：${prepId} → ${hit.ready.taskId}（0 秒，不重渲）`)
+              return {
+                taskId: hit.ready.taskId,
+                state: 'ready',
+                status: describeState('ready'),
+                artifact: `${ANIMATIONS_SUBDIR}/${hit.ready.taskId}/${mp4}`,
+                title: hit.ready.task.title ?? declared.title,
+                template: declared.template,
+                prepId,
+                cacheHit: true,
+                lesson: hit.ready.task.lesson ?? declared.lesson,
+                turn: phase.turnCount,
+                lines: 0,
+                bytes: 0,
+                expected: '已就绪（命中缓存）',
+                time: nowLabel(Date.now()),
+              }
+            }
+            spec = {
+              template: declared.template,
+              params: declared.params,
+              title: declared.title,
+              caption: declared.caption,
+              prepId,
+              cacheKey,
+              lesson: declared.lesson,
+            }
+          } else {
+            spec = {
+              template: args.template,
+              params: args.params,
+              title: args.title,
+              caption: '',
+              prepId: null,
+              cacheKey: null,
+              lesson: currentLesson,
+            }
+          }
+
+          const check = checkTemplateArgs({ template: spec.template, params: spec.params, title: spec.title })
+          if (!check.ok) {
+            throw new Error(
+              'classroom_animate_template 拒绝这次调用，什么都没有落盘、也没有起渲染。\n- ' +
+                check.problems.join('\n- ') +
+                '\n（模板清单与参数形状：\n' +
+                describeTemplates() +
+                '\n）',
+            )
+          }
+          const result = await startAnimationTask(
+            { script: check.script, title: check.title, caption: spec.caption },
+            {
+              runtimeDir,
+              lesson: spec.lesson,
+              turn: phase.turnCount,
+              python: animEnv.python,
+              manim: animEnv.manim,
+              quality: animEnv.quality,
+              gate: animEnv.gate,
+              gatePython: animEnv.gatePython,
+              cacheKey: spec.cacheKey,
+              prepId: spec.prepId,
+              origin: 'template',
+              template: spec.template,
+            },
+          )
+          log(
+            `动画任务已起（模板 ${spec.template}${spec.prepId === null ? '' : `，备课 ${spec.prepId}`}）：` +
+              `${result.taskId}（pid ${result.runnerPid}，脚本 ${result.lines} 行）｜不阻塞，已返回`,
+          )
+          return {
+            taskId: result.taskId,
+            state: result.state,
+            status: describeState(result.state, { reason: result.status?.reason ?? null }),
+            artifact: result.artifact,
+            title: result.title,
+            template: spec.template,
+            prepId: spec.prepId ?? '',
+            cacheHit: false,
+            lesson: result.lesson ?? 0,
+            turn: result.turn,
+            lines: result.lines,
+            bytes: result.bytes,
+            expected: EXPECTED_RANGE_TEXT,
+            time: result.time,
+          }
+        },
+      }),
+    )
+
+    // ---- 9) classroom_animation_status 工具（老师主动查；不查也会被通报，这是兜底）----
+    ctx.tools.register(
+      defineTool({
+        name: 'classroom_animation_status',
+        description:
+          'Report the state of this lesson\'s teaching animations: how many are still rendering and which ones ' +
+          'are ready to play. Call it when you are about to reach a step you queued an animation for and want ' +
+          'to know whether it is ready yet. Read-only — the engine also tells you at the start of a turn when ' +
+          'something finishes, so you normally do not need to ask.',
+        parameters: {},
+        output: {
+          schema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              total: { type: 'integer', required: true },
+              running: { type: 'integer', required: true },
+              ready: { type: 'integer', required: true },
+              blocked: { type: 'integer', required: true },
+              failed: { type: 'integer', required: true },
+              pendingNotice: { type: 'integer', required: true },
+              prep: { type: 'string', required: true },
+              detail: { type: 'string', required: true },
+            },
+          },
+          render: (_args, value) => [
+            { type: 'text', text: `${value.detail}\n\n【本讲备课清单状态】\n${value.prep}` },
+          ],
+        },
+        execute: async () => {
+          const runtimeDir = animationRuntimeDir()
+          if (runtimeDir === null) throw new Error('classroom_animation_status：教室目录尚未确定')
+          const root = join(runtimeDir, ANIMATIONS_SUBDIR)
+          const tasks = await listTasks(root)
+          const s = summarizeTasks(tasks)
+          const running = tasks.filter((t) => !TERMINAL_STATES.includes(t.status?.state ?? 'queued'))
+          const ready = tasks.filter((t) => t.status?.state === 'ready')
+          const bad = tasks.filter((t) => t.status?.state === 'blocked' || t.status?.state === 'failed')
+          const lines = [
+            `教学动画共 ${s.total} 段｜在跑 ${running.length}｜可播 ${ready.length}｜` +
+              `不许播/失败 ${bad.length}｜未通报 ${s.pendingNotice}`,
+          ]
+          for (const t of running) {
+            lines.push(`· ${t.taskId} **${t.status?.state ?? 'queued'}**（${describeState(t.status?.state ?? 'queued')}）｜${t.task.title}`)
+          }
+          for (const t of ready) {
+            lines.push(
+              `· ${t.taskId} **ready** —— 可以播：${ANIMATIONS_SUBDIR}/${t.taskId}/${t.status?.mp4 ?? `${t.taskId}.mp4`}` +
+                `（${typeof t.status?.durationSec === 'number' ? `${t.status.durationSec.toFixed(1)} 秒` : '时长未知'}）｜${t.task.title}`,
+            )
+          }
+          for (const t of bad) {
+            lines.push(`· ${t.taskId} **${t.status?.state}** —— 不许播：${t.status?.reason ?? '（无原因）'}`)
+          }
+          if (s.total === 0) lines.push('（本教室还没有起过动画任务）')
+          // ANIM-PREP：把"本讲预先备好的那几段现在什么状态"一并报出来——
+          // 老师不用记清单，问一句就能看到哪段可取用、哪段别等。
+          let prepText = '（本教室没有声明备课清单 prep:）'
+          const prepItems = current.manifest.prep?.items ?? []
+          if (prepItems.length > 0) {
+            try {
+              prepText = describePrepPlan(
+                await prepPlan({
+                  runtimeDir,
+                  baseDir: current.dir,
+                  items: prepItemsForLesson(current.manifest, currentLesson),
+                  lesson: currentLesson,
+                }),
+              )
+            } catch (cause) {
+              prepText = `🔴 读备课清单状态失败：${cause?.message ?? cause}`
+            }
+          }
+          return {
+            total: s.total,
+            running: running.length,
+            ready: ready.length,
+            blocked: tasks.filter((t) => t.status?.state === 'blocked').length,
+            failed: tasks.filter((t) => t.status?.state === 'failed').length,
+            pendingNotice: s.pendingNotice,
+            prep: prepText,
+            detail: lines.join('\n'),
+          }
+        },
+      }),
+    )
+  }
 }

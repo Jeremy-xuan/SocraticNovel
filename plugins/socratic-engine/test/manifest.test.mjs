@@ -125,6 +125,50 @@ blocks:
   assert.throws(() => parseManifest(text), /n_turns 需要 n>=1/)
 })
 
+// 🔴 启动层频率（2026-09-24 立规）：系统段只在装载时注册一次，块上的 frequency 不参与裁决
+//    → 非 once 的写法必须报错（不静默忽略）。官方六层把 ① 常驻层写成"系统段 · 每轮"，
+//    照它写 every: turn 就会踩这一条，故判据写死在这里。
+test('system 块的 frequency 非 once → 报错（系统段注册是一次性的）', () => {
+  const text = `format: socratic-classroom/0
+classroom: { id: x }
+blocks:
+  - id: a
+    text: t
+    position: { target: system, order: 100 }
+    frequency: { every: turn }
+`
+  assert.throws(() => parseManifest(text), /target=system 的块只能用 frequency: \{ every: once \}/)
+})
+
+test('system 块的 frequency.anchor: lesson_start → 报错（每讲重注对系统段不成立）', () => {
+  const text = `format: socratic-classroom/0
+classroom: { id: x }
+blocks:
+  - id: a
+    text: t
+    position: { target: system, order: 100 }
+    frequency: { every: once, anchor: lesson_start }
+`
+  assert.throws(() => parseManifest(text), /target=system 的块不支持 frequency\.anchor: lesson_start/)
+})
+
+test('system 块的 every: once / anchor: session_start 仍然合法（现有教室逐字不变）', () => {
+  const text = `format: socratic-classroom/0
+classroom: { id: x }
+blocks:
+  - id: a
+    text: t
+    position: { target: system, order: 100 }
+    frequency: { every: once }
+  - id: b
+    text: t2
+    position: { target: system, order: 200 }
+    frequency: { every: once, anchor: session_start }
+`
+  const m = parseManifest(text)
+  assert.deepEqual(m.blocks.map((b) => b.frequency), [{ every: 'once' }, { every: 'once', anchor: 'session_start' }])
+})
+
 test('未知 layer → 报错', () => {
   const text = `format: socratic-classroom/0
 classroom: { id: x }

@@ -1,0 +1,123 @@
+{
+  "format": "socratic-expression/0",
+  "note": [
+    "EXPR-1 的**数据文件**：文本→情绪的正则表（13 线索 / 13 规则 / 优先级即语义）、情绪枚举（18）、",
+    "情绪→槽位（8 槽）、以及**逐参数直驱**的角色表（slotFace / faceRoles）。",
+    "🔴 正则与优先级顺序逐字来自相邻项目 sakiko-for-dsh 的 host.mjs:392-420",
+    "（出处：开源线/DSH定制/研究_同类DSH立绘插件_2026-09-24.md §3.3.1 全文）。",
+    "🔴 槽位表与角色表是**我们的**：他们第 2 步是一张「情绪 → 表情名」静态表（happy:'smile03'），",
+    "那些名字是他们模型特有的、抄过来必失效（R3 的告诫）。我们改成",
+    "① 命名表情路：情绪 → 8 槽位下标 → `下标 % 该模型实际表情数`；",
+    "② 逐参数路：情绪 → 8 槽位 → 角色（role）→ **按角色正则在本模型真实参数里匹配**（可能匹配到多个）。",
+    "🔴 为什么必须有第 ② 条（2026-09-24 主代理补充实测）：官方初音ミク 两版（FREE miku / PRO miku_sample_t04）",
+    "**命名表情个数 = 0**，但各有 17 个脸部参数（眼 6／眉 8／口 2／颊 1）→ 对这类模型",
+    "「按名字设表情」这条路**根本不成立**，只剩逐参数。故两条路**并列**，不是主/备关系。",
+    "⚠️ 诚实边界：槽位与角色数值是**估计**，未经画面验证（引擎侧看不到画面）；",
+    "且同一角色在不同模型上匹配到的参数个数不同（如 eye_smile 在 miku 上命中 2 个：左右眼）。"
+  ],
+  "emotions": [
+    "happy",
+    "excited",
+    "elated",
+    "sad",
+    "angry",
+    "furious",
+    "question",
+    "soft",
+    "blush",
+    "annoyed",
+    "thinking",
+    "surprised",
+    "disappointed",
+    "eyes_closed",
+    "indifferent",
+    "side",
+    "winking",
+    "neutral"
+  ],
+  "slots": ["neutral", "happy", "excited", "thinking", "sad", "angry", "soft", "indifferent"],
+  "emotionSlot": {
+    "happy": 1,
+    "excited": 2,
+    "elated": 2,
+    "sad": 4,
+    "angry": 5,
+    "furious": 5,
+    "question": 3,
+    "soft": 6,
+    "blush": 6,
+    "annoyed": 5,
+    "thinking": 3,
+    "surprised": 2,
+    "disappointed": 4,
+    "eyes_closed": 7,
+    "indifferent": 7,
+    "side": 7,
+    "winking": 1,
+    "neutral": 0
+  },
+  "faceRoles": {
+    "eye_smile": ["EYE_[LR]_SMILE", "EYE_.*_SMILE", "EYE_SMILE"],
+    "eye_open": ["EYE_[LR]_OPEN", "EYE_.*_OPEN", "EYE_OPEN"],
+    "brow_y": ["BROW_[LR]_Y", "BROW_.*_Y", "BROW_Y"],
+    "brow_form": ["BROW_[LR]_FORM", "BROW_.*_FORM", "BROW_FORM"],
+    "mouth_form": ["MOUTH_FORM", "MOUTH_.*_FORM"],
+    "mouth_open": ["MOUTH_OPEN_Y", "MOUTH_.*_OPEN", "MOUTH_OPEN"],
+    "cheek": ["CHEEK"]
+  },
+  "motionRoles": {
+    "neutral": ["Idle", "Neutral", "Normal", "Default", "Wait"],
+    "happy": ["Smile", "Happy", "Joy", "Fun", "Laugh"],
+    "excited": ["Surprise", "Surprised", "Excited", "Excite", "Wow", "Amaz"],
+    "thinking": ["Think", "Ponder", "Question", "Head_yaw", "Head_yaw2", "Tilt", "Nod"],
+    "sad": ["Sad", "Sorrow", "Cry", "Down", "Shake"],
+    "angry": ["Angry", "Anger", "Mad", "Furious", "Serious"],
+    "soft": ["Shy", "Blush", "Soft", "Gentle", "Calm", "Bashful"],
+    "indifferent": ["Body_sway", "Sway", "Bored", "Away", "Turn"]
+  },
+  "slotFace": {
+    "neutral": {},
+    "happy": { "eye_smile": 1, "mouth_form": 0.8, "brow_y": 0.4 },
+    "excited": { "eye_open": 1, "mouth_open": 0.7, "mouth_form": 0.6, "brow_y": 0.6 },
+    "thinking": { "eye_open": 0.7, "brow_form": -0.5, "mouth_form": -0.2 },
+    "sad": { "eye_open": 0.4, "brow_y": -0.6, "mouth_form": -0.8 },
+    "angry": { "eye_open": 0.9, "brow_y": -0.8, "brow_form": 0.9, "mouth_form": -0.6 },
+    "soft": { "eye_smile": 0.6, "mouth_form": 0.5, "brow_y": 0.2 },
+    "indifferent": { "eye_open": 0.3, "mouth_form": 0, "brow_y": 0 }
+  },
+  "cues": {
+    "ex": { "pattern": "[！!]" },
+    "q": { "pattern": "[？?]" },
+    "negative": {
+      "pattern": "(エラー|失敗|できない|できません|错误|失败|无法|不能|ダメ|クソ|まずい|やばい|最悪|ひどい|嫌い|讨厌|糟糕|完了|出事了)"
+    },
+    "angryCue": { "pattern": "(ふざけるな|何言ってるの|馬鹿|バカ|あんた|もういい|烦死了|闭嘴|滚开|岂有此理)" },
+    "apologetic": { "pattern": "(抱歉|ごめん|对不起|すみません|残念|申し訳)" },
+    "positive": {
+      "pattern": "(完成|成功|好了|搞定|できた|完了|よかった|やった|おめでとう|恭喜|可以|すごい|最高|素晴らしい|大功告成|嬉しい|楽しい|素敵|太好了|厉害)"
+    },
+    "softCue": { "pattern": "(…|⋯|ね|よ|ねぇ|ふぅん|そう|大丈夫|没事|安心|ゆっくり|そっと)" },
+    "surpriseCue": { "pattern": "(えっ|え？|なに|何|不会吧|真的假的|マジ|うそ|惊)" },
+    "blushCue": { "pattern": "(脸红|害羞|照れ|恥ずかしい|ばか...|もう...|やだ)" },
+    "thinkingCue": { "pattern": "(考え|思う|ふむ|なるほど|嗯|让我想想|思考|どうしよう|ちょっと待って)" },
+    "annoyedCue": { "pattern": "(もう|うるさい|烦|真是的|啧|あーもう|吵死了|烦人)" },
+    "indifferentCue": { "pattern": "(随便|どうでも|无所谓|别管我|知らない|随你)" },
+    "ellipsisTail": { "pattern": "[…⋯]$", "input": "trimmed" }
+  },
+  "rules": [
+    { "emotion": "furious", "all": ["ex", "negative"] },
+    { "emotion": "elated", "all": ["ex", "positive"] },
+    { "emotion": "surprised", "any": ["surpriseCue"] },
+    { "emotion": "blush", "any": ["blushCue"] },
+    { "emotion": "thinking", "any": ["thinkingCue"] },
+    { "emotion": "annoyed", "any": ["annoyedCue"] },
+    { "emotion": "indifferent", "any": ["indifferentCue"] },
+    { "emotion": "excited", "any": ["ex"] },
+    { "emotion": "question", "any": ["q"] },
+    { "emotion": "angry", "any": ["negative", "angryCue"] },
+    { "emotion": "sad", "any": ["apologetic"] },
+    { "emotion": "happy", "any": ["positive"] },
+    { "emotion": "soft", "any": ["softCue", "ellipsisTail"] }
+  ],
+  "default": "neutral"
+}

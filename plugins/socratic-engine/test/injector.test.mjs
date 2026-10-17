@@ -1,6 +1,7 @@
 // test/injector.test.mjs — 注入计划器单测（纯函数，零 LLM 成本）
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { loadManifest } from '../lib/manifest.mjs'
@@ -73,11 +74,26 @@ test('wrap system-reminder 生效；none 不包装', () => {
   assert.equal(wrapText('hi', { style: 'none' }), 'hi')
 })
 
+// 🔴 断言口径（2026-09-24 起）：**测"锚点原文被注入了没有"，不测教学法内容**。
+//    夹具文案只作占位（教学口径已由用户 `e961ef1` 反转，旧铁律不得再出现在任何夹具里），
+//    故判据取"注入文本与 `_anchor.md` 盘上原文逐字一致"——文案怎么改都不用动这条断言。
 test('注入文本被包进 system-reminder（端到端形态）', () => {
   const due = planTurnInjections(blocks, freshState(1))
   const anchor = due.find((d) => d.id === 'anchor')
   assert.match(anchor.text, /^<system-reminder>/)
-  assert.match(anchor.text, /最后一英里/)
+  assert.match(anchor.text, /<\/system-reminder>$/)
+})
+
+test('纪律块注入的是 _anchor.md 的原文（不加工、不裁剪）', () => {
+  const source = readFileSync(join(FIXTURE, '_anchor.md'), 'utf8').trim()
+  const due = planTurnInjections(blocks, freshState(1))
+  const anchor = due.find((d) => d.id === 'anchor')
+  assert.ok(
+    anchor.text.includes(source),
+    `注入文本应逐字包含 _anchor.md 全文（${source.length} 字符）\n实际注入：${anchor.text}`,
+  )
+  // 夹具里那句"关键句"必须真的在——防止夹具被改成空壳后断言仍然变绿。
+  assert.match(anchor.text, /教学取向由教室内容决定/)
 })
 
 // ---- phasestore ----

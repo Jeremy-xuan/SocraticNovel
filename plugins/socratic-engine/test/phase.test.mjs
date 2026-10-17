@@ -10,10 +10,19 @@
 //   · `anchor` 写错值 / 与别的 `every` 连用 → **抛错**（不静默忽略）；
 //   · `of: 99` 而教室只有 14 讲 → **抛错**（否则该块永不注入且不报错）。
 //
+// 🔴 FREQ-PARITY（2026-09-24）补一条同族教训 —— **"两处必须同改"要有人管**：
+//   教室 `classroom.yaml` 改了一个块的**频率语义**（`anchor.check`：`n_turns:5` → 相位门
+//   `every: phase` ＋ `except: [open]`），而引擎侧 F3 的期望块集还是旧语义 → 测试变红，
+//   但红的信息只有"某相位的块集不对"，**没人知道红的是哪两处**（另一条线做了一组对照实验才定位）。
+//   处置：F3 的期望值改成**从教室声明推导**（教室改语义 → 这里自动跟上），并新增 **F3b 签署表**
+//   ——教室语义一变就响亮报错，说清"哪一处改了、另一处没动"。两份判据的分工写在 F3 的注释里。
+//
 // 运行：/opt/homebrew/bin/node test/phase.test.mjs
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises'
+import { readFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -36,6 +45,8 @@ import { planTurnInjections } from '../lib/injector.mjs'
 const here = dirname(fileURLToPath(import.meta.url))
 // 真教室路径：test/ → socratic-engine/ → plugins/ → code/classrooms/cs-os
 const CS_OS = join(here, '..', '..', '..', 'classrooms', 'cs-os')
+/** 教室的 yaml 本体（F3b 要读它取行号与 sha256，用来把"两处"指到具体位置）。 */
+const CLASSROOM_YAML = join(CS_OS, 'classroom.yaml')
 
 // ── 脚手架 ───────────────────────────────────────────────────────────────────
 
@@ -553,19 +564,290 @@ test('🔴 F2 cs-os：curriculum.map 已改成「每讲一次」（once + anchor
   assert.equal(block.lesson, null, '已去掉无意义的讲次门（M2 待确认 C5）')
 })
 
-test('🔴 F3 cs-os：相位逐相位注入块集（钉住报告 §1 的对照表）', () => {
+// ── F3／F3b 用的两件东西（都在本文件里，**独立于**引擎的注入计划器）─────────────
+//
+// 🔴 为什么 F3 的期望值**不再写死一份块集**（FREQ-PARITY，2026-09-24）：
+//    写死的块集＝教室真值的第二副本。教室一改频率语义（那一次是 `anchor.check` 从
+//    `n_turns:5` 改成相位门 `every: phase` ＋ `except: [open]`），这里就变红，而红的信息
+//    只说"某相位的块集不对"——**没人知道红的是哪两处**（另一条线为此做了一组"冻结引擎 vs
+//    现盘教室"的对照实验才定位到成因）。现在期望值**从教室声明推导**：教室再改频率，这里
+//    自动跟上，不再留分叉点。
+//
+// 🔴 但"推导"**不能**发现"教室声明自己写错了"——推导器与计划器读的是同一份声明，会一起错。
+//    所以另加一份**签署表**（`SIGNED_FREQUENCY_GATES`，见 F3b）：教室语义一变就响亮报错，
+//    指名道姓说清"哪一处改了、另一处没动"。
+//    分工：**推导管"计划器有没有照教室声明执行"，签署表管"教室有没有在没人知道的情况下改语义"。**
+
+/** 相位门（独立实现；语义与 `lib/injector.mjs` 的 `phaseGate` 逐条一致）。 */
+function declaredPhaseAllows(gate, current) {
+  if (!gate) return true
+  if (Array.isArray(gate.except) && gate.except.includes(current)) return false
+  if (Array.isArray(gate.phases) && !gate.phases.includes(current)) return false
+  return true
+}
+
+/** 讲次门（独立实现；形状不认识就抛错，**不静默**当作"不放行"）。 */
+function declaredLessonAllows(gate, lesson) {
+  if (gate === null || gate === undefined) return true
+  if (gate.current === true) return gate.of === undefined || gate.of === lesson
+  if (Array.isArray(gate.list)) return gate.list.includes(lesson)
+  if (Array.isArray(gate.range)) return lesson >= gate.range[0] && lesson <= gate.range[1]
+  throw new Error(`讲次门形状不认识：${JSON.stringify(gate)} → 本推导器不猜（两处必须同改）`)
+}
+
+/**
+ * 从**教室声明**推导"记账表全空"时某相位的注入块集（独立实现，不调注入计划器）。
+ * @param {object} manifest — `loadManifest` 的结果
+ * @param {string} phase — 当前相位
+ * @param {{turnCount?:number, currentLesson?:number}} at — 回合号／讲次；记账表按**全空**算
+ *   （两种 `anchor` 的 `once` 都还没记过账 → 本回合在场）
+ */
+function deriveBlocksFromDeclarations(manifest, phase, at = {}) {
+  const turnCount = at.turnCount ?? 1
+  const currentLesson = at.currentLesson ?? 1
+  const due = []
+  for (const block of manifest.blocks) {
+    if (block.position.target !== 'chat') continue
+    if (!declaredLessonAllows(block.lesson, currentLesson)) continue
+    const every = block.frequency?.every
+    const gateOk = declaredPhaseAllows(block.phase, phase)
+    let byFrequency
+    switch (every) {
+      case 'once':
+      case 'turn':
+        byFrequency = true
+        break
+      case 'n_turns':
+        byFrequency = turnCount % block.frequency.n === 0
+        break
+      case 'phase':
+        byFrequency = gateOk
+        break
+      case 'on_demand':
+        byFrequency = false
+        break
+      default:
+        throw new Error(
+          `块 ${block.id} 的频率模式 ${JSON.stringify(every)} 本推导器不认识 —— ` +
+            '教室加了新语义而引擎侧（推导器＋签署表）没跟上＝两处必须同改；不许静默当作"不注入"',
+        )
+    }
+    if (!byFrequency) continue
+    if (!gateOk) continue // 与计划器一致：相位门可叠加在任意频率上
+    due.push(block.id)
+  }
+  return due
+}
+
+/** 一个块"与注入有关"的声明，规范化成一行（签署表与报错信息共用这一处口径）。 */
+function canonicalDeclaration(block) {
+  const gateText = () => {
+    if (!block.phase) return null
+    const bits = []
+    if (Array.isArray(block.phase.phases)) bits.push(`phases=${block.phase.phases.join(',')}`)
+    if (Array.isArray(block.phase.except)) bits.push(`except=${block.phase.except.join(',')}`)
+    return bits.length > 0 ? bits.join(';') : '无门（恒开）'
+  }
+  const parts = [block.position.target]
+  const freq = block.frequency ?? {}
+  if (freq.every === 'phase') {
+    parts.push(`phase(${gateText() ?? '无门（恒开）'})`)
+  } else {
+    let head = String(freq.every)
+    if (freq.every === 'n_turns') head += `(${freq.n})`
+    else if (freq.every === 'once' && freq.anchor) head += `(${freq.anchor})`
+    parts.push(head)
+    if (gateText()) parts.push(`phase(${gateText()})`)
+  }
+  if (block.lesson) {
+    const gate = block.lesson
+    if (gate.current === true) parts.push(`lesson(current${gate.of === undefined ? '' : `,of=${gate.of}`})`)
+    else if (Array.isArray(gate.list)) parts.push(`lesson(list=${gate.list.join(',')})`)
+    else if (Array.isArray(gate.range)) parts.push(`lesson(range=${gate.range.join('-')})`)
+    else parts.push(`lesson(${JSON.stringify(gate)})`)
+  }
+  return parts.join(' · ')
+}
+
+/**
+ * 🔴 **引擎侧对 cs-os 频率语义的签署表**（块 id → 上面那个规范化声明）。
+ *
+ * 这是"动这里的频率语义＝两处必须同改"里的**引擎侧那一处**（教室 `classroom.yaml` 自己的注释
+ * 就写着这句话）。它是**声明层的第二副本**，代价说清楚：教室改语义时它会红。
+ * 为什么仍然要它（而不是全交给 F3 的推导）：
+ *   F3 的期望是**从同一份教室声明推出来的**——教室声明自己配错（例如新教材块忘了挂讲次门）时
+ *   推导器会**跟着一起错**，这类问题就没人能发现了；T6 接线那轮正是靠 F3 当时写死的期望值才
+ *   抓到"13 条新教材块有没有挂上讲次门"（见该报告的自检节）。所以两份都要：
+ *   **推导管"计划器有没有照声明执行"，这份表管"教室有没有在没人知道的情况下改语义"。**
+ * 纪律：红了先判断是不是**有意**的；有意的就**逐条更新这里**（并检查引用同一份语义的别处：
+ *   报告里的逐相位对照表、`classroom.yaml` 自己的注释、`system_core.md`），误改就还原教室。
+ *   🔴 **不许把这条判据删掉或放宽来"变绿"**——那正是本表要防的静默分叉。
+ */
+const SIGNED_FREQUENCY_GATES = {
+  'persona.komari': 'system · once',
+  'teach.system_core': 'system · once',
+  'world.setting': 'system · once',
+  'world.metaphor': 'system · once',
+  'anchor.rules': 'chat · turn',
+  'anchor.lesson_ban': 'chat · turn',
+  'anchor.voice': 'system · once',
+  'anchor.check': 'chat · phase(except=open)',
+  'story.arc_gate': 'chat · once · lesson(list=1)',
+  'curriculum.map': 'chat · once(lesson_start)',
+  'kp.current': 'chat · phase(phases=check,close)',
+  'story.node.01': 'chat · phase(phases=open) · lesson(current,of=1)',
+  'story.node.02': 'chat · phase(phases=open) · lesson(current,of=2)',
+  'story.node.03': 'chat · phase(phases=open) · lesson(current,of=3)',
+  'story.node.04': 'chat · phase(phases=open) · lesson(current,of=4)',
+  'story.node.05': 'chat · phase(phases=open) · lesson(current,of=5)',
+  'story.node.06': 'chat · phase(phases=open) · lesson(current,of=6)',
+  'story.node.07': 'chat · phase(phases=open) · lesson(current,of=7)',
+  'story.node.08': 'chat · phase(phases=open) · lesson(current,of=8)',
+  'story.node.09': 'chat · phase(phases=open) · lesson(current,of=9)',
+  'story.node.10': 'chat · phase(phases=open) · lesson(current,of=10)',
+  'story.node.11': 'chat · phase(phases=open) · lesson(current,of=11)',
+  'story.node.12': 'chat · phase(phases=open) · lesson(current,of=12)',
+  'story.node.13': 'chat · phase(phases=open) · lesson(current,of=13)',
+  'story.node.14': 'chat · phase(phases=open) · lesson(current,of=14)',
+  'material.current.01': 'chat · phase(phases=probe,check) · lesson(current,of=1)',
+  'material.current.02': 'chat · phase(phases=probe,check) · lesson(current,of=2)',
+  'material.current.03': 'chat · phase(phases=probe,check) · lesson(current,of=3)',
+  'material.current.04': 'chat · phase(phases=probe,check) · lesson(current,of=4)',
+  'material.current.05': 'chat · phase(phases=probe,check) · lesson(current,of=5)',
+  'material.current.06': 'chat · phase(phases=probe,check) · lesson(current,of=6)',
+  'material.current.07': 'chat · phase(phases=probe,check) · lesson(current,of=7)',
+  'material.current.08': 'chat · phase(phases=probe,check) · lesson(current,of=8)',
+  'material.current.09': 'chat · phase(phases=probe,check) · lesson(current,of=9)',
+  'material.current.10': 'chat · phase(phases=probe,check) · lesson(current,of=10)',
+  'material.current.11': 'chat · phase(phases=probe,check) · lesson(current,of=11)',
+  'material.current.12': 'chat · phase(phases=probe,check) · lesson(current,of=12)',
+  'material.current.13': 'chat · phase(phases=probe,check) · lesson(current,of=13)',
+  'material.current.14': 'chat · phase(phases=probe,check) · lesson(current,of=14)',
+  'state.progress': 'chat · turn',
+  'state.learner': 'chat · n_turns(5)',
+  'state.mistakes': 'chat · phase(phases=open,check)',
+  'state.review': 'chat · phase(phases=open)',
+  'state.session_log': 'chat · on_demand',
+  'state.archive': 'chat · on_demand',
+  'state.diary': 'chat · on_demand · phase(phases=close)',
+  'state.wechat': 'chat · on_demand',
+}
+
+/** 教室 yaml 里某个块 id 的行号（只用于报错信息里指路；找不到 → null）。 */
+function yamlLineOfBlock(yamlText, id) {
+  const at = yamlText.split('\n').findIndex((line) => line.trim() === `- id: ${id}`)
+  return at === -1 ? null : at + 1
+}
+
+test('🔴 F3 cs-os：相位逐相位注入块集（期望值**从教室声明推导**，不再写死一份块集）', () => {
   const m = loadManifest(CS_OS)
-  const expected = {
-    open: ['anchor.rules', 'anchor.lesson_ban', 'story.arc_gate', 'curriculum.map', 'story.node.01', 'state.progress', 'state.mistakes', 'state.review'],
-    probe: ['anchor.rules', 'anchor.lesson_ban', 'story.arc_gate', 'curriculum.map', 'material.current.01', 'state.progress'],
-    answer: ['anchor.rules', 'anchor.lesson_ban', 'story.arc_gate', 'curriculum.map', 'state.progress'],
-    check: ['anchor.rules', 'anchor.lesson_ban', 'story.arc_gate', 'curriculum.map', 'kp.current', 'material.current.01', 'state.progress', 'state.mistakes'],
-    review: ['anchor.rules', 'anchor.lesson_ban', 'story.arc_gate', 'curriculum.map', 'state.progress'],
-    close: ['anchor.rules', 'anchor.lesson_ban', 'story.arc_gate', 'curriculum.map', 'kp.current', 'state.progress'],
+  const domain = phaseDomainOf(m)
+  assert.deepEqual(domain, ['open', 'probe', 'answer', 'check', 'review', 'close'])
+  // 两个状态各跑一遍六相位：① 冷启动（第 1 回合／第 1 讲）；② 第 5 回合（`n_turns:5` 的那几块进场）。
+  const ats = [
+    { label: '第 1 回合（冷启动）', turnCount: 1, currentLesson: 1 },
+    { label: '第 5 回合', turnCount: 5, currentLesson: 1 },
+  ]
+  for (const at of ats) {
+    for (const phase of domain) {
+      const want = deriveBlocksFromDeclarations(m, phase, at)
+      const got = ids(
+        planTurnInjections(m.blocks, freshState(phase, { turnCount: at.turnCount, currentLesson: at.currentLesson })),
+      )
+      assert.deepEqual(
+        got,
+        want,
+        `${at.label} · ${phase} 相位：计划器算出的块集 ≠ 从教室声明推导的块集` +
+          '（要么计划器没照声明执行，要么教室声明改了而引擎侧没跟上）',
+      )
+    }
   }
-  for (const [phase, want] of Object.entries(expected)) {
-    assert.deepEqual(ids(planTurnInjections(m.blocks, freshState(phase, { currentLesson: 1 }))), want, phase)
+  // 门真的在动：六个相位不得推出同一个集合（否则＝相位门恒开，是假门）
+  const perPhase = domain.map((phase) => deriveBlocksFromDeclarations(m, phase, ats[0]).join(','))
+  assert.ok(new Set(perPhase).size > 1, '六个相位的块集完全相同 → 相位门恒开（假门），必须查')
+  // 🔴 本轮（FREQ-PARITY）跟改的那条语义——`anchor.check` 走相位门、六个相位里除 `open` 外都放行
+  //    ——**不在这里另写一遍**（写第二遍＝第二个分叉点）：它的唯一手写维护点是下面 F3b 签署表里
+  //    那一行 `'anchor.check': 'chat · phase(except=open)'`，那行一变就响亮报错；逐相位的期望值
+  //    则由本条的推导自动跟上。`open` 不放行 / 其余五个放行这条事实，由"推导 vs 计划器"逐相位
+  //    比对（含 open 相位）来保证。
+})
+
+test('🔴 F3 推导器自身：遇到它不认识的语义 → 抛错（不许静默当作"不注入"）', () => {
+  // 这一条守的是**未来**：若有人给 schema 加了新频率模式而计划器/推导器没跟上，
+  // 计划器会静默"永不注入"（本项目最怕的形态）→ 推导器必须当场喊出来。
+  const fake = (block) => ({ blocks: [{ position: { target: 'chat' }, phase: null, lesson: null, ...block }] })
+  assert.throws(
+    () => deriveBlocksFromDeclarations(fake({ id: 'x', frequency: { every: 'weird' } }), 'open', {}),
+    /频率模式 "weird" 本推导器不认识/,
+  )
+  assert.throws(
+    () => deriveBlocksFromDeclarations(fake({ id: 'y', frequency: { every: 'turn' }, lesson: { weird: true } }), 'open', {}),
+    /讲次门形状不认识/,
+  )
+  // 反向对照：认识的语义不得误抛
+  assert.deepEqual(
+    deriveBlocksFromDeclarations(fake({ id: 'z', frequency: { every: 'turn' } }), 'open', {}),
+    ['z'],
+  )
+})
+
+test('🔴 F3b cs-os：教室频率语义 vs 引擎侧签署表 —— 不一致就报「两处必须同改」', () => {
+  const m = loadManifest(CS_OS)
+  const yamlText = readFileSync(CLASSROOM_YAML, 'utf8')
+  const sha = createHash('sha256').update(yamlText, 'utf8').digest('hex')
+  const now = new Map(m.blocks.map((block) => [block.id, canonicalDeclaration(block)]))
+  const changed = []
+  const removed = []
+  const added = []
+  for (const [id, signed] of Object.entries(SIGNED_FREQUENCY_GATES)) {
+    if (!now.has(id)) removed.push({ id, signed })
+    else if (now.get(id) !== signed) changed.push({ id, signed, now: now.get(id) })
   }
+  for (const [id, value] of now) {
+    if (!Object.prototype.hasOwnProperty.call(SIGNED_FREQUENCY_GATES, id)) added.push({ id, now: value })
+  }
+  if (changed.length === 0 && removed.length === 0 && added.length === 0) return
+
+  const where = (id) => {
+    const line = yamlLineOfBlock(yamlText, id)
+    return line === null ? '' : `（classroom.yaml 第 ${line} 行）`
+  }
+  const out = [
+    '',
+    '🔴 教室的频率语义与引擎侧签署表**不一致（＝两处不同步）** —— 「动这里的频率语义＝两处必须同改」',
+    '',
+    '这两处分别是：',
+    `  ① 教室侧：code/classrooms/cs-os/classroom.yaml（现盘 sha256 ${sha.slice(0, 16)}…）`,
+    '  ② 引擎侧：本文件（test/phase.test.mjs）的 SIGNED_FREQUENCY_GATES 签署表',
+    '',
+  ]
+  if (changed.length > 0) {
+    out.push(`改了 ${changed.length} 条（教室已经变了，签署表还是旧语义）：`)
+    for (const c of changed) {
+      out.push(`  · ${c.id}${where(c.id)}`)
+      out.push(`      签署表：${c.signed}`)
+      out.push(`      现盘　：${c.now}`)
+    }
+    out.push('')
+  }
+  if (removed.length > 0) {
+    out.push(`删了 ${removed.length} 条（签署表里有、教室里已经找不到）：`)
+    for (const r of removed) out.push(`  · ${r.id}　签署表：${r.signed}`)
+    out.push('')
+  }
+  if (added.length > 0) {
+    out.push(`新增 ${added.length} 条（教室里新出现的块，签署表里没有）：`)
+    for (const a of added) out.push(`  · ${a.id}${where(a.id)}　现盘：${a.now}`)
+    out.push('')
+  }
+  out.push(
+    '怎么修（二选一，都不许"把判据放宽"）：',
+    '  · 这是**有意**的改动 → 逐条更新上面那张签署表（每块一行），并检查引用同一份语义的别处：',
+    '    报告里的逐相位对照表、classroom.yaml 自己的注释、system_core.md 的相位段；然后重跑。',
+    '  · 这是**误改** → 还原教室 classroom.yaml。',
+    '🔴 不许删掉或放宽这条判据来变绿 —— 那正是它要防的静默分叉（下一个人会看到一条没人能解释的红测试）。',
+  )
+  throw new Error(out.join('\n'))
 })
 
 test('🔴 F4 cs-os：curriculum.map 每讲一次（同讲不重注、换讲重注）', () => {

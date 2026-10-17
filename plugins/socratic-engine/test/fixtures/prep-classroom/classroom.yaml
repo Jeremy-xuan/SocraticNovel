@@ -1,0 +1,74 @@
+format: socratic-classroom/0
+
+# ============================================================================
+# ANIM-PREP fixture：声明了 `animation:` ＋ `prep:` 的最小教室。
+# 🔴 它**只用于单测**（test/prep.test.mjs），不是任何真实教室。
+#    真实教室 code/classrooms/cs-os/** 一个字都没改（本批不许碰）。
+# ============================================================================
+
+classroom:
+  id: prep-fixture
+  title: 备课 fixture 教室
+  lessons: 14
+
+runtime_store:
+  dir: runtime/
+  progress: runtime/progress.md
+  lesson_key: current_lesson
+
+animation:
+  enabled: true
+
+prep:
+  items:
+    - id: fifo-vs-sjf
+      lesson: 3
+      template: timeline
+      title: 长任务怎么堵住短任务？
+      material: materials/ch03.md
+      caption: 针对"FIFO 会让长任务把后面全堵住"这一步
+      params:
+        note: 周转时间 = 完成时刻 − 到达时刻
+        lanes:
+          - label: 先到先服务（FIFO）：A → B → C
+            segments:
+              - { start: 0, end: 100, label: A, color: blue, endLabel: "100" }
+              - { start: 100, end: 110, label: B, color: amber, endLabel: "110" }
+          - label: 最短作业优先（SJF）：B → C → A
+            segments:
+              - { start: 0, end: 10, label: B, color: amber, endLabel: "10" }
+              - { start: 10, end: 120, label: A, color: blue, endLabel: "120" }
+    - id: avg-turnaround
+      lesson: 3
+      template: bar_compare
+      title: 三种调度的平均周转时间
+      material: materials/ch03.md
+      required: false
+      params:
+        highlight: SJF
+        items:
+          - { label: FIFO, value: 96.7 }
+          - { label: SJF, value: 50.0 }
+    - id: process-states
+      lesson: 5
+      template: state_machine
+      title: 一个进程的一生：三态怎么走
+      material: materials/ch05.md
+      params:
+        states:
+          - { id: ready, label: 就绪 }
+          - { id: running, label: 运行 }
+          - { id: blocked, label: 阻塞 }
+        transitions:
+          - { from: ready, to: running, label: 被调度 }
+          - { from: running, to: blocked, label: 等 I/O }
+          - { from: blocked, to: ready, label: I/O 完成 }
+        walk: [ready, running, blocked, ready]
+
+blocks:
+  - id: anchor
+    path: _anchor.md
+    layer: discipline
+    position: { target: chat, depth: 0 }
+    frequency: { every: turn }
+    wrap: { style: system-reminder }

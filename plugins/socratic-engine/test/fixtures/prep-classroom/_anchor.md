@@ -1,0 +1,1 @@
+- 白板内容一律用 classroom_draw 画。
