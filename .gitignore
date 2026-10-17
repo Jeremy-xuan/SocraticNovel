@@ -11,6 +11,43 @@ Thumbs.db
 # Session/temp
 .copilot/
 
+# Node 依赖（依赖经 npm ci 重装，不入库）
+node_modules/
+npm-debug.log*
+
+# Python 字节码产物（`tools/animation-gate/*.py`、引擎的 `lib/animation-runner.py` 跑起来就会生成）
+__pycache__/
+*.pyc
+*.pyo
+
+# DSH 的本地任务板数据库（运行时产物）
+# 🔴 只忽略这一个库，**不忽略整个 `.dsh/`** —— 那里面将来可能放项目技能与配置（要入库）。
+# `*` 覆盖 SQLite 的边车文件（`-wal` / `-shm` / `-journal`）。
+.dsh/taskboard.sqlite*
+
+# ── 验收流水线的运行产物与报告生成物（每次跑自己重建）─────────────────────────
+# acceptance/runs/            —— 每次运行一个目录：冻结源码副本、会话原始事件流、哈希清单、断言证据
+# acceptance/验收报告_最新.md   —— 只指向最近一次运行的人读报告
+# acceptance/降级留痕.md        —— 显式降级的跨运行追加留痕
+# acceptance/negative-control/ —— 负向对照故意在允许写的位置之外写的那一个文件（跑完自动清）
+# 📌 `acceptance/.gitignore` 已按同一口径局部忽略过一遍；这里补一份是让"仓库根一眼看得见"。
+acceptance/runs/
+acceptance/验收报告_最新.md
+acceptance/降级留痕.md
+acceptance/negative-control/
+# 📌 `prototypes/stage3/.gitignore` 已忽略 stage3/shots/（12 屏截图，约 7MB），此处不重复。
+
+# ── Live2D 渲染宿主（clients/live2d-host）的运行产物与依赖 ──────────────────────
+# 🔴 只忽略**产物**：vendor/ 下的官方框架源码与 samples/ 是源码资产，不在忽略之列。
+clients/live2d-host/out/
+clients/live2d-host/evidence/
+clients/live2d-host/tmp_expr*/
+clients/live2d-host/vendor/node_modules/
+
+# ── classroom-ui 的取证产物与临时目录 ──────────────────────────────────────────
+clients/classroom-ui/evidence/
+clients/classroom-ui/tmp_expr*/
+
 # Copyrighted materials (textbooks, workbooks)
 AP_Physics_EM/materials/textbook/
 AP_Physics_EM/materials/练习册/

@@ -268,6 +268,27 @@ SocraticNovel 不一样。15+ 个文件各司其职——学习进度、课堂�
 
 ---
 
+## ✅ 仓库验收（贡献者 / 复现基线）
+
+本仓库自带一个零新依赖的验收入口 `check.mjs`，把「可复现基线」要查的四件事串成统一通过/失败口径与退出码：
+
+1. **技能自检** `skills/socratic-classroom/validate`（跑默认镜像教室）
+2. **教室真源 ↔ 技能镜像** 字节一致（`classrooms/cs-os` 与 `skills/socratic-classroom/classroom` 全文件 sha256 比对）
+3. **客户端面板测试** `clients/classroom-ui/test/panel.test.mjs`
+4. **引擎单元测试** `plugins/socratic-engine`（`npm test`）
+
+跑法（依赖经 `npm ci` 重装，不入库）：
+
+```bash
+node check.mjs                 # 跑全部 ①②③④
+node check.mjs --skill         # 只跑 ①②（纯本地，不需引擎依赖）
+node check.mjs --node <exe>    # 指定运行 node 可执行文件（默认 process.execPath）
+```
+
+退出码 `0` = 全部通过；`1` = 有任一检查失败。引擎/技能依赖缺失时该步会**明确报错并计为失败**，不会静默跳过。
+
+---
+
 ## 🏗 系统运行逻辑
 
 ```

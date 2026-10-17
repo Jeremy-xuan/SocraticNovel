@@ -251,6 +251,27 @@ Two interaction triggers: say "check messages" to view the group chat, say "done
 
 ---
 
+## ✅ Repository Check (Contributors / Reproducible Baseline)
+
+This repo ships a zero-extra-dependency acceptance entry `check.mjs` that chains the four reproducible-baseline checks into one pass/fail verdict and exit code:
+
+1. **Skill self-check** `skills/socratic-classroom/validate` (runs the default mirror classroom)
+2. **Classroom source ↔ skill mirror** byte-identical (`classrooms/cs-os` vs `skills/socratic-classroom/classroom`, full-file sha256)
+3. **Client panel test** `clients/classroom-ui/test/panel.test.mjs`
+4. **Engine unit tests** `plugins/socratic-engine` (`npm test`)
+
+Run it (deps reinstalled via `npm ci`, not committed):
+
+```bash
+node check.mjs                 # run all ①②③④
+node check.mjs --skill         # only ①② (local, no engine deps needed)
+node check.mjs --node <exe>    # specify the node executable (default process.execPath)
+```
+
+Exit code `0` = all passed; `1` = at least one check failed. A missing engine/skill dependency makes that step **report and count as a failure** instead of failing silently.
+
+---
+
 ## 🏗 How It Works
 
 ```
