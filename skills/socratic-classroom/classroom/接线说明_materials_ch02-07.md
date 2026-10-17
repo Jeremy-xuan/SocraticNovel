@@ -9,9 +9,9 @@
 
 `classroom.yaml` 的 C · 情境层目前**只有一条**教材块：
 
-- `material.current.01`（`classroom.yaml` 第 **391–399** 行），`path: materials/ch01.md`，`lesson: { current: true, of: 1 }`，相位门 `[probe, check]`。
+- `material.current.01`（`classroom.yaml` 第 **405–414** 行），`path: materials/ch01.md`，`lesson: { current: true, of: 1 }`，相位门 `[probe, check]`。
 
-其上方第 **384–390** 行的注释说明了原因：**校验器对 `path` 用 `readFileSync`，文件不存在即抛错**，所以当时只能声明磁盘上真实存在的 `ch01.md`。
+其上方第 **389–403** 行的注释说明了原因：**校验器对 `path` 用 `readFileSync`，文件不存在即抛错**，所以当时只能声明磁盘上真实存在的 `ch01.md`。
 
 🔴 **该注释里的"ch02–ch14 磁盘上不存在"现在已经过期**：本路已落盘 `materials/ch02.md` … `materials/ch07.md`（6 个文件，见第四节实测字节）。**接线的同时请一并更新第 384–390 行的注释**（它现在会误导后来人）。第 8–14 讲由另一路负责，不在此文件承诺。
 
@@ -19,7 +19,7 @@
 
 ## 二、插到哪里
 
-**位置**：紧接在 `material.current.01` 块之后（即第 **400** 行那个空行处），**在第 401 行 `# D · 状态层` 的分隔注释之前**。
+**位置**：紧接在 `material.current.01` 块之后（即第 **415** 行那个空行处），**在第 562 行 `# D · 状态层` 的分隔注释之前**。
 
 即：
 
@@ -125,15 +125,15 @@
 
 **实测字节（`wc -c`，2026-09-24）**：
 
-| 文件 | 字节 | 与 `ch01.md`（7975B）之比 |
+| 文件 | 字节 | 与 `ch01.md`（6918B）之比 |
 |---|---|---|
-| `materials/ch01.md`（基准） | 7975 | 1.00 |
-| `materials/ch02.md` | 8181 | 1.03 |
-| `materials/ch03.md` | 10053 | 1.26 |
-| `materials/ch04.md` | 9690 | 1.21 |
-| `materials/ch05.md` | 9168 | 1.15 |
-| `materials/ch06.md` | 10539 | 1.32 |
-| `materials/ch07.md` | 11311 | 1.42 |
+| `materials/ch01.md`（基准） | 6918 | 1.00 |
+| `materials/ch02.md` | 8181 | 1.18 |
+| `materials/ch03.md` | 10053 | 1.45 |
+| `materials/ch04.md` | 9690 | 1.40 |
+| `materials/ch05.md` | 9168 | 1.33 |
+| `materials/ch06.md` | 10539 | 1.52 |
+| `materials/ch07.md` | 11311 | 1.64 |
 
 多出来的部分是**每讲末尾的「本讲知识点覆盖对照表」**（本批正文的强制交付项，`ch01.md` 没有这一节）。除该表外，各讲的小节结构与 `ch01.md` 一一对应。
 

@@ -59,6 +59,145 @@ runtime_store:
   progress: runtime/progress.md
   lesson_key: current_lesson
 
+# ── 教学动画开关（ANIM-ENABLE，2026-09-24；消费方 = lib/manifest.mjs 的 normalizeAnimation）──
+# 🔴 语义（写死，逐字见 lib/manifest.mjs:155-184）：**教室声明"我这一课要不要放教学动画"**，
+#    引擎只实现机制。段**缺席** → manifest 里根本不挂 animation 键 → 引擎不注册
+#    `classroom_animate` / `classroom_animation_status`、不注入动画纪律段、不产生就绪通报
+#    → 老教室行为逐字不变。段在场且 enabled 不为 false → 工具与纪律段都挂上。
+# 🔴 这里**只写最小集**（引擎只认 `enabled` 一个子键，写别的键会报错，见 ANIMATION_KEYS）：
+#    渲染器路径（python / manim / quality / gate / gatePython）**不写在这里**——那是**部署事实**，
+#    不是课程内容；由 profile 的 `socratic-engine` config.animation（或环境变量）提供。
+#    → 本教室声明了 animation 而部署没配渲染环境时，**装载时就报错**（不留到课堂上才炸）。
+# 🔴 为什么必须有一条配套的渠道纪律：ANIM-ORCH 实测——只挂工具、内容侧不提动画时，
+#    模型两个点位上一次都没调 `classroom_animate`（全走 `classroom_draw`）。
+#    渠道纪律写在 `_anchor.md`「本课不许违反项」（每轮贴尾注入）。
+animation:
+  enabled: true
+
+# ── 备课清单（ANIM-PREP-ENABLE，2026-09-24；消费方 = lib/manifest.mjs 的 normalizePrep）──
+# 🔴 语义（写死；形状与校验口径逐字见 lib/prep.mjs 的文件头）：
+#    教室在这里**预先声明**「第几讲要放哪几段动画、用哪个模板、参数是多少」→ 引擎**开课前**
+#    就能把参数拼成脚本、把脚本渲成片子（**零模型调用**）；课上老师按 `id`（＝工具入参 `prepId`）
+#    **取用**，命中缓存**基本不用等**。没有这段声明，课上就只能现场套模板（要等一小会儿）
+#    或自己写脚本（明显更慢）。
+# 🔴 三条硬约束（写错**报错**，不静默）：
+#    ① 每条的 `material` 必须是**相对本教室目录的真实文件**：它是**缓存键**的教材内容哈希来源
+#       （教材改了 → 键变 → 自动重渲）。指错了不会报错、只会每次上课都重渲一遍——故引擎校验存在性；
+#    ② `template` / `params` 用**与课堂上调 `classroom_animate_template` 完全同一个校验器**
+#       （课前写声明与课上现生成不会各有一套判据）；
+#    ③ 声明了本段却缺 `animation: {enabled: true}` → 报错（死配置：预热跑不了、工具也没注册）。
+# 🔴 只放**本讲真会出现**的图元，不放占位：每条都要花一次渲染时间，占了不用就是白花。
+# 🔴 与渠道纪律的关系：本清单是渠道②（"取备好的"）的唯一来源，纪律写在 `_anchor.md`「本课不许违反项」。
+#    教材依据（逐条）：
+#    · ctx-switch       ← materials/ch01.md §2「切换时为什么要保存状态」（2026-09-24 合入用户新版后该节改名，原为「片段一」）
+#    · proc-lifecycle   ← materials/ch02.md §片段三「僵尸进程……父进程取走后，记录才被释放」
+#    · fifo-vs-sjf      ← materials/ch03.md「关键关口」第 1 段（A 需 100、B/C 各需 10，0 时刻到达）
+#    · avg-turnaround   ← 同上（平均周转 110 / 50；平均响应 70 / 10，都是那组数算出来的）
+#    · race-interleaving← materials/ch09.md「线程 A 读到 0 → 线程 B 也读到 0 → A 写 1 → B 写 1」
+prep:
+  items:
+    # ── 第 1 讲 · 一个程序怎么跑起来 ────────────────────────────────────────
+    - id: ctx-switch
+      lesson: 1
+      template: timeline
+      title: 两个进程轮流用 CPU（上下文切换）
+      material: materials/ch01.md
+      caption: 针对「切走时为什么要保存执行位置与寄存器」这一步
+      params:
+        unit: 时间单位
+        note: 切走时保存执行位置与寄存器，切回来时恢复
+        lanes:
+          - label: 进程 A：执行 → 被切走 → 再执行
+            segments:
+              - { start: 0, end: 2, label: A 执行, color: blue, endLabel: "2" }
+              - { start: 4, end: 6, label: A 执行, color: blue, endLabel: "6" }
+          - label: 进程 B：在 A 被切走的间隙里跑
+            segments:
+              - { start: 2, end: 4, label: B 执行, color: amber, endLabel: "4" }
+              - { start: 6, end: 8, label: B 执行, color: amber, endLabel: "8" }
+
+    # ── 第 2 讲 · 进程的 API 与生命周期 ─────────────────────────────────────
+    - id: proc-lifecycle
+      lesson: 2
+      template: state_machine
+      title: 子进程退出之后为什么还留着（僵尸 → 回收）
+      material: materials/ch02.md
+      caption: 针对「僵尸进程不是 bug，是父进程还没来取件」这一步
+      params:
+        note: 父进程取走退出状态之前，内核保留一小份记录
+        states:
+          - { id: running, label: 运行 }
+          - { id: zombie,  label: 僵尸 }
+          - { id: reaped,  label: 已回收 }
+        transitions:
+          - { from: running, to: zombie, label: exit 退出 }
+          - { from: zombie,  to: reaped, label: 父进程 wait }
+        walk: [running, zombie, reaped]
+
+    # ── 第 3 讲 · 调度 ──────────────────────────────────────────────────────
+    - id: fifo-vs-sjf
+      lesson: 3
+      template: timeline
+      title: 长任务怎么堵住短任务（FIFO vs SJF）
+      material: materials/ch03.md
+      caption: 针对「FIFO 会让长任务把后面全堵住」这一步
+      params:
+        note: 周转时间 = 完成时刻 − 到达时刻
+        lanes:
+          - label: 先到先服务（FIFO）：A → B → C
+            segments:
+              - { start: 0, end: 100, label: A, color: blue, endLabel: "100" }
+              - { start: 100, end: 110, label: B, color: amber, endLabel: "110" }
+          - label: 最短作业优先（SJF）：B → C → A
+            segments:
+              - { start: 0, end: 10, label: B, color: amber, endLabel: "10" }
+              - { start: 10, end: 120, label: A, color: blue, endLabel: "120" }
+    - id: avg-turnaround
+      lesson: 3
+      template: bar_compare
+      title: 三种调度的平均周转时间
+      material: materials/ch03.md
+      required: false
+      params:
+        highlight: SJF
+        items:
+          - { label: FIFO, value: 96.7 }
+          - { label: SJF, value: 50.0 }
+    - id: process-states
+      lesson: 5
+      template: state_machine
+      title: 一个进程的一生：三态怎么走
+      material: materials/ch05.md
+      params:
+        states:
+          - { id: ready, label: 就绪 }
+          - { id: running, label: 运行 }
+          - { id: blocked, label: 阻塞 }
+        transitions:
+          - { from: ready, to: running, label: 被调度 }
+          - { from: running, to: blocked, label: 等 I/O }
+          - { from: blocked, to: ready, label: I/O 完成 }
+        walk: [ready, running, blocked, ready]
+
+    # ── 第 9 讲 · 并发 ──────────────────────────────────────────────────────
+    - id: race-interleaving
+      lesson: 9
+      template: timeline
+      title: 两条线程交错读写同一块内存会读出什么
+      material: materials/ch09.md
+      caption: 针对「线程 A 读到 0 → 线程 B 也读到 0 → A 写 1 → B 写 1」这一步
+      params:
+        note: 没有同步时，交错顺序决定最终结果
+        lanes:
+          - label: 线程 A：读 x → 写 x=1
+            segments:
+              - { start: 0, end: 2, label: A 读 x=0, color: blue, endLabel: "0" }
+              - { start: 2, end: 4, label: A 写 x=1, color: blue, endLabel: "1" }
+          - label: 线程 B：读 x → 写 x=1
+            segments:
+              - { start: 1, end: 3, label: B 读 x=0, color: amber, endLabel: "0" }
+              - { start: 3, end: 5, label: B 写 x=1, color: amber, endLabel: "1" }
+
 # ── 教学相位枚举（草案 §2.0；顺序即推进顺序）──────────────────────────────
 # ✅ P0-1 已修（2026-09-23）：相位值域由本声明驱动，引擎不再硬编码。
 #    块里出现的相位 id 不在本列表内 → 引擎**报错**（不静默不注入）。
@@ -137,12 +276,25 @@ blocks:
   #   ① anchor.rules       「教学取向」              freq=turn（每轮）   chat/depth 0
   #   ② anchor.lesson_ban  「本课不许违反项（每讲更新）」freq=turn（每轮）   chat/depth 0
   #   ③ anchor.voice       「角色声音速查（生成任何台词前看一眼）」freq=once  **system**（① 常驻层）
-  #   ④ anchor.check       「教学检查（需要校准时使用）」freq=n_turns n=5  chat/depth 0
+  #   ④ anchor.check       「教学检查（需要校准时使用）」freq=phase（除 open 相位外）chat/depth 0
   # 依据：文件自述"把最硬的纪律放到**贴近本轮对话**的位置。每轮上课前读一次"（→ ①②每轮）；
   #   ②段自带"（每讲更新）"→ 每轮注入才跟得上换讲；
   #   ③段整门课不变（草案 §4.5 冲突 1：它占了 ② 纪律层体量的一半，且承担"非当课老师轻量人格"）
   #     → 提到 ① 常驻层走系统段；
-  #   ④段原文"第 5、10、15… 轮"（文件内自述）→ n_turns n=5，与 state.learner 同频。
+  #   ④段**不设频率配额**：新版 META_PROMPT v2.3 标准② 明写 `_anchor.md` 是"简短的课中锚点，
+  #     不设置问句或自检频率配额"；段名本身就是"**需要校准时使用**"，不是"每 N 轮"（故不再 n_turns=5）。
+  #     🔴 但它**也不能是 `on_demand`**（ALIGN-EXEC2 实测）：注入计划器对 `on_demand` 直接
+  #     `inject = false`（注释写的是"工具/相位触发路径"，而工具路径尚未实现）
+  #     → **标 on_demand ＝ 这个块永久不注入**，不是"按需出现"。
+  #     → ALIGN-EXEC3 改 **`every: phase` ＋ `phase: { except: [open] }`**：相位门是**活门**
+  #       （逐回合按当前相位裁决），六个相位里除 `open` 外都在场，且**不按回合数计配额**。
+  #       为什么排除 `open`（开场）：四问都要以"已经有师生往来"为前提——开场相位还没有可校准的往来。
+  #       🔴 为什么不写成不带 `phase:` 的裸 `every: phase`：那种写法 phaseGate 恒真
+  #       （`if (!phase) return true`）＝每轮注入、与相位无关，正是本项目禁止的
+  #       "看起来配了门、其实门恒开"；要收窄/换相位只需改这一行 `phase:`。
+  # 🔴 频率语义在**验收侧有第二份独立实现**（`code/acceptance/lib/asserts.mjs` 的
+  #   `predictTurnBlocks`，逐条复刻 once/turn/n_turns/phase/on_demand 的判定）
+  #   → **动这里的频率语义＝两处必须同改**，否则验收仍按旧语义推期望块清单。
   # ⚠️ 讲次门**不加**在这四块上：它们是**跨讲常驻的纪律**，不随讲次变化
   #   （"每讲更新"指的是人更新内容，不是引擎按讲切换——内容更新由课后流程改文件）。
 
@@ -178,13 +330,17 @@ blocks:
     frequency: { every: once }
     render: { enabled: false }
 
-  # ④ 教学检查（需要校准时使用）—— 每 5 回合
+  # ④ 教学检查（需要校准时使用）—— 相位门（除开场相位外都在场），不设回合配额
+  #    🔴 语义＝**逐回合按当前相位裁决**（引擎里 `every: phase` 就是这条门，没有"每次相位切换注入一次"这种模式）；
+  #    `phase.except: [open]` ＝ 六个相位里只有开场不放行。
+  #    为什么不用 on_demand：引擎对 on_demand 恒不注入（依据见上方 ④ 段）——那是"永久不出现"，不是"按需"。
   - id: anchor.check
     path: _anchor.md
     section: 教学检查（需要校准时使用）
     layer: anchor
     position: { target: chat, depth: 0 }
-    frequency: { every: n_turns, n: 5 }
+    frequency: { every: phase }
+    phase: { except: [open] }
     wrap: { style: system-reminder }
     render: { enabled: false }
 
@@ -383,7 +539,7 @@ blocks:
 
   # materials/ch01–ch14.md · 草案 §4.3 `material.current`
   # 🔴 事实更新（2026-09-24 · T6 教材接线）：**14 讲正文已全部落盘**
-  #    （`wc -c` 实测合计 163455 B：ch01 7975／ch02 8181／ch03 10053／ch04 9690／ch05 9168／
+  #    （`wc -c` 实测合计 162398 B：ch01 6918／ch02 8181／ch03 10053／ch04 9690／ch05 9168／
   #     ch06 10539／ch07 11311／ch08 12249／ch09 11535／ch10 12275／ch11 14371／ch12 15481／
   #     ch13 14177／ch14 16450）→ 本文件按同一模板**逐讲声明 14 条**：
   #    `material.current.01`–`material.current.14`，`lesson.of` 与讲次一一对应。

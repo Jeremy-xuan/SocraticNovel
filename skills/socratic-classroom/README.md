@@ -86,29 +86,42 @@ node <技能目录>/socratic-classroom/validate
 |---|---|
 | `SKILL.md` | 技能本体。DSH 在会话开始时只读它的名字和一句话说明；真正上课时才读全文 |
 | `classroom/` | **教室内容**（自包含副本）。课程表、知识点、故事节点、教材正文、教师人格、世界观、纪律便条、运行记录，都在这里 |
-| `validate` | 自检命令 |
+| `validate` | 自检命令（依赖声明在 `package.json`，经 `npm ci` 安装） |
 | `sync-classroom.sh` | 把源教室目录同步进 `classroom/`（改教室内容后跑一次，副本才跟上） |
-| `node_modules/yaml` | 自检用的 YAML 解析器，随包附带 |
 
 ### 依赖来源
 
-`validate` 只用 Node 内置模块，外加一个 YAML 解析器 `yaml`（v2.6.1）。
+`validate` 只用 Node 内置模块，外加一个 YAML 解析器 `yaml`（**钉在 2.6.1**）。
 
-它是**复制过来的，不是新装的**：来源是本仓库里教学插件 `code/plugins/socratic-engine/`
-本来就声明的依赖（同一个包、同一版本），复制一份进包内，好让技能包离开本仓库也能独立运行。
-`LICENSE` 随包一起复制。没有联网安装，没有改动任何文件内容。
+它是本技能包**自己声明的依赖**（见 `package.json` 的 `dependencies` 与 `package-lock.json`），
+与教学引擎 `plugins/socratic-engine` 使用的同一包、同一版本——不引入其他任何包。
+安装方式：
 
+```sh
+cd skills/socratic-classroom
+npm ci        # 按 package-lock.json 精确装回 yaml@2.6.1，写到 node_modules/（已被 .gitignore 忽略，不入库）
+```
+
+> ⚠️ `node_modules/` **不入库**（见仓库根 `.gitignore`）。干净 checkout 里没有它，
+> 必须先 `npm ci` 再跑 `validate`／`npm test`，否则 `require('yaml')` 失败、自检直接退出码 2。
+>
 > 为什么不用手写解析：`classroom.yaml` 的解析结果决定了自检报不报得出问题，
 > 手写一个"够用"的解析器会在它不认识的结构上悄悄少报 —— 那正是自检最不该犯的错。
 
-### 副本与源教室的关系
+### 副本与源教室的关系（🔴 谁是真源）
 
-`classroom/` 是 `code/classrooms/cs-os/` 的**副本**。两边不会自动联动：
+`classroom/` 是 `classrooms/cs-os/` 的**生成镜像（generated mirror），不是第二真源**。
+真正的教室内容只写在 **`classrooms/cs-os/`**，技能包里的 `classroom/` 只是它的同步副本：
 
 ```sh
-sh sync-classroom.sh              # 从默认源教室同步
+sh sync-classroom.sh              # 从默认源教室（classrooms/cs-os）同步
 sh sync-classroom.sh <教室目录>    # 从别的教室同步
 ```
+
+**同步是确定性的**：脚本用 `rsync -a --delete`，会让 `classroom/` 与源字节一致
+（源里删掉的文件在副本里也删掉）。改了 `classrooms/cs-os/` 之后必须手动跑一次同步，
+否则副本会旧——这正是「镜像」与「真源」的关系，**任何改动都应落在 `classrooms/cs-os/`，
+再同步到 `classroom/`**。
 
 **代价说清楚**：复制 = 包体积翻倍，且源教室更新后必须手动跑一次同步，否则副本会旧。
 换来的好处是「一个文件夹复制过去就能用」，不依赖任何外部路径。
