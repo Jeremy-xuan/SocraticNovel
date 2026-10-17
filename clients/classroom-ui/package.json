@@ -2,12 +2,13 @@
   "name": "classroom-ui",
   "version": "0.0.1",
   "private": true,
-  "description": "SocraticNovel P3 client plugin: the right-Sidebar「教室」panel (curriculum / current lesson / current phase / progress), reading the classroom's own files over the workspaceFiles Remote.",
+  "description": "SocraticNovel P3/T5/T3 client plugin: the right-Sidebar「教室」panel (curriculum / current lesson / current phase / progress) reading the classroom's own files over the workspaceFiles Remote, a Live2D portrait mounted in the same panel (phase-driven state, speak/write mouth channels), and an inline mermaid view for the `classroom_draw` tool call in the message stream.",
   "type": "module",
   "main": "./lib/index.js",
   "exports": {
     ".": "./lib/index.js",
     "./client": "./lib/client.js",
+    "./typert": "./lib/typert.host.js",
     "./package.json": "./package.json"
   },
   "dsh": {
@@ -23,10 +24,19 @@
       "platform": "web"
     }
   },
+  "scripts": {
+    "test": "node test/panel.test.mjs"
+  },
   "files": [
     "lib/index.js",
     "lib/client.js",
+    "lib/whiteboard.mjs",
+    "lib/whiteboard-route.mjs",
+    "lib/whiteboard-host.mjs",
+    "lib/typert.host.js",
     "cordis.patch.yml",
-    "README.md"
+    "README.md",
+    "README.anchors.md",
+    "vendor"
   ]
 }

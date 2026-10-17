@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>L2D-M1 · 立绘渲染宿主验证</title>
+    <!--
+      官方 Cubism Core（proprietary，见 vendor/Core/RedistributableFiles.txt）。
+      必须在 bundle 之前加载：Core 提供 Live2DCubismCore 全局，框架在其之上工作。
+    -->
+    <script src="./live2dcubismcore.min.js"></script>
+    <style>
+      /* xAI 设计语言：近黑单面 / 发丝线承重 / 无投影 / 全部字重 400 / 层级靠字号与字色阶梯 */
+      :root {
+        --bg: #0a0a0a;
+        --line: rgba(255, 255, 255, 0.14);
+        --ink: #ffffff;
+        --body: #b9bbc0;
+        --dim: #6e7075;
+        --mono: ui-monospace, "SF Mono", Menlo, monospace;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; }
+      body {
+        background: var(--bg);
+        color: var(--body);
+        font: 400 14px/1.6 -apple-system, "Helvetica Neue", "PingFang SC", sans-serif;
+        font-weight: 400;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 360px;
+        height: 100%;
+      }
+      main { display: flex; align-items: center; justify-content: center; }
+      /* 舞台：底 + canvas 叠在一起，切换底就能切换「透明/深色/白」三种呈现 */
+      #stagewrap {
+        position: relative;
+        width: 720px;
+        height: 720px;
+        border: 1px solid var(--line);
+      }
+      #bg { position: absolute; inset: 0; pointer-events: none; }
+      #bg.checker {
+        background-color: #ffffff;
+        background-image: linear-gradient(45deg, #d8d8d8 25%, transparent 25%),
+          linear-gradient(-45deg, #d8d8d8 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #d8d8d8 75%),
+          linear-gradient(-45deg, transparent 75%, #d8d8d8 75%);
+        background-size: 24px 24px;
+        background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+      }
+      #bg.dark { background: #0a0a0a; }
+      #bg.white { background: #ffffff; }
+      #stage { position: relative; display: block; width: 720px; height: 720px; }
+      aside { border-left: 1px solid var(--line); padding: 20px; overflow: auto; }
+      h1 { font-size: 15px; letter-spacing: 0.02em; color: var(--ink); font-weight: 400; margin: 0 0 4px; }
+      h2 { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); font-weight: 400; margin: 22px 0 8px; }
+      .sub { font-size: 12px; color: var(--dim); margin-bottom: 16px; }
+      label { display: block; font-size: 12px; color: var(--dim); margin: 10px 0 4px; }
+      select, textarea, button {
+        width: 100%; background: #111; color: var(--ink); border: 1px solid var(--line);
+        border-radius: 999px; padding: 8px 14px; font: 400 13px/1.4 inherit; font-weight: 400;
+      }
+      textarea { border-radius: 8px; min-height: 96px; resize: vertical; font-family: var(--mono); font-size: 12px; }
+      button { cursor: pointer; }
+      button:hover { border-color: rgba(255, 255, 255, 0.4); }
+      .row { display: flex; gap: 8px; margin-top: 8px; }
+      pre {
+        font-family: var(--mono); font-size: 11px; line-height: 1.5; color: var(--body);
+        border: 1px solid var(--line); border-radius: 8px; padding: 10px; overflow: auto;
+        max-height: 260px; white-space: pre-wrap; word-break: break-all;
+      }
+      .meter { height: 6px; background: #171717; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; margin-top: 6px; }
+      .meter > i { display: block; height: 100%; background: var(--ink); width: 0; }
+      .kv { font-family: var(--mono); font-size: 11px; color: var(--dim); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div id="stagewrap">
+        <div id="bg" class="checker"></div>
+        <canvas id="stage" width="720" height="720"></canvas>
+      </div>
+    </main>
+    <aside>
+      <h1>L2D-M1 · 渲染宿主验证页</h1>
+      <div class="sub">官方 Cubism Web Framework R5 ＋ 官方样本模型</div>
+
+      <h2>画布底</h2>
+      <select id="bgsel">
+        <option value="checker">棋盘（透明区域会露出棋盘）</option>
+        <option value="dark">深色 #0a0a0a</option>
+        <option value="white">白色</option>
+      </select>
+
+      <h2>模型</h2>
+      <select id="model"></select>
+      <div class="row"><button id="load">装载并渲染</button><button id="motion">起 Idle 动作</button></div>
+
+      <h2>能力发现</h2>
+      <pre id="cap">（装载后显示）</pre>
+
+      <h2>文字节奏嘴型</h2>
+      <label>通道</label>
+      <select id="channel">
+        <option value="speak">speak —— 嘴跟着文字动（冲高 + 衰减 + 标点停顿）</option>
+        <option value="write">write —— 嘴不动（恒 0）</option>
+      </select>
+      <label>文本（按「喂一句」逐句推进）</label>
+      <textarea id="text">同学们好，今天我们把这一节讲完。先看定义：若函数连续，则极限存在。注意——这里有个容易错的地方，我们慢慢来。</textarea>
+      <div class="row"><button id="feed">喂一句</button><button id="silence">闭嘴</button></div>
+      <label><input id="pause" type="checkbox" style="width:auto;border-radius:0" /> 冻结动画（只让参数生效，用于隔离验证）</label>
+      <label>嘴型参数直接注入（0–1，用于目视验证）</label>
+      <input id="mouth" type="range" min="0" max="1" step="0.01" value="0" />
+      <div class="row"><button id="mouth0">嘴闭合</button><button id="mouth1">嘴张开</button></div>
+
+      <label>实时嘴参数值（getParameter）</label>
+      <div class="meter"><i id="bar"></i></div>
+      <div class="kv" id="val">0.000</div>
+
+      <h2>日志</h2>
+      <pre id="log"></pre>
+    </aside>
+
+    <script type="module">
+      import { Live2DHost, parseCapability, TextRhythmProvider, WriteChannelProvider } from './live2d-host.bundle.mjs';
+
+      const MODELS = ['Haru', 'Hiyori', 'Mao', 'Mark', 'Natori', 'Ren', 'Rice', 'Wanko', 'Teacher', 'miku', 'miku_sample_t04', 'DS_p2l2', 'p2l2char'];
+      const $ = (id) => document.getElementById(id);
+      const log = (m) => {
+        $('log').textContent += m + '\n';
+        $('log').scrollTop = $('log').scrollHeight;
+      };
+
+      const sel = $('model');
+      for (const m of MODELS) sel.append(new Option(m, m));
+
+      let host = null;
+      let provider = new TextRhythmProvider();
+
+      async function loadModel(name) {
+        stopLoopControlled(); // 🔴 循环只能有一个：先停掉上一次装载起的那条 rAF 链
+        $('log').textContent = '';
+        const url = `./models/${name}/${name}.model3.json`;
+        log(`[load] ${url}`);
+
+        // 能力发现：纯 JSON 解析，与渲染解耦
+        const m3 = await (await fetch(url)).json();
+        let cdi = null;
+        if (m3.FileReferences?.DisplayInfo) {
+          try {
+            cdi = await (await fetch(`./models/${name}/${m3.FileReferences.DisplayInfo}`)).json();
+          } catch {}
+        }
+        const cap = parseCapability(m3, { modelId: name, displayInfo: cdi });
+        $('cap').textContent = JSON.stringify(
+          {
+            动作组: cap.motionGroups,
+            表情数: cap.expressionCount,
+            表情: cap.expressions.map((e) => e.name),
+            参数组: cap.parameterGroupNames,
+            嘴参数: cap.lipSync,
+            相位到表情: cap.phaseExpression,
+            眨眼参数: cap.eyeBlink,
+            参数全集来源: cap.parameterUniverseSource + `(${cap.parameterUniverseCount})`
+          },
+          null,
+          1
+        );
+        // 🔴 「0 表情 = 相位→表情静默失效」在页面上也要出声（不能只藏在 JSON 里）
+        if (cap.phaseExpression.status === 'unavailable') {
+          log(`[warn] 相位→表情不可用：${cap.phaseExpression.detail}`);
+        } else if (cap.phaseExpression.status === 'partial') {
+          log(`[note] 相位→表情部分可用：${cap.phaseExpression.detail}`);
+        }
+
+        host = new Live2DHost($('stage'), {
+          shaderBaseUrl: './shaders/WebGL/',
+          // 🔴 通用待机/演出编排层：默认开启；seed 可由 ?idleSeed= 注入（取证可复现）
+          idleConfig: {},
+          idleSeed: Number(new URLSearchParams(location.search).get('idleSeed')) || 1,
+          // 宿主级错误（例如「起 Idle 动作失败」）直接进页面日志——不许静默
+          onError: (e) => log('[host-error] ' + e.message)
+        });
+        host.initGL();
+        await host.load(url);
+        // 取证钩子：让 tools/ 下的脚本能读到宿主内部状态（动作队列、_motionData 等）。
+        // 纯赋值，不改变页面任何行为；人点按钮的路径与脚本路径完全同一条。
+        window.__host = host;
+        log(`[ok] lipSyncIds=${JSON.stringify(host.lipSyncIds)} updaters=${JSON.stringify(host.updaterOrders)}`);
+        // 官方 shader 源码是异步 fetch 的，未就绪前 drawModel 不画任何东西
+        log(`[shaders] ready=${await host.waitForShaders()}`);
+        setChannel();
+        host.runFrames(30);
+        startLoopControlled();
+        // 每帧包一层 try/catch：某些官方样本的动作数据会让官方框架抛错，
+        // 不希望它把整页打断（错误原样打到日志，便于取证）
+        window.addEventListener('error', (e) => log('[window-error] ' + e.message));
+      }
+
+      function setChannel() {
+        const ch = $('channel').value;
+        provider = ch === 'write' ? new WriteChannelProvider() : new TextRhythmProvider();
+        if (host) host.setLipSyncProvider(provider);
+        log(`[channel] ${ch}`);
+      }
+
+      $('bgsel').onchange = (e) => { document.getElementById('bg').className = e.target.value; };
+      // 🔴 装载阶段的失败必须落在页面日志里：装载失败 = 立绘不会出现，静默等于"点了没反应"
+      $('load').onclick = async () => {
+        try {
+          await loadModel(sel.value);
+        } catch (e) {
+          log('[load-error] ' + ((e && e.message) || e));
+        }
+      };
+      $('channel').onchange = setChannel;
+      $('motion').onclick = () => {
+        if (!host) return;
+        // 起动作的返回值必须看：失败要出声，不许「点了没反应」当成正常
+        if (!host.startRandomIdleMotion()) log('[host-error] 起 Idle 动作失败：该模型没有可用的 Idle 动作');
+      };
+      $('silence').onclick = () => provider.silence && provider.silence();
+      // 直接写参数：绕开 provider，用来单独验证「参数 → 画面」这一段
+      const setMouth = (v) => {
+        if (!host || !host.loaded) return;
+        const model = host.userModel.getModel();
+        for (const id of host.lipSyncIds) {
+          model.setParameterValueById(id, v);
+        }
+        // 必须再跑一次 model.update() 把参数写进顶点缓冲，否则 draw 出来还是上一帧的形状
+        model.update();
+        host.draw();
+      };
+      $('mouth').oninput = (e) => setMouth(Number(e.target.value));
+      $('mouth0').onclick = () => { $('mouth').value = 0; setMouth(0); };
+      $('mouth1').onclick = () => { $('mouth').value = 1; setMouth(1); };
+      $('feed').onclick = async () => {
+        const text = $('text').value;
+        // 模拟流式：逐字喂（真实 DSH 里是 text-delta chunk）
+        for (const ch of text) {
+          provider.pushText(ch);
+          await new Promise((r) => setTimeout(r, 30));
+        }
+      };
+
+      // 受「冻结动画」开关控制的渲染循环：
+      //   勾上时只 draw（不 update）→ 画面除了被显式写入的参数外完全静止
+      //
+      // 🔴 循环只能有一个。修前这里每次都新起一条 rAF 链、旧的**从不停**，
+      //    于是装载 N 次之后同一帧里 step() 被调 N 次（实测 1/3/5 次）。
+      //    两条一起用：世代号让"已经排进队列的旧 tick"自弃，raf id 让"还没跑的旧 tick"被取消。
+      let loopRaf = 0;
+      let loopGen = 0;
+      function stopLoopControlled() {
+        loopGen++; // 旧 tick 的世代号立刻失效 → 即使这一帧已经排上也不再排下一帧
+        if (loopRaf) cancelAnimationFrame(loopRaf);
+        loopRaf = 0;
+      }
+      function startLoopControlled() {
+        stopLoopControlled(); // 先停旧的：装载多少次都只有一条链
+        const gen = loopGen;
+        let last = 0;
+        const tick = (ts) => {
+          if (gen !== loopGen) return; // 世代不符 = 上一轮的循环，退出且不再排队
+          const dt = last ? Math.min((ts - last) / 1000, 0.1) : 1 / 30;
+          last = ts;
+          if (!host) return;
+          try {
+            if ($('pause').checked) host.draw();
+            else host.step(dt);
+          } catch (e) {
+            if (!window.__l2dErrLogged) {
+              window.__l2dErrLogged = true;
+              log('[frame-error] ' + (e && e.message));
+              log('[frame-stack] ' + String((e && e.stack) || '').split('\n').slice(0, 5).join(' <- '));
+            }
+          }
+          loopRaf = requestAnimationFrame(tick);
+        };
+        loopRaf = requestAnimationFrame(tick);
+      }
+      $('pause').onchange = () => {};
+
+      setInterval(() => {
+        const v = provider.getParameter();
+        $('bar').style.width = (v * 100).toFixed(1) + '%';
+        $('val').textContent = v.toFixed(3);
+      }, 50);
+
+      // ?nomodel=1 时不自动装载（给取证脚本截「空白画布负对照」用）
+      if (!new URLSearchParams(location.search).has('nomodel')) loadModel('Haru');
+    </script>
+  </body>
+</html>

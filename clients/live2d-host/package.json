@@ -1,0 +1,13 @@
+{
+  "name": "live2d-host",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "L2D-M1：Live2D 立绘渲染宿主 + 能力发现 + 文字节奏嘴型（技术验证）",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "serve": "node scripts/serve.mjs",
+    "capability": "node scripts/run-capability.mjs",
+    "rhythm": "node scripts/run-rhythm.mjs"
+  }
+}

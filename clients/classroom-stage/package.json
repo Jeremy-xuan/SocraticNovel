@@ -1,0 +1,33 @@
+{
+  "name": "classroom-stage",
+  "version": "0.0.1",
+  "private": true,
+  "description": "SocraticNovel classroom stage: a galgame-style stage (B 讲台骨架 ＋ C 書庫材质) mounted on the official `conversation.view` slot — the only session-scoped seat that exposes the conversation stream (useChat/useConversation). Renders the conversation body with design tokens measured from real gameplay screenshots, on a fixed 1920×1080 canvas scaled by JS. Undeployed Live2D assets report an explicit status; every visible control has a real handler.",
+  "type": "module",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "test": "node test/stage.test.mjs"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "cordis.patch.yml",
+    "README.md"
+  ]
+}

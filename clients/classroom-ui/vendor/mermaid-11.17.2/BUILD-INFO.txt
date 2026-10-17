@@ -1,0 +1,25 @@
+vendored:  2026-09-24
+package:   mermaid
+version:   11.17.2
+file:      mermaid.min.js  (IIFE / 经典脚本构建，执行后挂 globalThis.mermaid)
+bytes:     3572661
+sha256:    581ed7d74bd9048d0e3a91363927d72ef22942d7722546b27f7cc29e35390eb8
+
+download:  curl -fsSL -o mermaid.min.js \
+             https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js
+
+为什么用 IIFE 而不是 ESM（mermaid.esm.min.mjs）：
+  ESM 构建是**多文件**的——入口 `mermaid.esm.min.mjs`（30 KB）用相对路径 import 若干
+  `./chunks/mermaid.esm.min/chunk-*.mjs`。浏览器半边取资源只有 `workspaceFiles.readAll`
+  （逐个工作区文件读字节），没有「相对路径 import 自动解析」这回事：要把 ESM 装起来就得
+  自己把每个 chunk 也读出来、把 import 说明符重写成 objectURL，脆且不必要。
+  IIFE 构建是**单文件**，当经典脚本执行完就挂 `globalThis.mermaid`，与 live2d-host 装载
+  Cubism Core（`live2dcubismcore.min.js` → `globalThis.Live2DCubismCore`）是同一手法。
+
+版本一致性（本项目「第三方依赖必须成对锚定版本」规矩）：
+  上面这个 sha256 与**服务端** `socratic-engine/node_modules/mermaid/dist/mermaid.min.js`
+  **逐字节相同**（本机实测）。也就是说：
+    · 服务端 `classroom_draw` 用它做 `mermaid.parse()` 判「这张图能不能渲染」；
+    · 浏览器半边用**同一个构建**做真正的 `mermaid.render()`。
+  → 「服务端判过能渲染」与「客户端真画出来」用的是同一份实现，不存在版本漂移。
+  换版本 = 重新验证，不得外推。

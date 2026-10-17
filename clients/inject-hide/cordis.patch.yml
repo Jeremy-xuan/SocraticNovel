@@ -1,0 +1,11 @@
+# inject-hide bundle patch：把「隐藏引擎注入」插件挂成 profile 的一层。
+#
+# 为什么必须有这个文件：`dsh plugin add` 只把**声明了 `dsh.bundle`** 的依赖并入
+# `dsh.profile.bundles` 层栈（`isBundle()` 读 `dsh.bundle.patch`）；没声明的包只当普通依赖
+# 装进去，**不会成为 profile 层**，也就没有 loader 行，于是浏览器 roster
+# （`dsh-client-modules` 扫宿主 Loader 条目）扫不到它的 `dsh.client` 半边。
+#
+# 行 id 与包名一致；name 用包名，由 profile 树解析到 profile 的 node_modules。
+- insert:
+    - id: inject-hide
+      name: inject-hide

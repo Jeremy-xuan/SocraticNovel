@@ -1,0 +1,33 @@
+{
+  "name": "inject-hide",
+  "version": "0.0.1",
+  "private": true,
+  "description": "SocraticNovel HIDE-INJECT client plugin: keep the teaching engine's context injections out of the visible transcript, by shadowing the shipped `conversation.chat.node` renderer for the `context` kind at a lower priority and delegating every other producer to it unchanged.",
+  "type": "module",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-chat"
+      ],
+      "platform": "web"
+    }
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node test/hide.test.mjs"
+  }
+}

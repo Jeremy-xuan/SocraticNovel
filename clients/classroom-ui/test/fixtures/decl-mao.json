@@ -1,0 +1,5 @@
+{
+  "classroomRoot": "clients/classroom-ui/test/fixtures/classroom",
+  "portraitModel": "Mao",
+  "note": "EXPR-5 取证用的**临时**声明：只把立绘模型名从 Haru 改成 Mao（其余一个字不动）→ 用来验收『改一处模型名，引擎与面板两侧同时生效』。该文件取代研究版的 tmp_expr5/decl-mao.json，归入本仓库内 fixtures，不再依赖研究副本。"
+}

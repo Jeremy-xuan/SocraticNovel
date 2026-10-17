@@ -1,0 +1,10 @@
+# classroom-stage bundle patch：把课堂舞台插件挂成 profile 的一层。
+#
+# 与 classroom-ui 同一机制（见 clients/classroom-ui/cordis.patch.yml 的注记）：
+# `dsh plugin add` 只把声明了 `dsh.bundle` 的依赖并入 `dsh.profile.bundles` 层栈；
+# 没声明的包不会成为 profile 层，也就没有 loader 行，浏览器 roster 扫不到它。
+#
+# 行 id 与包名一致；name 用包名，由 profile 树解析到 profile 的 node_modules。
+- insert:
+    - id: classroom-stage
+      name: classroom-stage

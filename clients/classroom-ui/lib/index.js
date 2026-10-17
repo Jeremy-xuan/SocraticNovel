@@ -1,18 +1,23 @@
 /**
  * Host half of the `classroom-ui` client plugin.
  *
- * It is deliberately empty. A Loader row mounts a package's host half in node
- * and reads that same package's `dsh.client` declaration to compose the browser
- * roster, so a client-only plugin still needs an importable host module — this
- * is that module, not a placeholder for future work.
+ * 右栏「教室」面板（curriculum / current lesson / current phase / progress）仍由浏览器半边
+ * （`lib/client.js`）从教室自己的文件读取，无需宿主侧代码。
  *
- * The panel needs no host-side code: every fact it shows is read from the
- * classroom's own files through the `workspaceFiles` Remote that the web
- * surface already provides (see `lib/client.js` and `README.md` §数据通道).
+ * 本文件新增：挂载「白板存储」Remote 服务（S3 宿主接线）。它与 `dsh-api-workspace-files`
+ * 同构 —— 通过 `@deepseek-ai/dsh-typert-protocol` 暴露 `whiteboardStore` 服务，浏览器半边
+ * 经 `ctx.remote.whiteboardStore` 调用（save / load / index）。服务的 host face 清单在
+ * `lib/typert.host.js`，由 `dsh-typert-loader` 自动注册进 `ctx.typert`。
  */
 
+import { WhiteboardStore } from './whiteboard-host.mjs'
+
 /**
- * Mount the host half. Nothing to provide: the browser half owns the panel.
- * @returns nothing.
+ * Mount the host half.
+ * @param {import('@deepseek-ai/cordis').Context} ctx - 宿主 cordis 上下文
  */
-export function apply() {}
+export function apply(ctx) {
+  // 注册白板存储服务（connection + fs 鉴权、原子写、rev409、路径边界都在 WhiteboardStore 内）。
+  // 以 fiber effect 挂载，插件卸载时自动卸载。
+  ctx.effect(() => ctx.provide('whiteboardStore', new WhiteboardStore(ctx)), 'classroom-ui: whiteboardStore')
+}
