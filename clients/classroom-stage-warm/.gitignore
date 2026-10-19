@@ -6,3 +6,6 @@ shots/
 measure/
 ornaments/*.png
 node_modules/
+
+# 立绘候选（生成过程产物，最终只用 teacher_gen.png）
+assets/stage/portrait-candidates/

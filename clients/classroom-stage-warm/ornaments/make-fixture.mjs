@@ -64,7 +64,7 @@ html,body{margin:0;width:100%;height:100%;background:#0a0a0a}
   <div class="veil"></div>
   <div class="corner tl">${cornerOrn}</div>
   <div class="corner br">${cornerOrn}</div>
-  <div class="cast-wrap"><img class="cast" src="../assets/stage/student_f.png" alt=""></div>
+  <div class="cast-wrap"><img class="cast" src="../assets/stage/teacher_gen.png" alt=""></div>
   <div class="band">
     <div class="band-top"></div>
     <div class="band-core">

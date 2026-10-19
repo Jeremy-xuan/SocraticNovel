@@ -161,7 +161,9 @@ function listAssets() {
       const ext = path.extname(ent.name).toLowerCase()
       if (!MIME[ext]) continue
       const stat = fs.statSync(path.join(ASSET_DIR, ent.name))
-      out.push({ name: ent.name, bytes: stat.size, mime: MIME[ext] })
+      // 🔴 rev＝mtime：客户端会把它拼成 `?v=<rev>`。换图后 mtime 变 → URL 变 → 浏览器不会拿旧缓存。
+      //    （实测踩过：直接把 teacher_gen.png 换掉，页面还在显示旧立绘，因为 URL 没变。）
+      out.push({ name: ent.name, bytes: stat.size, mime: MIME[ext], rev: Math.round(stat.mtimeMs) })
     }
   } catch (err) {
     noteWarning('素材目录读取失败：' + String((err && err.message) || err))

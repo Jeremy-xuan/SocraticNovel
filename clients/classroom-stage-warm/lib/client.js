@@ -108,7 +108,10 @@ window.__ModuleLoader__.load({
   color:#F3E9DA;border-radius:999px;padding:.9vh 2.1vh;font-size:1.5vh;letter-spacing:.04em;cursor:pointer;
   transition:background 160ms,border-color 160ms}
 .stage-warm-root .tool:hover{background:rgba(243,233,218,.18);border-color:rgba(243,233,218,.42)}
-.stage-warm-root .cast{position:absolute;right:6.8vh;bottom:34vh;height:74vh;z-index:3;pointer-events:none;
+.stage-warm-root .cast{position:absolute;right:6.8vh;bottom:44vh;height:54vh;z-index:3;pointer-events:none;
+  /* 🔴 2026-10-19 改（立绘换成半身像后）：原来是 bottom:34vh / height:74vh —— 那是给「全身立绘」的，
+     全身图被纸带盖掉腿正好；换成半身（膝上）后同样的数会把躯干压到纸带下面，只剩一个头。
+     半身像要**贴纸带上沿**：纸带 48vh，所以 bottom 取 47vh（略嵌 1vh 免得悬空），高度取 52vh。 */
   filter:drop-shadow(0 -6px 34px rgba(0,0,0,.42))}
 .stage-warm-root .cast-strip{position:absolute;right:4.2vh;top:9.6vh;z-index:7;display:flex;flex-direction:column;
   gap:.8vh;align-items:flex-end;opacity:0;transition:opacity 240ms ease}
@@ -272,7 +275,7 @@ window.__ModuleLoader__.load({
   text-shadow:0 1px 0 rgba(243,233,218,.75)}
 
 /* ⑤ · 立绘入画：自下而上压暗，让立绘"落进"画面而不是贴上去 */
-.stage-warm-root .cast-wrap{position:absolute;right:12.05vh;bottom:0;z-index:3;pointer-events:none}
+.stage-warm-root .cast-wrap{position:absolute;right:12.05vh;bottom:44vh;z-index:3;pointer-events:none}
 .stage-warm-root .cast-wrap .cast{position:static;right:auto;bottom:auto;display:block}
 .stage-warm-root .cast-wrap::after{content:'';position:absolute;left:-3.7vh;right:-3.7vh;bottom:0;height:34%;
   background:linear-gradient(to top,rgba(10,12,16,.66),rgba(10,12,16,.22) 46%,rgba(10,12,16,0));
@@ -421,6 +424,51 @@ window.__ModuleLoader__.load({
         }
         return hits.length >= 2 ? hits.slice(0, 6) : []
       } catch { return [] }
+    }
+
+    /**
+     * 把正文**末尾连续**的编号清单行裁掉。
+     *
+     * 为什么只裁末尾：舞台会把可解析的编号清单渲染成选项卡片，正文里那份就是重复显示
+     * （实测同一个 1./2./3. 既在正文又在卡片里）。但正文**中间**的编号（教学步骤"第一步…
+     * 第二步…"）是内容，不能动 —— 所以只从末尾往上连续匹配，遇到第一行不是编号就停。
+     *
+     * @param {string} text - 老师这一句的正文
+     * @returns {string} 去掉末尾编号清单后的正文（全被裁则返回空串，由调用方决定怎么显示）
+     */
+    /**
+     * 去掉正文里的 markdown 标记。
+     *
+     * 为什么需要：老师（LLM）输出常带 `**粗体**`、`*斜体*`、行首 `#` 之类，而纸带是按**纯文本**
+     * 渲染的 —— 实测真机上出现 `**"……？"**` 这种星号裸露。本项目的排版纪律是「字重全部 400、
+     * 靠字号字距层级，不靠加粗」，所以正确做法是**把标记去掉**，不是渲染成粗体。
+     *
+     * @param {string} text
+     * @returns {string}
+     */
+    function stripMarkdown(text) {
+      return String(text || '')
+        .replace(/\*\*([^*]+)\*\*/g, '$1')   // **粗体**
+        .replace(/__([^_]+)__/g, '$1')          // __粗体__
+        .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1$2')  // *斜体*
+        .replace(/^\s{0,3}#{1,6}\s+/gm, '')     // 行首 # 标题
+        .replace(/`([^`]+)`/g, '$1')            // 行内代码的反引号
+    }
+
+    function stripTrailingOptionList(text) {
+      const src = String(text || '')
+      if (!src) return src
+      const lines = src.split('\n')
+      const isOptionLine = (l) => /^\s*(?:\d{1,2}[.、)）]|[①②③④⑤⑥⑦⑧⑨])\s*\S/.test(l)
+      let cut = lines.length
+      for (let i = lines.length - 1; i >= 0; i--) {
+        const l = lines[i]
+        if (l.trim() === '') { cut = i; continue }      // 允许清单与正文之间空行
+        if (isOptionLine(l)) { cut = i; continue }
+        break
+      }
+      if (cut >= lines.length) return src                 // 末尾不是清单，原样返回
+      return lines.slice(0, cut).join('\n').trim()
     }
 
     /** 逐字依据：AssistantBlock = text | reasoning | image | tool-call | other */
@@ -978,6 +1026,15 @@ window.__ModuleLoader__.load({
       // 正文区：纸卡内框（.cardframe）＋ 正文行（.line.sans）
       // ★ 2026-09-30：按「真·魔夜 UI」补的造型 —— 正文改无衬线、包进内外双线框
       // ══════════════════════════════════════════════════════════════════
+      // 真实选项：从**最后一条老师正文**里抽编号清单（抽不到就不显示，绝不编）
+      // 🔴 2026-10-19：提前算 —— 因为正文渲染要用它判断"末尾那份清单要不要裁掉"（否则与卡片重复）。
+      const realOptions = (function () {
+        if (props.gallery) return []
+        if (lastTeacherIdx < 0) return []
+        const t = String((msgs[lastTeacherIdx] && msgs[lastTeacherIdx].text) || '')
+        return parseOptions(t)
+      })()
+
       const lines = []
       if (msgs.length === 0) {
         lines.push(H('div', { key: 'empty', className: 'empty' },
@@ -1000,8 +1057,16 @@ window.__ModuleLoader__.load({
         const isCurrent = (i === lastTeacherIdx)
         // 当前老师句带 `cur`（机核判据用；视觉上也就是"最下面那一句"）
         const cls = 'line sans' + (m.role === 'you' ? ' you' : (isCurrent ? ' cur' : ' past'))
+        // 🔴 2026-10-19：选项被渲染成卡片后，正文末尾那份编号清单就是**重复**（实测同一个 1./2./3.
+        //    既出现在正文里又出现在卡片里）。这里把**末尾连续**的编号行裁掉 —— 只裁末尾，
+        //    正文中间的教学步骤（"第一步…第二步…"）不动。
+        let bodyText = m.text
+        if (isCurrent && realOptions.length > 0) {
+          bodyText = stripTrailingOptionList(bodyText)
+        }
+        bodyText = stripMarkdown(bodyText)
         lines.push(H('p', { key: 'm' + i, className: cls },
-          (m.role === 'you' ? '你：' : '') + m.text,
+          (m.role === 'you' ? '你：' : '') + bodyText,
           isCurrent ? H('i', { className: 'adv' }) : null))
       })
 
@@ -1010,13 +1075,6 @@ window.__ModuleLoader__.load({
       //   ① 让造型在真机上看得见（否则 CSS 只是躺在文件里）
       //   ② 类名即契约，下一轮接引擎照此产出
       let optsNode = null
-      // 真实选项：从**最后一条老师正文**里抽编号清单（抽不到就不显示，绝不编）
-      const realOptions = (function () {
-        if (props.gallery) return []
-        if (lastTeacherIdx < 0) return []
-        const t = String((msgs[lastTeacherIdx] && msgs[lastTeacherIdx].text) || '')
-        return parseOptions(t)
-      })()
 
       // 真实选项 → 与样张**同一套类名**（.orn / .opts / .oc），但状态由真实交互驱动：
       //   cur = 键盘当前项 ｜ picked = 已点过的 ｜ picked sent = 已点且已送出
@@ -1276,7 +1334,8 @@ window.__ModuleLoader__.load({
         if (j) {
           if (j.settings) state.props.settings = Object.assign({}, DEFAULTS, j.settings)
           const map = {}
-          for (const a of (j.assets || [])) map[a.name] = ROUTE + '/assets/' + a.name
+          // 带 `?v=<rev>` 做缓存破坏：素材被替换（mtime 变）后 URL 跟着变，浏览器才会重新拉。
+          for (const a of (j.assets || [])) map[a.name] = ROUTE + '/assets/' + a.name + (a.rev ? ('?v=' + a.rev) : '')
           state.props.assets = map
         }
         render()
