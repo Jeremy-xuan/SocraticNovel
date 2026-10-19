@@ -898,6 +898,7 @@ window.__ModuleLoader__.load({
       // Live2D：libReady=库加载完 | l2dFailed=放弃（回落静态图）| l2dPhase=当前映射到的动作名
       const [libReady, setLibReady] = React.useState(false)
       const [l2dFailed, setL2dFailed] = React.useState(false)
+      const [l2dReady, setL2dReady] = React.useState(false)
       const l2dCanvasRef = React.useRef(null)
       const l2dAppRef = React.useRef(null)
       const l2dModelRef = React.useRef(null)
@@ -951,6 +952,7 @@ window.__ModuleLoader__.load({
                 model.y = app.screen.height
                 app.stage.addChild(model)
                 l2dModelRef.current = model
+                setL2dReady(true)
               })
           })
           .catch(function (err) {
@@ -968,6 +970,27 @@ window.__ModuleLoader__.load({
           l2dModelRef.current = null
         }
       }, [enabled, data, props.l2d, props.models])
+
+      // ── Live2D：状态 → 动作 ────────────────────────────────────────────────
+      // 模型只有两组动作：`Idle`（1 段）与 `Anima`（0=speak / 1=thinkend / 2=thinking）。
+      // 这里按**能观测到的课堂状态**驱动（不假装知道相位——相位在引擎侧，客户端只有消息流）：
+      //   · 正在生成         → thinking
+      //   · 老师刚说完一段    → speak（播一轮）
+      //   · 学生刚说完        → thinkend（老师在消化）
+      //   · 其它             → idle
+      React.useEffect(function () {
+        const model = l2dModelRef.current
+        if (!model || !l2dReady) return
+        const play = function (group, index) {
+          try { model.motion(group, index) } catch (e) { /* 动作缺失不该影响画面 */ }
+        }
+        const msgs = data.messages || []
+        const last = msgs.length ? msgs[msgs.length - 1] : null
+        if (data.running) { play('Anima', 2); return }          // thinking
+        if (last && last.role === 'teacher') { play('Anima', 0); return }  // speak
+        if (last && last.role === 'you') { play('Anima', 1); return }      // thinkend
+        play('Idle', 0)
+      }, [l2dReady, data.running, data.messages])
 
       // 阅读态＝正文流自己滚（Avalon 做法）：新消息到达时贴底
       React.useEffect(function () {
