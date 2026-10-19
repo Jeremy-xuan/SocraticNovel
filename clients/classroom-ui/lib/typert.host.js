@@ -77,4 +77,49 @@ export const TYPERT = {
       sourceLocation: { file: 'clients/classroom-ui/lib/whiteboard-host.mjs', line: 166, column: 3 },
     },
   ],
+  // 🔴 2026-10-19：0.1.5-rc.1 的 typert-loader 要求清单里必须有 `model`（描述宿主暴露给浏览器的
+  //    服务形状），缺它会直接判 `TYPERT.model must be an object` 并把整个 profile 拉不起来。
+  //    形状对照 `@deepseek-ai/dsh-api-workspace-files/lib/typert.host.js` 的 model 段。
+  model: {
+    services: [
+      {
+        description: 'Host the classroom whiteboard store: atomic writes, revision checks and path-bound writes over the workspace filesystem.',
+        summary: 'Host the classroom whiteboard store.',
+        tags: [],
+        jsDoc: '/** Host the classroom whiteboard store. */',
+        key: 'whiteboardStore',
+        exportName: 'WhiteboardStore',
+        // typert-loader 要求每个 service 都带 types 数组（形状见 dsh-typert-loader 的 requireTypes）；
+        // 白板服务的方法参数是 JSON，没有额外的命名类型要导出，给空数组即可。
+        types: [],
+        members: [
+          {
+            kind: 'method',
+            name: 'save',
+            signature: 'async save(scope: WorkspaceFileScope, lesson: number, body: string, baseRev: string | null): Promise<{ rev: string }>',
+            summary: 'Write one lesson whiteboard body atomically; rejects on revision conflict.',
+            jsDoc: '/** Write one lesson whiteboard body atomically. */',
+          },
+          {
+            kind: 'method',
+            name: 'load',
+            signature: 'async load(scope: WorkspaceFileScope, lesson: number): Promise<{ body: string, rev: string } | null>',
+            summary: 'Read the current whiteboard body and its revision for one lesson.',
+            jsDoc: '/** Read the current whiteboard body for one lesson. */',
+          },
+          {
+            kind: 'method',
+            name: 'index',
+            signature: 'async index(scope: WorkspaceFileScope): Promise<Array<{ lesson: number, rev: string }>>',
+            summary: 'List the lessons that already have a whiteboard, with their revisions.',
+            jsDoc: '/** List lessons that already have a whiteboard. */',
+          },
+        ],
+      },
+    ],
+    // 0.1.5-rc.1 的 typert-loader 还要求这两项存在（可以是空数组）：事件与对象模型。
+    // 0.1.7 起似乎放宽了，但为了在班级服务器的版本上能起来，显式给空数组。
+    events: [],
+    objects: [],
+  },
 }
