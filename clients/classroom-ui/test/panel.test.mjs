@@ -69,6 +69,14 @@ assert.deepEqual(panel.inject, ['slots', 'sidebarRightTabs', 'remote', 'remote.w
 const read = (rel) => readFileSync(join(WORKSPACE, CLASSROOM, rel), 'utf8')
 
 const manifest = panel.parseManifest(read('classroom.yaml'))
+// 🔴 2026-10-19：当课老师是**教室数据**（runtime/progress.md 的表格），不是测试常量。
+//    这里从那份文件里解析出来，换角色（komari → deepseek → …）时测试不需要改。
+const EXPECTED_TEACHER = (function () {
+  const m = read('runtime/progress.md').match(/\|\s*当课老师\s*\|\s*([^|]+?)\s*\|/)
+  if (!m) throw new Error('progress.md 里找不到「当课老师」行')
+  return m[1].trim()
+})()
+
 assert.equal(manifest.id, 'cs-os')
 assert.equal(manifest.title, '计算机系教室 · 操作系统')
 assert.equal(manifest.subject, '操作系统')
@@ -79,7 +87,11 @@ assert.deepEqual(manifest.phases.map((phase) => phase.name), ['开场', '追问'
 const progress = panel.parseProgress(read('runtime/progress.md'))
 assert.equal(progress.currentLesson, 1, 'current_lesson 机器可读行')
 assert.equal(progress.currentPhase, null, 'progress.md 当前无 current_phase 行')
-assert.equal(progress.teacher, '小鞠知花')
+// 🔴 2026-10-19：这里原本硬编码 `'小鞠知花'` —— 演示角色换成「鲸」之后断言就断了。
+//    角色名本来就是**教室数据**（runtime/progress.md 的「当课老师」），不该被测试钉死：
+//    改成断言"字段有值且与 progress.md 里写的那个一致"。
+assert.equal(progress.teacher, read('runtime/progress.md').match(/\|\s*当课老师\s*\|\s*([^|]+?)\s*\|/)[1].trim(),
+  '当课老师应与 progress.md 的表格一致（不硬编码具体角色名）')
 assert.equal(progress.progressText, '0 / 14 讲')
 // 🔴 事实契约（classrooms/cs-os/AGENTS.md:63-66）：人读表格只给「本轮要讲」＋「已完成」，
 // 没有「当前讲次」也没有「下次上课」；「本轮要讲」与机器可读行 current_lesson 必须是同一个值。
@@ -111,8 +123,8 @@ assert.equal(curriculum[0].title, '一个程序怎么跑起来')
 assert.ok(curriculum[0].core !== null && curriculum[0].core.length > 0, '第 1 讲必须有核心疑问')
 assert.equal(curriculum[13].n, 14)
 
-const teacher = panel.parseTeacher(read('characters/komari.md'))
-assert.equal(teacher.name, '小鞠知花')
+const teacher = panel.parseTeacher(read('characters/deepseek.md'))  // 角色卡以 classroom.yaml 的 persona 声明为准
+assert.equal(teacher.name, EXPECTED_TEACHER)
 assert.ok(teacher.scope !== null && teacher.scope.includes('14 讲'))
 
 // ── 2.5 · 默认教室路径（不依赖 globalThis 配置）─────────────────────────────
@@ -187,7 +199,7 @@ assert.equal(loaded.data.humanLesson, '**第 1 讲 · 一个程序怎么跑起�
 assert.equal(loaded.data.doneCount, '0 讲', '快照透传人读「已完成」')
 assert.equal(loaded.data.currentPhase, null)
 assert.equal(loaded.data.phaseName, null)
-assert.equal(loaded.data.teacher, '小鞠知花')
+assert.equal(loaded.data.teacher, EXPECTED_TEACHER)
 assert.equal(loaded.data.progressText, '0 / 14 讲')
 assert.equal(loaded.data.lessons.length, 14)
 assert.equal(loaded.data.phases.length, 6)
@@ -213,7 +225,7 @@ const partial = await panel.loadClassroom({ remote: broken }, 'session-under-tes
 assert.deepEqual(partial.sources.map((source) => source.ok), [false, true, true, true, false, true], '只有 classroom.yaml 失败；部署声明不受影响')
 assert.equal(partial.data.title, null, 'manifest 缺失 → 标题如实为 null，不填默认值')
 assert.equal(partial.data.currentLesson, 1, '其余文件仍照常解析')
-assert.equal(partial.data.teacher, '小鞠知花', '老师取自 progress.md，不依赖 manifest')
+assert.equal(partial.data.teacher, EXPECTED_TEACHER, '老师取自 progress.md，不依赖 manifest')
 
 // ── 5 · 立绘接线（§6.5）：纯函数 + 真实解析器 ────────────────────────────────
 
@@ -1266,7 +1278,7 @@ assert.ok(textOf(lessonLine).includes('第 01 讲 / 14'), '讲次号走等宽体
 assert.ok(textOf(lessonLine).includes('一个程序怎么跑起来'), '讲题在讲次号右边')
 assert.equal(lessonLine.props.style.fontFamily, panel.SERIF, '讲次主标题走衬线（書庫的书名）')
 assert.ok(lessonLine.props.style.fontSize.includes('--dsw-font-s-14-font-size'), '讲次主标题是面板里最大的一档字')
-for (const [hook, expected] of [['teacher', '小鞠知花'], ['progress', '0 / 14 讲']]) {
+for (const [hook, expected] of [['teacher', EXPECTED_TEACHER], ['progress', '0 / 14 讲']]) {
   const field = findOne(tree, 'data-cui-field')
   const target = findAll(tree, (node) => node.props['data-cui-field'] === hook)[0]
   assert.ok(target !== undefined, `字段 ${hook} 必须画出来`)

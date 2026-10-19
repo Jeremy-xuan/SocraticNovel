@@ -334,7 +334,20 @@ def main():
         json.dump(rec, open(os.path.join(outdir, "result.json"), "w"), indent=2, ensure_ascii=False)
         return 4
 
+    import lama_inpainter
     from lama_inpainter import apply_inpaint
+
+    # 🔴 2026-10-19：上游 `lama_inpainter.apply_inpaint` 内部调 `inpaint_preprocess(img, mask)`
+    #    **不传 device** → 用函数默认值 `device='cuda'`。本机无 CUDA（Apple M3），于是每一层都抛
+    #    `AssertionError: Torch not compiled with CUDA enabled`（实测：12 层里 6 层挂）。
+    #    这里在**我们自己的脚本**里把那个默认值接到当前选定的 device 上，不动 vendor 的源码树。
+    _CUR_DEVICE = {"device": args.device}
+    _orig_preprocess = lama_inpainter.inpaint_preprocess
+
+    def _preprocess_with_device(img, mask, inpaint_size=1024, device=None):
+        return _orig_preprocess(img, mask, inpaint_size, device or _CUR_DEVICE["device"])
+
+    lama_inpainter.inpaint_preprocess = _preprocess_with_device
 
     parts = [p for p in LABELS if p in masks and int(masks[p].sum()) >= min_px_for(p)]
     rec["parts"] = parts

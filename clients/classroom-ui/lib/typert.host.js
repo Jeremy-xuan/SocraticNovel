@@ -10,7 +10,16 @@
 // 注意：本文件是「契约清单」，不是运行时代码；运行态方法实现在 `whiteboard-host.mjs`。
 // 若改了方法签名/服务名，必须同步改这里，否则 `typert-loader` 校验失败会导致整包激活抛错。
 
-const _scope_schema = /** @type {any} */ (undefined)
+import { z } from 'zod'
+
+// 🔴 2026-10-19：0.1.5-rc.1 的 dsh-typert-loader 会校验每个 invocation 参数的 codec 必须是
+//    **真的 zod v4 schema 实例**（它检查 `"_zod" in schema.schema`）。原先这里是 `undefined`，
+//    于是报 `invocation … parameter codec is not backed by a zod v4 schema`，整包装载失败、实例起不来。
+//    形状对照 `@deepseek-ai/dsh-api-workspace-files/lib/typert.host.js`。
+const _scopeSchema = z.intersection(z.string(), z.unknown())
+const _numberSchema = z.number()
+const _stringSchema = z.string()
+const _unknownSchema = z.unknown()
 
 export const TYPERT = {
   package: 'classroom-ui',
@@ -29,13 +38,13 @@ export const TYPERT = {
           wire: 'workspaceFileScopeId',
           source: 'lookup',
           lookup: 'workspaceFileScope',
-          codec: { mode: 'strict', typeSymbol: '@deepseek-ai/dsh-session/types#SessionId', schema: _scope_schema },
+          codec: { mode: 'strict', typeSymbol: '@deepseek-ai/dsh-session/types#SessionId', schema: _unknownSchema },
         },
-        { name: 'lesson', wire: 'lesson', source: 'json', codec: { mode: 'strict', typeSymbol: 'number', schema: _scope_schema } },
-        { name: 'body', wire: 'body', source: 'json', codec: { mode: 'strict', typeSymbol: 'unknown', schema: _scope_schema } },
-        { name: 'baseRev', wire: 'baseRev', source: 'json', codec: { mode: 'strict', typeSymbol: 'number', schema: _scope_schema } },
+        { name: 'lesson', wire: 'lesson', source: 'json', codec: { mode: 'strict', typeSymbol: 'number', schema: _numberSchema } },
+        { name: 'body', wire: 'body', source: 'json', codec: { mode: 'strict', typeSymbol: 'unknown', schema: _stringSchema } },
+        { name: 'baseRev', wire: 'baseRev', source: 'json', codec: { mode: 'strict', typeSymbol: 'number', schema: _stringSchema } },
       ],
-      result: { mode: 'strict', typeSymbol: 'unknown', schema: _scope_schema },
+      result: { mode: 'strict', typeSymbol: 'unknown', schema: _unknownSchema },
       // sourceLocation 仅作审计锚点（指向本仓库源码行）；不影响运行。
       sourceLocation: { file: 'clients/classroom-ui/lib/whiteboard-host.mjs', line: 90, column: 3 },
     },
@@ -51,11 +60,11 @@ export const TYPERT = {
           wire: 'workspaceFileScopeId',
           source: 'lookup',
           lookup: 'workspaceFileScope',
-          codec: { mode: 'strict', typeSymbol: '@deepseek-ai/dsh-session/types#SessionId', schema: _scope_schema },
+          codec: { mode: 'strict', typeSymbol: '@deepseek-ai/dsh-session/types#SessionId', schema: _unknownSchema },
         },
-        { name: 'lesson', wire: 'lesson', source: 'json', codec: { mode: 'strict', typeSymbol: 'number', schema: _scope_schema } },
+        { name: 'lesson', wire: 'lesson', source: 'json', codec: { mode: 'strict', typeSymbol: 'number', schema: _numberSchema } },
       ],
-      result: { mode: 'strict', typeSymbol: 'unknown', schema: _scope_schema },
+      result: { mode: 'strict', typeSymbol: 'unknown', schema: _unknownSchema },
       sourceLocation: { file: 'clients/classroom-ui/lib/whiteboard-host.mjs', line: 132, column: 3 },
     },
     {
@@ -70,10 +79,10 @@ export const TYPERT = {
           wire: 'workspaceFileScopeId',
           source: 'lookup',
           lookup: 'workspaceFileScope',
-          codec: { mode: 'strict', typeSymbol: '@deepseek-ai/dsh-session/types#SessionId', schema: _scope_schema },
+          codec: { mode: 'strict', typeSymbol: '@deepseek-ai/dsh-session/types#SessionId', schema: _unknownSchema },
         },
       ],
-      result: { mode: 'strict', typeSymbol: 'unknown', schema: _scope_schema },
+      result: { mode: 'strict', typeSymbol: 'unknown', schema: _unknownSchema },
       sourceLocation: { file: 'clients/classroom-ui/lib/whiteboard-host.mjs', line: 166, column: 3 },
     },
   ],
