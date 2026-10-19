@@ -4007,7 +4007,12 @@ window.__ModuleLoader__.load({
 				priority: "extension",
 				title: () => PANEL_TITLE,
 				guide: [{
+					// 🔴 2026-10-19：0.1.5 的指南条目读的是 `entry.kind`（`GuideBody.js` 里
+					//   `openTab(entry.kind)` 与 `data-sidebar-right-guide-entry={entry.kind}` 都取这个字段）。
+					//   原来这里只写了 `id`，于是 kind 为 undefined → openTab(undefined) → **面板永远打不开**，
+					//   而注册本身不报错、日志里也看不出来。`id` 保留是为了兼容按 id 读的版本。
 					id: "classroom",
+					kind: TYPE_KIND,
 					order: 10,
 					title: () => PANEL_TITLE,
 					description: () => "课程表 · 本轮要讲 · 当课老师 · 进度",
