@@ -1,0 +1,67 @@
+{
+	"Version": 3,
+	"FileReferences": {
+		"Moc": "deepseek.moc3",
+		"Textures": [
+			"deepseek.2048/texture_00.png"
+		],
+		"Physics": "deepseek.physics3.json",
+		"DisplayInfo": "deepseek.cdi3.json",
+		"Expressions": [
+			{
+				"Name": "happy",
+				"File": "happy.exp3.json"
+			},
+			{
+				"Name": "happy2",
+				"File": "happy2.exp3.json"
+			},
+			{
+				"Name": "puzzled",
+				"File": "puzzled.exp3.json"
+			},
+			{
+				"Name": "relax",
+				"File": "relax.exp3.json"
+			},
+			{
+				"Name": "unhappy",
+				"File": "unhappy.exp3.json"
+			}
+		],
+		"Motions": {
+			"Idle": [
+				{
+					"File": "idle.motion3.json"
+				}
+			],
+			"Anima": [
+				{
+					"File": "speak.motion3.json"
+				},
+				{
+					"File": "thinkend.motion3.json"
+				},
+				{
+					"File": "thinking.motion3.json"
+				}
+			]
+		}
+	},
+	"Groups": [
+		{
+			"Target": "Parameter",
+			"Name": "EyeBlink",
+			"Ids": [
+				"ParamEyeLOpen",
+				"ParamEyeROpen"
+			]
+		},
+		{
+			"Target": "Parameter",
+			"Name": "LipSync",
+			"Ids": []
+		}
+	],
+	"HitAreas": []
+}

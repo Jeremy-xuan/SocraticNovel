@@ -41,11 +41,17 @@ const PKG_ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)))
 const ROUTE_BASE = '/stage-static'
 const SETTINGS_NS = 'classroom-stage-warm'
 const ASSET_DIR = path.join(PKG_ROOT, 'assets', 'stage')
+// 🔴 2026-10-19：Live2D 接入新增两个静态根 —— 运行时库与模型目录。
+//    和 stage/ 一样只走 loopback、同样的目录穿越防护。
+const L2D_LIB_DIR = path.join(PKG_ROOT, 'assets', 'l2d')
+const MODEL_DIR = path.join(PKG_ROOT, 'assets', 'models')
 const BOARD_DIR = path.join(PKG_ROOT, 'assets', 'board')
 const ANIM_DIR = path.join(PKG_ROOT, 'assets', 'anim')
 
 const MIME = {
   '.json': 'application/json; charset=utf-8',
+  '.moc3': 'application/octet-stream',   // Live2D 模型本体（二进制）
+  '.js': 'text/javascript; charset=utf-8',  // 本地运行时库（PIXI / Cubism Core / display）
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
@@ -171,6 +177,30 @@ function listAssets() {
   return out.sort((a, b) => a.name.localeCompare(b.name))
 }
 
+/** Live2D 模型清单：`assets/models/<名字>/<名字>.model3.json` 的目录名。 */
+function listModels() {
+  const out = []
+  try {
+    for (const ent of fs.readdirSync(MODEL_DIR, { withFileTypes: true })) {
+      if (!ent.isDirectory()) continue
+      const m3 = path.join(MODEL_DIR, ent.name, ent.name + '.model3.json')
+      if (!fs.existsSync(m3)) continue
+      out.push({ name: ent.name, model3: ent.name + '/' + ent.name + '.model3.json' })
+    }
+  } catch (err) {
+    noteWarning('模型目录读取失败：' + String((err && err.message) || err))
+  }
+  return out.sort((a, b) => a.name.localeCompare(b.name))
+}
+
+/** Live2D 运行时库清单（按加载阶段顺序给出，客户端照此顺序插 script）。 */
+function listLibs() {
+  const phases = [['pixi.min.js'], ['live2d.min.js', 'live2dcubismcore.min.js', 'index.min.js']]
+  return phases
+    .map((phase) => phase.filter((f) => fs.existsSync(path.join(L2D_LIB_DIR, f))))
+    .filter((phase) => phase.length > 0)
+}
+
 /** 板书（whiteboard.scene.v1）清单：目录里真实存在的课次文件。 */
 function listBoards() {
   const out = []
@@ -250,6 +280,41 @@ export function apply(ctx) {
     }
   }
 
+  /**
+   * 通用静态目录路由：把 `<urlBase>/<相对路径>` 映射到 `<dirBase>/<相对路径>`。
+   *
+   * 与 assets 路由同口径：只允许 loopback、解析后的绝对路径必须仍在该根内（防目录穿越）、
+   * 只发 MIME 表里认识的类型（`.moc3` 走 application/octet-stream）。
+   * 抽成工厂是因为 Live2D 接入后有三个静态根（stage / l2d / models），复制三份会漂。
+   */
+  function registerStaticDir(label, urlBase, dirBase) {
+    registerRoute(label, {
+      kind: 'prefix',
+      path: urlBase,
+      handler: (req, res) => {
+        if (!isLoopback(req)) return sendText(res, 403, 'loopback only')
+        try {
+          const url = new URL(String(req.url), 'http://localhost')
+          let rel = decodeURIComponent(url.pathname.slice(urlBase.length))
+          rel = rel.replace(/^\/+/, '')
+          const abs = path.resolve(dirBase, rel)
+          const rootWithSep = dirBase.endsWith(path.sep) ? dirBase : dirBase + path.sep
+          if (!abs.startsWith(rootWithSep)) return sendText(res, 403, 'forbidden')
+          const ext = path.extname(abs).toLowerCase()
+          if (!MIME[ext]) return sendText(res, 415, 'unsupported type')
+          const bytes = fs.readFileSync(abs)
+          res.statusCode = 200
+          res.setHeader('content-type', MIME[ext])
+          // 模型与库都不该被浏览器长期缓存（换角色/升级时要立刻生效）
+          res.setHeader('cache-control', 'no-cache')
+          res.end(bytes)
+        } catch (err) {
+          sendText(res, 404, '资源不存在：' + String((err && err.message) || err))
+        }
+      },
+    })
+  }
+
   registerRoute('manifest', {
     kind: 'exact',
     path: ROUTE_BASE + '/manifest.json',
@@ -262,6 +327,8 @@ export function apply(ctx) {
           assetBase: ROUTE_BASE + '/assets/',
           settings: current,
           assets: listAssets(),
+          models: listModels(),
+          l2d: listLibs(),
           boards: listBoards(),
           animations: listAnimations(),
         })
@@ -296,6 +363,11 @@ export function apply(ctx) {
       }
     },
   })
+
+  // ── Live2D 运行时库（PIXI / Cubism Core / pixi-live2d-display）──────────────
+  registerStaticDir('l2d', ROUTE_BASE + '/l2d', L2D_LIB_DIR)
+  // ── Live2D 模型目录（<模型>/*.model3.json + moc3 + 贴图 + motion3/exp3）──────
+  registerStaticDir('models', ROUTE_BASE + '/models', MODEL_DIR)
 
   registerRoute('board', {
     kind: 'prefix',

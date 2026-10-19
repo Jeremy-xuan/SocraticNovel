@@ -276,6 +276,8 @@ window.__ModuleLoader__.load({
 
 /* ⑤ · 立绘入画：自下而上压暗，让立绘"落进"画面而不是贴上去 */
 .stage-warm-root .cast-wrap{position:absolute;right:12.05vh;bottom:44vh;z-index:3;pointer-events:none}
+/* Live2D 画布：与静态立绘同落点。canvas 的尺寸由 PIXI 按 CSS 盒子接管，这里给定宽高即可。 */
+.stage-warm-root .cast-l2d{display:block;width:38vh;height:52vh;pointer-events:none}
 .stage-warm-root .cast-wrap .cast{position:static;right:auto;bottom:auto;display:block}
 .stage-warm-root .cast-wrap::after{content:'';position:absolute;left:-3.7vh;right:-3.7vh;bottom:0;height:34%;
   background:linear-gradient(to top,rgba(10,12,16,.66),rgba(10,12,16,.22) 46%,rgba(10,12,16,0));
@@ -683,6 +685,61 @@ window.__ModuleLoader__.load({
       } catch { /* ignore */ }
     }
 
+    // ══════════════════════════════════════════════════════════════════════
+    //  Live2D 运行时加载（PIXI / Cubism Core / pixi-live2d-display）
+    //
+    //  做法照 `lrplrplrp/dsh-live2d`（MIT）的 20-libs.js：
+    //   · 动态插 <script>，**必须显式 async=false** —— 默认 async 时谁先下完谁先执行，
+    //     index.min.js 体积小会抢在 pixi 之前执行，而它在加载期就要用 PIXI → 报错。
+    //   · 分两阶段：pixi 单独跑完，再并行其余三个。
+    //   · 用 data 属性标记自己的 script，避免与别人插入的同名脚本混淆。
+    // ══════════════════════════════════════════════════════════════════════
+    let l2dLibsPromise = null
+    let l2dLibsReady = false
+    const L2D_MARK = 'data-stage-l2d-lib'
+
+    function loadOneScript(url) {
+      return new Promise(function (resolve, reject) {
+        const existing = document.querySelector('script[' + L2D_MARK + '][src="' + url + '"]')
+        if (existing) {
+          if (existing.readyState === 'loaded' || existing.readyState === 'complete') { resolve(); return }
+          existing.addEventListener('load', function () { resolve() }, { once: true })
+          existing.addEventListener('error', function () { reject(new Error('load fail ' + url)) }, { once: true })
+          return
+        }
+        const el = document.createElement('script')
+        el.setAttribute(L2D_MARK, '')
+        el.src = url
+        el.async = false
+        el.onload = function () { resolve() }
+        el.onerror = function () { reject(new Error('load fail ' + url)) }
+        document.head.appendChild(el)
+      })
+    }
+
+    /**
+     * 按阶段加载 Live2D 运行时。
+     * @param {string[][]} phases - manifest 给的 lib 分组（第一组必须只有 pixi）
+     * @returns {Promise<boolean>} 是否全部就绪
+     */
+    function ensureL2dLibs(phases) {
+      if (l2dLibsReady) return Promise.resolve(true)
+      if (l2dLibsPromise) return l2dLibsPromise
+      l2dLibsPromise = (async function () {
+        for (const phase of phases) {
+          // 同一阶段内并行下载、按插入顺序执行
+          await Promise.all(phase.map(function (f) { return loadOneScript(ROUTE + '/l2d/' + f) }))
+        }
+        if (!window.PIXI) throw new Error('PIXI 未就绪')
+        l2dLibsReady = true
+        return true
+      })().catch(function (err) {
+        l2dLibsPromise = null
+        throw err
+      })
+      return l2dLibsPromise
+    }
+
     function fetchJson(url) {
       try {
         return fetch(url, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null)
@@ -838,11 +895,79 @@ window.__ModuleLoader__.load({
       // 真实选项：cursor = 键盘当前项；picked = 已点过的那一条（下一轮老师说话时自动清空）
       const [cursor, setCursor] = React.useState(0)
       const [picked, setPicked] = React.useState(-1)
+      // Live2D：libReady=库加载完 | l2dFailed=放弃（回落静态图）| l2dPhase=当前映射到的动作名
+      const [libReady, setLibReady] = React.useState(false)
+      const [l2dFailed, setL2dFailed] = React.useState(false)
+      const l2dCanvasRef = React.useRef(null)
+      const l2dAppRef = React.useRef(null)
+      const l2dModelRef = React.useRef(null)
       const coreRef = React.useRef(null)
       const rootRef = React.useRef(null)   // 读当前有几个 .oc（键盘导航用）
       const taRef = React.useRef(null)
       const settings = props.settings || DEFAULTS
       const enabled = settings.enabled !== false
+
+      // ── Live2D：库就绪 → 建 PIXI 应用 → 载模型 ─────────────────────────────
+      // 🔴 规矩：这个 effect 必须在所有 return 之前（hooks 顺序铁律），且**失败要能降级**：
+      //   任何一步出错都 setL2dFailed(true)，渲染时回落静态 <img>，绝不因为 Live2D 挂了而没有立绘。
+      React.useEffect(function () {
+        if (!enabled) return
+        // 🔴 2026-10-19：这两个字段在 **state.props** 里（组件的 React props），
+        //    不在 `data`（那是消息流 store，只有 messages/sessionId 之类）。
+        //    写错源不会报错，只会一直静默降级成静态图 —— 实测卡在这里一轮。
+        const phases = (props && props.l2d) || []
+        const models = (props && props.models) || []
+        // manifest 还没回来时不能下失败的结论（否则首次渲染就永久降级成静态图，实测卡了一轮）
+        if (!phases.length || !models.length) return
+        const canvas = l2dCanvasRef.current
+        if (!canvas) return
+        let disposed = false
+
+        ensureL2dLibs(phases)
+          .then(function () {
+            if (disposed || !l2dCanvasRef.current) return
+            const app = new window.PIXI.Application({
+              view: l2dCanvasRef.current,
+              backgroundAlpha: 0,
+              antialias: true,
+              autoDensity: true,
+              resolution: window.devicePixelRatio || 1,
+            })
+            l2dAppRef.current = app
+            setLibReady(true)
+            const entry = models[0]
+            return window.PIXI.live2d.Live2DModel.from(ROUTE + '/models/' + entry.model3, { autoInteract: false })
+              .then(function (model) {
+                if (disposed) { try { model.destroy() } catch (e) {} return }
+                // 模型原始画布按 2048 设计；这里按舞台高度缩放到合适大小
+                const box = l2dCanvasRef.current.getBoundingClientRect()
+                // 🔴 缩放基准：原来按 1600 算，实测模型只出来一小只（这个模型的原始画布约
+                //    300×400，不是 1600）。改成按画布盒子高度、以模型自身高度为基数算。
+                const modelH = (model.internalModel && model.internalModel.originalHeight) || 400
+                const scale = ((box.height || 520) / modelH) * 0.92
+                model.scale.set(scale)
+                model.anchor.set(0.5, 1)
+                model.x = app.screen.width / 2
+                model.y = app.screen.height
+                app.stage.addChild(model)
+                l2dModelRef.current = model
+              })
+          })
+          .catch(function (err) {
+            if (disposed) return
+            warnings.push('Live2D 不可用，回落静态立绘：' + String((err && err.message) || err))
+            setL2dFailed(true)
+            try { if (l2dAppRef.current) l2dAppRef.current.destroy(false) } catch (e) {}
+            l2dAppRef.current = null
+          })
+
+        return function () {
+          disposed = true
+          try { if (l2dAppRef.current) l2dAppRef.current.destroy(false) } catch (e) {}
+          l2dAppRef.current = null
+          l2dModelRef.current = null
+        }
+      }, [enabled, data, props.l2d, props.models])
 
       // 阅读态＝正文流自己滚（Avalon 做法）：新消息到达时贴底
       React.useEffect(function () {
@@ -1016,10 +1141,18 @@ window.__ModuleLoader__.load({
                     scene ? ('板书缺件：' + String(scene.error || '') + '（可用：' + String((scene.boards || []).join('、') || '无') + '）') : '')))))
       }
 
-      if (settings.showSprite !== false && castUrl) {
+      if (settings.showSprite !== false) {
         // 立绘入画：外层 .cast-wrap 自带"自下而上压暗"（见 CSS ⑤）
-        children.push(H('div', { key: 'cast', className: 'cast-wrap' },
-          H('img', { className: 'cast', src: castUrl, alt: '' })))
+        // 🔴 2026-10-19：优先 Live2D（canvas），任何一步失败或未就绪都回落静态 <img>。
+        //   canvas 一直挂在 DOM 里（卸载会丢 WebGL 上下文），只用 CSS 控制显隐。
+        const useL2d = !l2dFailed
+        children.push(H('div', { key: 'cast', className: 'cast-wrap', 'data-l2d': useL2d ? 'on' : 'off' },
+          useL2d
+            ? H('canvas', { key: 'l2d', ref: l2dCanvasRef, className: 'cast-l2d' })
+            : null,
+          (l2dFailed && castUrl)
+            ? H('img', { key: 'img', className: 'cast', src: castUrl, alt: '' })
+            : null))
       }
 
       // ══════════════════════════════════════════════════════════════════
@@ -1170,7 +1303,8 @@ window.__ModuleLoader__.load({
           H('div', { key: 'frame', className: 'cardframe' },
             H('div', { className: 'who' },
               H('span', { className: 'bar' }),
-              H('span', { className: 'nm' }, '小 鞠 知 花')),
+              // 角色名：与 characters/ 里的当课老师一致（换角色改这一处）
+              H('span', { className: 'nm' }, '鲸')),
             lines,
             optsNode)),
         H('div', { className: 'composer' },
@@ -1337,6 +1471,10 @@ window.__ModuleLoader__.load({
           // 带 `?v=<rev>` 做缓存破坏：素材被替换（mtime 变）后 URL 跟着变，浏览器才会重新拉。
           for (const a of (j.assets || [])) map[a.name] = ROUTE + '/assets/' + a.name + (a.rev ? ('?v=' + a.rev) : '')
           state.props.assets = map
+          // 🔴 2026-10-19：Live2D 需要的两项也在同一份 manifest 里 —— 漏读就会一直走静态图
+          //    （而且它是**静默降级**：没有报错，只是 canvas 不出现）。
+          state.props.models = j.models || []
+          state.props.l2d = j.l2d || []
         }
         render()
       }).catch(function (err) { warnings.push('清单加载失败：' + String(err)) })
