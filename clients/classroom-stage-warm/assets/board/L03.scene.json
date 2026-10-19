@@ -1,0 +1,54 @@
+{
+  "version": "whiteboard.scene.v1",
+  "rev": 1,
+  "lesson": "L03",
+  "label": "进程状态迁移",
+  "canvas": { "width": 1600, "height": 1000, "background": "#F3E9DA" },
+  "elements": [
+    { "id": "t-title", "type": "text", "x": 96, "y": 84, "w": 520, "h": 44,
+      "text": "进程状态迁移", "fontSize": 40, "color": "#2A211A" },
+    { "id": "t-sub", "type": "text", "x": 96, "y": 146, "w": 720, "h": 30,
+      "text": "三种状态 + 四种迁移 —— 每个箭头都有触发条件", "fontSize": 24, "color": "#6B5B4A" },
+    { "id": "l-rule", "type": "line", "x1": 96, "y1": 196, "x2": 1504, "y2": 196,
+      "stroke": "#C2861F", "strokeWidth": 2 },
+
+    { "id": "n-ready", "type": "rect", "x": 160, "y": 340, "w": 300, "h": 120,
+      "fill": "#FBF3E6", "stroke": "#B84A1C", "strokeWidth": 3, "rx": 12 },
+    { "id": "t-ready", "type": "text", "x": 214, "y": 372, "w": 200, "h": 40,
+      "text": "就绪 Ready", "fontSize": 34, "color": "#B84A1C" },
+
+    { "id": "n-run", "type": "rect", "x": 650, "y": 340, "w": 300, "h": 120,
+      "fill": "#FBF3E6", "stroke": "#D9772C", "strokeWidth": 3, "rx": 12 },
+    { "id": "t-run", "type": "text", "x": 712, "y": 372, "w": 220, "h": 40,
+      "text": "运行 Running", "fontSize": 34, "color": "#D9772C" },
+
+    { "id": "n-wait", "type": "rect", "x": 1140, "y": 340, "w": 300, "h": 120,
+      "fill": "#FBF3E6", "stroke": "#C2861F", "strokeWidth": 3, "rx": 12 },
+    { "id": "t-wait", "type": "text", "x": 1196, "y": 372, "w": 220, "h": 40,
+      "text": "阻塞 Blocked", "fontSize": 34, "color": "#C2861F" },
+
+    { "id": "n-end", "type": "rect", "x": 650, "y": 700, "w": 300, "h": 120,
+      "fill": "#EADCC8", "stroke": "#6B5B4A", "strokeWidth": 3, "rx": 12 },
+    { "id": "t-end", "type": "text", "x": 726, "y": 732, "w": 220, "h": 40,
+      "text": "终止 Exit", "fontSize": 34, "color": "#6B5B4A" },
+
+    { "id": "a1", "type": "arrow", "x1": 460, "y1": 400, "x2": 646, "y2": 400, "stroke": "#B84A1C", "strokeWidth": 3 },
+    { "id": "t-a1", "type": "text", "x": 470, "y": 320, "w": 170, "h": 26,
+      "text": "调度选中", "fontSize": 22, "color": "#6B5B4A" },
+    { "id": "a2", "type": "arrow", "x1": 800, "y1": 464, "x2": 800, "y2": 696, "stroke": "#6B5B4A", "strokeWidth": 3 },
+    { "id": "t-a2", "type": "text", "x": 816, "y": 560, "w": 170, "h": 26,
+      "text": "exit()", "fontSize": 22, "color": "#6B5B4A" },
+    { "id": "a3", "type": "arrow", "x1": 950, "y1": 400, "x2": 1136, "y2": 400, "stroke": "#C2861F", "strokeWidth": 3 },
+    { "id": "t-a3", "type": "text", "x": 962, "y": 320, "w": 190, "h": 26,
+      "text": "等 I/O", "fontSize": 22, "color": "#6B5B4A" },
+    { "id": "a4", "type": "arrow", "x1": 1140, "y1": 500, "x2": 460, "y2": 500, "stroke": "#E0921C", "strokeWidth": 3 },
+    { "id": "t-a4", "type": "text", "x": 640, "y": 520, "w": 320, "h": 26,
+      "text": "I/O 完成 → 回到就绪队列", "fontSize": 22, "color": "#8A6A4A" },
+    { "id": "a5", "type": "arrow", "x1": 800, "y1": 336, "x2": 800, "y2": 300, "stroke": "#D9772C", "strokeWidth": 3 },
+    { "id": "t-a5", "type": "text", "x": 816, "y": 262, "w": 300, "h": 26,
+      "text": "时间片用尽（抢占）", "fontSize": 22, "color": "#8A6A4A" },
+
+    { "id": "t-note", "type": "text", "x": 96, "y": 880, "w": 1200, "h": 30,
+      "text": "🔴 只有「运行」能发起 I/O；「就绪」不持有 CPU，不能直接等 I/O。", "fontSize": 26, "color": "#B84A1C" }
+  ]
+}

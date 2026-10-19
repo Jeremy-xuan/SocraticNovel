@@ -1,0 +1,28 @@
+{
+  "name": "classroom-stage-warm",
+  "version": "0.0.1",
+  "description": "SocraticNovel「教室舞台」DSH web 客户端插件：暖纸配色的整屏课堂舞台（自建根容器，与插槽系统解耦）。宿主半边提供素材静态路由与设置；浏览器半边自绘整屏界面。",
+  "type": "module",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json",
+    "./cordis.patch.yml": "./cordis.patch.yml"
+  },
+  "files": [
+    "lib/",
+    "assets/",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,7 @@
+# classroom-stage-warm bundle patch：挂载「教室舞台」宿主半边。
+#
+# 宿主半边（lib/index.js）负责：素材静态路由 /stage-static/*（loopback-only）＋ 设置持久化。
+# 浏览器半边（lib/client.js）由 package.json 的 dsh.client 声明自动下发，**不需要在这里注册**。
+- insert:
+    - id: classroom-stage-warm
+      name: classroom-stage-warm

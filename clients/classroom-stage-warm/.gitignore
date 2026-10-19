@@ -1,0 +1,8 @@
+# 舞台的运行产物与中间素材（源码入库，产物不入库）
+# shots/         —— 真机截图（每轮验收自己生成，约 12 MB）
+# measure/       —— 拉出三段时序的逐帧读数（验收产物，约 10 MB）
+# ornaments/*.png —— 花饰展厅与夹具的出图（可重生成：node ornaments/gen-sheet.mjs / make-fixture.mjs）
+shots/
+measure/
+ornaments/*.png
+node_modules/

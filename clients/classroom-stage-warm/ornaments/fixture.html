@@ -1,0 +1,409 @@
+<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8">
+<title>舞台静态夹具</title>
+<style>
+.stage-warm-root{position:fixed;inset:0;z-index:1080;pointer-events:none;overflow:hidden;
+  --paper:#F3E9DA;--paper2:#EADCC8;--paper3:#DFCEB4;
+  --ink:#2A211A;--ink2:#6B5B4A;--ink3:#9C8B77;--ink4:#B9A992;
+  --accent:#B84A1C;--accent2:#D9772C;--gilt:#C2861F;--vermilion:#E0921C;
+  --night:#141A20;--night2:#1E262E;
+  --hair:rgba(42,33,26,.14);--hair2:rgba(42,33,26,.07);
+  --hair-w:rgba(243,233,218,.16);--hair-w2:rgba(243,233,218,.08);
+  --sans:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  --serif:"Songti SC","Source Han Serif SC","Noto Serif CJK SC",Georgia,serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-family:var(--sans);-webkit-font-smoothing:antialiased;color:var(--paper)}
+.stage-warm-root *{box-sizing:border-box;font-weight:400}
+.stage-warm-root .grain::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:99;
+  background:repeating-linear-gradient(45deg,rgba(255,255,255,.012) 0 2px,transparent 2px 5px)}
+.stage-warm-root .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.stage-warm-root .bgfallback{position:absolute;inset:0;z-index:0;background:#161B22}
+.stage-warm-root .veil{position:absolute;inset:0;z-index:1;
+  background:linear-gradient(to bottom,rgba(8,10,14,.40) 0%,rgba(8,10,14,.10) 42%,rgba(8,10,14,0) 100%)}
+.stage-warm-root .corner{position:absolute;width:8.8vh;height:8.8vh;pointer-events:none;opacity:.88;z-index:6;
+  filter:drop-shadow(0 1px 3px rgba(20,16,12,.52))}
+.stage-warm-root .corner svg{width:100%;height:100%;display:block;overflow:visible}
+.stage-warm-root .corner path,.stage-warm-root .corner circle{fill:none;stroke:var(--gilt);
+  stroke-linecap:round;stroke-linejoin:round}
+.stage-warm-root .corner path:nth-child(1){stroke-width:2.2}
+.stage-warm-root .corner path:nth-child(2){stroke-width:1.2;opacity:.65}
+.stage-warm-root .corner path:nth-child(n+3){stroke-width:1.65}
+.stage-warm-root .corner.tl{left:2.2vh;top:2.2vh}
+.stage-warm-root .corner.br{right:2.2vh;bottom:2.2vh;transform:scale(-1,-1)}
+.stage-warm-root .topbar{position:absolute;left:0;right:0;top:0;height:9.6vh;z-index:7;
+  display:flex;align-items:center;justify-content:space-between;padding:0 4.2vh;
+  opacity:0;transition:opacity 240ms ease}
+.stage-warm-root[data-chrome="on"] .topbar{opacity:1}
+.stage-warm-root .tb-lft{display:flex;align-items:baseline;gap:2.4vh;min-width:0}
+.stage-warm-root .cn{font-size:1.8vh;letter-spacing:.14em;color:#F3E9DA;text-shadow:0 1px 12px rgba(0,0,0,.6);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
+.stage-warm-root .no{font-family:var(--mono);font-size:1.24vh;letter-spacing:.10em;color:rgba(243,233,218,.55);flex:none}
+.stage-warm-root .tools{display:flex;gap:.9vh;pointer-events:auto}
+.stage-warm-root .tool{border:1px solid var(--hair-w);background:rgba(243,233,218,.08);backdrop-filter:blur(10px);
+  color:#F3E9DA;border-radius:999px;padding:.9vh 2.1vh;font-size:1.5vh;letter-spacing:.04em;cursor:pointer;
+  transition:background 160ms,border-color 160ms}
+.stage-warm-root .tool:hover{background:rgba(243,233,218,.18);border-color:rgba(243,233,218,.42)}
+.stage-warm-root .cast{position:absolute;right:6.8vh;bottom:34vh;height:74vh;z-index:3;pointer-events:none;
+  filter:drop-shadow(0 -6px 34px rgba(0,0,0,.42))}
+.stage-warm-root .cast-strip{position:absolute;right:4.2vh;top:9.6vh;z-index:7;display:flex;flex-direction:column;
+  gap:.8vh;align-items:flex-end;opacity:0;transition:opacity 240ms ease}
+.stage-warm-root[data-chrome="on"] .cast-strip{opacity:1}
+.stage-warm-root .cast-chip{font-family:var(--mono);font-size:1.15vh;letter-spacing:.16em;color:rgba(243,233,218,.55);
+  border:1px solid var(--hair-w);border-radius:999px;padding:.5vh 1.3vh;background:rgba(20,26,32,.42)}
+.stage-warm-root .cast-chip.on{color:#F3E9DA;border-color:rgba(185,139,58,.6)}
+.stage-warm-root .band{position:absolute;left:0;right:0;bottom:0;height:48vh;z-index:5;background:var(--paper);color:var(--ink)}
+.stage-warm-root .band-top{position:absolute;left:0;right:0;top:0;height:1px;background:var(--gilt);opacity:.55}
+.stage-warm-root .band-top::after{content:'';position:absolute;left:50%;top:-4px;width:8px;height:8px;margin-left:-4px;
+  background:var(--paper);border:1px solid var(--gilt);transform:rotate(45deg)}
+.stage-warm-root .band-core{position:absolute;left:0;right:0;top:1px;bottom:11vh;padding:4.2vh 8.8vh 0;
+  overflow-y:auto;scrollbar-width:thin;
+  display:flex;flex-direction:column;justify-content:flex-end}   /* 内容贴底：当前句永远在最下 */
+.stage-warm-root .band-core .line{flex:none}
+.stage-warm-root .band-core::-webkit-scrollbar{width:6px}
+.stage-warm-root .band-core::-webkit-scrollbar-thumb{background:var(--ink4);border-radius:3px}
+.stage-warm-root .who{display:flex;align-items:center;gap:1.1vh;margin-bottom:1.8vh}
+.stage-warm-root .who .bar{width:2.2vh;height:1px;background:var(--accent);flex:none}
+.stage-warm-root .who .nm{font-size:1.4vh;letter-spacing:.24em;color:var(--accent);font-family:var(--mono)}
+.stage-warm-root .line{margin:0;font-family:var(--serif);color:var(--ink);font-size:3.24vh;line-height:1.70;
+  letter-spacing:.005em;text-wrap:pretty;max-width:66vw;white-space:pre-wrap}
+.stage-warm-root .line + .line{margin-top:1.85vh}
+.stage-warm-root .line.narr{color:var(--ink2);font-size:2.78vh}
+.stage-warm-root .line.past{color:var(--ink3)}
+.stage-warm-root .line.cur{color:var(--ink)}          /* 当前老师句：正常墨色（与 past 的浅色拉开） */
+/* 旧句与当前句之间一条发丝线（真品阅读态的做法：当前句独占下方一块） */
+.stage-warm-root .line + .line.past{margin-top:1.2vh}
+.stage-warm-root .line.past + .line:not(.past){margin-top:2.4vh;padding-top:2.2vh;position:relative}
+.stage-warm-root .line.past + .line:not(.past)::before{content:'';position:absolute;left:0;right:0;top:0;
+  height:1px;background:var(--hair)}
+.stage-warm-root .line.you{color:var(--accent)}
+.stage-warm-root .adv{display:inline-block;width:2.2vh;height:2px;background:var(--accent);margin-left:1.5vh;
+  vertical-align:.75vh;animation:stage-grow 1.5s ease-in-out infinite}
+@keyframes stage-grow{0%,100%{width:1.3vh;opacity:.7}50%{width:2.8vh;opacity:1}}
+.stage-warm-root .empty{font-family:var(--serif);font-size:2.6vh;color:var(--ink3)}
+.stage-warm-root .tline{margin:1.6vh 0 0;font-family:var(--mono);font-size:1.15vh;letter-spacing:.08em;color:var(--ink4)}
+.stage-warm-root .composer{position:absolute;left:8.8vh;right:8.8vh;bottom:2.9vh;display:flex;align-items:flex-end;
+  gap:1.7vh;border-top:1px solid var(--hair);padding-top:1.7vh;pointer-events:auto}
+.stage-warm-root .composer textarea{flex:1;min-width:0;background:transparent;border:0;outline:none;resize:none;
+  font-family:var(--sans);font-size:1.85vh;line-height:1.5;color:var(--ink);max-height:11vh;overflow-y:auto;
+  height:3.2vh}
+.stage-warm-root .composer textarea::placeholder{color:var(--ink3)}
+.stage-warm-root .composer .hint{font-family:var(--mono);font-size:1.1vh;letter-spacing:.10em;color:var(--ink3);
+  flex:none;padding-bottom:.6vh}
+.stage-warm-root .composer .send{border:0;background:var(--ink);color:var(--paper);border-radius:999px;
+  padding:1.1vh 2.6vh;font-size:1.5vh;letter-spacing:.06em;cursor:pointer;flex:none;transition:background 160ms}
+.stage-warm-root .composer .send:hover{background:#000}
+.stage-warm-root .composer .send[disabled]{background:var(--ink4);cursor:default}
+.stage-warm-root .banner{position:fixed;right:2.4vh;bottom:2.4vh;z-index:1200;pointer-events:auto;
+  display:flex;align-items:center;gap:1.4vh;padding:1.3vh 1.9vh;border-radius:999px;
+  background:rgba(20,26,32,.94);border:1px solid rgba(185,139,58,.5);color:#F3E9DA;
+  font-family:var(--mono);font-size:1.2vh;letter-spacing:.08em;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.stage-warm-root .banner button{border:1px solid var(--hair-w);background:transparent;color:#F3E9DA;
+  border-radius:999px;padding:.7vh 1.6vh;font-size:1.2vh;cursor:pointer}
+.stage-warm-root .banner button:hover{background:rgba(243,233,218,.16)}
+
+/* ★ 来源：avalon-warm.html 的 2026-09-30 追加块，已机核通过（12-verify-mockup-s5.cjs） */
+/* ══════════════════════════════════════════════════════════════════════
+   ★ 2026-09-30 追加：按「真·魔夜 UI」补的造型（对比件见 对比_真魔夜UI_vs_暖纸舞台）
+   ①②③ 三条为已定案实现：白板屏内嵌 ／ 面板从角色身后拉出 ／ 选项卡片六态
+   🔴 只做"造型"这一半：色系仍是暖纸，不搬青绿发光与深色斜纹
+   ※ 移植换算：纵向尺寸与字号 → vh；横向尺寸优先 vh；1px 边线/发丝线/圆角半径保持 px
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ⓪ · 叶形分隔带：正文与选项之间，一叶居中 + 双侧波浪蔓延 + 极细渐变发丝线 */
+.stage-warm-root .leaf-sep{display:flex;align-items:center;justify-content:center;gap:1.0vh;margin:0.8vh 0 0.5vh;color:var(--accent);opacity:.82}
+.stage-warm-root .leaf-sep .sep-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(184,74,28,.30),transparent)}
+.stage-warm-root .leaf-band{width:12vh;height:1.95vh;flex:none;overflow:visible}
+.stage-warm-root .leaf-band path{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;stroke-width:1.4}
+.stage-warm-root .leaf-band .leaf-mid{stroke-width:1;opacity:.6}
+
+/* ① · 分节抬头：对称波浪括号 + 菱形（真品的 ~选项 I~ 语汇，换暖棕） */
+.stage-warm-root .orn{display:flex;align-items:center;justify-content:center;gap:0.95vh;margin-bottom:0.8vh}
+.stage-warm-root .orn svg{width:4.25vh;height:2.04vh;flex:none;overflow:visible}
+.stage-warm-root .orn-wave{width:10.5vh;height:3.2vh;flex:none;overflow:visible;color:var(--gilt)}
+.stage-warm-root .orn-wave path{fill:none;stroke:currentColor;stroke-width:1.9;
+  stroke-linecap:round;stroke-linejoin:round}
+.stage-warm-root .orn svg path,.stage-warm-root .orn svg circle{fill:none;stroke:rgba(194,134,31,.95);stroke-width:1.6}
+.stage-warm-root .orn .tx{font-family:var(--serif);font-size:2.13vh;letter-spacing:.30em;color:var(--ink2)}
+.stage-warm-root .orn .dm{width:0.65vh;height:0.65vh;background:var(--gilt);transform:rotate(45deg);flex:none;opacity:.9}
+
+/* ② · 选项卡片：两端括号花饰 + 圆角描边 + 渐变面 + 波纹 + 六态
+      状态机：未选 / hover / 当前(键盘焦点) / 已选 / 已选·本次发送 / 禁用 */
+.stage-warm-root .opts{display:flex;flex-direction:column;gap:0.45vh;margin-top:0.1vh;
+  padding:0 3.9vh}
+.stage-warm-root .oc{position:relative;display:flex;align-items:center;gap:1.5vh;height:4.45vh;padding:0 1.85vh;
+  border:2px solid var(--hair-w);border-radius:10px;cursor:pointer;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,0) 46%,rgba(0,0,0,.10)),
+    repeating-linear-gradient(172deg,rgba(255,255,255,.022) 0 1px,transparent 1px 0.65vh),
+    #4A3C31;
+  box-shadow:inset 0 0 0 1px rgba(243,233,218,.05),0 0 0 rgba(185,139,58,0);
+  transition:background 180ms,border-color 180ms,box-shadow 220ms,transform 180ms}
+/* 两端卷草端饰：真品语汇是「竖双柱 ＋ 三卷须 ＋ 中横羽」，用 SVG 画（伪元素的 border 拼不出曲线）
+   默认态设为透明（消除六行连排齿链感，仅保留活跃态 cur/hover/picked 作为织边羽翼） */
+.stage-warm-root .oe{position:absolute;top:50%;width:2.65vh;height:4.1vh;margin-top:-2.05vh;
+  color:rgba(194,134,31,.92);opacity:0;pointer-events:none;transition:opacity 180ms,color 180ms}
+.stage-warm-root .oe.l{left:-2.95vh}
+.stage-warm-root .oe.r{right:-2.95vh;transform:scaleX(-1)}
+.stage-warm-root .oe svg{display:block;width:100%;height:100%;overflow:visible}
+.stage-warm-root .oe path{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+.stage-warm-root .oe path:nth-child(1){stroke-width:1.8}
+.stage-warm-root .oe path:nth-child(2){stroke-width:1.1;opacity:.55}
+.stage-warm-root .oe path:nth-child(n+3){stroke-width:1.4}
+.stage-warm-root .oc .no{font-family:var(--mono);font-size:1.2vh;letter-spacing:.06em;color:rgba(224,146,28,1);
+  flex:none;width:2.04vh}
+.stage-warm-root .oc .tx{flex:1;font-family:var(--serif);font-size:1.94vh;letter-spacing:.03em;
+  color:rgba(248,240,229,.92);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stage-warm-root .oc .go{font-family:var(--mono);font-size:1.02vh;letter-spacing:.12em;color:rgba(243,233,218,.52);
+  flex:none;opacity:0;transition:opacity 180ms}
+
+/* hover：抬起来一点点（真品 selecting 态就是"更亮 + 更浮"） */
+.stage-warm-root .oc:hover{border-color:rgba(217,119,44,.75);transform:translateX(3px);
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.085),rgba(255,255,255,0) 46%,rgba(0,0,0,.08)),
+    repeating-linear-gradient(172deg,rgba(255,255,255,.032) 0 1px,transparent 1px 0.65vh),
+    #56453A}
+.stage-warm-root .oc:hover .tx{color:#FFF8EE}
+.stage-warm-root .oc:hover .go{opacity:1}
+.stage-warm-root .oc:hover .oe{opacity:.92}
+
+/* 当前（键盘焦点）：菱形指示 + 赭色边（**主信号是指示器，不是色差** —— 沿用审核件的裁定） */
+.stage-warm-root .oc.cur{border-color:rgba(224,146,28,.95);
+  box-shadow:inset 0 0 0 1px rgba(224,146,28,.30),0 0 1.4vh rgba(224,146,28,.22)}
+.stage-warm-root .oc.cur .tx{color:#FFF8EE}
+.stage-warm-root .oc.cur .no::after{content:'';display:inline-block;width:0.46vh;height:0.46vh;margin-left:0.55vh;
+  background:var(--vermilion);transform:rotate(45deg);vertical-align:0.2vh}
+.stage-warm-root .oc.cur .oe{opacity:1;color:var(--vermilion)}
+
+/* 已选：换材质（暖纸墨字），与"未选=夜色玻璃"拉开 —— 这是六态里的主差分 */
+.stage-warm-root .oc{box-shadow:inset 0 0 0 1px rgba(243,233,218,.06)}
+/* 已选：整行**反相**（深底浅字）——真品 selected 就是整格高亮，靠明暗反转拉开层次 */
+.stage-warm-root .oc.picked{background:#3A2E25;border-color:rgba(224,146,28,.9);
+  box-shadow:inset 0 0 0 1px rgba(224,146,28,.25),0 0 1.2vh rgba(224,146,28,.18)}
+.stage-warm-root .oc.picked .no{color:rgba(224,146,28,.95)}
+.stage-warm-root .oc.picked .tx{color:#FFF7EC}
+.stage-warm-root .oc.picked .oe{opacity:.9;color:rgba(224,146,28,.95)}
+/* 已选·本次发送：纸色更实 + 左端一枚赭色短横（真品 selected 那枚"更亮的收口"） */
+.stage-warm-root .oc.picked.sent{background:linear-gradient(180deg,#C2521F,#B84A1C);border-color:#E0921C;
+  box-shadow:0 0 0 2px rgba(224,146,28,.28),0 0 1.6vh rgba(224,146,28,.22)}
+.stage-warm-root .oc.picked.sent .tx{color:#FFF7EC;letter-spacing:.05em}
+.stage-warm-root .oc.disabled{opacity:.60;cursor:default;transform:none}
+.stage-warm-root .oc.disabled:hover{transform:none;border-color:var(--hair-w)}
+
+/* ③ · 纸卡短答 / 给选项：内外双线框（真品 archive_window_waku 的内凹边做法） */
+.stage-warm-root .cardframe{position:relative;border:1px solid var(--hair);background:var(--paper);
+  padding:2.95vh 4.8vh 2.4vh}
+.stage-warm-root .cardframe::before{content:'';position:absolute;left:0.93vh;top:0.93vh;right:0.93vh;bottom:0.93vh;
+  border:1px solid var(--hair);box-shadow:0 0 0 3px rgba(243,233,218,.6);pointer-events:none}
+.stage-warm-root .cardframe::after{content:'';position:absolute;left:0;right:0;top:0;height:2px;
+  background:var(--gilt);opacity:.85}
+
+/* ④ · 正文行：正文用无衬线（真品正文就是硬边黑体感），选项/抬头仍走衬线 */
+.stage-warm-root .band-core .line.sans{font-family:var(--sans);font-size:2.78vh;line-height:1.56;letter-spacing:.012em;
+  text-shadow:0 1px 0 rgba(243,233,218,.85), 0 0 1px rgba(42,33,26,.30)}
+.stage-warm-root .band-core .line.sans.narr{font-size:2.7vh;color:var(--ink2);
+  text-shadow:0 1px 0 rgba(243,233,218,.75)}
+
+/* ⑤ · 立绘入画：自下而上压暗，让立绘"落进"画面而不是贴上去 */
+.stage-warm-root .cast-wrap{position:absolute;right:12.05vh;bottom:0;z-index:3;pointer-events:none}
+.stage-warm-root .cast-wrap .cast{position:static;right:auto;bottom:auto;display:block}
+.stage-warm-root .cast-wrap::after{content:'';position:absolute;left:-3.7vh;right:-3.7vh;bottom:0;height:34%;
+  background:linear-gradient(to top,rgba(10,12,16,.66),rgba(10,12,16,.22) 46%,rgba(10,12,16,0));
+  pointer-events:none}
+
+/* ⑧ · 板书屏（已定案「白板＝舞台的一个屏」）：整屏变纸、藏立绘、正文让位
+       依据真品：板书时不与正文抢画面（Avalon 模式是"逐屏"，不是"常驻栏"） */
+.stage-warm-root[data-screen="board"] .veil{opacity:0;transition:opacity .3s}
+.stage-warm-root[data-screen="board"] .cast-wrap{opacity:0;transition:opacity .25s}
+.stage-warm-root[data-screen="board"] .band{height:30vh;transition:height .35s cubic-bezier(.22,.61,.36,1)}
+.stage-warm-root[data-screen="board"] .band-core{bottom:11vh;opacity:.55}
+.stage-warm-root[data-screen="board"] .boardpanel{width:80vh;height:58vh;left:50%;top:11vh;
+  margin-left:-40vh;box-shadow:0 1.6vh 4vh rgba(10,12,16,.5)}
+.stage-warm-root .boardpanel .bp-rev{font-family:var(--mono);font-size:1.05vh;letter-spacing:.14em;
+  color:var(--ink3);margin-left:auto}
+.stage-warm-root .boardpanel .bp-canvas{position:absolute;left:1.6vh;right:1.6vh;top:7.4vh;bottom:1.6vh;
+  border:1px solid var(--hair);overflow:hidden}
+.stage-warm-root .boardpanel .bp-canvas svg{display:block;width:100%;height:100%}
+.stage-warm-root .boardpanel .bp-note{margin-top:1.4vh;font-family:var(--mono);font-size:1.2vh;
+  color:var(--ink3);letter-spacing:.06em}
+.stage-warm-root .boardpanel .bp-body{position:absolute;left:0;right:0;top:5.4vh;bottom:0;padding:0}
+
+/* ⑨ · 动画屏（已定案：整屏放完自动回）
+       铺满视口、盖住舞台其余部分；as-frame 是暖纸上的"放映框"（与纸卡同一套语汇） */
+.stage-warm-root .animscr{position:absolute;inset:0;z-index:60;background:var(--night);
+  display:flex;flex-direction:column;pointer-events:auto;animation:stage-anim-in .28s cubic-bezier(.22,.61,.36,1) both}
+@keyframes stage-anim-in{from{opacity:0;transform:scale(1.015)}to{opacity:1;transform:none}}
+.stage-warm-root .animscr .as-top{height:6.4vh;flex:none;display:flex;align-items:center;gap:1.2vh;
+  padding:0 4.2vh;border-bottom:1px solid var(--hair-w)}
+.stage-warm-root .animscr .as-top .dm{width:0.65vh;height:0.65vh;background:var(--gilt);transform:rotate(45deg);flex:none}
+.stage-warm-root .animscr .as-top .as-tx{font-family:var(--mono);font-size:1.25vh;letter-spacing:.20em;color:rgba(243,233,218,.9)}
+.stage-warm-root .animscr .as-top .as-esc{margin-left:auto;font-family:var(--mono);font-size:1.1vh;letter-spacing:.12em;color:rgba(243,233,218,.45)}
+.stage-warm-root .animscr .as-frame{flex:1;min-height:0;margin:4.2vh;border:1px solid rgba(194,134,31,.55);
+  background:#0B0E12;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.stage-warm-root .animscr .as-frame video{max-width:100%;max-height:100%;display:block}
+.stage-warm-root .animscr .as-fallback{flex:1;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:1.5vh;color:rgba(243,233,218,.6)}
+
+/* ⑦ · 面板「从角色身后拉出」（已定案：170/390/220ms ＋ 560→−24→0 ＋ 2.4° 倾斜）
+       依据 pull-out.html 逐字：① 预备角色侧身（面板还没出现）② 拉出面板块 ③ 收尾回正
+       🔴 面板 z 序**低于角色**（5 < 8），所以看起来是"角色把它拉出来" */
+.stage-warm-root .boardpanel{position:absolute;left:5vh;top:9vh;width:62vh;height:52vh;z-index:5;
+  background:var(--paper);border:1px solid var(--hair);border-left:2px solid var(--gilt);
+  box-shadow:0 1.2vh 3.2vh rgba(10,12,16,.42);
+  transform-origin:right center;transform:translateX(56vh) rotate(-2.4deg) scale(.94);opacity:0;
+  pointer-events:auto;overflow:hidden}
+.stage-warm-root .boardpanel .bp-top{height:5.2vh;display:flex;align-items:center;gap:1.2vh;
+  padding:0 2.2vh;border-bottom:1px solid var(--hair)}
+.stage-warm-root .boardpanel .bp-top .dm{width:0.65vh;height:0.65vh;background:var(--gilt);
+  transform:rotate(45deg);flex:none}
+.stage-warm-root .boardpanel .bp-top .bp-tx{font-family:var(--mono);font-size:1.2vh;
+  letter-spacing:.22em;color:var(--accent)}
+.stage-warm-root .boardpanel .bp-body{padding:2.6vh 3.2vh;font-family:var(--sans);
+  font-size:2.05vh;line-height:1.72;color:var(--ink)}
+.stage-warm-root .boardpanel .bp-body .k{color:var(--accent);font-family:var(--mono);
+  font-size:1.75vh;letter-spacing:.06em}
+/* 三段：先侧身（面板不动）→ 拉出（过冲）→ 回正 */
+.stage-warm-root .cast-wrap{transition:transform .22s cubic-bezier(.22,.61,.36,1),
+  filter .22s cubic-bezier(.22,.61,.36,1)}
+.stage-warm-root[data-board="turn"] .cast-wrap{transform:rotate(-1.6deg) translateX(-3vh) scale(.965)}
+.stage-warm-root[data-board="pull"] .cast-wrap{transform:rotate(-1.2deg) translateX(-1.5vh) scale(.985)}
+.stage-warm-root[data-board="settle"] .cast-wrap{transform:none}
+.stage-warm-root[data-board="turn"] .boardpanel,
+.stage-warm-root[data-board="pull"] .boardpanel,
+.stage-warm-root[data-board="settle"] .boardpanel{opacity:1}
+.stage-warm-root[data-board="turn"] .boardpanel{transform:translateX(56vh) rotate(-2.4deg) scale(.94)}
+.stage-warm-root[data-board="pull"] .boardpanel{
+  transform:translateX(-2.2vh) rotate(.5deg) scale(1.012);   /* ← 过冲（定案值 −24px） */
+  transition:transform .39s cubic-bezier(.16,1,.3,1),opacity .39s cubic-bezier(.16,1,.3,1)}
+.stage-warm-root[data-board="settle"] .boardpanel{
+  transform:translateX(0) rotate(0) scale(1);
+  transition:transform .22s cubic-bezier(.22,1.12,.36,1),opacity .22s ease}
+/* 拉出期间正文让位（真品：dock 变暗缩小） */
+.stage-warm-root[data-board="pull"] .band-core{opacity:.45;transform:scale(.985);transition:opacity .39s,transform .39s}
+.stage-warm-root[data-board="settle"] .band-core{opacity:1;transform:none;transition:opacity .22s,transform .22s}
+
+/* ⑥ · 底部控件收拢：次要控件只在悬停时浮出（阅读态零 chrome 的延续） */
+.stage-warm-root .quiet{opacity:0;transition:opacity 200ms;pointer-events:none}
+.stage-warm-root .topbar:hover .quiet,.stage-warm-root .toolwrap:hover .quiet{opacity:1;pointer-events:auto}
+
+html,body{margin:0;width:100%;height:100%;background:#0a0a0a}
+</style></head><body>
+<div class="stage-warm-root" data-chrome="on" data-screen="">
+  <img class="bg" src="../assets/stage/classroom_wide.png" alt="">
+  <div class="veil"></div>
+  <div class="corner tl"><svg viewBox="0 0 40 40" class="corner-svg">
+  <path d="M1 36 L1 8 Q1 1 8 1 L36 1"/><path d="M6 34 L6 9 Q6 6 9 6 L34 6"/>
+  <path d="M12,12 C12.2,12 12.7,11.6 13,12 C13.3,12.4 13.3,13.5 13.6,14.1 C13.9,14.8 14.4,15.4 14.8,15.9 C15.3,16.4 15.9,16.8 16.5,17.2 C17,17.5 17.7,17.7 18.3,17.8 C18.9,17.9 19.6,17.9 20.2,17.8 C20.8,17.7 21.4,17.5 21.9,17.3 C22.4,17 22.9,16.6 23.3,16.3 C23.7,15.9 24,15.4 24.2,14.9 C24.5,14.5 24.6,13.9 24.7,13.5 C24.7,13 24.7,12.5 24.6,12 C24.5,11.5 24.4,11.1 24.1,10.7 C23.9,10.3 23.6,10 23.3,9.7 C23,9.5 22.7,9.2 22.3,9.1 C22,8.9 21.6,8.9 21.2,8.8 C20.9,8.8 20.5,8.9 20.2,9 C19.9,9 19.6,9.2 19.3,9.4 C19.1,9.5 18.9,9.8 18.7,10 C18.6,10.2 18.5,10.5 18.4,10.7 C18.4,10.9 18.3,11.2 18.4,11.4 C18.4,11.6 18.5,11.8 18.5,12 C18.6,12.2 18.8,12.3 18.9,12.4 C19,12.5 19.2,12.6 19.3,12.6"/><path d="M12,12 C12,12.2 11.6,12.7 12,13 C12.4,13.3 13.5,13.3 14.1,13.6 C14.8,13.9 15.4,14.4 15.9,14.8 C16.4,15.3 16.8,15.9 17.2,16.5 C17.5,17 17.7,17.7 17.8,18.3 C17.9,18.9 17.9,19.6 17.8,20.2 C17.7,20.8 17.5,21.4 17.3,21.9 C17,22.4 16.6,22.9 16.3,23.3 C15.9,23.7 15.4,24 14.9,24.2 C14.5,24.5 13.9,24.6 13.5,24.7 C13,24.7 12.5,24.7 12,24.6 C11.5,24.5 11.1,24.4 10.7,24.1 C10.3,23.9 10,23.6 9.7,23.3 C9.5,23 9.2,22.7 9.1,22.3 C8.9,22 8.9,21.6 8.8,21.2 C8.8,20.9 8.9,20.5 9,20.2 C9,19.9 9.2,19.6 9.4,19.3 C9.5,19.1 9.8,18.9 10,18.7 C10.2,18.6 10.5,18.5 10.7,18.4 C10.9,18.4 11.2,18.3 11.4,18.4 C11.6,18.4 11.8,18.5 12,18.5 C12.2,18.6 12.3,18.8 12.4,18.9 C12.5,19 12.6,19.2 12.6,19.3"/></svg></div>
+  <div class="corner br"><svg viewBox="0 0 40 40" class="corner-svg">
+  <path d="M1 36 L1 8 Q1 1 8 1 L36 1"/><path d="M6 34 L6 9 Q6 6 9 6 L34 6"/>
+  <path d="M12,12 C12.2,12 12.7,11.6 13,12 C13.3,12.4 13.3,13.5 13.6,14.1 C13.9,14.8 14.4,15.4 14.8,15.9 C15.3,16.4 15.9,16.8 16.5,17.2 C17,17.5 17.7,17.7 18.3,17.8 C18.9,17.9 19.6,17.9 20.2,17.8 C20.8,17.7 21.4,17.5 21.9,17.3 C22.4,17 22.9,16.6 23.3,16.3 C23.7,15.9 24,15.4 24.2,14.9 C24.5,14.5 24.6,13.9 24.7,13.5 C24.7,13 24.7,12.5 24.6,12 C24.5,11.5 24.4,11.1 24.1,10.7 C23.9,10.3 23.6,10 23.3,9.7 C23,9.5 22.7,9.2 22.3,9.1 C22,8.9 21.6,8.9 21.2,8.8 C20.9,8.8 20.5,8.9 20.2,9 C19.9,9 19.6,9.2 19.3,9.4 C19.1,9.5 18.9,9.8 18.7,10 C18.6,10.2 18.5,10.5 18.4,10.7 C18.4,10.9 18.3,11.2 18.4,11.4 C18.4,11.6 18.5,11.8 18.5,12 C18.6,12.2 18.8,12.3 18.9,12.4 C19,12.5 19.2,12.6 19.3,12.6"/><path d="M12,12 C12,12.2 11.6,12.7 12,13 C12.4,13.3 13.5,13.3 14.1,13.6 C14.8,13.9 15.4,14.4 15.9,14.8 C16.4,15.3 16.8,15.9 17.2,16.5 C17.5,17 17.7,17.7 17.8,18.3 C17.9,18.9 17.9,19.6 17.8,20.2 C17.7,20.8 17.5,21.4 17.3,21.9 C17,22.4 16.6,22.9 16.3,23.3 C15.9,23.7 15.4,24 14.9,24.2 C14.5,24.5 13.9,24.6 13.5,24.7 C13,24.7 12.5,24.7 12,24.6 C11.5,24.5 11.1,24.4 10.7,24.1 C10.3,23.9 10,23.6 9.7,23.3 C9.5,23 9.2,22.7 9.1,22.3 C8.9,22 8.9,21.6 8.8,21.2 C8.8,20.9 8.9,20.5 9,20.2 C9,19.9 9.2,19.6 9.4,19.3 C9.5,19.1 9.8,18.9 10,18.7 C10.2,18.6 10.5,18.5 10.7,18.4 C10.9,18.4 11.2,18.3 11.4,18.4 C11.6,18.4 11.8,18.5 12,18.5 C12.2,18.6 12.3,18.8 12.4,18.9 C12.5,19 12.6,19.2 12.6,19.3"/></svg></div>
+  <div class="cast-wrap"><img class="cast" src="../assets/stage/student_f.png" alt=""></div>
+  <div class="band">
+    <div class="band-top"></div>
+    <div class="band-core">
+      <p class="line sans past">先看这两行：它们在同一个核上，却不是同时跑。</p>
+      <p class="line sans cur">那你觉得，切换的时候，什么必须被保存下来？</p>
+      <div class="leaf-sep">
+  <div class="sep-line"></div>
+  <svg viewBox="0 0 160 26" class="leaf-band">
+    <path d="M68,13 C67.4,13 65.7,13 64.6,13 C63.5,13.1 62.3,13.1 61.2,13.2 C60.1,13.2 58.9,13.3 57.8,13.3 C56.7,13.4 55.5,13.4 54.4,13.5 C53.3,13.5 52.1,13.6 51,13.6 C49.9,13.6 48.7,13.6 47.6,13.6 C46.5,13.6 45.3,13.6 44.2,13.6 C43.1,13.5 41.9,13.4 40.8,13.4 C39.7,13.3 38.5,13.2 37.4,13 C36.3,12.9 35.1,12.8 34,12.6 C32.9,12.5 31.7,12.3 30.6,12.2 C29.5,12.1 28.3,11.9 27.2,11.8 C26.1,11.7 24.9,11.6 23.8,11.5 C22.7,11.4 21.5,11.3 20.4,11.3 C19.3,11.3 18.1,11.3 17,11.4 C15.9,11.5 14.7,11.6 13.6,11.7 C12.5,11.8 11.3,12 10.2,12.2 C9.1,12.4 7.9,12.6 6.8,12.9 C5.7,13.1 4.5,13.4 3.4,13.6 C2.3,13.9 0.6,14.3 0,14.4"/>
+    <path d="M92,13 C92.6,13 94.3,13 95.4,13 C96.5,13.1 97.7,13.1 98.8,13.2 C99.9,13.2 101.1,13.3 102.2,13.3 C103.3,13.4 104.5,13.4 105.6,13.5 C106.7,13.5 107.9,13.6 109,13.6 C110.1,13.6 111.3,13.6 112.4,13.6 C113.5,13.6 114.7,13.6 115.8,13.6 C116.9,13.5 118.1,13.4 119.2,13.4 C120.3,13.3 121.5,13.2 122.6,13 C123.7,12.9 124.9,12.8 126,12.6 C127.1,12.5 128.3,12.3 129.4,12.2 C130.5,12.1 131.7,11.9 132.8,11.8 C133.9,11.7 135.1,11.6 136.2,11.5 C137.3,11.4 138.5,11.3 139.6,11.3 C140.7,11.3 141.9,11.3 143,11.4 C144.1,11.5 145.3,11.6 146.4,11.7 C147.5,11.8 148.7,12 149.8,12.2 C150.9,12.4 152.1,12.6 153.2,12.9 C154.3,13.1 155.5,13.4 156.6,13.6 C157.7,13.9 159.4,14.3 160,14.4"/>
+    <path d="M80 3 C88 9 88 17 80 23 C72 17 72 9 80 3 Z"/>
+    <path d="M80 3 L80 23" class="leaf-mid"/>
+  </svg>
+  <div class="sep-line"></div>
+</div>
+      <div class="orn">
+        <svg viewBox="0 0 100 26" class="orn-wave" style="transform:scaleX(-1)">
+  <path d="M4,8 C4.8,8.1 7.1,8.4 8.7,8.6 C10.2,8.9 11.8,9.1 13.3,9.2 C14.9,9.4 16.4,9.5 18,9.5 C19.6,9.5 21.1,9.4 22.7,9.3 C24.2,9.1 25.8,8.9 27.3,8.6 C28.9,8.3 30.4,7.9 32,7.6 C33.6,7.3 35.1,6.9 36.7,6.6 C38.2,6.3 39.8,6 41.3,5.9 C42.9,5.7 44.4,5.7 46,5.8 C47.6,5.9 49.1,6.1 50.7,6.4 C52.2,6.7 53.8,7.2 55.3,7.6 C56.9,8.1 58.4,8.7 60,9.1 C61.6,9.6 63.1,10.1 64.7,10.4 C66.2,10.7 67.8,11 69.3,11 C70.9,11.1 72.4,11 74,10.8 C75.6,10.5 77.1,10.1 78.7,9.6 C80.2,9.1 81.8,8.4 83.3,7.8 C84.9,7.1 87.2,6.2 88,5.9"/><path d="M4,18 C4.8,18.1 7.1,18.4 8.7,18.6 C10.2,18.9 11.8,19.1 13.3,19.2 C14.9,19.4 16.4,19.5 18,19.5 C19.6,19.5 21.1,19.4 22.7,19.3 C24.2,19.1 25.8,18.9 27.3,18.6 C28.9,18.3 30.4,17.9 32,17.6 C33.6,17.3 35.1,16.9 36.7,16.6 C38.2,16.3 39.8,16 41.3,15.9 C42.9,15.7 44.4,15.7 46,15.8 C47.6,15.9 49.1,16.1 50.7,16.4 C52.2,16.7 53.8,17.2 55.3,17.6 C56.9,18.1 58.4,18.7 60,19.1 C61.6,19.6 63.1,20.1 64.7,20.4 C66.2,20.7 67.8,21 69.3,21 C70.9,21.1 72.4,21 74,20.8 C75.6,20.5 77.1,20.1 78.7,19.6 C80.2,19.1 81.8,18.4 83.3,17.8 C84.9,17.1 87.2,16.2 88,15.9"/><path d="M90,13 C90.2,13 90.8,13.2 91,13 C91.2,12.8 91.2,12 91.4,11.5 C91.6,11 91.9,10.6 92.2,10.2 C92.5,9.9 92.9,9.6 93.3,9.3 C93.7,9.1 94.1,8.9 94.6,8.7 C95,8.6 95.4,8.6 95.9,8.6 C96.3,8.6 96.7,8.6 97.1,8.8 C97.5,8.9 97.9,9.1 98.2,9.3 C98.5,9.5 98.8,9.8 99,10.1 C99.3,10.4 99.4,10.7 99.6,11 C99.7,11.3 99.8,11.7 99.8,12 C99.8,12.4 99.8,12.7 99.8,13 C99.7,13.3 99.6,13.6 99.4,13.9 C99.3,14.1 99.1,14.3 98.9,14.5 C98.7,14.7 98.5,14.9 98.2,15 C98,15.1 97.7,15.2 97.5,15.2 C97.3,15.2 97,15.2 96.8,15.2 C96.6,15.2 96.4,15.1 96.2,15 C96,14.9 95.9,14.8 95.7,14.7 C95.6,14.5 95.5,14.4 95.4,14.2 C95.4,14.1 95.3,13.9 95.3,13.8 C95.3,13.6 95.3,13.5 95.3,13.3 C95.4,13.2 95.5,13.1 95.5,13"/></svg>
+        <span class="tx">选 项</span>
+        <svg viewBox="0 0 100 26" class="orn-wave">
+  <path d="M4,8 C4.8,8.1 7.1,8.4 8.7,8.6 C10.2,8.9 11.8,9.1 13.3,9.2 C14.9,9.4 16.4,9.5 18,9.5 C19.6,9.5 21.1,9.4 22.7,9.3 C24.2,9.1 25.8,8.9 27.3,8.6 C28.9,8.3 30.4,7.9 32,7.6 C33.6,7.3 35.1,6.9 36.7,6.6 C38.2,6.3 39.8,6 41.3,5.9 C42.9,5.7 44.4,5.7 46,5.8 C47.6,5.9 49.1,6.1 50.7,6.4 C52.2,6.7 53.8,7.2 55.3,7.6 C56.9,8.1 58.4,8.7 60,9.1 C61.6,9.6 63.1,10.1 64.7,10.4 C66.2,10.7 67.8,11 69.3,11 C70.9,11.1 72.4,11 74,10.8 C75.6,10.5 77.1,10.1 78.7,9.6 C80.2,9.1 81.8,8.4 83.3,7.8 C84.9,7.1 87.2,6.2 88,5.9"/><path d="M4,18 C4.8,18.1 7.1,18.4 8.7,18.6 C10.2,18.9 11.8,19.1 13.3,19.2 C14.9,19.4 16.4,19.5 18,19.5 C19.6,19.5 21.1,19.4 22.7,19.3 C24.2,19.1 25.8,18.9 27.3,18.6 C28.9,18.3 30.4,17.9 32,17.6 C33.6,17.3 35.1,16.9 36.7,16.6 C38.2,16.3 39.8,16 41.3,15.9 C42.9,15.7 44.4,15.7 46,15.8 C47.6,15.9 49.1,16.1 50.7,16.4 C52.2,16.7 53.8,17.2 55.3,17.6 C56.9,18.1 58.4,18.7 60,19.1 C61.6,19.6 63.1,20.1 64.7,20.4 C66.2,20.7 67.8,21 69.3,21 C70.9,21.1 72.4,21 74,20.8 C75.6,20.5 77.1,20.1 78.7,19.6 C80.2,19.1 81.8,18.4 83.3,17.8 C84.9,17.1 87.2,16.2 88,15.9"/><path d="M90,13 C90.2,13 90.8,13.2 91,13 C91.2,12.8 91.2,12 91.4,11.5 C91.6,11 91.9,10.6 92.2,10.2 C92.5,9.9 92.9,9.6 93.3,9.3 C93.7,9.1 94.1,8.9 94.6,8.7 C95,8.6 95.4,8.6 95.9,8.6 C96.3,8.6 96.7,8.6 97.1,8.8 C97.5,8.9 97.9,9.1 98.2,9.3 C98.5,9.5 98.8,9.8 99,10.1 C99.3,10.4 99.4,10.7 99.6,11 C99.7,11.3 99.8,11.7 99.8,12 C99.8,12.4 99.8,12.7 99.8,13 C99.7,13.3 99.6,13.6 99.4,13.9 C99.3,14.1 99.1,14.3 98.9,14.5 C98.7,14.7 98.5,14.9 98.2,15 C98,15.1 97.7,15.2 97.5,15.2 C97.3,15.2 97,15.2 96.8,15.2 C96.6,15.2 96.4,15.1 96.2,15 C96,14.9 95.9,14.8 95.7,14.7 C95.6,14.5 95.5,14.4 95.4,14.2 C95.4,14.1 95.3,13.9 95.3,13.8 C95.3,13.6 95.3,13.5 95.3,13.3 C95.4,13.2 95.5,13.1 95.5,13"/></svg>
+      </div>
+      <div class="opts">
+        <div class="oc picked sent">
+          <span class="oe l"><svg viewBox="0 0 32 50" class="orn-end">
+  <path d="M25.6 2 L25.6 48"/><path d="M30 5 L30 45"/>
+  <path d="M25,9 C24.7,9 23.4,8.7 23,9 C22.6,9.3 22.8,10.2 22.5,10.7 C22.3,11.2 22,11.7 21.6,12 C21.2,12.4 20.8,12.8 20.3,13 C19.9,13.3 19.4,13.4 18.9,13.5 C18.4,13.6 17.9,13.6 17.4,13.6 C16.9,13.5 16.5,13.3 16.1,13.1 C15.7,12.9 15.3,12.7 15,12.3 C14.7,12 14.4,11.7 14.2,11.3 C14,10.9 13.9,10.5 13.9,10.1 C13.8,9.8 13.8,9.4 13.9,9 C14,8.6 14.1,8.3 14.3,8 C14.4,7.7 14.7,7.4 14.9,7.2 C15.1,7 15.4,6.8 15.7,6.7 C16,6.5 16.3,6.5 16.6,6.5 C16.9,6.4 17.1,6.5 17.4,6.5 C17.7,6.6 17.9,6.7 18.1,6.9 C18.3,7 18.5,7.2 18.6,7.3 C18.7,7.5 18.8,7.7 18.9,7.9 C18.9,8.1 19,8.3 18.9,8.5 C18.9,8.7 18.9,8.9 18.8,9 C18.8,9.1 18.7,9.3 18.5,9.4 C18.4,9.5 18.3,9.6 18.2,9.6"/><path d="M25,41 C24.7,41 23.4,41.3 23,41 C22.6,40.7 22.8,39.8 22.5,39.3 C22.3,38.8 22,38.3 21.6,38 C21.2,37.6 20.8,37.2 20.3,37 C19.9,36.7 19.4,36.6 18.9,36.5 C18.4,36.4 17.9,36.4 17.4,36.4 C16.9,36.5 16.5,36.7 16.1,36.9 C15.7,37.1 15.3,37.3 15,37.7 C14.7,38 14.4,38.3 14.2,38.7 C14,39.1 13.9,39.5 13.9,39.9 C13.8,40.2 13.8,40.6 13.9,41 C14,41.4 14.1,41.7 14.3,42 C14.4,42.3 14.7,42.6 14.9,42.8 C15.1,43 15.4,43.2 15.7,43.3 C16,43.5 16.3,43.5 16.6,43.5 C16.9,43.6 17.1,43.5 17.4,43.5 C17.7,43.4 17.9,43.3 18.1,43.1 C18.3,43 18.5,42.8 18.6,42.7 C18.7,42.5 18.8,42.3 18.9,42.1 C18.9,41.9 19,41.7 18.9,41.5 C18.9,41.3 18.9,41.1 18.8,41 C18.8,40.9 18.7,40.7 18.5,40.6 C18.4,40.5 18.3,40.4 18.2,40.4"/><path d="M25,25 C24.7,25 23.5,24.6 23,25 C22.5,25.4 22.6,26.9 22.2,27.6 C21.8,28.4 21.3,29.2 20.6,29.8 C20,30.4 19.3,30.9 18.5,31.2 C17.8,31.5 17,31.7 16.2,31.8 C15.4,31.8 14.6,31.7 13.9,31.5 C13.1,31.3 12.5,31 11.9,30.5 C11.3,30.1 10.8,29.6 10.4,29 C10,28.5 9.8,27.8 9.6,27.2 C9.5,26.6 9.4,25.9 9.5,25.3 C9.6,24.7 9.8,24.1 10,23.6 C10.3,23.1 10.6,22.6 11,22.3 C11.4,21.9 11.9,21.6 12.4,21.4 C12.8,21.2 13.3,21.1 13.8,21.1 C14.2,21.1 14.7,21.2 15.1,21.3 C15.5,21.5 15.9,21.7 16.2,21.9 C16.5,22.2 16.7,22.5 16.9,22.8 C17.1,23.1 17.2,23.5 17.2,23.8 C17.3,24.1 17.2,24.4 17.2,24.7 C17.1,25 17,25.3 16.8,25.5 C16.7,25.7 16.5,25.8 16.3,25.9 C16.1,26.1 15.9,26.1 15.7,26.1 C15.5,26.1 15.2,26.1 15.1,26"/>
+  <path d="M25 25 L17 25"/></svg></span>
+          <span class="no">01</span>
+          <span class="tx">先把 PCB 拆给我看。</span>
+          <span class="go">已送出</span>
+          <span class="oe r"><svg viewBox="0 0 32 50" class="orn-end">
+  <path d="M25.6 2 L25.6 48"/><path d="M30 5 L30 45"/>
+  <path d="M25,9 C24.7,9 23.4,8.7 23,9 C22.6,9.3 22.8,10.2 22.5,10.7 C22.3,11.2 22,11.7 21.6,12 C21.2,12.4 20.8,12.8 20.3,13 C19.9,13.3 19.4,13.4 18.9,13.5 C18.4,13.6 17.9,13.6 17.4,13.6 C16.9,13.5 16.5,13.3 16.1,13.1 C15.7,12.9 15.3,12.7 15,12.3 C14.7,12 14.4,11.7 14.2,11.3 C14,10.9 13.9,10.5 13.9,10.1 C13.8,9.8 13.8,9.4 13.9,9 C14,8.6 14.1,8.3 14.3,8 C14.4,7.7 14.7,7.4 14.9,7.2 C15.1,7 15.4,6.8 15.7,6.7 C16,6.5 16.3,6.5 16.6,6.5 C16.9,6.4 17.1,6.5 17.4,6.5 C17.7,6.6 17.9,6.7 18.1,6.9 C18.3,7 18.5,7.2 18.6,7.3 C18.7,7.5 18.8,7.7 18.9,7.9 C18.9,8.1 19,8.3 18.9,8.5 C18.9,8.7 18.9,8.9 18.8,9 C18.8,9.1 18.7,9.3 18.5,9.4 C18.4,9.5 18.3,9.6 18.2,9.6"/><path d="M25,41 C24.7,41 23.4,41.3 23,41 C22.6,40.7 22.8,39.8 22.5,39.3 C22.3,38.8 22,38.3 21.6,38 C21.2,37.6 20.8,37.2 20.3,37 C19.9,36.7 19.4,36.6 18.9,36.5 C18.4,36.4 17.9,36.4 17.4,36.4 C16.9,36.5 16.5,36.7 16.1,36.9 C15.7,37.1 15.3,37.3 15,37.7 C14.7,38 14.4,38.3 14.2,38.7 C14,39.1 13.9,39.5 13.9,39.9 C13.8,40.2 13.8,40.6 13.9,41 C14,41.4 14.1,41.7 14.3,42 C14.4,42.3 14.7,42.6 14.9,42.8 C15.1,43 15.4,43.2 15.7,43.3 C16,43.5 16.3,43.5 16.6,43.5 C16.9,43.6 17.1,43.5 17.4,43.5 C17.7,43.4 17.9,43.3 18.1,43.1 C18.3,43 18.5,42.8 18.6,42.7 C18.7,42.5 18.8,42.3 18.9,42.1 C18.9,41.9 19,41.7 18.9,41.5 C18.9,41.3 18.9,41.1 18.8,41 C18.8,40.9 18.7,40.7 18.5,40.6 C18.4,40.5 18.3,40.4 18.2,40.4"/><path d="M25,25 C24.7,25 23.5,24.6 23,25 C22.5,25.4 22.6,26.9 22.2,27.6 C21.8,28.4 21.3,29.2 20.6,29.8 C20,30.4 19.3,30.9 18.5,31.2 C17.8,31.5 17,31.7 16.2,31.8 C15.4,31.8 14.6,31.7 13.9,31.5 C13.1,31.3 12.5,31 11.9,30.5 C11.3,30.1 10.8,29.6 10.4,29 C10,28.5 9.8,27.8 9.6,27.2 C9.5,26.6 9.4,25.9 9.5,25.3 C9.6,24.7 9.8,24.1 10,23.6 C10.3,23.1 10.6,22.6 11,22.3 C11.4,21.9 11.9,21.6 12.4,21.4 C12.8,21.2 13.3,21.1 13.8,21.1 C14.2,21.1 14.7,21.2 15.1,21.3 C15.5,21.5 15.9,21.7 16.2,21.9 C16.5,22.2 16.7,22.5 16.9,22.8 C17.1,23.1 17.2,23.5 17.2,23.8 C17.3,24.1 17.2,24.4 17.2,24.7 C17.1,25 17,25.3 16.8,25.5 C16.7,25.7 16.5,25.8 16.3,25.9 C16.1,26.1 15.9,26.1 15.7,26.1 C15.5,26.1 15.2,26.1 15.1,26"/>
+  <path d="M25 25 L17 25"/></svg></span>
+        </div>
+        <div class="oc cur">
+          <span class="oe l"><svg viewBox="0 0 32 50" class="orn-end">
+  <path d="M25.6 2 L25.6 48"/><path d="M30 5 L30 45"/>
+  <path d="M25,9 C24.7,9 23.4,8.7 23,9 C22.6,9.3 22.8,10.2 22.5,10.7 C22.3,11.2 22,11.7 21.6,12 C21.2,12.4 20.8,12.8 20.3,13 C19.9,13.3 19.4,13.4 18.9,13.5 C18.4,13.6 17.9,13.6 17.4,13.6 C16.9,13.5 16.5,13.3 16.1,13.1 C15.7,12.9 15.3,12.7 15,12.3 C14.7,12 14.4,11.7 14.2,11.3 C14,10.9 13.9,10.5 13.9,10.1 C13.8,9.8 13.8,9.4 13.9,9 C14,8.6 14.1,8.3 14.3,8 C14.4,7.7 14.7,7.4 14.9,7.2 C15.1,7 15.4,6.8 15.7,6.7 C16,6.5 16.3,6.5 16.6,6.5 C16.9,6.4 17.1,6.5 17.4,6.5 C17.7,6.6 17.9,6.7 18.1,6.9 C18.3,7 18.5,7.2 18.6,7.3 C18.7,7.5 18.8,7.7 18.9,7.9 C18.9,8.1 19,8.3 18.9,8.5 C18.9,8.7 18.9,8.9 18.8,9 C18.8,9.1 18.7,9.3 18.5,9.4 C18.4,9.5 18.3,9.6 18.2,9.6"/><path d="M25,41 C24.7,41 23.4,41.3 23,41 C22.6,40.7 22.8,39.8 22.5,39.3 C22.3,38.8 22,38.3 21.6,38 C21.2,37.6 20.8,37.2 20.3,37 C19.9,36.7 19.4,36.6 18.9,36.5 C18.4,36.4 17.9,36.4 17.4,36.4 C16.9,36.5 16.5,36.7 16.1,36.9 C15.7,37.1 15.3,37.3 15,37.7 C14.7,38 14.4,38.3 14.2,38.7 C14,39.1 13.9,39.5 13.9,39.9 C13.8,40.2 13.8,40.6 13.9,41 C14,41.4 14.1,41.7 14.3,42 C14.4,42.3 14.7,42.6 14.9,42.8 C15.1,43 15.4,43.2 15.7,43.3 C16,43.5 16.3,43.5 16.6,43.5 C16.9,43.6 17.1,43.5 17.4,43.5 C17.7,43.4 17.9,43.3 18.1,43.1 C18.3,43 18.5,42.8 18.6,42.7 C18.7,42.5 18.8,42.3 18.9,42.1 C18.9,41.9 19,41.7 18.9,41.5 C18.9,41.3 18.9,41.1 18.8,41 C18.8,40.9 18.7,40.7 18.5,40.6 C18.4,40.5 18.3,40.4 18.2,40.4"/><path d="M25,25 C24.7,25 23.5,24.6 23,25 C22.5,25.4 22.6,26.9 22.2,27.6 C21.8,28.4 21.3,29.2 20.6,29.8 C20,30.4 19.3,30.9 18.5,31.2 C17.8,31.5 17,31.7 16.2,31.8 C15.4,31.8 14.6,31.7 13.9,31.5 C13.1,31.3 12.5,31 11.9,30.5 C11.3,30.1 10.8,29.6 10.4,29 C10,28.5 9.8,27.8 9.6,27.2 C9.5,26.6 9.4,25.9 9.5,25.3 C9.6,24.7 9.8,24.1 10,23.6 C10.3,23.1 10.6,22.6 11,22.3 C11.4,21.9 11.9,21.6 12.4,21.4 C12.8,21.2 13.3,21.1 13.8,21.1 C14.2,21.1 14.7,21.2 15.1,21.3 C15.5,21.5 15.9,21.7 16.2,21.9 C16.5,22.2 16.7,22.5 16.9,22.8 C17.1,23.1 17.2,23.5 17.2,23.8 C17.3,24.1 17.2,24.4 17.2,24.7 C17.1,25 17,25.3 16.8,25.5 C16.7,25.7 16.5,25.8 16.3,25.9 C16.1,26.1 15.9,26.1 15.7,26.1 C15.5,26.1 15.2,26.1 15.1,26"/>
+  <path d="M25 25 L17 25"/></svg></span>
+          <span class="no">02</span>
+          <span class="tx">进程和线程，到底差在哪？</span>
+          <span class="go">当前</span>
+          <span class="oe r"><svg viewBox="0 0 32 50" class="orn-end">
+  <path d="M25.6 2 L25.6 48"/><path d="M30 5 L30 45"/>
+  <path d="M25,9 C24.7,9 23.4,8.7 23,9 C22.6,9.3 22.8,10.2 22.5,10.7 C22.3,11.2 22,11.7 21.6,12 C21.2,12.4 20.8,12.8 20.3,13 C19.9,13.3 19.4,13.4 18.9,13.5 C18.4,13.6 17.9,13.6 17.4,13.6 C16.9,13.5 16.5,13.3 16.1,13.1 C15.7,12.9 15.3,12.7 15,12.3 C14.7,12 14.4,11.7 14.2,11.3 C14,10.9 13.9,10.5 13.9,10.1 C13.8,9.8 13.8,9.4 13.9,9 C14,8.6 14.1,8.3 14.3,8 C14.4,7.7 14.7,7.4 14.9,7.2 C15.1,7 15.4,6.8 15.7,6.7 C16,6.5 16.3,6.5 16.6,6.5 C16.9,6.4 17.1,6.5 17.4,6.5 C17.7,6.6 17.9,6.7 18.1,6.9 C18.3,7 18.5,7.2 18.6,7.3 C18.7,7.5 18.8,7.7 18.9,7.9 C18.9,8.1 19,8.3 18.9,8.5 C18.9,8.7 18.9,8.9 18.8,9 C18.8,9.1 18.7,9.3 18.5,9.4 C18.4,9.5 18.3,9.6 18.2,9.6"/><path d="M25,41 C24.7,41 23.4,41.3 23,41 C22.6,40.7 22.8,39.8 22.5,39.3 C22.3,38.8 22,38.3 21.6,38 C21.2,37.6 20.8,37.2 20.3,37 C19.9,36.7 19.4,36.6 18.9,36.5 C18.4,36.4 17.9,36.4 17.4,36.4 C16.9,36.5 16.5,36.7 16.1,36.9 C15.7,37.1 15.3,37.3 15,37.7 C14.7,38 14.4,38.3 14.2,38.7 C14,39.1 13.9,39.5 13.9,39.9 C13.8,40.2 13.8,40.6 13.9,41 C14,41.4 14.1,41.7 14.3,42 C14.4,42.3 14.7,42.6 14.9,42.8 C15.1,43 15.4,43.2 15.7,43.3 C16,43.5 16.3,43.5 16.6,43.5 C16.9,43.6 17.1,43.5 17.4,43.5 C17.7,43.4 17.9,43.3 18.1,43.1 C18.3,43 18.5,42.8 18.6,42.7 C18.7,42.5 18.8,42.3 18.9,42.1 C18.9,41.9 19,41.7 18.9,41.5 C18.9,41.3 18.9,41.1 18.8,41 C18.8,40.9 18.7,40.7 18.5,40.6 C18.4,40.5 18.3,40.4 18.2,40.4"/><path d="M25,25 C24.7,25 23.5,24.6 23,25 C22.5,25.4 22.6,26.9 22.2,27.6 C21.8,28.4 21.3,29.2 20.6,29.8 C20,30.4 19.3,30.9 18.5,31.2 C17.8,31.5 17,31.7 16.2,31.8 C15.4,31.8 14.6,31.7 13.9,31.5 C13.1,31.3 12.5,31 11.9,30.5 C11.3,30.1 10.8,29.6 10.4,29 C10,28.5 9.8,27.8 9.6,27.2 C9.5,26.6 9.4,25.9 9.5,25.3 C9.6,24.7 9.8,24.1 10,23.6 C10.3,23.1 10.6,22.6 11,22.3 C11.4,21.9 11.9,21.6 12.4,21.4 C12.8,21.2 13.3,21.1 13.8,21.1 C14.2,21.1 14.7,21.2 15.1,21.3 C15.5,21.5 15.9,21.7 16.2,21.9 C16.5,22.2 16.7,22.5 16.9,22.8 C17.1,23.1 17.2,23.5 17.2,23.8 C17.3,24.1 17.2,24.4 17.2,24.7 C17.1,25 17,25.3 16.8,25.5 C16.7,25.7 16.5,25.8 16.3,25.9 C16.1,26.1 15.9,26.1 15.7,26.1 C15.5,26.1 15.2,26.1 15.1,26"/>
+  <path d="M25 25 L17 25"/></svg></span>
+        </div>
+        <div class="oc">
+          <span class="oe l"><svg viewBox="0 0 32 50" class="orn-end">
+  <path d="M25.6 2 L25.6 48"/><path d="M30 5 L30 45"/>
+  <path d="M25,9 C24.7,9 23.4,8.7 23,9 C22.6,9.3 22.8,10.2 22.5,10.7 C22.3,11.2 22,11.7 21.6,12 C21.2,12.4 20.8,12.8 20.3,13 C19.9,13.3 19.4,13.4 18.9,13.5 C18.4,13.6 17.9,13.6 17.4,13.6 C16.9,13.5 16.5,13.3 16.1,13.1 C15.7,12.9 15.3,12.7 15,12.3 C14.7,12 14.4,11.7 14.2,11.3 C14,10.9 13.9,10.5 13.9,10.1 C13.8,9.8 13.8,9.4 13.9,9 C14,8.6 14.1,8.3 14.3,8 C14.4,7.7 14.7,7.4 14.9,7.2 C15.1,7 15.4,6.8 15.7,6.7 C16,6.5 16.3,6.5 16.6,6.5 C16.9,6.4 17.1,6.5 17.4,6.5 C17.7,6.6 17.9,6.7 18.1,6.9 C18.3,7 18.5,7.2 18.6,7.3 C18.7,7.5 18.8,7.7 18.9,7.9 C18.9,8.1 19,8.3 18.9,8.5 C18.9,8.7 18.9,8.9 18.8,9 C18.8,9.1 18.7,9.3 18.5,9.4 C18.4,9.5 18.3,9.6 18.2,9.6"/><path d="M25,41 C24.7,41 23.4,41.3 23,41 C22.6,40.7 22.8,39.8 22.5,39.3 C22.3,38.8 22,38.3 21.6,38 C21.2,37.6 20.8,37.2 20.3,37 C19.9,36.7 19.4,36.6 18.9,36.5 C18.4,36.4 17.9,36.4 17.4,36.4 C16.9,36.5 16.5,36.7 16.1,36.9 C15.7,37.1 15.3,37.3 15,37.7 C14.7,38 14.4,38.3 14.2,38.7 C14,39.1 13.9,39.5 13.9,39.9 C13.8,40.2 13.8,40.6 13.9,41 C14,41.4 14.1,41.7 14.3,42 C14.4,42.3 14.7,42.6 14.9,42.8 C15.1,43 15.4,43.2 15.7,43.3 C16,43.5 16.3,43.5 16.6,43.5 C16.9,43.6 17.1,43.5 17.4,43.5 C17.7,43.4 17.9,43.3 18.1,43.1 C18.3,43 18.5,42.8 18.6,42.7 C18.7,42.5 18.8,42.3 18.9,42.1 C18.9,41.9 19,41.7 18.9,41.5 C18.9,41.3 18.9,41.1 18.8,41 C18.8,40.9 18.7,40.7 18.5,40.6 C18.4,40.5 18.3,40.4 18.2,40.4"/><path d="M25,25 C24.7,25 23.5,24.6 23,25 C22.5,25.4 22.6,26.9 22.2,27.6 C21.8,28.4 21.3,29.2 20.6,29.8 C20,30.4 19.3,30.9 18.5,31.2 C17.8,31.5 17,31.7 16.2,31.8 C15.4,31.8 14.6,31.7 13.9,31.5 C13.1,31.3 12.5,31 11.9,30.5 C11.3,30.1 10.8,29.6 10.4,29 C10,28.5 9.8,27.8 9.6,27.2 C9.5,26.6 9.4,25.9 9.5,25.3 C9.6,24.7 9.8,24.1 10,23.6 C10.3,23.1 10.6,22.6 11,22.3 C11.4,21.9 11.9,21.6 12.4,21.4 C12.8,21.2 13.3,21.1 13.8,21.1 C14.2,21.1 14.7,21.2 15.1,21.3 C15.5,21.5 15.9,21.7 16.2,21.9 C16.5,22.2 16.7,22.5 16.9,22.8 C17.1,23.1 17.2,23.5 17.2,23.8 C17.3,24.1 17.2,24.4 17.2,24.7 C17.1,25 17,25.3 16.8,25.5 C16.7,25.7 16.5,25.8 16.3,25.9 C16.1,26.1 15.9,26.1 15.7,26.1 C15.5,26.1 15.2,26.1 15.1,26"/>
+  <path d="M25 25 L17 25"/></svg></span>
+          <span class="no">03</span>
+          <span class="tx">画一张状态迁移图。</span>
+          <span class="go">↑↓ 选 · Enter 定</span>
+          <span class="oe r"><svg viewBox="0 0 32 50" class="orn-end">
+  <path d="M25.6 2 L25.6 48"/><path d="M30 5 L30 45"/>
+  <path d="M25,9 C24.7,9 23.4,8.7 23,9 C22.6,9.3 22.8,10.2 22.5,10.7 C22.3,11.2 22,11.7 21.6,12 C21.2,12.4 20.8,12.8 20.3,13 C19.9,13.3 19.4,13.4 18.9,13.5 C18.4,13.6 17.9,13.6 17.4,13.6 C16.9,13.5 16.5,13.3 16.1,13.1 C15.7,12.9 15.3,12.7 15,12.3 C14.7,12 14.4,11.7 14.2,11.3 C14,10.9 13.9,10.5 13.9,10.1 C13.8,9.8 13.8,9.4 13.9,9 C14,8.6 14.1,8.3 14.3,8 C14.4,7.7 14.7,7.4 14.9,7.2 C15.1,7 15.4,6.8 15.7,6.7 C16,6.5 16.3,6.5 16.6,6.5 C16.9,6.4 17.1,6.5 17.4,6.5 C17.7,6.6 17.9,6.7 18.1,6.9 C18.3,7 18.5,7.2 18.6,7.3 C18.7,7.5 18.8,7.7 18.9,7.9 C18.9,8.1 19,8.3 18.9,8.5 C18.9,8.7 18.9,8.9 18.8,9 C18.8,9.1 18.7,9.3 18.5,9.4 C18.4,9.5 18.3,9.6 18.2,9.6"/><path d="M25,41 C24.7,41 23.4,41.3 23,41 C22.6,40.7 22.8,39.8 22.5,39.3 C22.3,38.8 22,38.3 21.6,38 C21.2,37.6 20.8,37.2 20.3,37 C19.9,36.7 19.4,36.6 18.9,36.5 C18.4,36.4 17.9,36.4 17.4,36.4 C16.9,36.5 16.5,36.7 16.1,36.9 C15.7,37.1 15.3,37.3 15,37.7 C14.7,38 14.4,38.3 14.2,38.7 C14,39.1 13.9,39.5 13.9,39.9 C13.8,40.2 13.8,40.6 13.9,41 C14,41.4 14.1,41.7 14.3,42 C14.4,42.3 14.7,42.6 14.9,42.8 C15.1,43 15.4,43.2 15.7,43.3 C16,43.5 16.3,43.5 16.6,43.5 C16.9,43.6 17.1,43.5 17.4,43.5 C17.7,43.4 17.9,43.3 18.1,43.1 C18.3,43 18.5,42.8 18.6,42.7 C18.7,42.5 18.8,42.3 18.9,42.1 C18.9,41.9 19,41.7 18.9,41.5 C18.9,41.3 18.9,41.1 18.8,41 C18.8,40.9 18.7,40.7 18.5,40.6 C18.4,40.5 18.3,40.4 18.2,40.4"/><path d="M25,25 C24.7,25 23.5,24.6 23,25 C22.5,25.4 22.6,26.9 22.2,27.6 C21.8,28.4 21.3,29.2 20.6,29.8 C20,30.4 19.3,30.9 18.5,31.2 C17.8,31.5 17,31.7 16.2,31.8 C15.4,31.8 14.6,31.7 13.9,31.5 C13.1,31.3 12.5,31 11.9,30.5 C11.3,30.1 10.8,29.6 10.4,29 C10,28.5 9.8,27.8 9.6,27.2 C9.5,26.6 9.4,25.9 9.5,25.3 C9.6,24.7 9.8,24.1 10,23.6 C10.3,23.1 10.6,22.6 11,22.3 C11.4,21.9 11.9,21.6 12.4,21.4 C12.8,21.2 13.3,21.1 13.8,21.1 C14.2,21.1 14.7,21.2 15.1,21.3 C15.5,21.5 15.9,21.7 16.2,21.9 C16.5,22.2 16.7,22.5 16.9,22.8 C17.1,23.1 17.2,23.5 17.2,23.8 C17.3,24.1 17.2,24.4 17.2,24.7 C17.1,25 17,25.3 16.8,25.5 C16.7,25.7 16.5,25.8 16.3,25.9 C16.1,26.1 15.9,26.1 15.7,26.1 C15.5,26.1 15.2,26.1 15.1,26"/>
+  <path d="M25 25 L17 25"/></svg></span>
+        </div>
+        <div class="oc">
+          <span class="oe l"><svg viewBox="0 0 32 50" class="orn-end">
+  <path d="M25.6 2 L25.6 48"/><path d="M30 5 L30 45"/>
+  <path d="M25,9 C24.7,9 23.4,8.7 23,9 C22.6,9.3 22.8,10.2 22.5,10.7 C22.3,11.2 22,11.7 21.6,12 C21.2,12.4 20.8,12.8 20.3,13 C19.9,13.3 19.4,13.4 18.9,13.5 C18.4,13.6 17.9,13.6 17.4,13.6 C16.9,13.5 16.5,13.3 16.1,13.1 C15.7,12.9 15.3,12.7 15,12.3 C14.7,12 14.4,11.7 14.2,11.3 C14,10.9 13.9,10.5 13.9,10.1 C13.8,9.8 13.8,9.4 13.9,9 C14,8.6 14.1,8.3 14.3,8 C14.4,7.7 14.7,7.4 14.9,7.2 C15.1,7 15.4,6.8 15.7,6.7 C16,6.5 16.3,6.5 16.6,6.5 C16.9,6.4 17.1,6.5 17.4,6.5 C17.7,6.6 17.9,6.7 18.1,6.9 C18.3,7 18.5,7.2 18.6,7.3 C18.7,7.5 18.8,7.7 18.9,7.9 C18.9,8.1 19,8.3 18.9,8.5 C18.9,8.7 18.9,8.9 18.8,9 C18.8,9.1 18.7,9.3 18.5,9.4 C18.4,9.5 18.3,9.6 18.2,9.6"/><path d="M25,41 C24.7,41 23.4,41.3 23,41 C22.6,40.7 22.8,39.8 22.5,39.3 C22.3,38.8 22,38.3 21.6,38 C21.2,37.6 20.8,37.2 20.3,37 C19.9,36.7 19.4,36.6 18.9,36.5 C18.4,36.4 17.9,36.4 17.4,36.4 C16.9,36.5 16.5,36.7 16.1,36.9 C15.7,37.1 15.3,37.3 15,37.7 C14.7,38 14.4,38.3 14.2,38.7 C14,39.1 13.9,39.5 13.9,39.9 C13.8,40.2 13.8,40.6 13.9,41 C14,41.4 14.1,41.7 14.3,42 C14.4,42.3 14.7,42.6 14.9,42.8 C15.1,43 15.4,43.2 15.7,43.3 C16,43.5 16.3,43.5 16.6,43.5 C16.9,43.6 17.1,43.5 17.4,43.5 C17.7,43.4 17.9,43.3 18.1,43.1 C18.3,43 18.5,42.8 18.6,42.7 C18.7,42.5 18.8,42.3 18.9,42.1 C18.9,41.9 19,41.7 18.9,41.5 C18.9,41.3 18.9,41.1 18.8,41 C18.8,40.9 18.7,40.7 18.5,40.6 C18.4,40.5 18.3,40.4 18.2,40.4"/><path d="M25,25 C24.7,25 23.5,24.6 23,25 C22.5,25.4 22.6,26.9 22.2,27.6 C21.8,28.4 21.3,29.2 20.6,29.8 C20,30.4 19.3,30.9 18.5,31.2 C17.8,31.5 17,31.7 16.2,31.8 C15.4,31.8 14.6,31.7 13.9,31.5 C13.1,31.3 12.5,31 11.9,30.5 C11.3,30.1 10.8,29.6 10.4,29 C10,28.5 9.8,27.8 9.6,27.2 C9.5,26.6 9.4,25.9 9.5,25.3 C9.6,24.7 9.8,24.1 10,23.6 C10.3,23.1 10.6,22.6 11,22.3 C11.4,21.9 11.9,21.6 12.4,21.4 C12.8,21.2 13.3,21.1 13.8,21.1 C14.2,21.1 14.7,21.2 15.1,21.3 C15.5,21.5 15.9,21.7 16.2,21.9 C16.5,22.2 16.7,22.5 16.9,22.8 C17.1,23.1 17.2,23.5 17.2,23.8 C17.3,24.1 17.2,24.4 17.2,24.7 C17.1,25 17,25.3 16.8,25.5 C16.7,25.7 16.5,25.8 16.3,25.9 C16.1,26.1 15.9,26.1 15.7,26.1 C15.5,26.1 15.2,26.1 15.1,26"/>
+  <path d="M25 25 L17 25"/></svg></span>
+          <span class="no">04</span>
+          <span class="tx">举一个我身边能看见的例子。</span>
+          <span class="go">↑↓ 选 · Enter 定</span>
+          <span class="oe r"><svg viewBox="0 0 32 50" class="orn-end">
+  <path d="M25.6 2 L25.6 48"/><path d="M30 5 L30 45"/>
+  <path d="M25,9 C24.7,9 23.4,8.7 23,9 C22.6,9.3 22.8,10.2 22.5,10.7 C22.3,11.2 22,11.7 21.6,12 C21.2,12.4 20.8,12.8 20.3,13 C19.9,13.3 19.4,13.4 18.9,13.5 C18.4,13.6 17.9,13.6 17.4,13.6 C16.9,13.5 16.5,13.3 16.1,13.1 C15.7,12.9 15.3,12.7 15,12.3 C14.7,12 14.4,11.7 14.2,11.3 C14,10.9 13.9,10.5 13.9,10.1 C13.8,9.8 13.8,9.4 13.9,9 C14,8.6 14.1,8.3 14.3,8 C14.4,7.7 14.7,7.4 14.9,7.2 C15.1,7 15.4,6.8 15.7,6.7 C16,6.5 16.3,6.5 16.6,6.5 C16.9,6.4 17.1,6.5 17.4,6.5 C17.7,6.6 17.9,6.7 18.1,6.9 C18.3,7 18.5,7.2 18.6,7.3 C18.7,7.5 18.8,7.7 18.9,7.9 C18.9,8.1 19,8.3 18.9,8.5 C18.9,8.7 18.9,8.9 18.8,9 C18.8,9.1 18.7,9.3 18.5,9.4 C18.4,9.5 18.3,9.6 18.2,9.6"/><path d="M25,41 C24.7,41 23.4,41.3 23,41 C22.6,40.7 22.8,39.8 22.5,39.3 C22.3,38.8 22,38.3 21.6,38 C21.2,37.6 20.8,37.2 20.3,37 C19.9,36.7 19.4,36.6 18.9,36.5 C18.4,36.4 17.9,36.4 17.4,36.4 C16.9,36.5 16.5,36.7 16.1,36.9 C15.7,37.1 15.3,37.3 15,37.7 C14.7,38 14.4,38.3 14.2,38.7 C14,39.1 13.9,39.5 13.9,39.9 C13.8,40.2 13.8,40.6 13.9,41 C14,41.4 14.1,41.7 14.3,42 C14.4,42.3 14.7,42.6 14.9,42.8 C15.1,43 15.4,43.2 15.7,43.3 C16,43.5 16.3,43.5 16.6,43.5 C16.9,43.6 17.1,43.5 17.4,43.5 C17.7,43.4 17.9,43.3 18.1,43.1 C18.3,43 18.5,42.8 18.6,42.7 C18.7,42.5 18.8,42.3 18.9,42.1 C18.9,41.9 19,41.7 18.9,41.5 C18.9,41.3 18.9,41.1 18.8,41 C18.8,40.9 18.7,40.7 18.5,40.6 C18.4,40.5 18.3,40.4 18.2,40.4"/><path d="M25,25 C24.7,25 23.5,24.6 23,25 C22.5,25.4 22.6,26.9 22.2,27.6 C21.8,28.4 21.3,29.2 20.6,29.8 C20,30.4 19.3,30.9 18.5,31.2 C17.8,31.5 17,31.7 16.2,31.8 C15.4,31.8 14.6,31.7 13.9,31.5 C13.1,31.3 12.5,31 11.9,30.5 C11.3,30.1 10.8,29.6 10.4,29 C10,28.5 9.8,27.8 9.6,27.2 C9.5,26.6 9.4,25.9 9.5,25.3 C9.6,24.7 9.8,24.1 10,23.6 C10.3,23.1 10.6,22.6 11,22.3 C11.4,21.9 11.9,21.6 12.4,21.4 C12.8,21.2 13.3,21.1 13.8,21.1 C14.2,21.1 14.7,21.2 15.1,21.3 C15.5,21.5 15.9,21.7 16.2,21.9 C16.5,22.2 16.7,22.5 16.9,22.8 C17.1,23.1 17.2,23.5 17.2,23.8 C17.3,24.1 17.2,24.4 17.2,24.7 C17.1,25 17,25.3 16.8,25.5 C16.7,25.7 16.5,25.8 16.3,25.9 C16.1,26.1 15.9,26.1 15.7,26.1 C15.5,26.1 15.2,26.1 15.1,26"/>
+  <path d="M25 25 L17 25"/></svg></span>
+        </div>
+        <div class="oc picked">
+          <span class="oe l"><svg viewBox="0 0 32 50" class="orn-end">
+  <path d="M25.6 2 L25.6 48"/><path d="M30 5 L30 45"/>
+  <path d="M25,9 C24.7,9 23.4,8.7 23,9 C22.6,9.3 22.8,10.2 22.5,10.7 C22.3,11.2 22,11.7 21.6,12 C21.2,12.4 20.8,12.8 20.3,13 C19.9,13.3 19.4,13.4 18.9,13.5 C18.4,13.6 17.9,13.6 17.4,13.6 C16.9,13.5 16.5,13.3 16.1,13.1 C15.7,12.9 15.3,12.7 15,12.3 C14.7,12 14.4,11.7 14.2,11.3 C14,10.9 13.9,10.5 13.9,10.1 C13.8,9.8 13.8,9.4 13.9,9 C14,8.6 14.1,8.3 14.3,8 C14.4,7.7 14.7,7.4 14.9,7.2 C15.1,7 15.4,6.8 15.7,6.7 C16,6.5 16.3,6.5 16.6,6.5 C16.9,6.4 17.1,6.5 17.4,6.5 C17.7,6.6 17.9,6.7 18.1,6.9 C18.3,7 18.5,7.2 18.6,7.3 C18.7,7.5 18.8,7.7 18.9,7.9 C18.9,8.1 19,8.3 18.9,8.5 C18.9,8.7 18.9,8.9 18.8,9 C18.8,9.1 18.7,9.3 18.5,9.4 C18.4,9.5 18.3,9.6 18.2,9.6"/><path d="M25,41 C24.7,41 23.4,41.3 23,41 C22.6,40.7 22.8,39.8 22.5,39.3 C22.3,38.8 22,38.3 21.6,38 C21.2,37.6 20.8,37.2 20.3,37 C19.9,36.7 19.4,36.6 18.9,36.5 C18.4,36.4 17.9,36.4 17.4,36.4 C16.9,36.5 16.5,36.7 16.1,36.9 C15.7,37.1 15.3,37.3 15,37.7 C14.7,38 14.4,38.3 14.2,38.7 C14,39.1 13.9,39.5 13.9,39.9 C13.8,40.2 13.8,40.6 13.9,41 C14,41.4 14.1,41.7 14.3,42 C14.4,42.3 14.7,42.6 14.9,42.8 C15.1,43 15.4,43.2 15.7,43.3 C16,43.5 16.3,43.5 16.6,43.5 C16.9,43.6 17.1,43.5 17.4,43.5 C17.7,43.4 17.9,43.3 18.1,43.1 C18.3,43 18.5,42.8 18.6,42.7 C18.7,42.5 18.8,42.3 18.9,42.1 C18.9,41.9 19,41.7 18.9,41.5 C18.9,41.3 18.9,41.1 18.8,41 C18.8,40.9 18.7,40.7 18.5,40.6 C18.4,40.5 18.3,40.4 18.2,40.4"/><path d="M25,25 C24.7,25 23.5,24.6 23,25 C22.5,25.4 22.6,26.9 22.2,27.6 C21.8,28.4 21.3,29.2 20.6,29.8 C20,30.4 19.3,30.9 18.5,31.2 C17.8,31.5 17,31.7 16.2,31.8 C15.4,31.8 14.6,31.7 13.9,31.5 C13.1,31.3 12.5,31 11.9,30.5 C11.3,30.1 10.8,29.6 10.4,29 C10,28.5 9.8,27.8 9.6,27.2 C9.5,26.6 9.4,25.9 9.5,25.3 C9.6,24.7 9.8,24.1 10,23.6 C10.3,23.1 10.6,22.6 11,22.3 C11.4,21.9 11.9,21.6 12.4,21.4 C12.8,21.2 13.3,21.1 13.8,21.1 C14.2,21.1 14.7,21.2 15.1,21.3 C15.5,21.5 15.9,21.7 16.2,21.9 C16.5,22.2 16.7,22.5 16.9,22.8 C17.1,23.1 17.2,23.5 17.2,23.8 C17.3,24.1 17.2,24.4 17.2,24.7 C17.1,25 17,25.3 16.8,25.5 C16.7,25.7 16.5,25.8 16.3,25.9 C16.1,26.1 15.9,26.1 15.7,26.1 C15.5,26.1 15.2,26.1 15.1,26"/>
+  <path d="M25 25 L17 25"/></svg></span>
+          <span class="no">05</span>
+          <span class="tx">我自己写一段 fork 试试。</span>
+          <span class="go">已选</span>
+          <span class="oe r"><svg viewBox="0 0 32 50" class="orn-end">
+  <path d="M25.6 2 L25.6 48"/><path d="M30 5 L30 45"/>
+  <path d="M25,9 C24.7,9 23.4,8.7 23,9 C22.6,9.3 22.8,10.2 22.5,10.7 C22.3,11.2 22,11.7 21.6,12 C21.2,12.4 20.8,12.8 20.3,13 C19.9,13.3 19.4,13.4 18.9,13.5 C18.4,13.6 17.9,13.6 17.4,13.6 C16.9,13.5 16.5,13.3 16.1,13.1 C15.7,12.9 15.3,12.7 15,12.3 C14.7,12 14.4,11.7 14.2,11.3 C14,10.9 13.9,10.5 13.9,10.1 C13.8,9.8 13.8,9.4 13.9,9 C14,8.6 14.1,8.3 14.3,8 C14.4,7.7 14.7,7.4 14.9,7.2 C15.1,7 15.4,6.8 15.7,6.7 C16,6.5 16.3,6.5 16.6,6.5 C16.9,6.4 17.1,6.5 17.4,6.5 C17.7,6.6 17.9,6.7 18.1,6.9 C18.3,7 18.5,7.2 18.6,7.3 C18.7,7.5 18.8,7.7 18.9,7.9 C18.9,8.1 19,8.3 18.9,8.5 C18.9,8.7 18.9,8.9 18.8,9 C18.8,9.1 18.7,9.3 18.5,9.4 C18.4,9.5 18.3,9.6 18.2,9.6"/><path d="M25,41 C24.7,41 23.4,41.3 23,41 C22.6,40.7 22.8,39.8 22.5,39.3 C22.3,38.8 22,38.3 21.6,38 C21.2,37.6 20.8,37.2 20.3,37 C19.9,36.7 19.4,36.6 18.9,36.5 C18.4,36.4 17.9,36.4 17.4,36.4 C16.9,36.5 16.5,36.7 16.1,36.9 C15.7,37.1 15.3,37.3 15,37.7 C14.7,38 14.4,38.3 14.2,38.7 C14,39.1 13.9,39.5 13.9,39.9 C13.8,40.2 13.8,40.6 13.9,41 C14,41.4 14.1,41.7 14.3,42 C14.4,42.3 14.7,42.6 14.9,42.8 C15.1,43 15.4,43.2 15.7,43.3 C16,43.5 16.3,43.5 16.6,43.5 C16.9,43.6 17.1,43.5 17.4,43.5 C17.7,43.4 17.9,43.3 18.1,43.1 C18.3,43 18.5,42.8 18.6,42.7 C18.7,42.5 18.8,42.3 18.9,42.1 C18.9,41.9 19,41.7 18.9,41.5 C18.9,41.3 18.9,41.1 18.8,41 C18.8,40.9 18.7,40.7 18.5,40.6 C18.4,40.5 18.3,40.4 18.2,40.4"/><path d="M25,25 C24.7,25 23.5,24.6 23,25 C22.5,25.4 22.6,26.9 22.2,27.6 C21.8,28.4 21.3,29.2 20.6,29.8 C20,30.4 19.3,30.9 18.5,31.2 C17.8,31.5 17,31.7 16.2,31.8 C15.4,31.8 14.6,31.7 13.9,31.5 C13.1,31.3 12.5,31 11.9,30.5 C11.3,30.1 10.8,29.6 10.4,29 C10,28.5 9.8,27.8 9.6,27.2 C9.5,26.6 9.4,25.9 9.5,25.3 C9.6,24.7 9.8,24.1 10,23.6 C10.3,23.1 10.6,22.6 11,22.3 C11.4,21.9 11.9,21.6 12.4,21.4 C12.8,21.2 13.3,21.1 13.8,21.1 C14.2,21.1 14.7,21.2 15.1,21.3 C15.5,21.5 15.9,21.7 16.2,21.9 C16.5,22.2 16.7,22.5 16.9,22.8 C17.1,23.1 17.2,23.5 17.2,23.8 C17.3,24.1 17.2,24.4 17.2,24.7 C17.1,25 17,25.3 16.8,25.5 C16.7,25.7 16.5,25.8 16.3,25.9 C16.1,26.1 15.9,26.1 15.7,26.1 C15.5,26.1 15.2,26.1 15.1,26"/>
+  <path d="M25 25 L17 25"/></svg></span>
+        </div>
+        <div class="oc disabled">
+          <span class="oe l"><svg viewBox="0 0 32 50" class="orn-end">
+  <path d="M25.6 2 L25.6 48"/><path d="M30 5 L30 45"/>
+  <path d="M25,9 C24.7,9 23.4,8.7 23,9 C22.6,9.3 22.8,10.2 22.5,10.7 C22.3,11.2 22,11.7 21.6,12 C21.2,12.4 20.8,12.8 20.3,13 C19.9,13.3 19.4,13.4 18.9,13.5 C18.4,13.6 17.9,13.6 17.4,13.6 C16.9,13.5 16.5,13.3 16.1,13.1 C15.7,12.9 15.3,12.7 15,12.3 C14.7,12 14.4,11.7 14.2,11.3 C14,10.9 13.9,10.5 13.9,10.1 C13.8,9.8 13.8,9.4 13.9,9 C14,8.6 14.1,8.3 14.3,8 C14.4,7.7 14.7,7.4 14.9,7.2 C15.1,7 15.4,6.8 15.7,6.7 C16,6.5 16.3,6.5 16.6,6.5 C16.9,6.4 17.1,6.5 17.4,6.5 C17.7,6.6 17.9,6.7 18.1,6.9 C18.3,7 18.5,7.2 18.6,7.3 C18.7,7.5 18.8,7.7 18.9,7.9 C18.9,8.1 19,8.3 18.9,8.5 C18.9,8.7 18.9,8.9 18.8,9 C18.8,9.1 18.7,9.3 18.5,9.4 C18.4,9.5 18.3,9.6 18.2,9.6"/><path d="M25,41 C24.7,41 23.4,41.3 23,41 C22.6,40.7 22.8,39.8 22.5,39.3 C22.3,38.8 22,38.3 21.6,38 C21.2,37.6 20.8,37.2 20.3,37 C19.9,36.7 19.4,36.6 18.9,36.5 C18.4,36.4 17.9,36.4 17.4,36.4 C16.9,36.5 16.5,36.7 16.1,36.9 C15.7,37.1 15.3,37.3 15,37.7 C14.7,38 14.4,38.3 14.2,38.7 C14,39.1 13.9,39.5 13.9,39.9 C13.8,40.2 13.8,40.6 13.9,41 C14,41.4 14.1,41.7 14.3,42 C14.4,42.3 14.7,42.6 14.9,42.8 C15.1,43 15.4,43.2 15.7,43.3 C16,43.5 16.3,43.5 16.6,43.5 C16.9,43.6 17.1,43.5 17.4,43.5 C17.7,43.4 17.9,43.3 18.1,43.1 C18.3,43 18.5,42.8 18.6,42.7 C18.7,42.5 18.8,42.3 18.9,42.1 C18.9,41.9 19,41.7 18.9,41.5 C18.9,41.3 18.9,41.1 18.8,41 C18.8,40.9 18.7,40.7 18.5,40.6 C18.4,40.5 18.3,40.4 18.2,40.4"/><path d="M25,25 C24.7,25 23.5,24.6 23,25 C22.5,25.4 22.6,26.9 22.2,27.6 C21.8,28.4 21.3,29.2 20.6,29.8 C20,30.4 19.3,30.9 18.5,31.2 C17.8,31.5 17,31.7 16.2,31.8 C15.4,31.8 14.6,31.7 13.9,31.5 C13.1,31.3 12.5,31 11.9,30.5 C11.3,30.1 10.8,29.6 10.4,29 C10,28.5 9.8,27.8 9.6,27.2 C9.5,26.6 9.4,25.9 9.5,25.3 C9.6,24.7 9.8,24.1 10,23.6 C10.3,23.1 10.6,22.6 11,22.3 C11.4,21.9 11.9,21.6 12.4,21.4 C12.8,21.2 13.3,21.1 13.8,21.1 C14.2,21.1 14.7,21.2 15.1,21.3 C15.5,21.5 15.9,21.7 16.2,21.9 C16.5,22.2 16.7,22.5 16.9,22.8 C17.1,23.1 17.2,23.5 17.2,23.8 C17.3,24.1 17.2,24.4 17.2,24.7 C17.1,25 17,25.3 16.8,25.5 C16.7,25.7 16.5,25.8 16.3,25.9 C16.1,26.1 15.9,26.1 15.7,26.1 C15.5,26.1 15.2,26.1 15.1,26"/>
+  <path d="M25 25 L17 25"/></svg></span>
+          <span class="no">06</span>
+          <span class="tx">先停一下，我把上一讲再看一遍。</span>
+          <span class="go">已用过</span>
+          <span class="oe r"><svg viewBox="0 0 32 50" class="orn-end">
+  <path d="M25.6 2 L25.6 48"/><path d="M30 5 L30 45"/>
+  <path d="M25,9 C24.7,9 23.4,8.7 23,9 C22.6,9.3 22.8,10.2 22.5,10.7 C22.3,11.2 22,11.7 21.6,12 C21.2,12.4 20.8,12.8 20.3,13 C19.9,13.3 19.4,13.4 18.9,13.5 C18.4,13.6 17.9,13.6 17.4,13.6 C16.9,13.5 16.5,13.3 16.1,13.1 C15.7,12.9 15.3,12.7 15,12.3 C14.7,12 14.4,11.7 14.2,11.3 C14,10.9 13.9,10.5 13.9,10.1 C13.8,9.8 13.8,9.4 13.9,9 C14,8.6 14.1,8.3 14.3,8 C14.4,7.7 14.7,7.4 14.9,7.2 C15.1,7 15.4,6.8 15.7,6.7 C16,6.5 16.3,6.5 16.6,6.5 C16.9,6.4 17.1,6.5 17.4,6.5 C17.7,6.6 17.9,6.7 18.1,6.9 C18.3,7 18.5,7.2 18.6,7.3 C18.7,7.5 18.8,7.7 18.9,7.9 C18.9,8.1 19,8.3 18.9,8.5 C18.9,8.7 18.9,8.9 18.8,9 C18.8,9.1 18.7,9.3 18.5,9.4 C18.4,9.5 18.3,9.6 18.2,9.6"/><path d="M25,41 C24.7,41 23.4,41.3 23,41 C22.6,40.7 22.8,39.8 22.5,39.3 C22.3,38.8 22,38.3 21.6,38 C21.2,37.6 20.8,37.2 20.3,37 C19.9,36.7 19.4,36.6 18.9,36.5 C18.4,36.4 17.9,36.4 17.4,36.4 C16.9,36.5 16.5,36.7 16.1,36.9 C15.7,37.1 15.3,37.3 15,37.7 C14.7,38 14.4,38.3 14.2,38.7 C14,39.1 13.9,39.5 13.9,39.9 C13.8,40.2 13.8,40.6 13.9,41 C14,41.4 14.1,41.7 14.3,42 C14.4,42.3 14.7,42.6 14.9,42.8 C15.1,43 15.4,43.2 15.7,43.3 C16,43.5 16.3,43.5 16.6,43.5 C16.9,43.6 17.1,43.5 17.4,43.5 C17.7,43.4 17.9,43.3 18.1,43.1 C18.3,43 18.5,42.8 18.6,42.7 C18.7,42.5 18.8,42.3 18.9,42.1 C18.9,41.9 19,41.7 18.9,41.5 C18.9,41.3 18.9,41.1 18.8,41 C18.8,40.9 18.7,40.7 18.5,40.6 C18.4,40.5 18.3,40.4 18.2,40.4"/><path d="M25,25 C24.7,25 23.5,24.6 23,25 C22.5,25.4 22.6,26.9 22.2,27.6 C21.8,28.4 21.3,29.2 20.6,29.8 C20,30.4 19.3,30.9 18.5,31.2 C17.8,31.5 17,31.7 16.2,31.8 C15.4,31.8 14.6,31.7 13.9,31.5 C13.1,31.3 12.5,31 11.9,30.5 C11.3,30.1 10.8,29.6 10.4,29 C10,28.5 9.8,27.8 9.6,27.2 C9.5,26.6 9.4,25.9 9.5,25.3 C9.6,24.7 9.8,24.1 10,23.6 C10.3,23.1 10.6,22.6 11,22.3 C11.4,21.9 11.9,21.6 12.4,21.4 C12.8,21.2 13.3,21.1 13.8,21.1 C14.2,21.1 14.7,21.2 15.1,21.3 C15.5,21.5 15.9,21.7 16.2,21.9 C16.5,22.2 16.7,22.5 16.9,22.8 C17.1,23.1 17.2,23.5 17.2,23.8 C17.3,24.1 17.2,24.4 17.2,24.7 C17.1,25 17,25.3 16.8,25.5 C16.7,25.7 16.5,25.8 16.3,25.9 C16.1,26.1 15.9,26.1 15.7,26.1 C15.5,26.1 15.2,26.1 15.1,26"/>
+  <path d="M25 25 L17 25"/></svg></span>
+        </div>
+      </div>
+    </div>
+    <div class="composer">
+      <textarea placeholder="回一句，或者说「听不懂」"></textarea>
+      <span class="hint">Enter 送出 · Shift+Enter 换行</span>
+      <button class="send">送出</button>
+    </div>
+  </div>
+</div>
+</body></html>

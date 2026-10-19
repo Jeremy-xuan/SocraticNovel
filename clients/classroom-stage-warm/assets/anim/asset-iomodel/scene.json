@@ -1,0 +1,72 @@
+{
+  "version": "animation.scene.v1",
+  "id": "asset-iomodel",
+  "label": "进程状态迁移（引擎模板渲染）",
+  "lesson": "L03",
+  "durationMs": 3000,
+  "video": "scene.mp4",
+  "poster": "frame.png",
+  "canvas": {
+    "width": 1600,
+    "height": 1000,
+    "background": "#F3E9DA"
+  },
+  "elements": [
+    {
+      "id": "t-title",
+      "type": "text",
+      "x": 96,
+      "y": 72,
+      "w": 700,
+      "h": 40,
+      "text": "动画 · I/O 完成中断",
+      "fontSize": 34,
+      "color": "#2A211A"
+    },
+    {
+      "id": "t-sub",
+      "type": "text",
+      "x": 96,
+      "y": 128,
+      "w": 900,
+      "h": 28,
+      "text": "渲染在课前完成、命中缓存即秒开（实测：模型写脚本 67.3s ｜ 渲染 2.85s ｜ 取回 3ms）",
+      "fontSize": 20,
+      "color": "#6B5B4A"
+    },
+    {
+      "id": "l-rule",
+      "type": "line",
+      "x1": 96,
+      "y1": 178,
+      "x2": 1504,
+      "y2": 178,
+      "stroke": "#C2861F",
+      "strokeWidth": 2
+    },
+    {
+      "id": "n-frame",
+      "type": "rect",
+      "x": 250,
+      "y": 236,
+      "w": 1100,
+      "h": 618,
+      "fill": "#FBF3E6",
+      "stroke": "#B84A1C",
+      "strokeWidth": 3,
+      "rx": 14
+    },
+    {
+      "id": "t-note",
+      "type": "text",
+      "x": 96,
+      "y": 904,
+      "w": 1300,
+      "h": 28,
+      "text": "播完自动回到阅读态；点画面或按 Esc 可以提前收。",
+      "fontSize": 22,
+      "color": "#B84A1C"
+    }
+  ],
+  "source": "plugins/socratic-engine/lib/animtemplates.mjs 的 state_machine 模板 → manim -ql"
+}
