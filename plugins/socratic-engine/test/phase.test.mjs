@@ -684,7 +684,10 @@ function canonicalDeclaration(block) {
  *   🔴 **不许把这条判据删掉或放宽来"变绿"**——那正是本表要防的静默分叉。
  */
 const SIGNED_FREQUENCY_GATES = {
-  'persona.komari': 'system · once',
+  // 🔴 2026-10-19：教室的当课角色从 komari 换成 deepseek（换角色＝换 characters/ 里的文件），
+  //    persona 块的 id 随之改名。**这是有意的语义变更**，按本表纪律逐条更新这里。
+  //    频率语义本身没变（仍是 system · once）。
+  'persona.deepseek': 'system · once',
   'teach.system_core': 'system · once',
   'world.setting': 'system · once',
   'world.metaphor': 'system · once',
