@@ -125,7 +125,7 @@
 |---|---|
 | 讲数 | **14** |
 | 建议节奏 | 每周 1–2 讲 |
-| 当课老师 | **小鞠知花（全 14 讲）**；由 `runtime/progress.md` 排班确认。角色文件 `characters/komari.md` |
+| 当课老师 | **鲸（DeepSeek 娘，全 14 讲）**；由 `runtime/progress.md` 排班确认。角色文件 `characters/deepseek.md` |
 | 单元测验 | 每 4 讲一次（第 4、8、12、14 讲后） |
 
 ## 未纳入本轮的 OSTEP 章节（备查）

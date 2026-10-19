@@ -151,7 +151,8 @@ cs-os/
 ├── curriculum.md              # 课程表（14 讲，含 OSTEP 章节链接）
 ├── knowledge_points.md        # 知识点清单（58 条，按讲分组，带掌握状态与判据）
 ├── characters/                # 人格（当课老师）
-│   └── komari.md              # 小鞠知花（本教室唯一当课老师，全 14 讲）
+│   ├── deepseek.md            # 鲸（DeepSeek 娘）· 当前当课老师
+│   └── komari.md              # 小鞠知花 · 上一版角色（保留作「换角色机制」对照组）
 ├── world/
 │   ├── setting.md             # 世界观与场景（编辑部 v2，2026-09-22 重置）
 │   └── metaphor.md            # 🔴 隐喻系统（编辑部 ↔ 操作系统，含"类比在哪不成立"）

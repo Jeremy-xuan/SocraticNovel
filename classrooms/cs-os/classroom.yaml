@@ -47,7 +47,7 @@ classroom:
   subject: 操作系统
   lessons: 14                      # 依据：curriculum.md「讲数：14 讲」；story/ch01–ch14 实测 14 个文件
   classroom_version: 0.1.0
-  license: CC-BY-NC-SA-4.0         # 依据：characters/komari.md「按项目契约（内容 CC BY-NC-SA）发布」
+  license: CC-BY-NC-SA-4.0         # 依据：characters/deepseek.md「按项目契约（内容 CC BY-NC-SA）发布」
 
 # ── runtime 目录（草案 §2.0 声明位）──────────────────────────────────────────
 # 🔴 M2-SCHEMA v0.2 起 `runtime_store` **不只是声明位**：`lesson_key` 是讲次门的唯一取值来源。
@@ -226,13 +226,16 @@ blocks:
   #     这里用裸 order 表达同一位置意图（草案 §3 的锚点对应的宿主常量见注释）。
   # ══════════════════════════════════════════════════════════════════════════
 
-  # characters/komari.md（6662B）· 草案 §4.2 `persona.komari` ① 常驻层
+  # characters/deepseek.md · ① 常驻层（角色卡；换角色只换这个文件）
   # 位置意图：draft `after: deployment:persona-prefix`；对应宿主常量 DEPLOYMENT_PERSONA_PREFIX
   #   order=0（侦察_L1_拼装权.md §1.4 段序表）。取 10200 使其落在
   #   DEPLOYMENT_PERSONA_SUFFIX(10200) 之后、不与之撞号（section name 由引擎加前缀，
   #   index.mjs 用 `socratic-engine:${block.id}`）。
-  - id: persona.komari
-    path: characters/komari.md
+  # 🔴 2026-10-19：演示角色换成「鲸（DeepSeek 娘）」。角色卡换文件即可，
+  #   教学法（system_core / _anchor）与世界观（world/）另行维护，互不牵连。
+  #   旧的 characters/komari.md 保留在树里不删 —— 它是"换角色机制"的对照组。
+  - id: persona.deepseek
+    path: characters/deepseek.md
     layer: persona
     position: { target: system, order: 10200 }
     frequency: { every: once }
