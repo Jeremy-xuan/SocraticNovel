@@ -125,7 +125,14 @@ window.__ModuleLoader__.load({
   background:var(--paper);border:1px solid var(--gilt);transform:rotate(45deg)}
 .stage-warm-root .band-core{position:absolute;left:0;right:0;top:1px;bottom:11vh;padding:4.2vh 8.8vh 0;
   overflow-y:auto;scrollbar-width:thin;
-  display:flex;flex-direction:column;justify-content:flex-end}   /* 内容贴底：当前句永远在最下 */
+  display:flex;flex-direction:column;justify-content:flex-start}
+/* 🔴 2026-10-19：原来用 justify-content:flex-end 实现内容贴底，但 flex-end ＋ overflow:auto
+   有个经典问题：内容一旦超出容器，上半部分会被裁掉且滚不到（实测老师一段 376 字的话，
+   正文区只剩最后几行，上面整段看不见）。
+   改成 flex-start ＋ 第一个子元素 margin-top:auto —— 内容少时照样贴底，内容多时能正常滚到顶部。
+   （注：CSS 模板串里不许出现裸反引号，注释里也不要写，会把模板串提前结束。） */
+.stage-warm-root .band-core > .line:first-child,
+.stage-warm-root .band-core > .empty:first-child{margin-top:auto}
 .stage-warm-root .band-core .line{flex:none}
 .stage-warm-root .band-core::-webkit-scrollbar{width:6px}
 .stage-warm-root .band-core::-webkit-scrollbar-thumb{background:var(--ink4);border-radius:3px}
@@ -927,13 +934,23 @@ window.__ModuleLoader__.load({
         ensureL2dLibs(phases)
           .then(function () {
             if (disposed || !l2dCanvasRef.current) return
+            // 🔴 必须显式给 width/height：PIXI 默认画布是 **300×150**，而 CSS 把它拉伸到
+            //    38vh×52vh（实测 399×546）—— 结果内部只渲 300×150，画面糊成一片。
+            //    这里的尺寸取 CSS 盒子的实际像素（拿不到就按视口推算）。
+            const hostW = l2dCanvasRef.current.clientWidth || Math.round(window.innerHeight * 0.38)
+            const hostH = l2dCanvasRef.current.clientHeight || Math.round(window.innerHeight * 0.52)
             const app = new window.PIXI.Application({
               view: l2dCanvasRef.current,
+              width: hostW,
+              height: hostH,
               backgroundAlpha: 0,
               antialias: true,
               autoDensity: true,
               resolution: window.devicePixelRatio || 1,
             })
+            // 构造参数里的 width/height 实测不生效（canvas 内部仍是 300×150），
+            // 必须再显式 resize 一次渲染器。
+            try { app.renderer.resize(hostW, hostH) } catch (e) { /* 旧版没有 resize 就跳过 */ }
             l2dAppRef.current = app
             setLibReady(true)
             const entry = models[0]
@@ -944,12 +961,29 @@ window.__ModuleLoader__.load({
                 const box = l2dCanvasRef.current.getBoundingClientRect()
                 // 🔴 缩放基准：原来按 1600 算，实测模型只出来一小只（这个模型的原始画布约
                 //    300×400，不是 1600）。改成按画布盒子高度、以模型自身高度为基数算。
-                const modelH = (model.internalModel && model.internalModel.originalHeight) || 400
-                const scale = ((box.height || 520) / modelH) * 0.92
+                // 🔴 缩放基准要按**模型自身显示尺寸**（scale=1 时的 model.width/height）算。
+                //    用 internalModel.originalHeight 实测拿不到（undefined → 退回 400 是错的，
+                //    这个模型的原始画布远大于 400），结果模型被放大到画布之外、看起来"立绘消失"。
+                // 兜底用这个模型的实际画布尺寸（300×400，来自它的 model_list 配置）。
+                // 不能用 `|| 1`：刚创建时 model.width 可能是 0，除以它会得到天文数字的缩放，
+                // 模型被放大到画布之外 —— 临床表现是"立绘消失"，而不是报错。
+                // 🔴 缩放与落位：**不要用 anchor** —— Live2DModel 是 PIXI 的 Container 子类，
+                //    Container 没有 anchor（那是 Sprite 的属性）。之前写了 model.anchor.set(0.5,1)
+                //    并据此定位，结果是模型原点落在画布右下角之外，肉眼看到的就是"立绘不见了"
+                //    （canvas 里透出背景，也不报错）。
+                //    正确做法：按缩放后的实际尺寸算左上角坐标。
+                const mw = model.width || 300
+                const mh = model.height || 400
+                const scale = Math.min(app.screen.width / mw, app.screen.height / mh) * 0.95
                 model.scale.set(scale)
-                model.anchor.set(0.5, 1)
-                model.x = app.screen.width / 2
-                model.y = app.screen.height
+                // 🔴 model.width/height 在 pixi-live2d-display 里**已经是缩放后**的显示尺寸
+                //    （实测：原始 1280×1280、scale 0.296 时 model.width = 379）。这里再乘一次 scale
+                //    会把 379 算成 112，于是 x 取 (399-112)/2 = 143，模型右边界冲到画布外 → 看不见。
+                const drawW = model.width || mw * scale
+                const drawH = model.height || mh * scale
+                model.x = Math.max(0, (app.screen.width - drawW) / 2)
+                model.y = Math.max(0, app.screen.height - drawH)
+
                 app.stage.addChild(model)
                 l2dModelRef.current = model
                 setL2dReady(true)
