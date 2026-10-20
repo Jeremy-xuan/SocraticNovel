@@ -1003,7 +1003,10 @@ window.__ModuleLoader__.load({
           l2dAppRef.current = null
           l2dModelRef.current = null
         }
-      }, [enabled, data, props.l2d, props.models])
+        // 🔴 props.killed 必须进依赖：关掉舞台（Ctrl+Shift+M）时组件返回 null、canvas 被销毁，
+        //    再打开（Ctrl+Shift+U）时 React 重建出一个**新的** canvas —— 依赖没变 effect 就不会重跑，
+        //    新 canvas 上没有 PIXI 应用，立绘消失。实测踩过。
+      }, [enabled, data, props.l2d, props.models, props.killed])
 
       // ── Live2D：状态 → 动作 ────────────────────────────────────────────────
       // 模型只有两组动作：`Idle`（1 段）与 `Anima`（0=speak / 1=thinkend / 2=thinking）。
@@ -1018,11 +1021,16 @@ window.__ModuleLoader__.load({
         const play = function (group, index) {
           try { model.motion(group, index) } catch (e) { /* 动作缺失不该影响画面 */ }
         }
+        // 表情：模型自带 5 个（happy / happy2 / puzzled / relax / unhappy）。
+        // 只在**状态切换时**设一次，不每帧刷 —— 反复 setExpression 会打断表情过渡。
+        const expr = function (name) {
+          try { model.expression(name) } catch (e) { /* 没有该表情就跳过 */ }
+        }
         const msgs = data.messages || []
         const last = msgs.length ? msgs[msgs.length - 1] : null
-        if (data.running) { play('Anima', 2); return }          // thinking
-        if (last && last.role === 'teacher') { play('Anima', 0); return }  // speak
-        if (last && last.role === 'you') { play('Anima', 1); return }      // thinkend
+        if (data.running) { play('Anima', 2); expr('relax'); return }        // thinking
+        if (last && last.role === 'teacher') { play('Anima', 0); expr('happy'); return }  // speak
+        if (last && last.role === 'you') { play('Anima', 1); expr('puzzled'); return }    // thinkend
         play('Idle', 0)
       }, [l2dReady, data.running, data.messages])
 
