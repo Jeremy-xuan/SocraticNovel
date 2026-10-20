@@ -5,7 +5,12 @@
 
 | 目录 | 曾经是什么 | 被谁取代 | 保留了什么 |
 |---|---|---|---|
-| （迁移中，逐个填写） | | | |
+| `poc-动画可写性/` | 验证"现场生成教学动画"可不可行（386 MB → 564 KB） | `tools/animation-gate` ＋ `tools/anim-prep`（课前预渲染＋课上取缓存） | 2 张关键帧、1 段 720p 样片、manim API 摘要 |
+| `poc-白板可写性/` | 验证 `classroom_draw` 能不能真把板书"写"出来 | `plugins/socratic-engine` 的正式实现 ＋ 教室「白板渠道」纪律 | `verdicts.json`（判据原文）＋ 2 张对照截图 |
+| `prototypes-stage-v1v2/` | 第一/二版 galgame 舞台（静态布局实验，没接引擎） | `clients/classroom-stage-warm` | 各版一张截图（用来知道当时为什么推翻） |
+| `demo-旧样稿/` | 早期给外部看效果的样稿页（含课堂实录视频） | `mockups/stage-modern/`（9 份定稿样稿） | 一张样稿截图 |
+
+合计约 4.2 MB（原始约 537 MB）。
 
 维护规则：进这里的每一次迁移都必须在上面这张表里留一行；只保留 `README.md`（结论）与关键截图，
 **源码与运行产物删除**（体积大且已无用）。

@@ -1,0 +1,1082 @@
+[
+  {
+    "id": "kp11-A-r1",
+    "kp": "KP-1.1",
+    "group": "A",
+    "rep": 1,
+    "chars": 1577,
+    "blocks": [
+      "∅"
+    ],
+    "aDetail": {
+      "bareFence": 1,
+      "bareHasDiagram": true,
+      "anyFence": [
+        "∅"
+      ]
+    },
+    "form": "ascii/文字示意图",
+    "mermaid": {
+      "ok": false,
+      "code": null,
+      "why": "有 1 个围栏但无 mermaid（lang=∅）"
+    }
+  },
+  {
+    "id": "kp11-A-r2",
+    "kp": "KP-1.1",
+    "group": "A",
+    "rep": 2,
+    "chars": 1346,
+    "blocks": [
+      "∅",
+      "∅"
+    ],
+    "aDetail": {
+      "bareFence": 2,
+      "bareHasDiagram": true,
+      "anyFence": [
+        "∅",
+        "∅"
+      ]
+    },
+    "form": "ascii/文字示意图",
+    "mermaid": {
+      "ok": false,
+      "code": null,
+      "why": "有 2 个围栏但无 mermaid（lang=∅,∅）"
+    }
+  },
+  {
+    "id": "kp11-B1-r1",
+    "kp": "KP-1.1",
+    "group": "B1",
+    "rep": 1,
+    "chars": 997,
+    "blocks": [
+      "mermaid"
+    ],
+    "mermaid": {
+      "ok": true,
+      "why": "lang=mermaid",
+      "chars": 171
+    },
+    "parseOk": true,
+    "renderOk": true,
+    "svgLen": 31343,
+    "bbox": {
+      "w": 306.7109375,
+      "h": 380
+    },
+    "counts": {
+      "text": 0,
+      "foText": 18,
+      "nodes": 5,
+      "edges": 6,
+      "rects": 6,
+      "paths": 11,
+      "labels": 18
+    },
+    "mermaidType": "stateDiagram-v2",
+    "mermaidLines": 7,
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_白板可写性/png/kp11-B1-r1.png"
+  },
+  {
+    "id": "kp11-B1-r2",
+    "kp": "KP-1.1",
+    "group": "B1",
+    "rep": 2,
+    "chars": 1128,
+    "blocks": [
+      "mermaid"
+    ],
+    "mermaid": {
+      "ok": true,
+      "why": "lang=mermaid",
+      "chars": 520
+    },
+    "parseOk": true,
+    "renderOk": true,
+    "svgLen": 28208,
+    "bbox": {
+      "w": 606.53125,
+      "h": 888.703125
+    },
+    "counts": {
+      "text": 0,
+      "foText": 37,
+      "nodes": 11,
+      "edges": 0,
+      "rects": 20,
+      "paths": 20,
+      "labels": 37
+    },
+    "mermaidType": "flowchart",
+    "mermaidLines": 16,
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_白板可写性/png/kp11-B1-r2.png"
+  },
+  {
+    "id": "kp11-B2-r1",
+    "kp": "KP-1.1",
+    "group": "B2",
+    "rep": 1,
+    "chars": 24540,
+    "blocks": [
+      "json"
+    ],
+    "extract": {
+      "ok": true,
+      "why": "lang=json",
+      "rawChars": 23711
+    },
+    "jsonOk": true,
+    "struct": {
+      "topLevel": {
+        "type": "excalidraw",
+        "hasElements": true,
+        "hasAppState": true,
+        "hasFiles": true,
+        "version": 2
+      },
+      "elementCount": 30,
+      "typeHist": {
+        "text": 18,
+        "rectangle": 12
+      },
+      "missingFieldHist": {},
+      "badType": [],
+      "oob": [],
+      "issues": [],
+      "deletedCount": 0
+    },
+    "renderOk": true,
+    "bbox": {
+      "w": 880,
+      "h": 722
+    },
+    "svgLen": 27997,
+    "counts": {
+      "text": 32,
+      "g": 30,
+      "paths": 24,
+      "rects": 1
+    },
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_白板可写性/png/kp11-B2-r1.png"
+  },
+  {
+    "id": "kp11-B2-r2",
+    "kp": "KP-1.1",
+    "group": "B2",
+    "rep": 2,
+    "chars": 17748,
+    "blocks": [
+      "json"
+    ],
+    "extract": {
+      "ok": true,
+      "why": "lang=json",
+      "rawChars": 17040
+    },
+    "jsonOk": true,
+    "struct": {
+      "topLevel": {
+        "type": "excalidraw",
+        "hasElements": true,
+        "hasAppState": true,
+        "hasFiles": true,
+        "version": 2
+      },
+      "elementCount": 27,
+      "typeHist": {
+        "text": 14,
+        "rectangle": 8,
+        "line": 2,
+        "arrow": 3
+      },
+      "missingFieldHist": {},
+      "badType": [],
+      "oob": [
+        "arrow_p2_cpu"
+      ],
+      "issues": [],
+      "deletedCount": 0
+    },
+    "renderOk": true,
+    "bbox": {
+      "w": 790,
+      "h": 680
+    },
+    "svgLen": 21565,
+    "counts": {
+      "text": 30,
+      "g": 38,
+      "paths": 27,
+      "rects": 1
+    },
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_白板可写性/png/kp11-B2-r2.png"
+  },
+  {
+    "id": "kp12-A-r1",
+    "kp": "KP-1.2",
+    "group": "A",
+    "rep": 1,
+    "chars": 1500,
+    "blocks": [
+      "∅",
+      "∅"
+    ],
+    "aDetail": {
+      "bareFence": 2,
+      "bareHasDiagram": true,
+      "anyFence": [
+        "∅",
+        "∅"
+      ]
+    },
+    "form": "ascii/文字示意图",
+    "mermaid": {
+      "ok": false,
+      "code": null,
+      "why": "有 2 个围栏但无 mermaid（lang=∅,∅）"
+    }
+  },
+  {
+    "id": "kp12-A-r2",
+    "kp": "KP-1.2",
+    "group": "A",
+    "rep": 2,
+    "chars": 1215,
+    "blocks": [
+      "∅"
+    ],
+    "aDetail": {
+      "bareFence": 1,
+      "bareHasDiagram": true,
+      "anyFence": [
+        "∅"
+      ]
+    },
+    "form": "ascii/文字示意图",
+    "mermaid": {
+      "ok": false,
+      "code": null,
+      "why": "有 1 个围栏但无 mermaid（lang=∅）"
+    }
+  },
+  {
+    "id": "kp12-B1-r1",
+    "kp": "KP-1.2",
+    "group": "B1",
+    "rep": 1,
+    "chars": 909,
+    "blocks": [
+      "mermaid"
+    ],
+    "mermaid": {
+      "ok": true,
+      "why": "lang=mermaid",
+      "chars": 453
+    },
+    "parseOk": true,
+    "renderOk": true,
+    "svgLen": 23198,
+    "bbox": {
+      "w": 647.9375,
+      "h": 966
+    },
+    "counts": {
+      "text": 0,
+      "foText": 32,
+      "nodes": 9,
+      "edges": 0,
+      "rects": 18,
+      "paths": 16,
+      "labels": 32
+    },
+    "mermaidType": "flowchart",
+    "mermaidLines": 10,
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_白板可写性/png/kp12-B1-r1.png"
+  },
+  {
+    "id": "kp12-B1-r2",
+    "kp": "KP-1.2",
+    "group": "B1",
+    "rep": 2,
+    "chars": 933,
+    "blocks": [
+      "mermaid"
+    ],
+    "mermaid": {
+      "ok": true,
+      "why": "lang=mermaid",
+      "chars": 429
+    },
+    "parseOk": true,
+    "renderOk": true,
+    "svgLen": 29308,
+    "bbox": {
+      "w": 777,
+      "h": 630
+    },
+    "counts": {
+      "text": 24,
+      "foText": 0,
+      "nodes": 16,
+      "edges": 7,
+      "rects": 12,
+      "paths": 12,
+      "labels": 24
+    },
+    "mermaidType": "sequenceDiagram",
+    "mermaidLines": 19,
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_白板可写性/png/kp12-B1-r2.png"
+  },
+  {
+    "id": "kp12-B2-r1",
+    "kp": "KP-1.2",
+    "group": "B2",
+    "rep": 1,
+    "chars": 14543,
+    "blocks": [
+      "json"
+    ],
+    "extract": {
+      "ok": true,
+      "why": "lang=json",
+      "rawChars": 13857
+    },
+    "jsonOk": true,
+    "struct": {
+      "topLevel": {
+        "type": "excalidraw",
+        "hasElements": true,
+        "hasAppState": true,
+        "hasFiles": true,
+        "version": 2
+      },
+      "elementCount": 30,
+      "typeHist": {
+        "text": 15,
+        "rectangle": 6,
+        "line": 4,
+        "arrow": 1,
+        "ellipse": 4
+      },
+      "missingFieldHist": {},
+      "badType": [],
+      "oob": [],
+      "issues": [],
+      "deletedCount": 0
+    },
+    "renderOk": true,
+    "bbox": {
+      "w": 820,
+      "h": 475
+    },
+    "svgLen": 22313,
+    "counts": {
+      "text": 15,
+      "g": 37,
+      "paths": 26,
+      "rects": 1
+    },
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_白板可写性/png/kp12-B2-r1.png"
+  },
+  {
+    "id": "kp12-B2-r2",
+    "kp": "KP-1.2",
+    "group": "B2",
+    "rep": 2,
+    "chars": 15579,
+    "blocks": [
+      "json"
+    ],
+    "extract": {
+      "ok": true,
+      "why": "lang=json",
+      "rawChars": 14797
+    },
+    "jsonOk": true,
+    "struct": {
+      "topLevel": {
+        "type": "excalidraw",
+        "hasElements": true,
+        "hasAppState": true,
+        "hasFiles": true,
+        "version": 2
+      },
+      "elementCount": 31,
+      "typeHist": {
+        "rectangle": 11,
+        "text": 17,
+        "arrow": 2,
+        "line": 1
+      },
+      "missingFieldHist": {},
+      "badType": [],
+      "oob": [],
+      "issues": [],
+      "deletedCount": 0
+    },
+    "renderOk": true,
+    "bbox": {
+      "w": 900,
+      "h": 580
+    },
+    "svgLen": 25583,
+    "counts": {
+      "text": 17,
+      "g": 35,
+      "paths": 28,
+      "rects": 1
+    },
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_白板可写性/png/kp12-B2-r2.png"
+  },
+  {
+    "id": "kp13-A-r1",
+    "kp": "KP-1.3",
+    "group": "A",
+    "rep": 1,
+    "chars": 863,
+    "blocks": [
+      "∅"
+    ],
+    "aDetail": {
+      "bareFence": 1,
+      "bareHasDiagram": true,
+      "anyFence": [
+        "∅"
+      ]
+    },
+    "form": "ascii/文字示意图",
+    "mermaid": {
+      "ok": false,
+      "code": null,
+      "why": "有 1 个围栏但无 mermaid（lang=∅）"
+    }
+  },
+  {
+    "id": "kp13-A-r2",
+    "kp": "KP-1.3",
+    "group": "A",
+    "rep": 2,
+    "chars": 1474,
+    "blocks": [
+      "∅"
+    ],
+    "aDetail": {
+      "bareFence": 1,
+      "bareHasDiagram": true,
+      "anyFence": [
+        "∅"
+      ]
+    },
+    "form": "ascii/文字示意图",
+    "mermaid": {
+      "ok": false,
+      "code": null,
+      "why": "有 1 个围栏但无 mermaid（lang=∅）"
+    }
+  },
+  {
+    "id": "kp13-B1-r1",
+    "kp": "KP-1.3",
+    "group": "B1",
+    "rep": 1,
+    "chars": 959,
+    "blocks": [
+      "mermaid"
+    ],
+    "mermaid": {
+      "ok": true,
+      "why": "lang=mermaid",
+      "chars": 508
+    },
+    "parseOk": true,
+    "renderOk": true,
+    "svgLen": 31428,
+    "bbox": {
+      "w": 669,
+      "h": 1002
+    },
+    "counts": {
+      "text": 32,
+      "foText": 0,
+      "nodes": 12,
+      "edges": 11,
+      "rects": 10,
+      "paths": 15,
+      "labels": 32
+    },
+    "mermaidType": "sequenceDiagram",
+    "mermaidLines": 20,
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_白板可写性/png/kp13-B1-r1.png"
+  },
+  {
+    "id": "kp13-B1-r2",
+    "kp": "KP-1.3",
+    "group": "B1",
+    "rep": 2,
+    "chars": 1600,
+    "blocks": [
+      "mermaid"
+    ],
+    "mermaid": {
+      "ok": true,
+      "why": "lang=mermaid",
+      "chars": 599
+    },
+    "parseOk": true,
+    "renderOk": true,
+    "svgLen": 28346,
+    "bbox": {
+      "w": 1838.828125,
+      "h": 677.0250244140625
+    },
+    "counts": {
+      "text": 0,
+      "foText": 41,
+      "nodes": 10,
+      "edges": 13,
+      "rects": 22,
+      "paths": 18,
+      "labels": 41
+    },
+    "mermaidType": "stateDiagram-v2",
+    "mermaidLines": 21,
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_白板可写性/png/kp13-B1-r2.png"
+  },
+  {
+    "id": "kp13-B2-r1",
+    "kp": "KP-1.3",
+    "group": "B2",
+    "rep": 1,
+    "chars": 21926,
+    "blocks": [
+      "json"
+    ],
+    "extract": {
+      "ok": true,
+      "why": "lang=json",
+      "rawChars": 20805
+    },
+    "jsonOk": true,
+    "struct": {
+      "topLevel": {
+        "type": "excalidraw",
+        "hasElements": true,
+        "hasAppState": true,
+        "hasFiles": true,
+        "version": 2
+      },
+      "elementCount": 34,
+      "typeHist": {
+        "text": 19,
+        "rectangle": 9,
+        "arrow": 6
+      },
+      "missingFieldHist": {},
+      "badType": [],
+      "oob": [],
+      "issues": [],
+      "deletedCount": 0
+    },
+    "renderOk": true,
+    "bbox": {
+      "w": 930.890625,
+      "h": 914
+    },
+    "svgLen": 24505,
+    "counts": {
+      "text": 27,
+      "g": 52,
+      "paths": 36,
+      "rects": 1
+    },
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_白板可写性/png/kp13-B2-r1.png"
+  },
+  {
+    "id": "kp13-B2-r2",
+    "kp": "KP-1.3",
+    "group": "B2",
+    "rep": 2,
+    "chars": 14316,
+    "blocks": [
+      "json"
+    ],
+    "extract": {
+      "ok": true,
+      "why": "lang=json",
+      "rawChars": 13767
+    },
+    "jsonOk": true,
+    "struct": {
+      "topLevel": {
+        "type": "excalidraw",
+        "hasElements": true,
+        "hasAppState": true,
+        "hasFiles": true,
+        "version": 2
+      },
+      "elementCount": 23,
+      "typeHist": {
+        "rectangle": 7,
+        "text": 13,
+        "arrow": 2,
+        "ellipse": 1
+      },
+      "missingFieldHist": {},
+      "badType": [],
+      "oob": [],
+      "issues": [],
+      "deletedCount": 0
+    },
+    "renderOk": true,
+    "bbox": {
+      "w": 1020,
+      "h": 610
+    },
+    "svgLen": 20635,
+    "counts": {
+      "text": 15,
+      "g": 29,
+      "paths": 22,
+      "rects": 1
+    },
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_白板可写性/png/kp13-B2-r2.png"
+  },
+  {
+    "id": "kp14-A-r1",
+    "kp": "KP-1.4",
+    "group": "A",
+    "rep": 1,
+    "chars": 1293,
+    "blocks": [
+      "∅"
+    ],
+    "aDetail": {
+      "bareFence": 1,
+      "bareHasDiagram": true,
+      "anyFence": [
+        "∅"
+      ]
+    },
+    "form": "ascii/文字示意图",
+    "mermaid": {
+      "ok": false,
+      "code": null,
+      "why": "有 1 个围栏但无 mermaid（lang=∅）"
+    }
+  },
+  {
+    "id": "kp14-A-r2",
+    "kp": "KP-1.4",
+    "group": "A",
+    "rep": 2,
+    "chars": 2047,
+    "blocks": [
+      "∅",
+      "∅"
+    ],
+    "aDetail": {
+      "bareFence": 2,
+      "bareHasDiagram": true,
+      "anyFence": [
+        "∅",
+        "∅"
+      ]
+    },
+    "form": "ascii/文字示意图",
+    "mermaid": {
+      "ok": false,
+      "code": null,
+      "why": "有 2 个围栏但无 mermaid（lang=∅,∅）"
+    }
+  },
+  {
+    "id": "kp14-B1-r1",
+    "kp": "KP-1.4",
+    "group": "B1",
+    "rep": 1,
+    "chars": 1192,
+    "blocks": [
+      "mermaid"
+    ],
+    "mermaid": {
+      "ok": true,
+      "why": "lang=mermaid",
+      "chars": 425
+    },
+    "parseOk": true,
+    "renderOk": true,
+    "svgLen": 29276,
+    "bbox": {
+      "w": 703.875,
+      "h": 697
+    },
+    "counts": {
+      "text": 29,
+      "foText": 0,
+      "nodes": 14,
+      "edges": 6,
+      "rects": 8,
+      "paths": 12,
+      "labels": 29
+    },
+    "mermaidType": "sequenceDiagram",
+    "mermaidLines": 13,
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_白板可写性/png/kp14-B1-r1.png"
+  },
+  {
+    "id": "kp14-B1-r2",
+    "kp": "KP-1.4",
+    "group": "B1",
+    "rep": 2,
+    "chars": 1228,
+    "blocks": [
+      "mermaid"
+    ],
+    "mermaid": {
+      "ok": true,
+      "why": "lang=mermaid",
+      "chars": 319
+    },
+    "parseOk": true,
+    "renderOk": true,
+    "svgLen": 26272,
+    "bbox": {
+      "w": 848,
+      "h": 592
+    },
+    "counts": {
+      "text": 14,
+      "foText": 0,
+      "nodes": 12,
+      "edges": 8,
+      "rects": 6,
+      "paths": 13,
+      "labels": 14
+    },
+    "mermaidType": "sequenceDiagram",
+    "mermaidLines": 12,
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_白板可写性/png/kp14-B1-r2.png"
+  },
+  {
+    "id": "kp14-B2-r1",
+    "kp": "KP-1.4",
+    "group": "B2",
+    "rep": 1,
+    "chars": 21083,
+    "blocks": [
+      "json"
+    ],
+    "extract": {
+      "ok": true,
+      "why": "lang=json",
+      "rawChars": 20446
+    },
+    "jsonOk": true,
+    "struct": {
+      "topLevel": {
+        "type": "excalidraw",
+        "hasElements": true,
+        "hasAppState": true,
+        "hasFiles": true,
+        "version": 2
+      },
+      "elementCount": 31,
+      "typeHist": {
+        "rectangle": 9,
+        "text": 15,
+        "line": 3,
+        "arrow": 4
+      },
+      "missingFieldHist": {},
+      "badType": [],
+      "oob": [
+        "measure-up"
+      ],
+      "issues": [],
+      "deletedCount": 0
+    },
+    "renderOk": true,
+    "bbox": {
+      "w": 1105,
+      "h": 580
+    },
+    "svgLen": 22059,
+    "counts": {
+      "text": 17,
+      "g": 42,
+      "paths": 30,
+      "rects": 1
+    },
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_白板可写性/png/kp14-B2-r1.png"
+  },
+  {
+    "id": "kp14-B2-r2",
+    "kp": "KP-1.4",
+    "group": "B2",
+    "rep": 2,
+    "chars": 22660,
+    "blocks": [
+      "json"
+    ],
+    "extract": {
+      "ok": true,
+      "why": "lang=json",
+      "rawChars": 21106
+    },
+    "jsonOk": true,
+    "struct": {
+      "topLevel": {
+        "type": "excalidraw",
+        "hasElements": true,
+        "hasAppState": true,
+        "hasFiles": true,
+        "version": 2
+      },
+      "elementCount": 28,
+      "typeHist": {
+        "text": 16,
+        "rectangle": 9,
+        "line": 1,
+        "arrow": 2
+      },
+      "missingFieldHist": {},
+      "badType": [],
+      "oob": [],
+      "issues": [],
+      "deletedCount": 0
+    },
+    "renderOk": true,
+    "bbox": {
+      "w": 810,
+      "h": 640
+    },
+    "svgLen": 23418,
+    "counts": {
+      "text": 19,
+      "g": 35,
+      "paths": 25,
+      "rects": 1
+    },
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_白板可写性/png/kp14-B2-r2.png"
+  },
+  {
+    "id": "kp15-A-r1",
+    "kp": "KP-1.5",
+    "group": "A",
+    "rep": 1,
+    "chars": 1690,
+    "blocks": [
+      "∅",
+      "c"
+    ],
+    "aDetail": {
+      "bareFence": 1,
+      "bareHasDiagram": true,
+      "anyFence": [
+        "∅",
+        "c"
+      ]
+    },
+    "form": "ascii/文字示意图",
+    "mermaid": {
+      "ok": false,
+      "code": null,
+      "why": "有 2 个围栏但无 mermaid（lang=∅,c）"
+    }
+  },
+  {
+    "id": "kp15-A-r2",
+    "kp": "KP-1.5",
+    "group": "A",
+    "rep": 2,
+    "chars": 1328,
+    "blocks": [
+      "∅"
+    ],
+    "aDetail": {
+      "bareFence": 1,
+      "bareHasDiagram": true,
+      "anyFence": [
+        "∅"
+      ]
+    },
+    "form": "ascii/文字示意图",
+    "mermaid": {
+      "ok": false,
+      "code": null,
+      "why": "有 1 个围栏但无 mermaid（lang=∅）"
+    }
+  },
+  {
+    "id": "kp15-B1-r1",
+    "kp": "KP-1.5",
+    "group": "B1",
+    "rep": 1,
+    "chars": 816,
+    "blocks": [
+      "mermaid"
+    ],
+    "mermaid": {
+      "ok": true,
+      "why": "lang=mermaid",
+      "chars": 397
+    },
+    "parseOk": true,
+    "renderOk": true,
+    "svgLen": 27781,
+    "bbox": {
+      "w": 915.796875,
+      "h": 665
+    },
+    "counts": {
+      "text": 18,
+      "foText": 0,
+      "nodes": 16,
+      "edges": 7,
+      "rects": 11,
+      "paths": 12,
+      "labels": 18
+    },
+    "mermaidType": "sequenceDiagram",
+    "mermaidLines": 15,
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_白板可写性/png/kp15-B1-r1.png"
+  },
+  {
+    "id": "kp15-B1-r2",
+    "kp": "KP-1.5",
+    "group": "B1",
+    "rep": 2,
+    "chars": 1187,
+    "blocks": [
+      "mermaid"
+    ],
+    "mermaid": {
+      "ok": true,
+      "why": "lang=mermaid",
+      "chars": 457
+    },
+    "parseOk": true,
+    "renderOk": true,
+    "svgLen": 29451,
+    "bbox": {
+      "w": 1011,
+      "h": 689
+    },
+    "counts": {
+      "text": 25,
+      "foText": 0,
+      "nodes": 16,
+      "edges": 6,
+      "rects": 13,
+      "paths": 11,
+      "labels": 25
+    },
+    "mermaidType": "sequenceDiagram",
+    "mermaidLines": 17,
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_白板可写性/png/kp15-B1-r2.png"
+  },
+  {
+    "id": "kp15-B2-r1",
+    "kp": "KP-1.5",
+    "group": "B2",
+    "rep": 1,
+    "chars": 17871,
+    "blocks": [
+      "json"
+    ],
+    "extract": {
+      "ok": true,
+      "why": "lang=json",
+      "rawChars": 17105
+    },
+    "jsonOk": true,
+    "struct": {
+      "topLevel": {
+        "type": "excalidraw",
+        "hasElements": true,
+        "hasAppState": true,
+        "hasFiles": true,
+        "version": 2
+      },
+      "elementCount": 26,
+      "typeHist": {
+        "rectangle": 9,
+        "text": 14,
+        "line": 1,
+        "arrow": 2
+      },
+      "missingFieldHist": {},
+      "badType": [],
+      "oob": [],
+      "issues": [],
+      "deletedCount": 0
+    },
+    "renderOk": true,
+    "bbox": {
+      "w": 970,
+      "h": 870
+    },
+    "svgLen": 19708,
+    "counts": {
+      "text": 31,
+      "g": 35,
+      "paths": 20,
+      "rects": 1
+    },
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_白板可写性/png/kp15-B2-r1.png"
+  },
+  {
+    "id": "kp15-B2-r2",
+    "kp": "KP-1.5",
+    "group": "B2",
+    "rep": 2,
+    "chars": 16540,
+    "blocks": [
+      "json",
+      "∅"
+    ],
+    "extract": {
+      "ok": true,
+      "why": "lang=json",
+      "rawChars": 15278
+    },
+    "jsonOk": true,
+    "struct": {
+      "topLevel": {
+        "type": "excalidraw",
+        "hasElements": true,
+        "hasAppState": true,
+        "hasFiles": true,
+        "version": 2
+      },
+      "elementCount": 20,
+      "typeHist": {
+        "text": 10,
+        "rectangle": 6,
+        "arrow": 4
+      },
+      "missingFieldHist": {},
+      "badType": [],
+      "oob": [],
+      "issues": [],
+      "deletedCount": 0
+    },
+    "renderOk": true,
+    "bbox": {
+      "w": 1200,
+      "h": 816
+    },
+    "svgLen": 12966,
+    "counts": {
+      "text": 4,
+      "g": 26,
+      "paths": 24,
+      "rects": 1
+    },
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_白板可写性/png/kp15-B2-r2.png"
+  }
+]
