@@ -1,0 +1,18 @@
+       18.55 real         4.04 user         3.71 sys
+          1151467520  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+             -432481  page reclaims
+              628477  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   5  messages sent
+                  20  messages received
+                   0  signals received
+                8971  voluntary context switches
+               77545  involuntary context switches
+         58691650782  instructions retired
+         28106608421  cycles elapsed
+         11118353536  peak memory footprint

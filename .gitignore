@@ -52,3 +52,19 @@ clients/classroom-ui/tmp_expr*/
 AP_Physics_EM/materials/textbook/
 AP_Physics_EM/materials/练习册/
 AP_Physics_EM/materials/讲义/
+
+# ── 2026-10-20 代码统一迁移时补全 ─────────────────────────────────────────────
+# 运行产物（可重生成，不入库）
+**/out/
+**/shots/
+**/measure/
+**/dist/
+**/logs/
+
+# 第三方资产（各自按各目录 README 里的「官方出处」获取）
+# ⚠️ 例外：classroom-ui 的 vendor/mermaid 是**运行必需**（右栏面板渲染要用），必须入库
+**/vendor/
+!clients/classroom-ui/vendor/
+
+# 参考素材：用户 2026-10-20 决定不进仓库（1.1 GB，其中 423M 是他人同人作品，版权归原作者）
+reference/

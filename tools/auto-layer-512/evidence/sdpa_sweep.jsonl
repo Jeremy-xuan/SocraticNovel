@@ -1,0 +1,17 @@
+### B=20 H=5 L=9216  (768² marigold 的候选形状（预测 15.82 GiB 失败 = 复现上一路的崩点）)
+RESULT {"B": 20, "H": 5, "L": 9216, "D": 64, "dtype": "bf16", "q_numel": 58982400, "attn_matrix_numel": 8493465600, "attn_matrix_bytes": 16986931200, "recommended_max_memory_gb": 17.18, "alloc_before_sdpa_gb": 0.35, "ok": false, "error": "RuntimeError: Invalid buffer size: 15.82 GiB", "driver_after_fail_gb": 1.07}
+
+### B=13 H=5 L=9216  (768² layerdiff body 的候选形状（上一路实测**通过**）)
+
+### B=20 H=5 L=4096  (512² marigold 的候选形状（预测 3.13 GiB）)
+RESULT {"B": 20, "H": 5, "L": 4096, "D": 64, "dtype": "bf16", "q_numel": 26214400, "attn_matrix_numel": 1677721600, "attn_matrix_bytes": 3355443200, "recommended_max_memory_gb": 17.18, "alloc_before_sdpa_gb": 0.16, "ok": true, "alloc_after_sdpa_gb": 0.21, "driver_after_sdpa_gb": 17.85}
+
+### B=13 H=5 L=4096  (512² layerdiff body 的候选形状（预测 2.03 GiB）)
+RESULT {"B": 13, "H": 5, "L": 4096, "D": 64, "dtype": "bf16", "q_numel": 17039360, "attn_matrix_numel": 1090519040, "attn_matrix_bytes": 2181038080, "recommended_max_memory_gb": 17.18, "alloc_before_sdpa_gb": 0.1, "ok": true, "alloc_after_sdpa_gb": 0.14, "driver_after_sdpa_gb": 11.98}
+
+### B=1 H=8 L=17409  (05 探针里的首个失败点（复现 16.00 GiB，用于刻画上限）)
+RESULT {"B": 1, "H": 8, "L": 17409, "D": 64, "dtype": "bf16", "q_numel": 8913408, "attn_matrix_numel": 2424586248, "attn_matrix_bytes": 4849172496, "recommended_max_memory_gb": 17.18, "alloc_before_sdpa_gb": 0.05, "ok": true, "alloc_after_sdpa_gb": 0.07, "driver_after_sdpa_gb": 25.34}
+
+### B=1 H=5 L=9216  (对照：B=1 时同 L（预测 0.79 GiB）)
+RESULT {"B": 1, "H": 5, "L": 9216, "D": 64, "dtype": "bf16", "q_numel": 2949120, "attn_matrix_numel": 424673280, "attn_matrix_bytes": 849346560, "recommended_max_memory_gb": 17.18, "alloc_before_sdpa_gb": 0.02, "ok": true, "alloc_after_sdpa_gb": 0.02, "driver_after_sdpa_gb": 4.28}
+

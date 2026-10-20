@@ -1,0 +1,9 @@
+  [patch] ✅ TransparentVAEDecoder.estimate_augmented：stack+median(5维) → result[0]（恒等，len(result)==1 已断言）
+=== 完整 call | full512_q30 ===
+  MPS 推荐预算 17.18 GB
+  [OK  ] build_layerdiff                     14.91s  RSS   1.07 GB  alloc   8.52  driver  10.58
+  [OK  ] run_layerdiff(body+head)          3123.48s  RSS   1.07 GB  alloc   8.52  driver  14.13
+  出层 26 张：['back hair.png', 'bottomwear.png', 'ears.png', 'earwear.png', 'eyebrow.png', 'eyelash.png', 'eyewear.png', 'eyewhite.png', 'face.png', 'footwear.png', 'front hair.png', 'handwear.png', 'head.png', 'headwear.png', 'irides.png', 'legwear.png', 'mouth.png', 'neck.png', 'neckwear.png', 'nose.png', 'objects.png', 'src_head.png', 'src_img.png', 'tail.png', 'topwear.png', 'wings.png']
+  [REL ] 释放 layerdiff -> alloc 0.0 GB  driver 0.34 GB
+  [OK  ] release_layerdiff                    1.46s  RSS   1.07 GB  alloc   0.00  driver   0.34
+  [OK  ] build_marigold                       3.86s  RSS   1.07 GB  alloc   2.60  driver   3.36

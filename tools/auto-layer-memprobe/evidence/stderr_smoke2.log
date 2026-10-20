@@ -1,0 +1,10 @@
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.3.0) or chardet (7.4.3)/charset_normalizer (3.4.1) doesn't match a supported version!
+  warnings.warn(
+Traceback (most recent call last):
+  File "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/tools/auto-layer-memprobe/scripts/40_full_call.py", line 304, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/tools/auto-layer-memprobe/scripts/40_full_call.py", line 97, in main
+    rec["vae_patch"] = vae_mps_patch.apply()
+    ^^^
+UnboundLocalError: cannot access local variable 'rec' where it is not associated with a value

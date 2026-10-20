@@ -1,0 +1,451 @@
+{
+  "generatedAt": "2026-09-24T04:43:10.143Z",
+  "rows": [
+    {
+      "run": 1,
+      "logFile": "/Users/wujunjie/Library/Application Support/dsh-desktop/harness/sessions/--private-var-folders-df-8fgt_lnd23q_5f3m_51vf4s80000gn-T-animorch-exp1-run1-classroom--/session-3b8bdad2-46aa-4b34-992f-6704d210e936/session.v3.jsonl.zstd",
+      "turnStart": 1790224568979,
+      "firstStudentVisibleTextMs": 99547,
+      "firstStudentVisibleTextChars": 161,
+      "toolsBeforeScript": [
+        "bash",
+        "classroom_status",
+        "read",
+        "read",
+        "read",
+        "read",
+        "read",
+        "read",
+        "read",
+        "classroom_set_phase",
+        "classroom_draw"
+      ],
+      "lastToolResultBeforeScriptMs": 90678,
+      "scriptWrittenMs": 90679,
+      "turnEndMs": 99553,
+      "scriptLines": 135,
+      "scriptBytes": 4811,
+      "steps": [
+        {
+          "step": 1,
+          "startMs": 85,
+          "generateMs": 12203,
+          "firstEventMs": 85,
+          "tools": [
+            "bash",
+            "classroom_status"
+          ],
+          "toolMs": 29,
+          "textChars": 0,
+          "outputTokens": null,
+          "wroteScript": false
+        },
+        {
+          "step": 2,
+          "startMs": 12328,
+          "generateMs": 3705,
+          "firstEventMs": 12328,
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "toolMs": 18,
+          "textChars": 0,
+          "outputTokens": null,
+          "wroteScript": false
+        },
+        {
+          "step": 3,
+          "startMs": 16073,
+          "generateMs": 3782,
+          "firstEventMs": 16073,
+          "tools": [
+            "read",
+            "read",
+            "read",
+            "read"
+          ],
+          "toolMs": 30,
+          "textChars": 0,
+          "outputTokens": null,
+          "wroteScript": false
+        },
+        {
+          "step": 4,
+          "startMs": 19937,
+          "generateMs": 67484,
+          "firstEventMs": 19937,
+          "tools": [
+            "classroom_set_phase",
+            "classroom_draw",
+            "write"
+          ],
+          "toolMs": 3244,
+          "textChars": 0,
+          "outputTokens": null,
+          "wroteScript": true
+        },
+        {
+          "step": 5,
+          "startMs": 90704,
+          "generateMs": 3987,
+          "firstEventMs": 90704,
+          "tools": [
+            "bash"
+          ],
+          "toolMs": 77,
+          "textChars": 0,
+          "outputTokens": null,
+          "wroteScript": true
+        },
+        {
+          "step": 6,
+          "startMs": 94779,
+          "generateMs": 4768,
+          "firstEventMs": 94779,
+          "tools": [],
+          "toolMs": 0,
+          "textChars": 161,
+          "outputTokens": null,
+          "wroteScript": false
+        }
+      ],
+      "scriptStepGenerateMs": 67484,
+      "modelGenerateTotalMs": 95929,
+      "toolExecTotalMs": 3398
+    },
+    {
+      "run": 2,
+      "logFile": "/Users/wujunjie/Library/Application Support/dsh-desktop/harness/sessions/--private-var-folders-df-8fgt_lnd23q_5f3m_51vf4s80000gn-T-animorch-exp1-run2-classroom--/session-37261cb6-3cf2-442e-b431-a4c7b0208f57/session.v3.jsonl.zstd",
+      "turnStart": 1790224670115,
+      "firstStudentVisibleTextMs": 107458,
+      "firstStudentVisibleTextChars": 142,
+      "toolsBeforeScript": [
+        "read",
+        "read",
+        "read",
+        "read",
+        "read",
+        "read",
+        "read",
+        "classroom_set_phase",
+        "classroom_draw"
+      ],
+      "lastToolResultBeforeScriptMs": 72807,
+      "scriptWrittenMs": 73918,
+      "turnEndMs": 107460,
+      "scriptLines": 123,
+      "scriptBytes": 4907,
+      "steps": [
+        {
+          "step": 1,
+          "startMs": 83,
+          "generateMs": 12157,
+          "firstEventMs": 83,
+          "tools": [
+            "read",
+            "read",
+            "read",
+            "read",
+            "read",
+            "read",
+            "read"
+          ],
+          "toolMs": 33,
+          "textChars": 0,
+          "outputTokens": null,
+          "wroteScript": false
+        },
+        {
+          "step": 2,
+          "startMs": 12293,
+          "generateMs": 60493,
+          "firstEventMs": 12293,
+          "tools": [
+            "classroom_set_phase",
+            "classroom_draw",
+            "write"
+          ],
+          "toolMs": 1135,
+          "textChars": 0,
+          "outputTokens": null,
+          "wroteScript": true
+        },
+        {
+          "step": 3,
+          "startMs": 73935,
+          "generateMs": 4958,
+          "firstEventMs": 73935,
+          "tools": [
+            "bash"
+          ],
+          "toolMs": 1927,
+          "textChars": 0,
+          "outputTokens": null,
+          "wroteScript": true
+        },
+        {
+          "step": 4,
+          "startMs": 80835,
+          "generateMs": 4675,
+          "firstEventMs": 80835,
+          "tools": [
+            "bash",
+            "bash"
+          ],
+          "toolMs": 27,
+          "textChars": 0,
+          "outputTokens": null,
+          "wroteScript": true
+        },
+        {
+          "step": 5,
+          "startMs": 85547,
+          "generateMs": 4639,
+          "firstEventMs": 85547,
+          "tools": [
+            "job_kill"
+          ],
+          "toolMs": 5,
+          "textChars": 0,
+          "outputTokens": null,
+          "wroteScript": true
+        },
+        {
+          "step": 6,
+          "startMs": 90199,
+          "generateMs": 2994,
+          "firstEventMs": 90199,
+          "tools": [
+            "job_output",
+            "edit"
+          ],
+          "toolMs": 19,
+          "textChars": 0,
+          "outputTokens": null,
+          "wroteScript": true
+        },
+        {
+          "step": 7,
+          "startMs": 93223,
+          "generateMs": 3729,
+          "firstEventMs": 93223,
+          "tools": [
+            "edit"
+          ],
+          "toolMs": 13,
+          "textChars": 0,
+          "outputTokens": null,
+          "wroteScript": true
+        },
+        {
+          "step": 8,
+          "startMs": 96976,
+          "generateMs": 3525,
+          "firstEventMs": 96976,
+          "tools": [
+            "bash",
+            "bash"
+          ],
+          "toolMs": 63,
+          "textChars": 0,
+          "outputTokens": null,
+          "wroteScript": true
+        },
+        {
+          "step": 9,
+          "startMs": 100572,
+          "generateMs": 2640,
+          "firstEventMs": 100572,
+          "tools": [
+            "read",
+            "job_output"
+          ],
+          "toolMs": 564,
+          "textChars": 0,
+          "outputTokens": null,
+          "wroteScript": true
+        },
+        {
+          "step": 10,
+          "startMs": 103784,
+          "generateMs": 3674,
+          "firstEventMs": 103784,
+          "tools": [],
+          "toolMs": 0,
+          "textChars": 142,
+          "outputTokens": null,
+          "wroteScript": false
+        }
+      ],
+      "scriptStepGenerateMs": 60493,
+      "modelGenerateTotalMs": 103484,
+      "toolExecTotalMs": 3786
+    },
+    {
+      "run": 3,
+      "logFile": "/Users/wujunjie/Library/Application Support/dsh-desktop/harness/sessions/--private-var-folders-df-8fgt_lnd23q_5f3m_51vf4s80000gn-T-animorch-exp1-run3-classroom--/session-7f16ad71-bb29-45db-b722-030a5ce8a006/session.v3.jsonl.zstd",
+      "turnStart": 1790224779167,
+      "firstStudentVisibleTextMs": 131354,
+      "firstStudentVisibleTextChars": 937,
+      "toolsBeforeScript": [
+        "bash",
+        "read",
+        "read",
+        "read",
+        "read",
+        "read",
+        "read",
+        "bash",
+        "classroom_set_phase",
+        "classroom_draw"
+      ],
+      "lastToolResultBeforeScriptMs": 99739,
+      "scriptWrittenMs": 100821,
+      "turnEndMs": 131359,
+      "scriptLines": 149,
+      "scriptBytes": 6050,
+      "steps": [
+        {
+          "step": 1,
+          "startMs": 97,
+          "generateMs": 5113,
+          "firstEventMs": 97,
+          "tools": [
+            "bash",
+            "read"
+          ],
+          "toolMs": 36,
+          "textChars": 0,
+          "outputTokens": null,
+          "wroteScript": false
+        },
+        {
+          "step": 2,
+          "startMs": 5256,
+          "generateMs": 2611,
+          "firstEventMs": 5256,
+          "tools": [
+            "read",
+            "read",
+            "read",
+            "read"
+          ],
+          "toolMs": 11,
+          "textChars": 0,
+          "outputTokens": null,
+          "wroteScript": false
+        },
+        {
+          "step": 3,
+          "startMs": 7889,
+          "generateMs": 17113,
+          "firstEventMs": 7889,
+          "tools": [
+            "read",
+            "bash"
+          ],
+          "toolMs": 877,
+          "textChars": 0,
+          "outputTokens": null,
+          "wroteScript": false
+        },
+        {
+          "step": 4,
+          "startMs": 25890,
+          "generateMs": 73830,
+          "firstEventMs": 25890,
+          "tools": [
+            "classroom_set_phase",
+            "classroom_draw",
+            "write"
+          ],
+          "toolMs": 1106,
+          "textChars": 0,
+          "outputTokens": null,
+          "wroteScript": true
+        },
+        {
+          "step": 5,
+          "startMs": 100838,
+          "generateMs": 4942,
+          "firstEventMs": 100838,
+          "tools": [
+            "bash"
+          ],
+          "toolMs": 56,
+          "textChars": 0,
+          "outputTokens": null,
+          "wroteScript": true
+        },
+        {
+          "step": 6,
+          "startMs": 105846,
+          "generateMs": 3184,
+          "firstEventMs": 105846,
+          "tools": [
+            "bash"
+          ],
+          "toolMs": 17,
+          "textChars": 0,
+          "outputTokens": null,
+          "wroteScript": true
+        },
+        {
+          "step": 7,
+          "startMs": 109055,
+          "generateMs": 3700,
+          "firstEventMs": 109055,
+          "tools": [
+            "bash"
+          ],
+          "toolMs": 18,
+          "textChars": 0,
+          "outputTokens": null,
+          "wroteScript": true
+        },
+        {
+          "step": 8,
+          "startMs": 112781,
+          "generateMs": 3093,
+          "firstEventMs": 112781,
+          "tools": [
+            "bash"
+          ],
+          "toolMs": 2375,
+          "textChars": 0,
+          "outputTokens": null,
+          "wroteScript": true
+        },
+        {
+          "step": 9,
+          "startMs": 118260,
+          "generateMs": 2787,
+          "firstEventMs": 118260,
+          "tools": [
+            "read_image"
+          ],
+          "toolMs": 34,
+          "textChars": 0,
+          "outputTokens": null,
+          "wroteScript": false
+        },
+        {
+          "step": 10,
+          "startMs": 121093,
+          "generateMs": 10261,
+          "firstEventMs": 121093,
+          "tools": [],
+          "toolMs": 0,
+          "textChars": 937,
+          "outputTokens": null,
+          "wroteScript": false
+        }
+      ],
+      "scriptStepGenerateMs": 73830,
+      "modelGenerateTotalMs": 126634,
+      "toolExecTotalMs": 4530
+    }
+  ]
+}

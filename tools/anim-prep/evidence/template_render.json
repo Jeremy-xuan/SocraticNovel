@@ -1,0 +1,46 @@
+{
+  "generatedAt": "2026-09-24T05:27:58.971Z",
+  "manim": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_动画可写性/env/bin/manim",
+  "note": "数值为按题设假设算出的示例数据，不是教材统计数据",
+  "cases": [
+    {
+      "case": "timeline_fifo_vs_sjf",
+      "template": "timeline",
+      "templateVersion": 1,
+      "ok": true,
+      "renderMs": 2676,
+      "bytes": 123676,
+      "scriptLines": 72,
+      "scriptBytes": 3999,
+      "scriptPath": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/tools/anim-prep/tmp/scenes/timeline_fifo_vs_sjf.py",
+      "mp4": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/tools/anim-prep/tmp/render/timeline_fifo_vs_sjf/videos/timeline_fifo_vs_sjf/480p15/timeline_fifo_vs_sjf.mp4",
+      "stderrTail": ""
+    },
+    {
+      "case": "state_machine_process",
+      "template": "state_machine",
+      "templateVersion": 1,
+      "ok": true,
+      "renderMs": 2881,
+      "bytes": 224135,
+      "scriptLines": 57,
+      "scriptBytes": 3145,
+      "scriptPath": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/tools/anim-prep/tmp/scenes/state_machine_process.py",
+      "mp4": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/tools/anim-prep/tmp/render/state_machine_process/videos/state_machine_process/480p15/state_machine_process.mp4",
+      "stderrTail": ""
+    },
+    {
+      "case": "bar_compare_avg_turnaround",
+      "template": "bar_compare",
+      "templateVersion": 1,
+      "ok": true,
+      "renderMs": 2063,
+      "bytes": 69248,
+      "scriptLines": 48,
+      "scriptBytes": 2385,
+      "scriptPath": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/tools/anim-prep/tmp/scenes/bar_compare_avg_turnaround.py",
+      "mp4": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/tools/anim-prep/tmp/render/bar_compare_avg_turnaround/videos/bar_compare_avg_turnaround/480p15/bar_compare_avg_turnaround.mp4",
+      "stderrTail": ""
+    }
+  ]
+}

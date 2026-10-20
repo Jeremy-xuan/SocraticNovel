@@ -1,0 +1,3 @@
+=== 完整 call | smoke ===
+  MPS 推荐预算 17.18 GB
+  [OK  ] build_layerdiff                     15.66s  RSS   1.07 GB  alloc   8.52  driver  10.58

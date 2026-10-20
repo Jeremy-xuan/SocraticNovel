@@ -1,0 +1,6 @@
+=== UNet 载入 dtype 实验 | mode=bf16 ===
+  参数 4071.3 M | dtype 直方图(M 参数) {'torch.bfloat16': 4071.3} | RSS 0.50 GB
+  [OK  ] from_pretrained               0.30s  RSS   0.50 GB
+  [OK  ] to(mps,bf16/fp16)             8.99s  RSS   0.50 GB
+
+  进程内 RSS 峰值 0.5 GB | 台账 /Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/tools/auto-layer-memprobe/out/unet_load_bf16.json

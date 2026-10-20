@@ -1,0 +1,147 @@
+{
+  "mode": "b",
+  "generatedAt": "2026-09-24T05:11:35.850Z",
+  "exit": 0,
+  "wallMs": 71193,
+  "classroom": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-ab-b-interrupt-note-gap20s-spoken0/classroom",
+  "patchPath": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-ab-b-interrupt-note-gap20s-spoken0/patch.yml",
+  "logFile": "/Users/wujunjie/Library/Application Support/dsh-desktop/harness/sessions/--private-var-folders-df-8fgt_lnd23q_5f3m_51vf4s80000gn-T-animorch-ab-b-interrupt-note-gap20s-spoken0-classroom--/session-93b9c22d-54f6-458e-ab42-cce5ec7b5024/session.v3.jsonl.zstd",
+  "driverReport": {
+    "turns": 2,
+    "prompts": [
+      "开始第 1 讲。学生问：「一个程序正在跑，它怎么就突然停下来了？谁让它停的？」请按你的教学判断讲这一小段。",
+      "继续讲：那它下次是怎么接着跑下去的？"
+    ],
+    "sessionId": "session-93b9c22d-54f6-458e-ab42-cce5ec7b5024",
+    "turnStarts": [
+      1,
+      2
+    ],
+    "turnEnds": [
+      {
+        "turn": 1,
+        "reason": {
+          "kind": "completed"
+        }
+      },
+      {
+        "turn": 2,
+        "reason": {
+          "kind": "completed"
+        }
+      }
+    ],
+    "injections": [
+      {
+        "turn": 1,
+        "seq": 11,
+        "form": "classroom-block",
+        "block": "anchor.rules",
+        "time": 1790226625941
+      },
+      {
+        "turn": 1,
+        "seq": 12,
+        "form": "classroom-block",
+        "block": "anchor.lesson_ban",
+        "time": 1790226625941
+      },
+      {
+        "turn": 1,
+        "seq": 13,
+        "form": "classroom-block",
+        "block": "story.arc_gate",
+        "time": 1790226625941
+      },
+      {
+        "turn": 1,
+        "seq": 14,
+        "form": "classroom-block",
+        "block": "curriculum.map",
+        "time": 1790226625941
+      },
+      {
+        "turn": 1,
+        "seq": 15,
+        "form": "classroom-block",
+        "block": "story.node.01",
+        "time": 1790226625942
+      },
+      {
+        "turn": 1,
+        "seq": 16,
+        "form": "classroom-block",
+        "block": "state.progress",
+        "time": 1790226625942
+      },
+      {
+        "turn": 1,
+        "seq": 17,
+        "form": "classroom-block",
+        "block": "state.mistakes",
+        "time": 1790226625942
+      },
+      {
+        "turn": 1,
+        "seq": 18,
+        "form": "classroom-block",
+        "block": "state.review",
+        "time": 1790226625942
+      },
+      {
+        "turn": 2,
+        "seq": 50,
+        "form": "classroom-block",
+        "block": "anchor.rules",
+        "time": 1790226663038
+      },
+      {
+        "turn": 2,
+        "seq": 51,
+        "form": "classroom-block",
+        "block": "anchor.lesson_ban",
+        "time": 1790226663038
+      },
+      {
+        "turn": 2,
+        "seq": 52,
+        "form": "classroom-block",
+        "block": "story.node.01",
+        "time": 1790226663038
+      },
+      {
+        "turn": 2,
+        "seq": 53,
+        "form": "classroom-block",
+        "block": "state.progress",
+        "time": 1790226663038
+      },
+      {
+        "turn": 2,
+        "seq": 54,
+        "form": "classroom-block",
+        "block": "state.mistakes",
+        "time": 1790226663038
+      },
+      {
+        "turn": 2,
+        "seq": 55,
+        "form": "classroom-block",
+        "block": "state.review",
+        "time": 1790226663038
+      }
+    ],
+    "turnGapMs": 20000,
+    "outcome": "completed"
+  },
+  "prompts": [
+    "开始第 1 讲。学生问：「一个程序正在跑，它怎么就突然停下来了？谁让它停的？」请按你的教学判断讲这一小段。",
+    "继续讲：那它下次是怎么接着跑下去的？"
+  ],
+  "stdoutTail": "",
+  "stderrTail": "[anim-driver] session=session-93b9c22d-54f6-458e-ab42-cce5ec7b5024 turns=2 gapMs=20000\n[anim-driver] turn 1/2: \"开始第 1 讲。学生问：「一个程序正在跑，它怎么就突然停下来了？谁让它停的？」请\"\n[anim-driver] 轮间等待 20000 ms（模拟学生读完上一段再开口）\n[anim-driver] turn 2/2: \"继续讲：那它下次是怎么接着跑下去的？\"\n[anim-driver] SUMMARY {\"turns\":2,\"injections\":14,\"notices\":0}\n",
+  "question": "interrupt",
+  "classroomNote": true,
+  "turnGapMs": 20000,
+  "spokenFirst": false
+}

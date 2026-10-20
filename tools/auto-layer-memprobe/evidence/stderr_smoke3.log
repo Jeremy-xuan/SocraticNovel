@@ -1,0 +1,9 @@
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.3.0) or chardet (7.4.3)/charset_normalizer (3.4.1) doesn't match a supported version!
+  warnings.warn(
+Loading pipeline components...:   0%|          | 0/5 [00:00<?, ?it/s]Loading pipeline components...:  40%|████      | 2/5 [00:00<00:00,  9.02it/s]Loading pipeline components...:  80%|████████  | 4/5 [00:00<00:00,  8.71it/s]Loading pipeline components...: 100%|██████████| 5/5 [00:00<00:00, 10.36it/s]
+  0%|          | 0/1 [00:00<?, ?it/s]100%|██████████| 1/1 [01:17<00:00, 77.22s/it]100%|██████████| 1/1 [01:17<00:00, 77.22s/it]
+/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/tools/auto-layer/vendor/see-through/common/modules/layerdiffuse/vae.py:263: RuntimeWarning: invalid value encountered in cast
+  vis = (vis * 255.0).detach().cpu().float().numpy().clip(0, 255).astype(np.uint8)
+/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/tools/auto-layer/vendor/see-through/common/modules/layerdiffuse/vae.py:268: RuntimeWarning: invalid value encountered in cast
+  png = (png * 255.0).detach().cpu().float().numpy().clip(0, 255).astype(np.uint8)
+  0%|          | 0/1 [00:00<?, ?it/s]100%|██████████| 1/1 [01:58<00:00, 118.69s/it]100%|██████████| 1/1 [01:58<00:00, 118.69s/it]

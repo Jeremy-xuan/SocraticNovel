@@ -1,0 +1,5 @@
+=== 管线装载 | stage=layerdiff | dtype=fp32 | device=mps ===
+  MPS 推荐预算 17.18 GB
+  [OK  ] build_layerdiff                      39.65s  RSS  15.96 GB  MPS 10.16 GB  driver 10.54 GB
+
+  进程内 RSS 峰值 15.96 GB | 台账 /Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/tools/auto-layer-memprobe/out/pipeline_load_layerdiff_fp32.json

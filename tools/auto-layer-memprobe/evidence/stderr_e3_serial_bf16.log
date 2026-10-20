@@ -1,0 +1,4 @@
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.3.0) or chardet (7.4.3)/charset_normalizer (3.4.1) doesn't match a supported version!
+  warnings.warn(
+Loading pipeline components...:   0%|          | 0/5 [00:00<?, ?it/s]Loading pipeline components...:  20%|██        | 1/5 [00:00<00:00,  4.56it/s]Loading pipeline components...:  80%|████████  | 4/5 [00:00<00:00, 12.07it/s]Loading pipeline components...: 100%|██████████| 5/5 [00:00<00:00,  9.75it/s]
+Loading pipeline components...:   0%|          | 0/4 [00:00<?, ?it/s]Loading pipeline components...: 100%|██████████| 4/4 [00:00<00:00, 43.12it/s]

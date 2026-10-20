@@ -1,0 +1,1817 @@
+{
+  "generatedAt": "2026-09-24T05:17:16.671Z",
+  "a-fifo": {
+    "key": "a-fifo",
+    "mode": "a",
+    "question": "fifo",
+    "logFile": "/Users/wujunjie/Library/Application Support/dsh-desktop/harness/sessions/--private-var-folders-df-8fgt_lnd23q_5f3m_51vf4s80000gn-T-animorch-ab-a-classroom--/session-b970fdc0-9a43-47ea-a8d6-089825685878/session.v3.jsonl.zstd",
+    "wallMs": 102476,
+    "exit": 0,
+    "turns": [
+      {
+        "turn": 1,
+        "startMs": 1790225030240,
+        "firstStudentVisibleTextMs": 65877,
+        "firstStudentVisibleTextChars": 723,
+        "firstStudentVisibleTextHead": "傍晚，编辑部靠窗那面墙的公告板上，排期表还钉在最中间。上面有几行被划掉了，划得很用力，纸面留下凹痕；新的那几行挤在旁边，字比划掉的小一号。\n\n小鞠知花站在板前，手里捏着一张便签，看了好一会儿，才把它贴到**最下面**那一行——不是最上面。\n",
+        "tools": [
+          {
+            "name": "read",
+            "atMs": 5925,
+            "durationMs": 16,
+            "argHead": "{\"file_path\":\"_anchor.md\"}"
+          },
+          {
+            "name": "read",
+            "atMs": 5927,
+            "durationMs": 16,
+            "argHead": "{\"file_path\":\"runtime/progress.md\"}"
+          },
+          {
+            "name": "read",
+            "atMs": 5927,
+            "durationMs": 16,
+            "argHead": "{\"file_path\":\"runtime/review_queue.md\"}"
+          },
+          {
+            "name": "read",
+            "atMs": 5927,
+            "durationMs": 17,
+            "argHead": "{\"file_path\":\"runtime/session_log.md\"}"
+          },
+          {
+            "name": "read",
+            "atMs": 16531,
+            "durationMs": 13,
+            "argHead": "{\"file_path\":\"materials/ch03.md\"}"
+          },
+          {
+            "name": "read",
+            "atMs": 16532,
+            "durationMs": 13,
+            "argHead": "{\"file_path\":\"story/ch03.md\"}"
+          },
+          {
+            "name": "read",
+            "atMs": 16532,
+            "durationMs": 14,
+            "argHead": "{\"file_path\":\"knowledge_points.md\"}"
+          },
+          {
+            "name": "read",
+            "atMs": 16532,
+            "durationMs": 15,
+            "argHead": "{\"file_path\":\"characters/komari.md\"}"
+          },
+          {
+            "name": "classroom_set_phase",
+            "atMs": 49466,
+            "durationMs": 12,
+            "argHead": "{\"phase\":\"open\"}"
+          },
+          {
+            "name": "classroom_draw",
+            "atMs": 49478,
+            "durationMs": 1111,
+            "argHead": "{\"kind\":\"gantt\",\"title\":\"FIFO 时间轴：长任务把后面的短任务堵在右边\",\"source\":\"gantt\\n    title FIFO：谁先到，谁一直占"
+          },
+          {
+            "name": "edit",
+            "atMs": 56088,
+            "durationMs": 14,
+            "argHead": "{\"file_path\":\"runtime/progress.md\",\"old_string\":\"current_lesson: 1\",\"new_string\":\"current_"
+          },
+          {
+            "name": "edit",
+            "atMs": 56102,
+            "durationMs": 6,
+            "argHead": "{\"file_path\":\"runtime/progress.md\",\"old_string\":\"| 本轮要讲 | **第 1 讲 · 一个程序怎么跑起来** |\",\"new_st"
+          },
+          {
+            "name": "read",
+            "atMs": 58357,
+            "durationMs": 10,
+            "argHead": "{\"file_path\":\"runtime/progress.md\"}"
+          },
+          {
+            "name": "edit",
+            "atMs": 61203,
+            "durationMs": 20,
+            "argHead": "{\"file_path\":\"runtime/progress.md\",\"old_string\":\"current_lesson: 1\",\"new_string\":\"current_"
+          },
+          {
+            "name": "edit",
+            "atMs": 61224,
+            "durationMs": 26,
+            "argHead": "{\"file_path\":\"runtime/progress.md\",\"old_string\":\"| 本轮要讲 | **第 1 讲 · 一个程序怎么跑起来** |\",\"new_st"
+          }
+        ],
+        "injections": [
+          {
+            "form": "classroom-block",
+            "block": "anchor.rules",
+            "atMs": 100,
+            "head": "<system-reminder>\n先弄清学生现在需要什么：澄清题目、补充事实、回应推断、纠正错误、继续探究，还是顺势拓展。只有学生能理解问题且能依据已有信息推理时才追问；提问不是每轮义务。学生说出关键关系后，确认并讲清当前最相关的一段因果链；到新的关口或混淆点再问，不拿刚讲过的事实考他，也不一次讲完整课。\n\n每个问题要有明确对象和判断目标。技术问题直接说出程序、CPU 等真实对象；稿子等道具只辅"
+          },
+          {
+            "form": "classroom-block",
+            "block": "anchor.lesson_ban",
+            "atMs": 100,
+            "head": "<system-reminder>\n- 本讲核心事实**必须以 `materials/ch{NN}.md` 与 OSTEP 原文为准**；**不确定就说不确定，不许编**。\n- 新术语出现时用日常语言解释；必要时可以先给术语和定义。\n- 学生的代码／答案出错时，先指出具体哪一步有问题；若预测实际结果能帮助理解，再让他预测并对照。不要让错误猜想悬着不处理。\n- 学生回答了关键点，不等于已经展示整讲所"
+          },
+          {
+            "form": "classroom-block",
+            "block": "story.arc_gate",
+            "atMs": 100,
+            "head": "<system-reminder>\n# 故事总览 · cs-os（14 讲）\n\n> **用途**：故事节点骨架与情感阶段的总表。**每讲的细节在 `ch{NN}.md`。**\n> **纪律**：本文件是节点说明，**不是可直接输出的叙述**。不得把节点描述当正文念。\n\n---\n\n## 一、她的人物弧（三段）\n\n| 段 | 讲次 | 状态 | 标志 |\n|---|---|---|---|\n| **Ⅰ"
+          },
+          {
+            "form": "classroom-block",
+            "block": "curriculum.map",
+            "atMs": 100,
+            "head": "<system-reminder>\n# 课程表 · 操作系统（cs-os）\n\n> **课程定位**：计算机系硬课，**408 考纲四门之一 + 美式 CS 核心课**。\n> **教材**：`Operating Systems: Three Easy Pieces`（OSTEP，Remzi & Andrea Arpaci-Dusseau，Wisconsin-Madison，v1.10）。\n> 🔴 "
+          },
+          {
+            "form": "classroom-block",
+            "block": "story.node.01",
+            "atMs": 101,
+            "head": "<system-reminder>\n# 第 1 讲故事节点 · 一个程序怎么跑起来\n\n> **格式**：开场与收束提供叙事方向；中段节点是可用素材，是否出现取决于学生的理解与实际进度。角色有弧线，课堂不按故事节点强行赶路。\n> **叙述纪律**：本文件是**节点说明**，不是可直接输出的叙述。**不得把节点描述直接当正文念出来**。\n> **对应正文**：`materials/ch01.md` ｜"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.progress",
+            "atMs": 101,
+            "head": "<system-reminder>\n# 学习进度\n\ncurrent_lesson: 1\n\n<!--\n🔴 上面这一行是**机器可读行**，引擎（classroom.yaml 的 runtime_store.lesson_key）按行找它。\n   语义写死：`current_lesson` = **本轮要讲的讲次**（不是\"已完成的讲次\"）。\n   初始 1（第一节课讲第 1 讲）；**课后更新时改"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.mistakes",
+            "atMs": 101,
+            "head": "<system-reminder>\n# 错题本\n\n> **字段固定**：日期 / 讲次 / 题目 / 他的答案 / 正确答案 / **他错在哪一步**。\n> 🔴 **最后一项最重要**：不写\"错了\"，要写**哪一步**开始偏的。这一步才是复习的靶子。\n\n| 日期 | 讲次 | 题目 | 他的答案 | 正确答案 | **错在哪一步** |\n|---|---|---|---|---|---|\n| （"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.review",
+            "atMs": 101,
+            "head": "<system-reminder>\n# 间隔复习队列\n\n> **每课更新。** 复习间隔：次日 / 3 天 / 7 天 / 21 天（见 `system_core.md` 复习系统规则）。\n> **课前必查**：今天日期是否 ≥ 任意一行的\"下次复习日期\"。是 → 本节课开头先做复习。\n\n| 知识点 | 讲次 | 掌握档 | 第 1 次 | 第 2 次 | 第 3 次 | 第 4 次 | 下次复习"
+          }
+        ],
+        "endMs": 65885,
+        "endReason": "completed"
+      },
+      {
+        "turn": 2,
+        "startMs": 1790225096129,
+        "firstStudentVisibleTextMs": 35144,
+        "firstStudentVisibleTextChars": 776,
+        "firstStudentVisibleTextHead": "她把笔帽按回去，又拔出来——没拔开，才想起笔帽已经摘了。她没有看学生，先转身面对白板，在刚才那条 FIFO 时间轴下面，又画了一条。\n\n\"时间片轮转……\"她开口，声音还是不大，\"做法是给每个任务一小段时间，叫**时间片**。到点就换下一个，",
+        "tools": [
+          {
+            "name": "read",
+            "atMs": 5102,
+            "durationMs": 9,
+            "argHead": "{\"file_path\":\"runtime/progress.md\"}"
+          },
+          {
+            "name": "classroom_set_phase",
+            "atMs": 30532,
+            "durationMs": 12,
+            "argHead": "{\"phase\":\"probe\"}"
+          },
+          {
+            "name": "classroom_draw",
+            "atMs": 30544,
+            "durationMs": 6,
+            "argHead": "{\"kind\":\"gantt\",\"title\":\"时间片轮转（时间片 = 5）：响应变快，但每个任务都被切碎\",\"source\":\"gantt\\n    title 时间片轮转（时"
+          }
+        ],
+        "injections": [
+          {
+            "form": "classroom-block",
+            "block": "anchor.rules",
+            "atMs": 23,
+            "head": "<system-reminder>\n先弄清学生现在需要什么：澄清题目、补充事实、回应推断、纠正错误、继续探究，还是顺势拓展。只有学生能理解问题且能依据已有信息推理时才追问；提问不是每轮义务。学生说出关键关系后，确认并讲清当前最相关的一段因果链；到新的关口或混淆点再问，不拿刚讲过的事实考他，也不一次讲完整课。\n\n每个问题要有明确对象和判断目标。技术问题直接说出程序、CPU 等真实对象；稿子等道具只辅"
+          },
+          {
+            "form": "classroom-block",
+            "block": "anchor.lesson_ban",
+            "atMs": 23,
+            "head": "<system-reminder>\n- 本讲核心事实**必须以 `materials/ch{NN}.md` 与 OSTEP 原文为准**；**不确定就说不确定，不许编**。\n- 新术语出现时用日常语言解释；必要时可以先给术语和定义。\n- 学生的代码／答案出错时，先指出具体哪一步有问题；若预测实际结果能帮助理解，再让他预测并对照。不要让错误猜想悬着不处理。\n- 学生回答了关键点，不等于已经展示整讲所"
+          },
+          {
+            "form": "classroom-block",
+            "block": "curriculum.map",
+            "atMs": 23,
+            "head": "<system-reminder>\n# 课程表 · 操作系统（cs-os）\n\n> **课程定位**：计算机系硬课，**408 考纲四门之一 + 美式 CS 核心课**。\n> **教材**：`Operating Systems: Three Easy Pieces`（OSTEP，Remzi & Andrea Arpaci-Dusseau，Wisconsin-Madison，v1.10）。\n> 🔴 "
+          },
+          {
+            "form": "classroom-block",
+            "block": "story.node.03",
+            "atMs": 23,
+            "head": "<system-reminder>\n# 第 3 讲故事节点 · 调度：谁来决定下一个跑谁\n\n> 正文：`materials/ch03.md`（已落盘 2026-09-24）｜知识点：KP-3.1～3.5｜OSTEP：ch7 CPU Scheduling / ch8 MLFQ\n\n## 本讲位置\n🔴 **回收种子①**：ch01 开场与机会节点里那张\"**白板上被划掉的旧计划**\"。本讲把它揭开——"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.progress",
+            "atMs": 23,
+            "head": "<system-reminder>\n# 学习进度\n\ncurrent_lesson: 1\n\n<!--\n🔴 上面这一行是**机器可读行**，引擎（classroom.yaml 的 runtime_store.lesson_key）按行找它。\n   语义写死：`current_lesson` = **本轮要讲的讲次**（不是\"已完成的讲次\"）。\n   初始 1（第一节课讲第 1 讲）；**课后更新时改"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.mistakes",
+            "atMs": 24,
+            "head": "<system-reminder>\n# 错题本\n\n> **字段固定**：日期 / 讲次 / 题目 / 他的答案 / 正确答案 / **他错在哪一步**。\n> 🔴 **最后一项最重要**：不写\"错了\"，要写**哪一步**开始偏的。这一步才是复习的靶子。\n\n| 日期 | 讲次 | 题目 | 他的答案 | 正确答案 | **错在哪一步** |\n|---|---|---|---|---|---|\n| （"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.review",
+            "atMs": 24,
+            "head": "<system-reminder>\n# 间隔复习队列\n\n> **每课更新。** 复习间隔：次日 / 3 天 / 7 天 / 21 天（见 `system_core.md` 复习系统规则）。\n> **课前必查**：今天日期是否 ≥ 任意一行的\"下次复习日期\"。是 → 本节课开头先做复习。\n\n| 知识点 | 讲次 | 掌握档 | 第 1 次 | 第 2 次 | 第 3 次 | 第 4 次 | 下次复习"
+          }
+        ],
+        "endMs": 35147,
+        "endReason": "completed"
+      }
+    ],
+    "animations": []
+  },
+  "a-interrupt": {
+    "key": "a-interrupt",
+    "mode": "a",
+    "question": "interrupt",
+    "logFile": "/Users/wujunjie/Library/Application Support/dsh-desktop/harness/sessions/--private-var-folders-df-8fgt_lnd23q_5f3m_51vf4s80000gn-T-animorch-ab-a-interrupt-classroom--/session-2be41252-4bd0-4848-a4f9-52ff2552c0cf/session.v3.jsonl.zstd",
+    "wallMs": 75438,
+    "exit": 0,
+    "turns": [
+      {
+        "turn": 1,
+        "startMs": 1790226203505,
+        "firstStudentVisibleTextMs": 47266,
+        "firstStudentVisibleTextChars": 537,
+        "firstStudentVisibleTextHead": "傍晚的编辑部只剩一盏台灯亮着。\n\n装订机停在长桌一头，不是坏了——今天要装的稿子已经装完。桌上摊着两份：左边那份压着几张批注，右边那份只写了一半，笔搁在页边。靠墙的档案柜关着，最下面那格抽屉没有完全合上，露出一线白边。\n\n白板上还留着上个月",
+        "tools": [
+          {
+            "name": "read",
+            "atMs": 3399,
+            "durationMs": 18,
+            "argHead": "{\"file_path\":\"/private/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-ab-a-inter"
+          },
+          {
+            "name": "read",
+            "atMs": 3401,
+            "durationMs": 23,
+            "argHead": "{\"file_path\":\"/private/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-ab-a-inter"
+          },
+          {
+            "name": "classroom_status",
+            "atMs": 42719,
+            "durationMs": 8,
+            "argHead": "{}"
+          },
+          {
+            "name": "classroom_set_phase",
+            "atMs": 42727,
+            "durationMs": 7,
+            "argHead": "{\"phase\":\"open\"}"
+          },
+          {
+            "name": "classroom_draw",
+            "atMs": 42734,
+            "durationMs": 1124,
+            "argHead": "{\"kind\":\"flowchart\",\"title\":\"谁让正在跑的程序停下来\",\"source\":\"flowchart TD\\n  A[\\\"程序 A 直接跑在 CPU 上\\\"]"
+          }
+        ],
+        "injections": [
+          {
+            "form": "classroom-block",
+            "block": "anchor.rules",
+            "atMs": 83,
+            "head": "<system-reminder>\n先弄清学生现在需要什么：澄清题目、补充事实、回应推断、纠正错误、继续探究，还是顺势拓展。只有学生能理解问题且能依据已有信息推理时才追问；提问不是每轮义务。学生说出关键关系后，确认并讲清当前最相关的一段因果链；到新的关口或混淆点再问，不拿刚讲过的事实考他，也不一次讲完整课。\n\n每个问题要有明确对象和判断目标。技术问题直接说出程序、CPU 等真实对象；稿子等道具只辅"
+          },
+          {
+            "form": "classroom-block",
+            "block": "anchor.lesson_ban",
+            "atMs": 83,
+            "head": "<system-reminder>\n- 本讲核心事实**必须以 `materials/ch{NN}.md` 与 OSTEP 原文为准**；**不确定就说不确定，不许编**。\n- 新术语出现时用日常语言解释；必要时可以先给术语和定义。\n- 学生的代码／答案出错时，先指出具体哪一步有问题；若预测实际结果能帮助理解，再让他预测并对照。不要让错误猜想悬着不处理。\n- 学生回答了关键点，不等于已经展示整讲所"
+          },
+          {
+            "form": "classroom-block",
+            "block": "story.arc_gate",
+            "atMs": 83,
+            "head": "<system-reminder>\n# 故事总览 · cs-os（14 讲）\n\n> **用途**：故事节点骨架与情感阶段的总表。**每讲的细节在 `ch{NN}.md`。**\n> **纪律**：本文件是节点说明，**不是可直接输出的叙述**。不得把节点描述当正文念。\n\n---\n\n## 一、她的人物弧（三段）\n\n| 段 | 讲次 | 状态 | 标志 |\n|---|---|---|---|\n| **Ⅰ"
+          },
+          {
+            "form": "classroom-block",
+            "block": "curriculum.map",
+            "atMs": 83,
+            "head": "<system-reminder>\n# 课程表 · 操作系统（cs-os）\n\n> **课程定位**：计算机系硬课，**408 考纲四门之一 + 美式 CS 核心课**。\n> **教材**：`Operating Systems: Three Easy Pieces`（OSTEP，Remzi & Andrea Arpaci-Dusseau，Wisconsin-Madison，v1.10）。\n> 🔴 "
+          },
+          {
+            "form": "classroom-block",
+            "block": "story.node.01",
+            "atMs": 84,
+            "head": "<system-reminder>\n# 第 1 讲故事节点 · 一个程序怎么跑起来\n\n> **格式**：开场与收束提供叙事方向；中段节点是可用素材，是否出现取决于学生的理解与实际进度。角色有弧线，课堂不按故事节点强行赶路。\n> **叙述纪律**：本文件是**节点说明**，不是可直接输出的叙述。**不得把节点描述直接当正文念出来**。\n> **对应正文**：`materials/ch01.md` ｜"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.progress",
+            "atMs": 84,
+            "head": "<system-reminder>\n# 学习进度\n\ncurrent_lesson: 1\n\n<!--\n🔴 上面这一行是**机器可读行**，引擎（classroom.yaml 的 runtime_store.lesson_key）按行找它。\n   语义写死：`current_lesson` = **本轮要讲的讲次**（不是\"已完成的讲次\"）。\n   初始 1（第一节课讲第 1 讲）；**课后更新时改"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.mistakes",
+            "atMs": 84,
+            "head": "<system-reminder>\n# 错题本\n\n> **字段固定**：日期 / 讲次 / 题目 / 他的答案 / 正确答案 / **他错在哪一步**。\n> 🔴 **最后一项最重要**：不写\"错了\"，要写**哪一步**开始偏的。这一步才是复习的靶子。\n\n| 日期 | 讲次 | 题目 | 他的答案 | 正确答案 | **错在哪一步** |\n|---|---|---|---|---|---|\n| （"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.review",
+            "atMs": 84,
+            "head": "<system-reminder>\n# 间隔复习队列\n\n> **每课更新。** 复习间隔：次日 / 3 天 / 7 天 / 21 天（见 `system_core.md` 复习系统规则）。\n> **课前必查**：今天日期是否 ≥ 任意一行的\"下次复习日期\"。是 → 本节课开头先做复习。\n\n| 知识点 | 讲次 | 掌握档 | 第 1 次 | 第 2 次 | 第 3 次 | 第 4 次 | 下次复习"
+          }
+        ],
+        "endMs": 47269,
+        "endReason": "completed"
+      },
+      {
+        "turn": 2,
+        "startMs": 1790226250775,
+        "firstStudentVisibleTextMs": 26703,
+        "firstStudentVisibleTextChars": 587,
+        "firstStudentVisibleTextHead": "她把笔从槽里又拿起来，走回白板前。这一次她画得快，笔尖顺着刚才那个\"换成 B\"的分岔，接着往下走。\n\n\"……得先存下来。\"她开口，声音还是小，\"A 被换下去之前，内核把它的执行位置存好。就是——CPU 下一条该执行哪条指令，这个位置记在程序",
+        "tools": [
+          {
+            "name": "read",
+            "atMs": 17405,
+            "durationMs": 9,
+            "argHead": "{\"file_path\":\"/private/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-ab-a-inter"
+          },
+          {
+            "name": "classroom_set_phase",
+            "atMs": 23112,
+            "durationMs": 6,
+            "argHead": "{\"phase\":\"probe\"}"
+          },
+          {
+            "name": "classroom_draw",
+            "atMs": 23118,
+            "durationMs": 20,
+            "argHead": "{\"caption\":\"接着上一张图往下画：换回来的时候，靠什么接得上。核心是保存与恢复执行状态；留一个容易混的口子——\\\"指令还在内存里\\\"是不是就够了。\",\"kind\":\"se"
+          }
+        ],
+        "injections": [
+          {
+            "form": "classroom-block",
+            "block": "anchor.rules",
+            "atMs": 14,
+            "head": "<system-reminder>\n先弄清学生现在需要什么：澄清题目、补充事实、回应推断、纠正错误、继续探究，还是顺势拓展。只有学生能理解问题且能依据已有信息推理时才追问；提问不是每轮义务。学生说出关键关系后，确认并讲清当前最相关的一段因果链；到新的关口或混淆点再问，不拿刚讲过的事实考他，也不一次讲完整课。\n\n每个问题要有明确对象和判断目标。技术问题直接说出程序、CPU 等真实对象；稿子等道具只辅"
+          },
+          {
+            "form": "classroom-block",
+            "block": "anchor.lesson_ban",
+            "atMs": 14,
+            "head": "<system-reminder>\n- 本讲核心事实**必须以 `materials/ch{NN}.md` 与 OSTEP 原文为准**；**不确定就说不确定，不许编**。\n- 新术语出现时用日常语言解释；必要时可以先给术语和定义。\n- 学生的代码／答案出错时，先指出具体哪一步有问题；若预测实际结果能帮助理解，再让他预测并对照。不要让错误猜想悬着不处理。\n- 学生回答了关键点，不等于已经展示整讲所"
+          },
+          {
+            "form": "classroom-block",
+            "block": "story.node.01",
+            "atMs": 14,
+            "head": "<system-reminder>\n# 第 1 讲故事节点 · 一个程序怎么跑起来\n\n> **格式**：开场与收束提供叙事方向；中段节点是可用素材，是否出现取决于学生的理解与实际进度。角色有弧线，课堂不按故事节点强行赶路。\n> **叙述纪律**：本文件是**节点说明**，不是可直接输出的叙述。**不得把节点描述直接当正文念出来**。\n> **对应正文**：`materials/ch01.md` ｜"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.progress",
+            "atMs": 15,
+            "head": "<system-reminder>\n# 学习进度\n\ncurrent_lesson: 1\n\n<!--\n🔴 上面这一行是**机器可读行**，引擎（classroom.yaml 的 runtime_store.lesson_key）按行找它。\n   语义写死：`current_lesson` = **本轮要讲的讲次**（不是\"已完成的讲次\"）。\n   初始 1（第一节课讲第 1 讲）；**课后更新时改"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.mistakes",
+            "atMs": 15,
+            "head": "<system-reminder>\n# 错题本\n\n> **字段固定**：日期 / 讲次 / 题目 / 他的答案 / 正确答案 / **他错在哪一步**。\n> 🔴 **最后一项最重要**：不写\"错了\"，要写**哪一步**开始偏的。这一步才是复习的靶子。\n\n| 日期 | 讲次 | 题目 | 他的答案 | 正确答案 | **错在哪一步** |\n|---|---|---|---|---|---|\n| （"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.review",
+            "atMs": 15,
+            "head": "<system-reminder>\n# 间隔复习队列\n\n> **每课更新。** 复习间隔：次日 / 3 天 / 7 天 / 21 天（见 `system_core.md` 复习系统规则）。\n> **课前必查**：今天日期是否 ≥ 任意一行的\"下次复习日期\"。是 → 本节课开头先做复习。\n\n| 知识点 | 讲次 | 掌握档 | 第 1 次 | 第 2 次 | 第 3 次 | 第 4 次 | 下次复习"
+          }
+        ],
+        "endMs": 26705,
+        "endReason": "completed"
+      }
+    ],
+    "animations": []
+  },
+  "b-fifo": {
+    "key": "b-fifo",
+    "mode": "b",
+    "question": "fifo",
+    "logFile": "/Users/wujunjie/Library/Application Support/dsh-desktop/harness/sessions/--private-var-folders-df-8fgt_lnd23q_5f3m_51vf4s80000gn-T-animorch-ab-b-classroom--/session-aaf098b0-c519-49e8-b71c-1b3f81dc639b/session.v3.jsonl.zstd",
+    "wallMs": 134275,
+    "exit": 0,
+    "turns": [
+      {
+        "turn": 1,
+        "startMs": 1790226040054,
+        "firstStudentVisibleTextMs": 65225,
+        "firstStudentVisibleTextChars": 528,
+        "firstStudentVisibleTextHead": "傍晚的编辑部。公告板上这个月的排期表还钉在那儿，有几行被划掉了，旁边重写过一遍，划痕压得很深。她站在板前看了一会儿，手里捏着一张新便签——没有往顶上贴，贴到了最下面一行。装订机今天停着，屋里只剩翻纸的声音。\n\n学生的问题还悬在半空：为什么 ",
+        "tools": [
+          {
+            "name": "read",
+            "atMs": 7100,
+            "durationMs": 21,
+            "argHead": "{\"file_path\":\"_anchor.md\"}"
+          },
+          {
+            "name": "read",
+            "atMs": 7106,
+            "durationMs": 23,
+            "argHead": "{\"file_path\":\"runtime/progress.md\"}"
+          },
+          {
+            "name": "read",
+            "atMs": 7107,
+            "durationMs": 22,
+            "argHead": "{\"file_path\":\"runtime/review_queue.md\"}"
+          },
+          {
+            "name": "read",
+            "atMs": 7108,
+            "durationMs": 22,
+            "argHead": "{\"file_path\":\"characters/komari.md\"}"
+          },
+          {
+            "name": "read",
+            "atMs": 7108,
+            "durationMs": 24,
+            "argHead": "{\"file_path\":\"runtime/session_log.md\"}"
+          },
+          {
+            "name": "read",
+            "atMs": 11258,
+            "durationMs": 16,
+            "argHead": "{\"file_path\":\"story/ch03.md\"}"
+          },
+          {
+            "name": "read",
+            "atMs": 11260,
+            "durationMs": 19,
+            "argHead": "{\"file_path\":\"materials/ch03.md\"}"
+          },
+          {
+            "name": "read",
+            "atMs": 11261,
+            "durationMs": 20,
+            "argHead": "{\"file_path\":\"knowledge_points.md\"}"
+          },
+          {
+            "name": "classroom_set_phase",
+            "atMs": 65232,
+            "durationMs": 19,
+            "argHead": "{\"phase\":\"open\"}"
+          },
+          {
+            "name": "classroom_draw",
+            "atMs": 65251,
+            "durationMs": 1237,
+            "argHead": "{\"kind\":\"gantt\",\"title\":\"同样的三个任务，只换顺序：长任务把短任务堵在后面\",\"source\":\"gantt\\n    title 同样的三个任务：只换顺序"
+          },
+          {
+            "name": "read",
+            "atMs": 76687,
+            "durationMs": 6,
+            "argHead": "{\"file_path\":\"runtime/progress.md\"}"
+          },
+          {
+            "name": "edit",
+            "atMs": 80600,
+            "durationMs": 20,
+            "argHead": "{\"file_path\":\"runtime/progress.md\",\"old_string\":\"current_lesson: 1\\ncurrent_phase: open\",\""
+          },
+          {
+            "name": "edit",
+            "atMs": 80621,
+            "durationMs": 12,
+            "argHead": "{\"file_path\":\"runtime/progress.md\",\"old_string\":\"| 本轮要讲 | **第 1 讲 · 一个程序怎么跑起来** |\",\"new_st"
+          }
+        ],
+        "injections": [
+          {
+            "form": "classroom-block",
+            "block": "anchor.rules",
+            "atMs": 95,
+            "head": "<system-reminder>\n先弄清学生现在需要什么：澄清题目、补充事实、回应推断、纠正错误、继续探究，还是顺势拓展。只有学生能理解问题且能依据已有信息推理时才追问；提问不是每轮义务。学生说出关键关系后，确认并讲清当前最相关的一段因果链；到新的关口或混淆点再问，不拿刚讲过的事实考他，也不一次讲完整课。\n\n每个问题要有明确对象和判断目标。技术问题直接说出程序、CPU 等真实对象；稿子等道具只辅"
+          },
+          {
+            "form": "classroom-block",
+            "block": "anchor.lesson_ban",
+            "atMs": 96,
+            "head": "<system-reminder>\n- 本讲核心事实**必须以 `materials/ch{NN}.md` 与 OSTEP 原文为准**；**不确定就说不确定，不许编**。\n- 新术语出现时用日常语言解释；必要时可以先给术语和定义。\n- 学生的代码／答案出错时，先指出具体哪一步有问题；若预测实际结果能帮助理解，再让他预测并对照。不要让错误猜想悬着不处理。\n- 学生回答了关键点，不等于已经展示整讲所"
+          },
+          {
+            "form": "classroom-block",
+            "block": "story.arc_gate",
+            "atMs": 96,
+            "head": "<system-reminder>\n# 故事总览 · cs-os（14 讲）\n\n> **用途**：故事节点骨架与情感阶段的总表。**每讲的细节在 `ch{NN}.md`。**\n> **纪律**：本文件是节点说明，**不是可直接输出的叙述**。不得把节点描述当正文念。\n\n---\n\n## 一、她的人物弧（三段）\n\n| 段 | 讲次 | 状态 | 标志 |\n|---|---|---|---|\n| **Ⅰ"
+          },
+          {
+            "form": "classroom-block",
+            "block": "curriculum.map",
+            "atMs": 96,
+            "head": "<system-reminder>\n# 课程表 · 操作系统（cs-os）\n\n> **课程定位**：计算机系硬课，**408 考纲四门之一 + 美式 CS 核心课**。\n> **教材**：`Operating Systems: Three Easy Pieces`（OSTEP，Remzi & Andrea Arpaci-Dusseau，Wisconsin-Madison，v1.10）。\n> 🔴 "
+          },
+          {
+            "form": "classroom-block",
+            "block": "story.node.01",
+            "atMs": 96,
+            "head": "<system-reminder>\n# 第 1 讲故事节点 · 一个程序怎么跑起来\n\n> **格式**：开场与收束提供叙事方向；中段节点是可用素材，是否出现取决于学生的理解与实际进度。角色有弧线，课堂不按故事节点强行赶路。\n> **叙述纪律**：本文件是**节点说明**，不是可直接输出的叙述。**不得把节点描述直接当正文念出来**。\n> **对应正文**：`materials/ch01.md` ｜"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.progress",
+            "atMs": 96,
+            "head": "<system-reminder>\n# 学习进度\n\ncurrent_lesson: 1\n\n<!--\n🔴 上面这一行是**机器可读行**，引擎（classroom.yaml 的 runtime_store.lesson_key）按行找它。\n   语义写死：`current_lesson` = **本轮要讲的讲次**（不是\"已完成的讲次\"）。\n   初始 1（第一节课讲第 1 讲）；**课后更新时改"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.mistakes",
+            "atMs": 96,
+            "head": "<system-reminder>\n# 错题本\n\n> **字段固定**：日期 / 讲次 / 题目 / 他的答案 / 正确答案 / **他错在哪一步**。\n> 🔴 **最后一项最重要**：不写\"错了\"，要写**哪一步**开始偏的。这一步才是复习的靶子。\n\n| 日期 | 讲次 | 题目 | 他的答案 | 正确答案 | **错在哪一步** |\n|---|---|---|---|---|---|\n| （"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.review",
+            "atMs": 96,
+            "head": "<system-reminder>\n# 间隔复习队列\n\n> **每课更新。** 复习间隔：次日 / 3 天 / 7 天 / 21 天（见 `system_core.md` 复习系统规则）。\n> **课前必查**：今天日期是否 ≥ 任意一行的\"下次复习日期\"。是 → 本节课开头先做复习。\n\n| 知识点 | 讲次 | 掌握档 | 第 1 次 | 第 2 次 | 第 3 次 | 第 4 次 | 下次复习"
+          }
+        ],
+        "endMs": 85010,
+        "endReason": "completed"
+      },
+      {
+        "turn": 2,
+        "startMs": 1790226125065,
+        "firstStudentVisibleTextMs": 48328,
+        "firstStudentVisibleTextChars": 644,
+        "firstStudentVisibleTextHead": "她把笔换到左手，右手指着刚画好的那条轴。\n\n「轮转……RR。规则就一条：给每个任务一小段时间，叫时间片；到点了，不管它跑没跑完，都放回队尾，换下一个。队列就这么一圈一圈地转。」\n\n「和 FIFO 的区别只有一处——」她比了一下，「FIFO ",
+        "tools": [
+          {
+            "name": "read",
+            "atMs": 37791,
+            "durationMs": 12,
+            "argHead": "{\"file_path\":\"runtime/progress.md\"}"
+          },
+          {
+            "name": "classroom_set_phase",
+            "atMs": 37804,
+            "durationMs": 12,
+            "argHead": "{\"phase\":\"probe\"}"
+          },
+          {
+            "name": "classroom_draw",
+            "atMs": 37816,
+            "durationMs": 9,
+            "argHead": "{\"caption\":\"同一组长短任务换成时间片轮转：B、C 不再排在长任务后面，很快就被理睬；代价是 A 被切片、完成时刻从 100 推到 120。这个例子还不算公平对照（FIF"
+          }
+        ],
+        "injections": [
+          {
+            "form": "classroom-block",
+            "block": "anchor.rules",
+            "atMs": 16,
+            "head": "<system-reminder>\n先弄清学生现在需要什么：澄清题目、补充事实、回应推断、纠正错误、继续探究，还是顺势拓展。只有学生能理解问题且能依据已有信息推理时才追问；提问不是每轮义务。学生说出关键关系后，确认并讲清当前最相关的一段因果链；到新的关口或混淆点再问，不拿刚讲过的事实考他，也不一次讲完整课。\n\n每个问题要有明确对象和判断目标。技术问题直接说出程序、CPU 等真实对象；稿子等道具只辅"
+          },
+          {
+            "form": "classroom-block",
+            "block": "anchor.lesson_ban",
+            "atMs": 16,
+            "head": "<system-reminder>\n- 本讲核心事实**必须以 `materials/ch{NN}.md` 与 OSTEP 原文为准**；**不确定就说不确定，不许编**。\n- 新术语出现时用日常语言解释；必要时可以先给术语和定义。\n- 学生的代码／答案出错时，先指出具体哪一步有问题；若预测实际结果能帮助理解，再让他预测并对照。不要让错误猜想悬着不处理。\n- 学生回答了关键点，不等于已经展示整讲所"
+          },
+          {
+            "form": "classroom-block",
+            "block": "curriculum.map",
+            "atMs": 16,
+            "head": "<system-reminder>\n# 课程表 · 操作系统（cs-os）\n\n> **课程定位**：计算机系硬课，**408 考纲四门之一 + 美式 CS 核心课**。\n> **教材**：`Operating Systems: Three Easy Pieces`（OSTEP，Remzi & Andrea Arpaci-Dusseau，Wisconsin-Madison，v1.10）。\n> 🔴 "
+          },
+          {
+            "form": "classroom-block",
+            "block": "story.node.03",
+            "atMs": 17,
+            "head": "<system-reminder>\n# 第 3 讲故事节点 · 调度：谁来决定下一个跑谁\n\n> 正文：`materials/ch03.md`（已落盘 2026-09-24）｜知识点：KP-3.1～3.5｜OSTEP：ch7 CPU Scheduling / ch8 MLFQ\n\n## 本讲位置\n🔴 **回收种子①**：ch01 开场与机会节点里那张\"**白板上被划掉的旧计划**\"。本讲把它揭开——"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.progress",
+            "atMs": 17,
+            "head": "<system-reminder>\n# 学习进度\n\ncurrent_lesson: 1\n\n<!--\n🔴 上面这一行是**机器可读行**，引擎（classroom.yaml 的 runtime_store.lesson_key）按行找它。\n   语义写死：`current_lesson` = **本轮要讲的讲次**（不是\"已完成的讲次\"）。\n   初始 1（第一节课讲第 1 讲）；**课后更新时改"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.mistakes",
+            "atMs": 17,
+            "head": "<system-reminder>\n# 错题本\n\n> **字段固定**：日期 / 讲次 / 题目 / 他的答案 / 正确答案 / **他错在哪一步**。\n> 🔴 **最后一项最重要**：不写\"错了\"，要写**哪一步**开始偏的。这一步才是复习的靶子。\n\n| 日期 | 讲次 | 题目 | 他的答案 | 正确答案 | **错在哪一步** |\n|---|---|---|---|---|---|\n| （"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.review",
+            "atMs": 17,
+            "head": "<system-reminder>\n# 间隔复习队列\n\n> **每课更新。** 复习间隔：次日 / 3 天 / 7 天 / 21 天（见 `system_core.md` 复习系统规则）。\n> **课前必查**：今天日期是否 ≥ 任意一行的\"下次复习日期\"。是 → 本节课开头先做复习。\n\n| 知识点 | 讲次 | 掌握档 | 第 1 次 | 第 2 次 | 第 3 次 | 第 4 次 | 下次复习"
+          }
+        ],
+        "endMs": 48337,
+        "endReason": "completed"
+      }
+    ],
+    "animations": []
+  },
+  "b-interrupt-note-gap20s-blocking": {
+    "key": "b-interrupt-note-gap20s-blocking",
+    "mode": "b",
+    "question": "interrupt",
+    "logFile": "/Users/wujunjie/Library/Application Support/dsh-desktop/harness/sessions/--private-var-folders-df-8fgt_lnd23q_5f3m_51vf4s80000gn-T-animorch-ab-b-interrupt-note-gap20s-blocking-classroom--/session-8b537925-479f-4858-8fcf-08e10a3e0bd7/session.v3.jsonl.zstd",
+    "wallMs": 152795,
+    "exit": 0,
+    "turns": [
+      {
+        "turn": 1,
+        "startMs": 1790226879929,
+        "firstStudentVisibleTextMs": 70527,
+        "firstStudentVisibleTextChars": 862,
+        "firstStudentVisibleTextHead": "傍晚。编辑部里只剩一盏台灯亮着。\n\n装订机停在墙角——不是坏了，是今天该装的都装完了。长桌上摊着两份稿子：一份压着批注，红笔的字迹很密；另一份只写了一半，后半页还空着。靠墙那排档案柜有一个抽屉没合严，露出一线纸边。白板上还留着上个月的排期表",
+        "tools": [
+          {
+            "name": "read",
+            "atMs": 3743,
+            "durationMs": 17,
+            "argHead": "{\"file_path\":\"_anchor.md\"}"
+          },
+          {
+            "name": "read",
+            "atMs": 3746,
+            "durationMs": 17,
+            "argHead": "{\"file_path\":\"runtime/progress.md\"}"
+          },
+          {
+            "name": "read",
+            "atMs": 3748,
+            "durationMs": 16,
+            "argHead": "{\"file_path\":\"runtime/review_queue.md\"}"
+          },
+          {
+            "name": "read",
+            "atMs": 3749,
+            "durationMs": 17,
+            "argHead": "{\"file_path\":\"characters/komari.md\"}"
+          },
+          {
+            "name": "read",
+            "atMs": 6005,
+            "durationMs": 12,
+            "argHead": "{\"file_path\":\"materials/ch01.md\"}"
+          },
+          {
+            "name": "read",
+            "atMs": 6005,
+            "durationMs": 14,
+            "argHead": "{\"file_path\":\"knowledge_points.md\"}"
+          },
+          {
+            "name": "classroom_set_phase",
+            "atMs": 70533,
+            "durationMs": 15,
+            "argHead": "{\"phase\":\"open\"}"
+          },
+          {
+            "name": "classroom_draw",
+            "atMs": 70548,
+            "durationMs": 1191,
+            "argHead": "{\"kind\":\"flowchart\",\"title\":\"进入内核的两条路：程序主动 vs 硬件强制\",\"source\":\"flowchart TD\\n  A[\\\"用户态：程序直接"
+          },
+          {
+            "name": "classroom_animate",
+            "atMs": 71740,
+            "durationMs": 10060,
+            "argHead": "{\"title\":\"定时器怎么把正在跑的程序打断、再让它接着跑\",\"caption\":\"针对\\\"程序怎么会自己停下来\\\"这个误解：时间轴上，A 一直在算，是定时器中断把它从 CPU"
+          },
+          {
+            "name": "classroom_draw",
+            "atMs": 92860,
+            "durationMs": 22,
+            "argHead": "{\"caption\":\"接在结构图下面的时间线：A 被打断 → 内核保存 → 换 B → 再打断 → 换回 A，A 从被打断的指令继续。用来把\\\"中断\\\"和\\\"上下文切换\\\"分开。"
+          }
+        ],
+        "injections": [
+          {
+            "form": "classroom-block",
+            "block": "anchor.rules",
+            "atMs": 94,
+            "head": "<system-reminder>\n先弄清学生现在需要什么：澄清题目、补充事实、回应推断、纠正错误、继续探究，还是顺势拓展。只有学生能理解问题且能依据已有信息推理时才追问；提问不是每轮义务。学生说出关键关系后，确认并讲清当前最相关的一段因果链；到新的关口或混淆点再问，不拿刚讲过的事实考他，也不一次讲完整课。\n\n每个问题要有明确对象和判断目标。技术问题直接说出程序、CPU 等真实对象；稿子等道具只辅"
+          },
+          {
+            "form": "classroom-block",
+            "block": "anchor.lesson_ban",
+            "atMs": 95,
+            "head": "<system-reminder>\n- 本讲核心事实**必须以 `materials/ch{NN}.md` 与 OSTEP 原文为准**；**不确定就说不确定，不许编**。\n- 新术语出现时用日常语言解释；必要时可以先给术语和定义。\n- 学生的代码／答案出错时，先指出具体哪一步有问题；若预测实际结果能帮助理解，再让他预测并对照。不要让错误猜想悬着不处理。\n- 学生回答了关键点，不等于已经展示整讲所"
+          },
+          {
+            "form": "classroom-block",
+            "block": "story.arc_gate",
+            "atMs": 95,
+            "head": "<system-reminder>\n# 故事总览 · cs-os（14 讲）\n\n> **用途**：故事节点骨架与情感阶段的总表。**每讲的细节在 `ch{NN}.md`。**\n> **纪律**：本文件是节点说明，**不是可直接输出的叙述**。不得把节点描述当正文念。\n\n---\n\n## 一、她的人物弧（三段）\n\n| 段 | 讲次 | 状态 | 标志 |\n|---|---|---|---|\n| **Ⅰ"
+          },
+          {
+            "form": "classroom-block",
+            "block": "curriculum.map",
+            "atMs": 95,
+            "head": "<system-reminder>\n# 课程表 · 操作系统（cs-os）\n\n> **课程定位**：计算机系硬课，**408 考纲四门之一 + 美式 CS 核心课**。\n> **教材**：`Operating Systems: Three Easy Pieces`（OSTEP，Remzi & Andrea Arpaci-Dusseau，Wisconsin-Madison，v1.10）。\n> 🔴 "
+          },
+          {
+            "form": "classroom-block",
+            "block": "story.node.01",
+            "atMs": 95,
+            "head": "<system-reminder>\n# 第 1 讲故事节点 · 一个程序怎么跑起来\n\n> **格式**：开场与收束提供叙事方向；中段节点是可用素材，是否出现取决于学生的理解与实际进度。角色有弧线，课堂不按故事节点强行赶路。\n> **叙述纪律**：本文件是**节点说明**，不是可直接输出的叙述。**不得把节点描述直接当正文念出来**。\n> **对应正文**：`materials/ch01.md` ｜"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.progress",
+            "atMs": 95,
+            "head": "<system-reminder>\n# 学习进度\n\ncurrent_lesson: 1\n\n<!--\n🔴 上面这一行是**机器可读行**，引擎（classroom.yaml 的 runtime_store.lesson_key）按行找它。\n   语义写死：`current_lesson` = **本轮要讲的讲次**（不是\"已完成的讲次\"）。\n   初始 1（第一节课讲第 1 讲）；**课后更新时改"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.mistakes",
+            "atMs": 95,
+            "head": "<system-reminder>\n# 错题本\n\n> **字段固定**：日期 / 讲次 / 题目 / 他的答案 / 正确答案 / **他错在哪一步**。\n> 🔴 **最后一项最重要**：不写\"错了\"，要写**哪一步**开始偏的。这一步才是复习的靶子。\n\n| 日期 | 讲次 | 题目 | 他的答案 | 正确答案 | **错在哪一步** |\n|---|---|---|---|---|---|\n| （"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.review",
+            "atMs": 95,
+            "head": "<system-reminder>\n# 间隔复习队列\n\n> **每课更新。** 复习间隔：次日 / 3 天 / 7 天 / 21 天（见 `system_core.md` 复习系统规则）。\n> **课前必查**：今天日期是否 ≥ 任意一行的\"下次复习日期\"。是 → 本节课开头先做复习。\n\n| 知识点 | 讲次 | 掌握档 | 第 1 次 | 第 2 次 | 第 3 次 | 第 4 次 | 下次复习"
+          }
+        ],
+        "endMs": 96756,
+        "endReason": "completed"
+      },
+      {
+        "turn": 2,
+        "startMs": 1790226996688,
+        "firstStudentVisibleTextMs": 30942,
+        "firstStudentVisibleTextChars": 654,
+        "firstStudentVisibleTextHead": "她把手从那份半截稿子上收回来，重新看向白板上那张时间线。\n\n\"……嗯。\"她先应了一声，\"你是问，它回来的时候，凭什么知道自己算到哪了。\"\n\n她站起来，把时间线旁边空出一块地方，笔尖落上去。\n\n\"被切走的那一下，内核不是把它随手一扔。内核把*",
+        "tools": [
+          {
+            "name": "classroom_draw",
+            "atMs": 30948,
+            "durationMs": 26,
+            "argHead": "{\"caption\":\"回答\\\"它下次怎么接着跑\\\"：CPU 里的执行状态（程序计数器、寄存器）在切走时被抄进进程控制块，回来时再装回 CPU；而进程的内存一直留在原处。用来分开\\"
+          },
+          {
+            "name": "classroom_set_phase",
+            "atMs": 30975,
+            "durationMs": 4,
+            "argHead": "{\"phase\":\"probe\"}"
+          }
+        ],
+        "injections": [
+          {
+            "form": "classroom-block",
+            "block": "anchor.rules",
+            "atMs": 12,
+            "head": "<system-reminder>\n先弄清学生现在需要什么：澄清题目、补充事实、回应推断、纠正错误、继续探究，还是顺势拓展。只有学生能理解问题且能依据已有信息推理时才追问；提问不是每轮义务。学生说出关键关系后，确认并讲清当前最相关的一段因果链；到新的关口或混淆点再问，不拿刚讲过的事实考他，也不一次讲完整课。\n\n每个问题要有明确对象和判断目标。技术问题直接说出程序、CPU 等真实对象；稿子等道具只辅"
+          },
+          {
+            "form": "classroom-block",
+            "block": "anchor.lesson_ban",
+            "atMs": 12,
+            "head": "<system-reminder>\n- 本讲核心事实**必须以 `materials/ch{NN}.md` 与 OSTEP 原文为准**；**不确定就说不确定，不许编**。\n- 新术语出现时用日常语言解释；必要时可以先给术语和定义。\n- 学生的代码／答案出错时，先指出具体哪一步有问题；若预测实际结果能帮助理解，再让他预测并对照。不要让错误猜想悬着不处理。\n- 学生回答了关键点，不等于已经展示整讲所"
+          },
+          {
+            "form": "classroom-block",
+            "block": "story.node.01",
+            "atMs": 12,
+            "head": "<system-reminder>\n# 第 1 讲故事节点 · 一个程序怎么跑起来\n\n> **格式**：开场与收束提供叙事方向；中段节点是可用素材，是否出现取决于学生的理解与实际进度。角色有弧线，课堂不按故事节点强行赶路。\n> **叙述纪律**：本文件是**节点说明**，不是可直接输出的叙述。**不得把节点描述直接当正文念出来**。\n> **对应正文**：`materials/ch01.md` ｜"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.progress",
+            "atMs": 12,
+            "head": "<system-reminder>\n# 学习进度\n\ncurrent_lesson: 1\n\n<!--\n🔴 上面这一行是**机器可读行**，引擎（classroom.yaml 的 runtime_store.lesson_key）按行找它。\n   语义写死：`current_lesson` = **本轮要讲的讲次**（不是\"已完成的讲次\"）。\n   初始 1（第一节课讲第 1 讲）；**课后更新时改"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.mistakes",
+            "atMs": 12,
+            "head": "<system-reminder>\n# 错题本\n\n> **字段固定**：日期 / 讲次 / 题目 / 他的答案 / 正确答案 / **他错在哪一步**。\n> 🔴 **最后一项最重要**：不写\"错了\"，要写**哪一步**开始偏的。这一步才是复习的靶子。\n\n| 日期 | 讲次 | 题目 | 他的答案 | 正确答案 | **错在哪一步** |\n|---|---|---|---|---|---|\n| （"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.review",
+            "atMs": 12,
+            "head": "<system-reminder>\n# 间隔复习队列\n\n> **每课更新。** 复习间隔：次日 / 3 天 / 7 天 / 21 天（见 `system_core.md` 复习系统规则）。\n> **课前必查**：今天日期是否 ≥ 任意一行的\"下次复习日期\"。是 → 本节课开头先做复习。\n\n| 知识点 | 讲次 | 掌握档 | 第 1 次 | 第 2 次 | 第 3 次 | 第 4 次 | 下次复习"
+          },
+          {
+            "form": "animation-notice",
+            "block": "animation-notice:L01-T01-20260924-131551",
+            "atMs": 13,
+            "head": "你上一轮起的教学动画有结果了：L01-T01-20260924-131551（第 1 讲 · 第 1 回合）**blocked** —— 质量闸门判不通过，**不许播**：闸门判 BLOCK：1 处阻断级画面缺陷（D2；另有需人工目视确认的项）｜标题：定时器怎么把正在跑的程序打断、再让它接着跑｜片子：L01-T01-20260924-131551.mp4（16.4 秒 / 227 KB）\n→ **"
+          }
+        ],
+        "endMs": 34692,
+        "endReason": "completed"
+      }
+    ],
+    "animations": [
+      {
+        "taskId": "L01-T01-20260924-131551",
+        "task": {
+          "taskId": "L01-T01-20260924-131551",
+          "lesson": 1,
+          "turn": 1,
+          "createdAt": 1790226951674,
+          "title": "定时器怎么把正在跑的程序打断、再让它接着跑",
+          "caption": "针对\"程序怎么会自己停下来\"这个误解：时间轴上，A 一直在算，是定时器中断把它从 CPU 上打断；内核保存状态、换 B 跑，之后再把 A 恢复回来。说明中断是硬件强制、换不换人由内核决定。",
+          "sceneClass": "TimerInterruptTimeline",
+          "scriptFile": "scene.py",
+          "quality": "l",
+          "gate": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/tools/animation-gate/animation_gate.py",
+          "expectedMs": null,
+          "announcedAt": 1790226996696
+        },
+        "status": {
+          "startedAt": 1790226951716,
+          "runnerPid": 56600,
+          "heartbeatAt": 1790226951716,
+          "manim": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_动画可写性/env/bin/manim",
+          "quality": "l",
+          "state": "blocked",
+          "updatedAt": 1790226961571,
+          "renderMs": 2333,
+          "mp4": "L01-T01-20260924-131551.mp4",
+          "bytes": 231979,
+          "durationSec": 16.399349,
+          "exit": 0,
+          "reason": "闸门判 BLOCK：1 处阻断级画面缺陷（D2；另有需人工目视确认的项）",
+          "gate": {
+            "ran": true,
+            "exit": 1,
+            "verdict": "BLOCK",
+            "blockingCount": 1,
+            "blockingKinds": [
+              "D2"
+            ],
+            "humanReviewRequired": true,
+            "summary": "",
+            "verdictFile": "/private/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-ab-b-interrupt-note-gap20s-blocking/classroom/runtime/animations/L01-T01-20260924-131551/gate/verdict.json"
+          },
+          "finishedAt": 1790226961571
+        },
+        "dir": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-ab-b-interrupt-note-gap20s-blocking/classroom/runtime/animations/L01-T01-20260924-131551"
+      }
+    ]
+  },
+  "b-interrupt-note-gap20s-spoken0": {
+    "key": "b-interrupt-note-gap20s-spoken0",
+    "mode": "b",
+    "question": "interrupt",
+    "logFile": "/Users/wujunjie/Library/Application Support/dsh-desktop/harness/sessions/--private-var-folders-df-8fgt_lnd23q_5f3m_51vf4s80000gn-T-animorch-ab-b-interrupt-note-gap20s-spoken0-classroom--/session-93b9c22d-54f6-458e-ab42-cce5ec7b5024/session.v3.jsonl.zstd",
+    "wallMs": 71193,
+    "exit": 0,
+    "turns": [
+      {
+        "turn": 1,
+        "startMs": 1790226625857,
+        "firstStudentVisibleTextMs": 17158,
+        "firstStudentVisibleTextChars": 525,
+        "firstStudentVisibleTextHead": "装订机停在窗边，针头悬在半空——不是坏了，是今天的活干完了。长桌上摊着两份稿子：一份压着批注，一份写到一半，笔帽没盖。台灯只开了一盏，光圈落在白板下沿。\n\n白板上还留着上个月排期的旧痕迹，几行字被划掉又没擦干净。她拿笔的手悬了一下，没去碰那",
+        "tools": [
+          {
+            "name": "read",
+            "atMs": 4623,
+            "durationMs": 16,
+            "argHead": "{\"file_path\":\"_anchor.md\"}"
+          },
+          {
+            "name": "read",
+            "atMs": 4625,
+            "durationMs": 16,
+            "argHead": "{\"file_path\":\"materials/ch01.md\"}"
+          },
+          {
+            "name": "read",
+            "atMs": 4625,
+            "durationMs": 18,
+            "argHead": "{\"file_path\":\"runtime/learner_profile.md\"}"
+          },
+          {
+            "name": "read",
+            "atMs": 4626,
+            "durationMs": 18,
+            "argHead": "{\"file_path\":\"runtime/session_log.md\"}"
+          },
+          {
+            "name": "classroom_set_phase",
+            "atMs": 10935,
+            "durationMs": 11,
+            "argHead": "{\"phase\":\"open\"}"
+          },
+          {
+            "name": "classroom_draw",
+            "atMs": 10946,
+            "durationMs": 1408,
+            "argHead": "{\"kind\":\"flowchart\",\"source\":\"flowchart TD\\n    C[\\\"一颗核心：同一时刻只把执行位置给一个程序\\\"]\\n    A[\\\"音乐播放器"
+          }
+        ],
+        "injections": [
+          {
+            "form": "classroom-block",
+            "block": "anchor.rules",
+            "atMs": 84,
+            "head": "<system-reminder>\n先弄清学生现在需要什么：澄清题目、补充事实、回应推断、纠正错误、继续探究，还是顺势拓展。只有学生能理解问题且能依据已有信息推理时才追问；提问不是每轮义务。学生说出关键关系后，确认并讲清当前最相关的一段因果链；到新的关口或混淆点再问，不拿刚讲过的事实考他，也不一次讲完整课。\n\n每个问题要有明确对象和判断目标。技术问题直接说出程序、CPU 等真实对象；稿子等道具只辅"
+          },
+          {
+            "form": "classroom-block",
+            "block": "anchor.lesson_ban",
+            "atMs": 84,
+            "head": "<system-reminder>\n- 本讲核心事实**必须以 `materials/ch{NN}.md` 与 OSTEP 原文为准**；**不确定就说不确定，不许编**。\n- 新术语出现时用日常语言解释；必要时可以先给术语和定义。\n- 学生的代码／答案出错时，先指出具体哪一步有问题；若预测实际结果能帮助理解，再让他预测并对照。不要让错误猜想悬着不处理。\n- 学生回答了关键点，不等于已经展示整讲所"
+          },
+          {
+            "form": "classroom-block",
+            "block": "story.arc_gate",
+            "atMs": 84,
+            "head": "<system-reminder>\n# 故事总览 · cs-os（14 讲）\n\n> **用途**：故事节点骨架与情感阶段的总表。**每讲的细节在 `ch{NN}.md`。**\n> **纪律**：本文件是节点说明，**不是可直接输出的叙述**。不得把节点描述当正文念。\n\n---\n\n## 一、她的人物弧（三段）\n\n| 段 | 讲次 | 状态 | 标志 |\n|---|---|---|---|\n| **Ⅰ"
+          },
+          {
+            "form": "classroom-block",
+            "block": "curriculum.map",
+            "atMs": 84,
+            "head": "<system-reminder>\n# 课程表 · 操作系统（cs-os）\n\n> **课程定位**：计算机系硬课，**408 考纲四门之一 + 美式 CS 核心课**。\n> **教材**：`Operating Systems: Three Easy Pieces`（OSTEP，Remzi & Andrea Arpaci-Dusseau，Wisconsin-Madison，v1.10）。\n> 🔴 "
+          },
+          {
+            "form": "classroom-block",
+            "block": "story.node.01",
+            "atMs": 85,
+            "head": "<system-reminder>\n# 第 1 讲故事节点 · 一个程序怎么跑起来\n\n> **格式**：开场与收束提供叙事方向；中段节点是可用素材，是否出现取决于学生的理解与实际进度。角色有弧线，课堂不按故事节点强行赶路。\n> **叙述纪律**：本文件是**节点说明**，不是可直接输出的叙述。**不得把节点描述直接当正文念出来**。\n> **对应正文**：`materials/ch01.md` ｜"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.progress",
+            "atMs": 85,
+            "head": "<system-reminder>\n# 学习进度\n\ncurrent_lesson: 1\n\n<!--\n🔴 上面这一行是**机器可读行**，引擎（classroom.yaml 的 runtime_store.lesson_key）按行找它。\n   语义写死：`current_lesson` = **本轮要讲的讲次**（不是\"已完成的讲次\"）。\n   初始 1（第一节课讲第 1 讲）；**课后更新时改"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.mistakes",
+            "atMs": 85,
+            "head": "<system-reminder>\n# 错题本\n\n> **字段固定**：日期 / 讲次 / 题目 / 他的答案 / 正确答案 / **他错在哪一步**。\n> 🔴 **最后一项最重要**：不写\"错了\"，要写**哪一步**开始偏的。这一步才是复习的靶子。\n\n| 日期 | 讲次 | 题目 | 他的答案 | 正确答案 | **错在哪一步** |\n|---|---|---|---|---|---|\n| （"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.review",
+            "atMs": 85,
+            "head": "<system-reminder>\n# 间隔复习队列\n\n> **每课更新。** 复习间隔：次日 / 3 天 / 7 天 / 21 天（见 `system_core.md` 复习系统规则）。\n> **课前必查**：今天日期是否 ≥ 任意一行的\"下次复习日期\"。是 → 本节课开头先做复习。\n\n| 知识点 | 讲次 | 掌握档 | 第 1 次 | 第 2 次 | 第 3 次 | 第 4 次 | 下次复习"
+          }
+        ],
+        "endMs": 17166,
+        "endReason": "completed"
+      },
+      {
+        "turn": 2,
+        "startMs": 1790226663026,
+        "firstStudentVisibleTextMs": 32656,
+        "firstStudentVisibleTextChars": 814,
+        "firstStudentVisibleTextHead": "\"啊，这个……这个是我刚才没说完的那半句。\"她把笔拿回来，站在白板边上，声音还是小，但没停。\n\n先给名字，再讲过程：\n\n- **程序文件**是静态的。硬盘上那个 `player` 可执行文件，放一年也不会自己动。\n- **进程**是\"这个程",
+        "tools": [
+          {
+            "name": "bash",
+            "atMs": 6953,
+            "durationMs": 1519,
+            "argHead": "{\"command\":\"which manim; python3 -c \\\"import manim, sys; print('manim', manim.__version__)"
+          },
+          {
+            "name": "write",
+            "atMs": 12763,
+            "durationMs": 12,
+            "argHead": "{\"file_path\":\"/tmp/anim_test/scene.py\",\"content\":\"from manim import *\\n\\n\\nclass ContextSw"
+          },
+          {
+            "name": "bash",
+            "atMs": 15082,
+            "durationMs": 25,
+            "argHead": "{\"command\":\"cd /tmp/anim_test && timeout 600 manim -ql -o test.mp4 scene.py ContextSwitchT"
+          },
+          {
+            "name": "bash",
+            "atMs": 17411,
+            "durationMs": 4124,
+            "argHead": "{\"command\":\"cd /tmp/anim_test && manim -ql -o test.mp4 scene.py ContextSwitchTimeline 2>&1"
+          },
+          {
+            "name": "classroom_animate",
+            "atMs": 27548,
+            "durationMs": 8,
+            "argHead": "{\"title\":\"切走再切回：进程凭什么从暂停处接着跑\",\"caption\":\"针对\\\"指令还在内存里，所以它自然会接着跑\\\"这个误解。动画让\\\"执行位置和寄存器被存下、再恢复\\"
+          },
+          {
+            "name": "classroom_draw",
+            "atMs": 27556,
+            "durationMs": 20,
+            "argHead": "{\"kind\":\"flowchart\",\"caption\":\"回答\\\"它下次怎么接着跑\\\"：切走前存下 PC 与寄存器，切回时恢复，所以从断点继续而不是从头。图只是骨架；真正随时间"
+          }
+        ],
+        "injections": [
+          {
+            "form": "classroom-block",
+            "block": "anchor.rules",
+            "atMs": 12,
+            "head": "<system-reminder>\n先弄清学生现在需要什么：澄清题目、补充事实、回应推断、纠正错误、继续探究，还是顺势拓展。只有学生能理解问题且能依据已有信息推理时才追问；提问不是每轮义务。学生说出关键关系后，确认并讲清当前最相关的一段因果链；到新的关口或混淆点再问，不拿刚讲过的事实考他，也不一次讲完整课。\n\n每个问题要有明确对象和判断目标。技术问题直接说出程序、CPU 等真实对象；稿子等道具只辅"
+          },
+          {
+            "form": "classroom-block",
+            "block": "anchor.lesson_ban",
+            "atMs": 12,
+            "head": "<system-reminder>\n- 本讲核心事实**必须以 `materials/ch{NN}.md` 与 OSTEP 原文为准**；**不确定就说不确定，不许编**。\n- 新术语出现时用日常语言解释；必要时可以先给术语和定义。\n- 学生的代码／答案出错时，先指出具体哪一步有问题；若预测实际结果能帮助理解，再让他预测并对照。不要让错误猜想悬着不处理。\n- 学生回答了关键点，不等于已经展示整讲所"
+          },
+          {
+            "form": "classroom-block",
+            "block": "story.node.01",
+            "atMs": 12,
+            "head": "<system-reminder>\n# 第 1 讲故事节点 · 一个程序怎么跑起来\n\n> **格式**：开场与收束提供叙事方向；中段节点是可用素材，是否出现取决于学生的理解与实际进度。角色有弧线，课堂不按故事节点强行赶路。\n> **叙述纪律**：本文件是**节点说明**，不是可直接输出的叙述。**不得把节点描述直接当正文念出来**。\n> **对应正文**：`materials/ch01.md` ｜"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.progress",
+            "atMs": 12,
+            "head": "<system-reminder>\n# 学习进度\n\ncurrent_lesson: 1\n\n<!--\n🔴 上面这一行是**机器可读行**，引擎（classroom.yaml 的 runtime_store.lesson_key）按行找它。\n   语义写死：`current_lesson` = **本轮要讲的讲次**（不是\"已完成的讲次\"）。\n   初始 1（第一节课讲第 1 讲）；**课后更新时改"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.mistakes",
+            "atMs": 12,
+            "head": "<system-reminder>\n# 错题本\n\n> **字段固定**：日期 / 讲次 / 题目 / 他的答案 / 正确答案 / **他错在哪一步**。\n> 🔴 **最后一项最重要**：不写\"错了\"，要写**哪一步**开始偏的。这一步才是复习的靶子。\n\n| 日期 | 讲次 | 题目 | 他的答案 | 正确答案 | **错在哪一步** |\n|---|---|---|---|---|---|\n| （"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.review",
+            "atMs": 12,
+            "head": "<system-reminder>\n# 间隔复习队列\n\n> **每课更新。** 复习间隔：次日 / 3 天 / 7 天 / 21 天（见 `system_core.md` 复习系统规则）。\n> **课前必查**：今天日期是否 ≥ 任意一行的\"下次复习日期\"。是 → 本节课开头先做复习。\n\n| 知识点 | 讲次 | 掌握档 | 第 1 次 | 第 2 次 | 第 3 次 | 第 4 次 | 下次复习"
+          }
+        ],
+        "endMs": 32660,
+        "endReason": "completed"
+      }
+    ],
+    "animations": [
+      {
+        "taskId": "L01-T02-20260924-131130",
+        "task": {
+          "taskId": "L01-T02-20260924-131130",
+          "lesson": 1,
+          "turn": 2,
+          "createdAt": 1790226690579,
+          "title": "切走再切回：进程凭什么从暂停处接着跑",
+          "caption": "针对\"指令还在内存里，所以它自然会接着跑\"这个误解。动画让\"执行位置和寄存器被存下、再恢复\"这件事随时间发生一次：A 正在执行 → 存 A 的 PC 与寄存器 → 换成 B → A 下次从存下的位置继续，而不是从头。",
+          "sceneClass": "ContextSwitchTimeline",
+          "scriptFile": "scene.py",
+          "quality": "l",
+          "gate": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/tools/animation-gate/animation_gate.py",
+          "expectedMs": null,
+          "announcedAt": null
+        },
+        "status": {
+          "startedAt": 1790226690610,
+          "runnerPid": 55637,
+          "heartbeatAt": 1790226700617,
+          "manim": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_动画可写性/env/bin/manim",
+          "quality": "l",
+          "state": "ready",
+          "updatedAt": 1790226701942,
+          "renderMs": 2324,
+          "mp4": "L01-T02-20260924-131130.mp4",
+          "bytes": 297959,
+          "durationSec": 16.8,
+          "exit": 0,
+          "gate": {
+            "ran": true,
+            "exit": 0,
+            "verdict": "PASS",
+            "blockingCount": 0,
+            "blockingKinds": [],
+            "humanReviewRequired": true,
+            "summary": "",
+            "verdictFile": "/private/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-ab-b-interrupt-note-gap20s-spoken0/classroom/runtime/animations/L01-T02-20260924-131130/gate/verdict.json"
+          },
+          "finishedAt": 1790226701942
+        },
+        "dir": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-ab-b-interrupt-note-gap20s-spoken0/classroom/runtime/animations/L01-T02-20260924-131130"
+      }
+    ]
+  },
+  "b-interrupt-note-gap20s-spoken1": {
+    "key": "b-interrupt-note-gap20s-spoken1",
+    "mode": "b",
+    "question": "interrupt",
+    "logFile": "/Users/wujunjie/Library/Application Support/dsh-desktop/harness/sessions/--private-var-folders-df-8fgt_lnd23q_5f3m_51vf4s80000gn-T-animorch-ab-b-interrupt-note-gap20s-spoken1-classroom--/session-2c2318ed-68fc-4733-a019-edb7be20e04e/session.v3.jsonl.zstd",
+    "wallMs": 134511,
+    "exit": 0,
+    "turns": [
+      {
+        "turn": 1,
+        "startMs": 1790226697456,
+        "firstStudentVisibleTextMs": 53548,
+        "firstStudentVisibleTextChars": 859,
+        "firstStudentVisibleTextHead": "傍晚六点出头，编辑部里那台装订机停了。不是坏——今天该装订的都装完了，最后一声\"咔哒\"落下去之后，屋里只剩下抽屉滑轨的声音。\n\n长桌上摊着两份稿子。左边那份压着三张批注纸，边角已经卷了；右边那份只写了一半，停在一句话中间。台灯开着，光只够照",
+        "tools": [
+          {
+            "name": "read",
+            "atMs": 6737,
+            "durationMs": 12,
+            "argHead": "{\"file_path\":\"/private/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-ab-b-inter"
+          },
+          {
+            "name": "read",
+            "atMs": 6738,
+            "durationMs": 14,
+            "argHead": "{\"file_path\":\"/private/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-ab-b-inter"
+          },
+          {
+            "name": "read",
+            "atMs": 6739,
+            "durationMs": 15,
+            "argHead": "{\"file_path\":\"/private/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-ab-b-inter"
+          },
+          {
+            "name": "read",
+            "atMs": 6739,
+            "durationMs": 16,
+            "argHead": "{\"file_path\":\"/private/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-ab-b-inter"
+          },
+          {
+            "name": "read",
+            "atMs": 9849,
+            "durationMs": 5,
+            "argHead": "{\"file_path\":\"/private/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-ab-b-inter"
+          },
+          {
+            "name": "bash",
+            "atMs": 9854,
+            "durationMs": 18,
+            "argHead": "{\"command\":\"tail -n 40 runtime/session_log.md 2>/dev/null; echo \\\"---EXIT $?---\\\"\",\"descri"
+          },
+          {
+            "name": "classroom_status",
+            "atMs": 9872,
+            "durationMs": 4,
+            "argHead": "{}"
+          },
+          {
+            "name": "classroom_set_phase",
+            "atMs": 53552,
+            "durationMs": 11,
+            "argHead": "{\"phase\":\"probe\"}"
+          },
+          {
+            "name": "classroom_draw",
+            "atMs": 53563,
+            "durationMs": 1149,
+            "argHead": "{\"kind\":\"flowchart\",\"source\":\"flowchart TD\\n    Q[\\\"本讲要回答：一个核心怎样让两个程序都有执行机会\\\"] --> A[\\\"程序在"
+          },
+          {
+            "name": "classroom_animate",
+            "atMs": 54713,
+            "durationMs": 8,
+            "argHead": "{\"script\":\"from manim import *\\n\\n\\nclass TimerInterrupt(Scene):\\n    def construct(self):"
+          }
+        ],
+        "injections": [
+          {
+            "form": "classroom-block",
+            "block": "anchor.rules",
+            "atMs": 98,
+            "head": "<system-reminder>\n先弄清学生现在需要什么：澄清题目、补充事实、回应推断、纠正错误、继续探究，还是顺势拓展。只有学生能理解问题且能依据已有信息推理时才追问；提问不是每轮义务。学生说出关键关系后，确认并讲清当前最相关的一段因果链；到新的关口或混淆点再问，不拿刚讲过的事实考他，也不一次讲完整课。\n\n每个问题要有明确对象和判断目标。技术问题直接说出程序、CPU 等真实对象；稿子等道具只辅"
+          },
+          {
+            "form": "classroom-block",
+            "block": "anchor.lesson_ban",
+            "atMs": 98,
+            "head": "<system-reminder>\n- 本讲核心事实**必须以 `materials/ch{NN}.md` 与 OSTEP 原文为准**；**不确定就说不确定，不许编**。\n- 新术语出现时用日常语言解释；必要时可以先给术语和定义。\n- 学生的代码／答案出错时，先指出具体哪一步有问题；若预测实际结果能帮助理解，再让他预测并对照。不要让错误猜想悬着不处理。\n- 学生回答了关键点，不等于已经展示整讲所"
+          },
+          {
+            "form": "classroom-block",
+            "block": "story.arc_gate",
+            "atMs": 98,
+            "head": "<system-reminder>\n# 故事总览 · cs-os（14 讲）\n\n> **用途**：故事节点骨架与情感阶段的总表。**每讲的细节在 `ch{NN}.md`。**\n> **纪律**：本文件是节点说明，**不是可直接输出的叙述**。不得把节点描述当正文念。\n\n---\n\n## 一、她的人物弧（三段）\n\n| 段 | 讲次 | 状态 | 标志 |\n|---|---|---|---|\n| **Ⅰ"
+          },
+          {
+            "form": "classroom-block",
+            "block": "curriculum.map",
+            "atMs": 99,
+            "head": "<system-reminder>\n# 课程表 · 操作系统（cs-os）\n\n> **课程定位**：计算机系硬课，**408 考纲四门之一 + 美式 CS 核心课**。\n> **教材**：`Operating Systems: Three Easy Pieces`（OSTEP，Remzi & Andrea Arpaci-Dusseau，Wisconsin-Madison，v1.10）。\n> 🔴 "
+          },
+          {
+            "form": "classroom-block",
+            "block": "story.node.01",
+            "atMs": 99,
+            "head": "<system-reminder>\n# 第 1 讲故事节点 · 一个程序怎么跑起来\n\n> **格式**：开场与收束提供叙事方向；中段节点是可用素材，是否出现取决于学生的理解与实际进度。角色有弧线，课堂不按故事节点强行赶路。\n> **叙述纪律**：本文件是**节点说明**，不是可直接输出的叙述。**不得把节点描述直接当正文念出来**。\n> **对应正文**：`materials/ch01.md` ｜"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.progress",
+            "atMs": 99,
+            "head": "<system-reminder>\n# 学习进度\n\ncurrent_lesson: 1\n\n<!--\n🔴 上面这一行是**机器可读行**，引擎（classroom.yaml 的 runtime_store.lesson_key）按行找它。\n   语义写死：`current_lesson` = **本轮要讲的讲次**（不是\"已完成的讲次\"）。\n   初始 1（第一节课讲第 1 讲）；**课后更新时改"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.mistakes",
+            "atMs": 99,
+            "head": "<system-reminder>\n# 错题本\n\n> **字段固定**：日期 / 讲次 / 题目 / 他的答案 / 正确答案 / **他错在哪一步**。\n> 🔴 **最后一项最重要**：不写\"错了\"，要写**哪一步**开始偏的。这一步才是复习的靶子。\n\n| 日期 | 讲次 | 题目 | 他的答案 | 正确答案 | **错在哪一步** |\n|---|---|---|---|---|---|\n| （"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.review",
+            "atMs": 99,
+            "head": "<system-reminder>\n# 间隔复习队列\n\n> **每课更新。** 复习间隔：次日 / 3 天 / 7 天 / 21 天（见 `system_core.md` 复习系统规则）。\n> **课前必查**：今天日期是否 ≥ 任意一行的\"下次复习日期\"。是 → 本节课开头先做复习。\n\n| 知识点 | 讲次 | 掌握档 | 第 1 次 | 第 2 次 | 第 3 次 | 第 4 次 | 下次复习"
+          }
+        ],
+        "endMs": 58697,
+        "endReason": "completed"
+      },
+      {
+        "turn": 2,
+        "startMs": 1790226776156,
+        "firstStudentVisibleTextMs": 50909,
+        "firstStudentVisibleTextChars": 788,
+        "firstStudentVisibleTextHead": "她没有急着写新的东西。她伸手把刚才那一段放了出来——A 在 CPU 上跑着，定时器到期，中断把它按停的那一下。\n\n\"……对，停是停在这儿了。\"她说，\"那接着跑，靠的是两件事：**保存现场**，和**恢复现场**。\"\n\n她把笔拿起来，这一次没",
+        "tools": [
+          {
+            "name": "classroom_set_phase",
+            "atMs": 50912,
+            "durationMs": 16,
+            "argHead": "{\"phase\":\"answer\"}"
+          },
+          {
+            "name": "classroom_draw",
+            "atMs": 50928,
+            "durationMs": 17,
+            "argHead": "{\"caption\":\"回答\\\"它下次怎么接着跑\\\"。核心是保存/恢复执行状态（程序计数器、寄存器、栈指针），并纠正\\\"把程序文件重装一遍\\\"的直觉。节点里写清状态存进内核为进程保"
+          },
+          {
+            "name": "classroom_animate",
+            "atMs": 50946,
+            "durationMs": 9,
+            "argHead": "{\"caption\":\"对应\\\"接着跑\\\"这一步：A 在时间轴上执行到中断点，现场被保存；B 执行一段后被中断，此时恢复 A 的现场，A 从上次停下的那条指令继续，而不是从头开始。"
+          }
+        ],
+        "injections": [
+          {
+            "form": "classroom-block",
+            "block": "anchor.rules",
+            "atMs": 17,
+            "head": "<system-reminder>\n先弄清学生现在需要什么：澄清题目、补充事实、回应推断、纠正错误、继续探究，还是顺势拓展。只有学生能理解问题且能依据已有信息推理时才追问；提问不是每轮义务。学生说出关键关系后，确认并讲清当前最相关的一段因果链；到新的关口或混淆点再问，不拿刚讲过的事实考他，也不一次讲完整课。\n\n每个问题要有明确对象和判断目标。技术问题直接说出程序、CPU 等真实对象；稿子等道具只辅"
+          },
+          {
+            "form": "classroom-block",
+            "block": "anchor.lesson_ban",
+            "atMs": 17,
+            "head": "<system-reminder>\n- 本讲核心事实**必须以 `materials/ch{NN}.md` 与 OSTEP 原文为准**；**不确定就说不确定，不许编**。\n- 新术语出现时用日常语言解释；必要时可以先给术语和定义。\n- 学生的代码／答案出错时，先指出具体哪一步有问题；若预测实际结果能帮助理解，再让他预测并对照。不要让错误猜想悬着不处理。\n- 学生回答了关键点，不等于已经展示整讲所"
+          },
+          {
+            "form": "classroom-block",
+            "block": "material.current.01",
+            "atMs": 17,
+            "head": "<system-reminder>\n# 第 1 讲正文 · 一个程序怎么跑起来\n\n> 🔴 **本文件是自写教学材料**，**不是 OSTEP 原文的副本**。\n> OSTEP 官方章节（**只链不搬**，官网明文 *\"please just link to them directly (instead of making a copy locally)\"*）：\n> [ch2 Introducti"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.progress",
+            "atMs": 17,
+            "head": "<system-reminder>\n# 学习进度\n\ncurrent_lesson: 1\n\n<!--\n🔴 上面这一行是**机器可读行**，引擎（classroom.yaml 的 runtime_store.lesson_key）按行找它。\n   语义写死：`current_lesson` = **本轮要讲的讲次**（不是\"已完成的讲次\"）。\n   初始 1（第一节课讲第 1 讲）；**课后更新时改"
+          },
+          {
+            "form": "animation-notice",
+            "block": "animation-notice:L01-T01-20260924-131232",
+            "atMs": 17,
+            "head": "你上一轮起的教学动画有结果了：L01-T01-20260924-131232（第 1 讲 · 第 1 回合）**ready** —— 已就绪：可以播了｜标题：定时器到期，硬件中断把控制权交回内核——不是程序自己停的｜片子：L01-T01-20260924-131232.mp4（9.5 秒 / 133 KB）\n→ 现在就在讲解里把它放出来：讲到那一步时直接播这段动画，并告诉学生它讲的是哪一步。（客户"
+          }
+        ],
+        "endMs": 54206,
+        "endReason": "completed"
+      }
+    ],
+    "animations": [
+      {
+        "taskId": "L01-T01-20260924-131232",
+        "task": {
+          "taskId": "L01-T01-20260924-131232",
+          "lesson": 1,
+          "turn": 1,
+          "createdAt": 1790226752175,
+          "title": "定时器到期，硬件中断把控制权交回内核——不是程序自己停的",
+          "caption": "对应\"谁让它停的\"这一步：程序 A 在 CPU 上执行到定时器期限，硬件发出时钟中断，CPU 停下 A、跳到内核的中断处理程序；内核拿到控制权后再决定继续跑 A 还是换 B。用来纠正\"程序自己决定何时停\"的直觉。",
+          "sceneClass": "TimerInterrupt",
+          "scriptFile": "scene.py",
+          "quality": "l",
+          "gate": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/tools/animation-gate/animation_gate.py",
+          "expectedMs": null,
+          "announcedAt": 1790226776167
+        },
+        "status": {
+          "startedAt": 1790226752205,
+          "runnerPid": 55826,
+          "heartbeatAt": 1790226752205,
+          "manim": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_动画可写性/env/bin/manim",
+          "quality": "l",
+          "state": "ready",
+          "updatedAt": 1790226758608,
+          "renderMs": 1657,
+          "mp4": "L01-T01-20260924-131232.mp4",
+          "bytes": 136005,
+          "durationSec": 9.466667,
+          "exit": 0,
+          "gate": {
+            "ran": true,
+            "exit": 0,
+            "verdict": "PASS",
+            "blockingCount": 0,
+            "blockingKinds": [
+              "D2"
+            ],
+            "humanReviewRequired": true,
+            "summary": "",
+            "verdictFile": "/private/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-ab-b-interrupt-note-gap20s-spoken1/classroom/runtime/animations/L01-T01-20260924-131232/gate/verdict.json"
+          },
+          "finishedAt": 1790226758607
+        },
+        "dir": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-ab-b-interrupt-note-gap20s-spoken1/classroom/runtime/animations/L01-T01-20260924-131232"
+      },
+      {
+        "taskId": "L01-T02-20260924-131347",
+        "task": {
+          "taskId": "L01-T02-20260924-131347",
+          "lesson": 1,
+          "turn": 2,
+          "createdAt": 1790226827107,
+          "title": "被打断之后怎样接上：保存现场 → 恢复现场",
+          "caption": "对应\"接着跑\"这一步：A 在时间轴上执行到中断点，现场被保存；B 执行一段后被中断，此时恢复 A 的现场，A 从上次停下的那条指令继续，而不是从头开始。用来把\"保存/恢复\"落到时间轴上看清楚。",
+          "sceneClass": "ContextSwitch",
+          "scriptFile": "scene.py",
+          "quality": "l",
+          "gate": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/tools/animation-gate/animation_gate.py",
+          "expectedMs": null,
+          "announcedAt": null
+        },
+        "status": {
+          "startedAt": 1790226827149,
+          "runnerPid": 56062,
+          "heartbeatAt": 1790226827149,
+          "manim": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_动画可写性/env/bin/manim",
+          "quality": "l",
+          "state": "ready",
+          "updatedAt": 1790226834981,
+          "renderMs": 1991,
+          "mp4": "L01-T02-20260924-131347.mp4",
+          "bytes": 162603,
+          "durationSec": 11.466667,
+          "exit": 0,
+          "gate": {
+            "ran": true,
+            "exit": 0,
+            "verdict": "PASS",
+            "blockingCount": 0,
+            "blockingKinds": [
+              "D2"
+            ],
+            "humanReviewRequired": true,
+            "summary": "",
+            "verdictFile": "/private/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-ab-b-interrupt-note-gap20s-spoken1/classroom/runtime/animations/L01-T02-20260924-131347/gate/verdict.json"
+          },
+          "finishedAt": 1790226834981
+        },
+        "dir": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-ab-b-interrupt-note-gap20s-spoken1/classroom/runtime/animations/L01-T02-20260924-131347"
+      }
+    ]
+  },
+  "b-interrupt-note": {
+    "key": "b-interrupt-note",
+    "mode": "b",
+    "question": "interrupt",
+    "logFile": "/Users/wujunjie/Library/Application Support/dsh-desktop/harness/sessions/--private-var-folders-df-8fgt_lnd23q_5f3m_51vf4s80000gn-T-animorch-ab-b-interrupt-note-classroom--/session-302c5632-02a7-4e2e-a2be-a0b74ceac08c/session.v3.jsonl.zstd",
+    "wallMs": 109683,
+    "exit": 0,
+    "turns": [
+      {
+        "turn": 1,
+        "startMs": 1790226408352,
+        "firstStudentVisibleTextMs": 66194,
+        "firstStudentVisibleTextChars": 208,
+        "firstStudentVisibleTextHead": "傍晚的编辑部。\n\n装订机停在长桌尽头，电源灯还亮着——不是坏了，是今天的活做完了。靠窗那排档案柜安静地并着。桌上摊着两份稿子：一份压着几张批注，另一份只写了一半，笔搁在旁边。白板上还留着上个月的排期，几行被划掉的字没擦干净，边角泛着灰。桌角",
+        "tools": [
+          {
+            "name": "read",
+            "atMs": 11004,
+            "durationMs": 9,
+            "argHead": "{\"file_path\":\"/private/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-ab-b-inter"
+          },
+          {
+            "name": "read",
+            "atMs": 11006,
+            "durationMs": 9,
+            "argHead": "{\"file_path\":\"/private/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-ab-b-inter"
+          },
+          {
+            "name": "read",
+            "atMs": 11006,
+            "durationMs": 11,
+            "argHead": "{\"file_path\":\"/private/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-ab-b-inter"
+          },
+          {
+            "name": "classroom_status",
+            "atMs": 11017,
+            "durationMs": 3,
+            "argHead": "{}"
+          },
+          {
+            "name": "read",
+            "atMs": 14070,
+            "durationMs": 16,
+            "argHead": "{\"file_path\":\"/private/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-ab-b-inter"
+          },
+          {
+            "name": "read",
+            "atMs": 14071,
+            "durationMs": 17,
+            "argHead": "{\"file_path\":\"/private/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-ab-b-inter"
+          },
+          {
+            "name": "bash",
+            "atMs": 14089,
+            "durationMs": 18,
+            "argHead": "{\"command\":\"tail -n 40 runtime/session_log.md 2>/dev/null || echo \\\"NO_SESSION_LOG\\\"\",\"des"
+          },
+          {
+            "name": "classroom_draw",
+            "atMs": 66202,
+            "durationMs": 1116,
+            "argHead": "{\"kind\":\"flowchart\",\"source\":\"flowchart TD\\n    Q[\\\"一个核心一次只给一个程序执行机会：音乐播放器和浏览器怎样都有机会继续？\\\"]"
+          },
+          {
+            "name": "classroom_animate",
+            "atMs": 67319,
+            "durationMs": 8,
+            "argHead": "{\"title\":\"时钟中断：程序怎样被换下来、又怎样接回去\",\"caption\":\"针对\\\"程序怎么会突然停、谁让它停\\\"：画一条时间轴，A 在用户态直接跑 → 定时器到点、硬件"
+          },
+          {
+            "name": "classroom_set_phase",
+            "atMs": 67328,
+            "durationMs": 6,
+            "argHead": "{\"phase\":\"probe\"}"
+          }
+        ],
+        "injections": [
+          {
+            "form": "classroom-block",
+            "block": "anchor.rules",
+            "atMs": 81,
+            "head": "<system-reminder>\n先弄清学生现在需要什么：澄清题目、补充事实、回应推断、纠正错误、继续探究，还是顺势拓展。只有学生能理解问题且能依据已有信息推理时才追问；提问不是每轮义务。学生说出关键关系后，确认并讲清当前最相关的一段因果链；到新的关口或混淆点再问，不拿刚讲过的事实考他，也不一次讲完整课。\n\n每个问题要有明确对象和判断目标。技术问题直接说出程序、CPU 等真实对象；稿子等道具只辅"
+          },
+          {
+            "form": "classroom-block",
+            "block": "anchor.lesson_ban",
+            "atMs": 81,
+            "head": "<system-reminder>\n- 本讲核心事实**必须以 `materials/ch{NN}.md` 与 OSTEP 原文为准**；**不确定就说不确定，不许编**。\n- 新术语出现时用日常语言解释；必要时可以先给术语和定义。\n- 学生的代码／答案出错时，先指出具体哪一步有问题；若预测实际结果能帮助理解，再让他预测并对照。不要让错误猜想悬着不处理。\n- 学生回答了关键点，不等于已经展示整讲所"
+          },
+          {
+            "form": "classroom-block",
+            "block": "story.arc_gate",
+            "atMs": 81,
+            "head": "<system-reminder>\n# 故事总览 · cs-os（14 讲）\n\n> **用途**：故事节点骨架与情感阶段的总表。**每讲的细节在 `ch{NN}.md`。**\n> **纪律**：本文件是节点说明，**不是可直接输出的叙述**。不得把节点描述当正文念。\n\n---\n\n## 一、她的人物弧（三段）\n\n| 段 | 讲次 | 状态 | 标志 |\n|---|---|---|---|\n| **Ⅰ"
+          },
+          {
+            "form": "classroom-block",
+            "block": "curriculum.map",
+            "atMs": 81,
+            "head": "<system-reminder>\n# 课程表 · 操作系统（cs-os）\n\n> **课程定位**：计算机系硬课，**408 考纲四门之一 + 美式 CS 核心课**。\n> **教材**：`Operating Systems: Three Easy Pieces`（OSTEP，Remzi & Andrea Arpaci-Dusseau，Wisconsin-Madison，v1.10）。\n> 🔴 "
+          },
+          {
+            "form": "classroom-block",
+            "block": "story.node.01",
+            "atMs": 81,
+            "head": "<system-reminder>\n# 第 1 讲故事节点 · 一个程序怎么跑起来\n\n> **格式**：开场与收束提供叙事方向；中段节点是可用素材，是否出现取决于学生的理解与实际进度。角色有弧线，课堂不按故事节点强行赶路。\n> **叙述纪律**：本文件是**节点说明**，不是可直接输出的叙述。**不得把节点描述直接当正文念出来**。\n> **对应正文**：`materials/ch01.md` ｜"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.progress",
+            "atMs": 82,
+            "head": "<system-reminder>\n# 学习进度\n\ncurrent_lesson: 1\n\n<!--\n🔴 上面这一行是**机器可读行**，引擎（classroom.yaml 的 runtime_store.lesson_key）按行找它。\n   语义写死：`current_lesson` = **本轮要讲的讲次**（不是\"已完成的讲次\"）。\n   初始 1（第一节课讲第 1 讲）；**课后更新时改"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.mistakes",
+            "atMs": 82,
+            "head": "<system-reminder>\n# 错题本\n\n> **字段固定**：日期 / 讲次 / 题目 / 他的答案 / 正确答案 / **他错在哪一步**。\n> 🔴 **最后一项最重要**：不写\"错了\"，要写**哪一步**开始偏的。这一步才是复习的靶子。\n\n| 日期 | 讲次 | 题目 | 他的答案 | 正确答案 | **错在哪一步** |\n|---|---|---|---|---|---|\n| （"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.review",
+            "atMs": 82,
+            "head": "<system-reminder>\n# 间隔复习队列\n\n> **每课更新。** 复习间隔：次日 / 3 天 / 7 天 / 21 天（见 `system_core.md` 复习系统规则）。\n> **课前必查**：今天日期是否 ≥ 任意一行的\"下次复习日期\"。是 → 本节课开头先做复习。\n\n| 知识点 | 讲次 | 掌握档 | 第 1 次 | 第 2 次 | 第 3 次 | 第 4 次 | 下次复习"
+          }
+        ],
+        "endMs": 71728,
+        "endReason": "completed"
+      },
+      {
+        "turn": 2,
+        "startMs": 1790226480081,
+        "firstStudentVisibleTextMs": 28371,
+        "firstStudentVisibleTextChars": 77,
+        "firstStudentVisibleTextHead": "她没有立刻回答。她伸手把白板往桌子中间拉了一点——那块板有点涩，滑轨响了一声。\n\n\"……这个问题，\"她小声说，\"正好接在刚才那条链的后面。\"\n\n她拿起笔。",
+        "tools": [
+          {
+            "name": "classroom_draw",
+            "atMs": 28372,
+            "durationMs": 17,
+            "argHead": "{\"caption\":\"回答\\\"下次怎么接着跑\\\"：进程 = 程序文件的一次执行 + 一整套执行状态；切走时把状态存进内核里属于它的结构，换回来时装回 CPU。要防的混淆是\\\"指令"
+          },
+          {
+            "name": "classroom_animation_status",
+            "atMs": 28389,
+            "durationMs": 6,
+            "argHead": "{}"
+          }
+        ],
+        "injections": [
+          {
+            "form": "classroom-block",
+            "block": "anchor.rules",
+            "atMs": 12,
+            "head": "<system-reminder>\n先弄清学生现在需要什么：澄清题目、补充事实、回应推断、纠正错误、继续探究，还是顺势拓展。只有学生能理解问题且能依据已有信息推理时才追问；提问不是每轮义务。学生说出关键关系后，确认并讲清当前最相关的一段因果链；到新的关口或混淆点再问，不拿刚讲过的事实考他，也不一次讲完整课。\n\n每个问题要有明确对象和判断目标。技术问题直接说出程序、CPU 等真实对象；稿子等道具只辅"
+          },
+          {
+            "form": "classroom-block",
+            "block": "anchor.lesson_ban",
+            "atMs": 12,
+            "head": "<system-reminder>\n- 本讲核心事实**必须以 `materials/ch{NN}.md` 与 OSTEP 原文为准**；**不确定就说不确定，不许编**。\n- 新术语出现时用日常语言解释；必要时可以先给术语和定义。\n- 学生的代码／答案出错时，先指出具体哪一步有问题；若预测实际结果能帮助理解，再让他预测并对照。不要让错误猜想悬着不处理。\n- 学生回答了关键点，不等于已经展示整讲所"
+          },
+          {
+            "form": "classroom-block",
+            "block": "material.current.01",
+            "atMs": 12,
+            "head": "<system-reminder>\n# 第 1 讲正文 · 一个程序怎么跑起来\n\n> 🔴 **本文件是自写教学材料**，**不是 OSTEP 原文的副本**。\n> OSTEP 官方章节（**只链不搬**，官网明文 *\"please just link to them directly (instead of making a copy locally)\"*）：\n> [ch2 Introducti"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.progress",
+            "atMs": 12,
+            "head": "<system-reminder>\n# 学习进度\n\ncurrent_lesson: 1\n\n<!--\n🔴 上面这一行是**机器可读行**，引擎（classroom.yaml 的 runtime_store.lesson_key）按行找它。\n   语义写死：`current_lesson` = **本轮要讲的讲次**（不是\"已完成的讲次\"）。\n   初始 1（第一节课讲第 1 讲）；**课后更新时改"
+          }
+        ],
+        "endMs": 36667,
+        "endReason": "completed"
+      }
+    ],
+    "animations": [
+      {
+        "taskId": "L01-T01-20260924-130755",
+        "task": {
+          "taskId": "L01-T01-20260924-130755",
+          "lesson": 1,
+          "turn": 1,
+          "createdAt": 1790226475677,
+          "title": "时钟中断：程序怎样被换下来、又怎样接回去",
+          "caption": "针对\"程序怎么会突然停、谁让它停\"：画一条时间轴，A 在用户态直接跑 → 定时器到点、硬件中断 → 内核保存 A 的状态、恢复 B 的状态 → B 接着跑。要让学生看见\"停下来\"不是程序自己决定，也不是运行结束。",
+          "sceneClass": "TimerInterrupt",
+          "scriptFile": "scene.py",
+          "quality": "l",
+          "gate": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/tools/animation-gate/animation_gate.py",
+          "expectedMs": null,
+          "announcedAt": null
+        },
+        "status": {
+          "startedAt": 1790226475720,
+          "runnerPid": 54206,
+          "heartbeatAt": 1790226485726,
+          "manim": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_动画可写性/env/bin/manim",
+          "quality": "l",
+          "state": "ready",
+          "updatedAt": 1790226486292,
+          "renderMs": 2065,
+          "mp4": "L01-T01-20260924-130755.mp4",
+          "bytes": 270803,
+          "durationSec": 15.733008,
+          "exit": 0,
+          "gate": {
+            "ran": true,
+            "exit": 0,
+            "verdict": "PASS",
+            "blockingCount": 0,
+            "blockingKinds": [
+              "D2"
+            ],
+            "humanReviewRequired": true,
+            "summary": "",
+            "verdictFile": "/private/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-ab-b-interrupt-note/classroom/runtime/animations/L01-T01-20260924-130755/gate/verdict.json"
+          },
+          "finishedAt": 1790226486292
+        },
+        "dir": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-ab-b-interrupt-note/classroom/runtime/animations/L01-T01-20260924-130755"
+      }
+    ]
+  },
+  "b-interrupt": {
+    "key": "b-interrupt",
+    "mode": "b",
+    "question": "interrupt",
+    "logFile": "/Users/wujunjie/Library/Application Support/dsh-desktop/harness/sessions/--private-var-folders-df-8fgt_lnd23q_5f3m_51vf4s80000gn-T-animorch-ab-b-interrupt-classroom--/session-ef1d5323-8a98-40af-9953-8a3630b39d0c/session.v3.jsonl.zstd",
+    "wallMs": 98358,
+    "exit": 0,
+    "turns": [
+      {
+        "turn": 1,
+        "startMs": 1790226278541,
+        "firstStudentVisibleTextMs": 53828,
+        "firstStudentVisibleTextChars": 239,
+        "firstStudentVisibleTextHead": "傍晚的编辑部只剩一盏台灯亮着。装订机停在墙角——不是坏了，是今天要装订的都装完了；它一停，屋子里就只剩翻纸的声音，和抽屉滑轨偶尔拖出的一声。长桌上摊着两份稿子：一份压着别人的批注，边角卷了起来；另一份只写了一半，后半页还空着。白板立在她手边",
+        "tools": [
+          {
+            "name": "bash",
+            "atMs": 4246,
+            "durationMs": 24,
+            "argHead": "{\"command\":\"ls -la; echo ---; ls runtime/\",\"description\":\"List classroom files\"}"
+          },
+          {
+            "name": "classroom_status",
+            "atMs": 4271,
+            "durationMs": 4,
+            "argHead": "{}"
+          },
+          {
+            "name": "read",
+            "atMs": 7237,
+            "durationMs": 9,
+            "argHead": "{\"file_path\":\"_anchor.md\"}"
+          },
+          {
+            "name": "read",
+            "atMs": 7238,
+            "durationMs": 11,
+            "argHead": "{\"file_path\":\"characters/komari.md\"}"
+          },
+          {
+            "name": "read",
+            "atMs": 7238,
+            "durationMs": 12,
+            "argHead": "{\"file_path\":\"materials/ch01.md\"}"
+          },
+          {
+            "name": "read",
+            "atMs": 7238,
+            "durationMs": 12,
+            "argHead": "{\"file_path\":\"runtime/learner_profile.md\"}"
+          },
+          {
+            "name": "bash",
+            "atMs": 10041,
+            "durationMs": 21,
+            "argHead": "{\"command\":\"tail -c 2000 runtime/session_log.md; echo \\\"=== wc ===\\\"; wc -l runtime/sessio"
+          },
+          {
+            "name": "read",
+            "atMs": 10063,
+            "durationMs": 5,
+            "argHead": "{\"file_path\":\"knowledge_points.md\",\"limit\":40}"
+          },
+          {
+            "name": "classroom_draw",
+            "atMs": 53831,
+            "durationMs": 1186,
+            "argHead": "{\"kind\":\"flowchart\",\"source\":\"flowchart TD\\n    Q[\\\"学生问：一个程序正在跑，怎么就突然停下来了？谁让它停的？\\\"] --> M["
+          },
+          {
+            "name": "classroom_set_phase",
+            "atMs": 55018,
+            "durationMs": 8,
+            "argHead": "{\"phase\":\"probe\"}"
+          },
+          {
+            "name": "classroom_draw",
+            "atMs": 58599,
+            "durationMs": 13,
+            "argHead": "{\"caption\":\"回答\\\"谁让它停的\\\"：程序离开执行位置的两条路。第一条是自愿的（系统调用／等待输入输出／执行结束），第二条留成问号，作为下一个推理关口。\",\"kind\":"
+          }
+        ],
+        "injections": [
+          {
+            "form": "classroom-block",
+            "block": "anchor.rules",
+            "atMs": 89,
+            "head": "<system-reminder>\n先弄清学生现在需要什么：澄清题目、补充事实、回应推断、纠正错误、继续探究，还是顺势拓展。只有学生能理解问题且能依据已有信息推理时才追问；提问不是每轮义务。学生说出关键关系后，确认并讲清当前最相关的一段因果链；到新的关口或混淆点再问，不拿刚讲过的事实考他，也不一次讲完整课。\n\n每个问题要有明确对象和判断目标。技术问题直接说出程序、CPU 等真实对象；稿子等道具只辅"
+          },
+          {
+            "form": "classroom-block",
+            "block": "anchor.lesson_ban",
+            "atMs": 89,
+            "head": "<system-reminder>\n- 本讲核心事实**必须以 `materials/ch{NN}.md` 与 OSTEP 原文为准**；**不确定就说不确定，不许编**。\n- 新术语出现时用日常语言解释；必要时可以先给术语和定义。\n- 学生的代码／答案出错时，先指出具体哪一步有问题；若预测实际结果能帮助理解，再让他预测并对照。不要让错误猜想悬着不处理。\n- 学生回答了关键点，不等于已经展示整讲所"
+          },
+          {
+            "form": "classroom-block",
+            "block": "story.arc_gate",
+            "atMs": 89,
+            "head": "<system-reminder>\n# 故事总览 · cs-os（14 讲）\n\n> **用途**：故事节点骨架与情感阶段的总表。**每讲的细节在 `ch{NN}.md`。**\n> **纪律**：本文件是节点说明，**不是可直接输出的叙述**。不得把节点描述当正文念。\n\n---\n\n## 一、她的人物弧（三段）\n\n| 段 | 讲次 | 状态 | 标志 |\n|---|---|---|---|\n| **Ⅰ"
+          },
+          {
+            "form": "classroom-block",
+            "block": "curriculum.map",
+            "atMs": 89,
+            "head": "<system-reminder>\n# 课程表 · 操作系统（cs-os）\n\n> **课程定位**：计算机系硬课，**408 考纲四门之一 + 美式 CS 核心课**。\n> **教材**：`Operating Systems: Three Easy Pieces`（OSTEP，Remzi & Andrea Arpaci-Dusseau，Wisconsin-Madison，v1.10）。\n> 🔴 "
+          },
+          {
+            "form": "classroom-block",
+            "block": "story.node.01",
+            "atMs": 89,
+            "head": "<system-reminder>\n# 第 1 讲故事节点 · 一个程序怎么跑起来\n\n> **格式**：开场与收束提供叙事方向；中段节点是可用素材，是否出现取决于学生的理解与实际进度。角色有弧线，课堂不按故事节点强行赶路。\n> **叙述纪律**：本文件是**节点说明**，不是可直接输出的叙述。**不得把节点描述直接当正文念出来**。\n> **对应正文**：`materials/ch01.md` ｜"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.progress",
+            "atMs": 89,
+            "head": "<system-reminder>\n# 学习进度\n\ncurrent_lesson: 1\n\n<!--\n🔴 上面这一行是**机器可读行**，引擎（classroom.yaml 的 runtime_store.lesson_key）按行找它。\n   语义写死：`current_lesson` = **本轮要讲的讲次**（不是\"已完成的讲次\"）。\n   初始 1（第一节课讲第 1 讲）；**课后更新时改"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.mistakes",
+            "atMs": 89,
+            "head": "<system-reminder>\n# 错题本\n\n> **字段固定**：日期 / 讲次 / 题目 / 他的答案 / 正确答案 / **他错在哪一步**。\n> 🔴 **最后一项最重要**：不写\"错了\"，要写**哪一步**开始偏的。这一步才是复习的靶子。\n\n| 日期 | 讲次 | 题目 | 他的答案 | 正确答案 | **错在哪一步** |\n|---|---|---|---|---|---|\n| （"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.review",
+            "atMs": 89,
+            "head": "<system-reminder>\n# 间隔复习队列\n\n> **每课更新。** 复习间隔：次日 / 3 天 / 7 天 / 21 天（见 `system_core.md` 复习系统规则）。\n> **课前必查**：今天日期是否 ≥ 任意一行的\"下次复习日期\"。是 → 本节课开头先做复习。\n\n| 知识点 | 讲次 | 掌握档 | 第 1 次 | 第 2 次 | 第 3 次 | 第 4 次 | 下次复习"
+          }
+        ],
+        "endMs": 61795,
+        "endReason": "completed"
+      },
+      {
+        "turn": 2,
+        "startMs": 1790226340337,
+        "firstStudentVisibleTextMs": 28593,
+        "firstStudentVisibleTextChars": 109,
+        "firstStudentVisibleTextHead": "她等了一会儿。笔尖还停在那两行下面，没动。见学生没接，她把笔帽在板槽边上磕了一下，声音很轻。\n\n「……你没填那个空。」她小声说，没等回答，又转回白板，「不过你问的这个，正好是它的后半截。」\n\n她抬手，把那个问号补完了。",
+        "tools": [
+          {
+            "name": "classroom_draw",
+            "atMs": 28595,
+            "durationMs": 16,
+            "argHead": "{\"caption\":\"把上一张图留的空补上：内核不靠程序自觉，靠硬件定时器到点打断，从而重新取得控制权。这是\\\"程序能停\\\"的强制那条路。\",\"kind\":\"flowchart\""
+          },
+          {
+            "name": "classroom_set_phase",
+            "atMs": 28612,
+            "durationMs": 6,
+            "argHead": "{\"phase\":\"check\"}"
+          },
+          {
+            "name": "classroom_draw",
+            "atMs": 32219,
+            "durationMs": 32,
+            "argHead": "{\"caption\":\"回答\\\"下次怎么接着跑\\\"：上下文切换的核心是保存执行状态再恢复。三个框是执行状态的最小内容，用来区分\\\"代码还在内存里\\\"和\\\"知道自己算到哪了\\\"。\","
+          }
+        ],
+        "injections": [
+          {
+            "form": "classroom-block",
+            "block": "anchor.rules",
+            "atMs": 15,
+            "head": "<system-reminder>\n先弄清学生现在需要什么：澄清题目、补充事实、回应推断、纠正错误、继续探究，还是顺势拓展。只有学生能理解问题且能依据已有信息推理时才追问；提问不是每轮义务。学生说出关键关系后，确认并讲清当前最相关的一段因果链；到新的关口或混淆点再问，不拿刚讲过的事实考他，也不一次讲完整课。\n\n每个问题要有明确对象和判断目标。技术问题直接说出程序、CPU 等真实对象；稿子等道具只辅"
+          },
+          {
+            "form": "classroom-block",
+            "block": "anchor.lesson_ban",
+            "atMs": 16,
+            "head": "<system-reminder>\n- 本讲核心事实**必须以 `materials/ch{NN}.md` 与 OSTEP 原文为准**；**不确定就说不确定，不许编**。\n- 新术语出现时用日常语言解释；必要时可以先给术语和定义。\n- 学生的代码／答案出错时，先指出具体哪一步有问题；若预测实际结果能帮助理解，再让他预测并对照。不要让错误猜想悬着不处理。\n- 学生回答了关键点，不等于已经展示整讲所"
+          },
+          {
+            "form": "classroom-block",
+            "block": "material.current.01",
+            "atMs": 16,
+            "head": "<system-reminder>\n# 第 1 讲正文 · 一个程序怎么跑起来\n\n> 🔴 **本文件是自写教学材料**，**不是 OSTEP 原文的副本**。\n> OSTEP 官方章节（**只链不搬**，官网明文 *\"please just link to them directly (instead of making a copy locally)\"*）：\n> [ch2 Introducti"
+          },
+          {
+            "form": "classroom-block",
+            "block": "state.progress",
+            "atMs": 16,
+            "head": "<system-reminder>\n# 学习进度\n\ncurrent_lesson: 1\n\n<!--\n🔴 上面这一行是**机器可读行**，引擎（classroom.yaml 的 runtime_store.lesson_key）按行找它。\n   语义写死：`current_lesson` = **本轮要讲的讲次**（不是\"已完成的讲次\"）。\n   初始 1（第一节课讲第 1 讲）；**课后更新时改"
+          }
+        ],
+        "endMs": 35621,
+        "endReason": "completed"
+      }
+    ],
+    "animations": []
+  }
+}

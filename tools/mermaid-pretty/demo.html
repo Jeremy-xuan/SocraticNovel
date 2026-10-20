@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>mermaid-pretty · 默认 vs Claude 风（候选 A/B/C）</title>
+<style>
+  :root {
+    --paper:#F0EEE6; --card:#FAF9F5; --ink:#262624; --ink-2:#6B6862;
+    --line:#E3DFD4; --line-2:#D9D4C8; --accent:#D97757;
+  }
+  * { box-sizing: border-box; }
+  html,body { margin:0; background:var(--paper); color:var(--ink);
+    font: 15px/1.55 "Styrene B", ui-sans-serif, -apple-system, "Segoe UI", "PingFang SC", sans-serif; }
+  header { padding:22px 28px 14px; display:flex; align-items:baseline; gap:18px; flex-wrap:wrap; }
+  h1 { font-size:17px; font-weight:400; margin:0; letter-spacing:.01em; }
+  .sub { color:var(--ink-2); font-size:13px; }
+  .bar { padding:0 28px 16px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  button, select {
+    font:inherit; font-size:13px; color:var(--ink); background:var(--card);
+    border:1px solid var(--line-2); border-radius:999px; padding:7px 14px; cursor:pointer;
+  }
+  button[aria-pressed="true"] { background:var(--ink); color:var(--card); border-color:var(--ink); }
+  select { border-radius:10px; }
+  main { padding:0 28px 40px; display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  @media (max-width:1000px){ main { grid-template-columns:1fr; } }
+  .panel { background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden;
+           display:flex; flex-direction:column; min-height:280px; }
+  .panel > h2 { font-size:13px; font-weight:400; color:var(--ink-2); margin:0;
+                padding:12px 16px; border-bottom:1px solid var(--line); letter-spacing:.02em; }
+  .stage { padding:18px; display:flex; align-items:center; justify-content:center;
+           flex:1; min-height:220px; overflow:auto; }
+  .stage svg { max-width:100%; height:auto; }
+  .meta { padding:8px 16px 12px; border-top:1px solid var(--line);
+          font:12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color:var(--ink-2); }
+  pre { margin:0; padding:0 16px 14px; font:12px/1.5 ui-monospace, Menlo, monospace;
+        color:var(--ink-2); white-space:pre-wrap; }
+  .warn { margin:0 28px 18px; padding:12px 16px; background:#F7F1E4; border:1px solid var(--line-2);
+          border-radius:10px; font-size:13px; color:var(--ink); display:none; }
+  .badge { font-size:11px; color:var(--ink-2); border:1px solid var(--line-2);
+           border-radius:999px; padding:2px 8px; margin-left:6px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>mermaid-pretty · 同一条源码，左边 mermaid 默认，右边「Claude 风」</h1>
+  <span class="sub">mermaid 11.17.2（用仓库里那份产物）</span>
+</header>
+
+<div class="bar">
+  <span class="sub">右栏模式：</span>
+  <button id="mA" aria-pressed="true">候选 A · 只换主题</button>
+  <button id="mB" aria-pressed="false">候选 B · 主题＋逐层长出</button>
+  <button id="mC" aria-pressed="false">候选 C · 按源码边长出来</button>
+  <span class="sub" style="margin-left:10px">源码：</span>
+  <select id="pick">
+    <option value="flow">流程图</option>
+    <option value="seq">时序图</option>
+    <option value="state">状态图</option>
+    <option value="big">大图（20 节点，测性能）</option>
+  </select>
+  <button id="replay">重播</button>
+</div>
+
+<div class="warn" id="warn"></div>
+
+<main>
+  <section class="panel">
+    <h2>① mermaid 默认（theme: default）</h2>
+    <div class="stage" id="stageDefault"></div>
+    <div class="meta" id="metaDefault"></div>
+    <pre id="srcDefault"></pre>
+  </section>
+  <section class="panel">
+    <h2>② Claude 风 <span class="badge" id="badge">候选 A</span></h2>
+    <div class="stage" id="stageClaude"></div>
+    <div class="meta" id="metaClaude"></div>
+    <pre id="srcClaude"></pre>
+  </section>
+</main>
+
+<script type="module">
+const SOURCES = {
+  flow: `flowchart TD
+    A[开始上课] --> B{学生答得上来吗}
+    B -->|答得上来| C[顺势推进下一问]
+    B -->|答不上来| D[换一个更小的问法]
+    D --> E[给一个具体例子]
+    E --> B
+    C --> F[记一条课后更新]
+    F --> G[下课]`,
+  seq: `sequenceDiagram
+    participant S as 学生
+    participant T as 老师
+    participant B as 板书
+    S->>T: 我不懂这里
+    T->>S: 那你先说说是哪一步卡住
+    S->>T: 是这一步的代换
+    T->>B: 画一张图
+    B-->>S: 图出现在消息流里
+    T->>S: 现在再看这一步`,
+  state: `stateDiagram-v2
+    [*] --> 待开课
+    待开课 --> 讲课中: 学生说开始
+    讲课中 --> 追问中: 老师提问
+    追问中 --> 讲课中: 学生答对
+    追问中 --> 换问法: 学生卡住
+    换问法 --> 讲课中: 重新推进
+    讲课中 --> [*]: 学生说今天到这`,
+  big: `flowchart TD
+    N0[节点 0] --> N1[节点 1]
+    N0 --> N2[节点 2]
+    N1 --> N3[节点 3]
+    N1 --> N4[节点 4]
+    N2 --> N5[节点 5]
+    N2 --> N6[节点 6]
+    N3 --> N7[节点 7]
+    N4 --> N7
+    N5 --> N8[节点 8]
+    N6 --> N8
+    N7 --> N9[节点 9]
+    N8 --> N9
+    N9 --> N10[节点 10]
+    N9 --> N11[节点 11]
+    N10 --> N12[节点 12]
+    N11 --> N12
+    N12 --> N13[节点 13]
+    N12 --> N14[节点 14]
+    N13 --> N15[节点 15]
+    N14 --> N15
+    N15 --> N16[节点 16]
+    N16 --> N17[节点 17]
+    N17 --> N18[节点 18]
+    N18 --> N19[节点 19]`,
+};
+
+const stageDefault = document.getElementById('stageDefault');
+const stageClaude  = document.getElementById('stageClaude');
+const metaDefault  = document.getElementById('metaDefault');
+const metaClaude   = document.getElementById('metaClaude');
+const warn         = document.getElementById('warn');
+const badge        = document.getElementById('badge');
+
+let mode = 'A';
+let current = 'flow';
+let controllers = [];
+let busy = false;
+
+function fail(msg) {
+  warn.style.display = 'block';
+  warn.textContent = msg;
+}
+
+// mermaid 走仓库里那份 IIFE 产物（当经典脚本执行后挂 globalThis.mermaid），
+// 与我们客户端 classroom-ui 用的是同一个文件、同一个 sha256。
+const MERMAID_SRC = '../../clients/classroom-ui/vendor/mermaid-11.17.2/mermaid.min.js';
+
+function loadClassic(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = res;
+    s.onerror = () => rej(new Error('加载 mermaid 失败：' + src));
+    document.head.appendChild(s);
+  });
+}
+
+await loadClassic(MERMAID_SRC);
+const { claudeMermaidConfig } = await import('./claude-mermaid-theme.mjs');
+const { animateStagger, streamRender } = await import('./claude-mermaid-anim.mjs');
+
+let seq = 0;
+async function renderInto(stage, source, config) {
+  const m = globalThis.mermaid;
+  m.initialize(config);
+  const id = 'd' + (seq++);
+  const t0 = performance.now();
+  const out = await m.render(id, source, undefined);
+  const ms = performance.now() - t0;
+  stage.innerHTML = out.svg;
+  return { ms, svg: stage.querySelector('svg') };
+}
+
+function cancelAll() {
+  for (const c of controllers) { try { c.cancel && c.cancel(); } catch {} }
+  controllers = [];
+}
+
+async function run() {
+  if (busy) return;
+  busy = true;
+  cancelAll();
+  const src = SOURCES[current];
+  document.getElementById('srcDefault').textContent = src;
+  document.getElementById('srcClaude').textContent = src;
+
+  // ① 默认
+  const a = await renderInto(stageDefault, src, { startOnLoad: false, securityLevel: 'loose', theme: 'default' });
+  metaDefault.textContent = `mermaid.render() ${a.ms.toFixed(1)} ms · theme: default`;
+
+  // ② Claude 风
+  const cfg = claudeMermaidConfig();
+  if (mode === 'C') {
+    stageClaude.innerHTML = '';
+    const t0 = performance.now();
+    const r = await streamRender(stageClaude, src, globalThis.mermaid, { interval: 120 });
+    metaClaude.textContent =
+      `增量重渲染 ${r.renders} 次 · 共 ${r.ms.toFixed(0)} ms · 间隔 120 ms · 节点 ${stageClaude.querySelectorAll('g.node').length}`;
+  } else {
+    const b = await renderInto(stageClaude, src, cfg);
+    let note = `mermaid.render() ${b.ms.toFixed(1)} ms · theme: base + Claude 变量`;
+    if (mode === 'B') {
+      const ctrl = animateStagger(b.svg, { kind: src.split('\n')[0] });
+      controllers.push(ctrl);
+      note += ` · 动画 ${ctrl.total.toFixed(0)} ms · ${ctrl.layers} 步（原始 ${ctrl.rawLayers} 层）/ ${ctrl.units} 单元 / ${ctrl.edges} 连线`;
+      ctrl.play();
+    }
+    metaClaude.textContent = note;
+  }
+  badge.textContent = '候选 ' + mode;
+  busy = false;
+}
+
+for (const [id, m] of [['mA','A'],['mB','B'],['mC','C']]) {
+  document.getElementById(id).addEventListener('click', () => {
+    mode = m;
+    for (const k of ['mA','mB','mC']) {
+      document.getElementById(k).setAttribute('aria-pressed', String(k === id));
+    }
+    run();
+  });
+}
+document.getElementById('pick').addEventListener('change', (e) => { current = e.target.value; run(); });
+document.getElementById('replay').addEventListener('click', run);
+
+// 供 Playwright 脚本调用
+globalThis.__demo = { run, setMode: (m) => { mode = m; return run(); }, setSource: (k) => { current = k; return run(); }, SOURCES };
+try { await run(); } catch (e) { fail('演示页出错：' + e.message); }
+globalThis.__demoReady = true;
+</script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+  [patch] ✅ TransparentVAEDecoder.estimate_augmented：stack+median(5维) → result[0]（恒等，len(result)==1 已断言）

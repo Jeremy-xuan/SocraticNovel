@@ -1,0 +1,509 @@
+{
+  "generatedAt": "2026-09-24T05:55:50.748Z",
+  "groups": [
+    {
+      "mode": "scratch",
+      "file": "ab-template-scratch.json",
+      "target": "write",
+      "label": "A（从零写脚本，未给数字）",
+      "rows": [
+        {
+          "run": 1,
+          "mode": "scratch",
+          "ms_model": 41005,
+          "ms_end_to_end": 68988,
+          "targetStepIndex": 1,
+          "targetStepGenMs": 10074,
+          "targetArgChars": null,
+          "steps": 5,
+          "stepsDetail": [
+            {
+              "step": 1,
+              "startMs": 388,
+              "genMs": 30449,
+              "tools": [
+                "read",
+                "read"
+              ],
+              "msgChars": 103327
+            },
+            {
+              "step": 2,
+              "startMs": 30927,
+              "genMs": 10074,
+              "tools": [
+                "write"
+              ],
+              "msgChars": 36059
+            },
+            {
+              "step": 3,
+              "startMs": 41063,
+              "genMs": 2646,
+              "tools": [
+                "bash"
+              ],
+              "msgChars": 4173
+            },
+            {
+              "step": 4,
+              "startMs": 44091,
+              "genMs": 6313,
+              "tools": [
+                "classroom_set_phase"
+              ],
+              "msgChars": 14453
+            },
+            {
+              "step": 5,
+              "startMs": 50443,
+              "genMs": 4259,
+              "tools": [],
+              "msgChars": 9644
+            }
+          ],
+          "totalStepGenMs": 53741,
+          "ready": true,
+          "scriptChars": 4956
+        },
+        {
+          "run": 2,
+          "mode": "scratch",
+          "ms_model": 34953,
+          "ms_end_to_end": 58310,
+          "targetStepIndex": 1,
+          "targetStepGenMs": 18064,
+          "targetArgChars": null,
+          "steps": 9,
+          "stepsDetail": [
+            {
+              "step": 1,
+              "startMs": 501,
+              "genMs": 9706,
+              "tools": [
+                "read",
+                "read",
+                "bash"
+              ],
+              "msgChars": 25847
+            },
+            {
+              "step": 2,
+              "startMs": 16886,
+              "genMs": 18064,
+              "tools": [
+                "write"
+              ],
+              "msgChars": 56980
+            },
+            {
+              "step": 3,
+              "startMs": 35061,
+              "genMs": 3753,
+              "tools": [
+                "bash"
+              ],
+              "msgChars": 6489
+            },
+            {
+              "step": 4,
+              "startMs": 39039,
+              "genMs": 2552,
+              "tools": [
+                "job_output"
+              ],
+              "msgChars": 2487
+            },
+            {
+              "step": 5,
+              "startMs": 41770,
+              "genMs": 2604,
+              "tools": [
+                "bash"
+              ],
+              "msgChars": 3549
+            },
+            {
+              "step": 6,
+              "startMs": 44427,
+              "genMs": 2524,
+              "tools": [
+                "job_output"
+              ],
+              "msgChars": 1862
+            },
+            {
+              "step": 7,
+              "startMs": 55426,
+              "genMs": 3093,
+              "tools": [
+                "bash"
+              ],
+              "msgChars": 4732
+            },
+            {
+              "step": 8,
+              "startMs": 59019,
+              "genMs": 2548,
+              "tools": [
+                "read_image",
+                "read_image"
+              ],
+              "msgChars": 2444
+            },
+            {
+              "step": 9,
+              "startMs": 61785,
+              "genMs": 7201,
+              "tools": [],
+              "msgChars": 15941
+            }
+          ],
+          "totalStepGenMs": 52045,
+          "ready": true,
+          "scriptChars": 3875
+        }
+      ]
+    },
+    {
+      "mode": "scratch2",
+      "file": "ab-template-scratch2.json",
+      "target": "write",
+      "label": "A′（从零写脚本，给了数字）",
+      "rows": [
+        {
+          "run": 1,
+          "mode": "scratch2",
+          "ms_model": 25103,
+          "ms_end_to_end": 58110,
+          "targetStepIndex": 1,
+          "targetStepGenMs": 18508,
+          "targetArgChars": 3959,
+          "steps": 18,
+          "stepsDetail": [
+            {
+              "step": 1,
+              "startMs": 573,
+              "genMs": 5901,
+              "tools": [
+                "bash",
+                "read"
+              ],
+              "msgChars": 14989
+            },
+            {
+              "step": 2,
+              "startMs": 6592,
+              "genMs": 18508,
+              "tools": [
+                "write"
+              ],
+              "msgChars": 60733
+            },
+            {
+              "step": 3,
+              "startMs": 25165,
+              "genMs": 2995,
+              "tools": [
+                "bash"
+              ],
+              "msgChars": 5614
+            },
+            {
+              "step": 4,
+              "startMs": 28309,
+              "genMs": 3359,
+              "tools": [
+                "edit"
+              ],
+              "msgChars": 6919
+            },
+            {
+              "step": 5,
+              "startMs": 31711,
+              "genMs": 2660,
+              "tools": [
+                "bash"
+              ],
+              "msgChars": 5071
+            },
+            {
+              "step": 6,
+              "startMs": 38448,
+              "genMs": 4036,
+              "tools": [
+                "bash"
+              ],
+              "msgChars": 6824
+            },
+            {
+              "step": 7,
+              "startMs": 42544,
+              "genMs": 2794,
+              "tools": [
+                "job_output"
+              ],
+              "msgChars": 3042
+            },
+            {
+              "step": 8,
+              "startMs": 45386,
+              "genMs": 2494,
+              "tools": [
+                "bash"
+              ],
+              "msgChars": 3967
+            },
+            {
+              "step": 9,
+              "startMs": 47936,
+              "genMs": 2452,
+              "tools": [
+                "job_output"
+              ],
+              "msgChars": 1863
+            },
+            {
+              "step": 10,
+              "startMs": 57672,
+              "genMs": 3605,
+              "tools": [
+                "bash"
+              ],
+              "msgChars": 6175
+            },
+            {
+              "step": 11,
+              "startMs": 61439,
+              "genMs": 2521,
+              "tools": [
+                "bash"
+              ],
+              "msgChars": 2467
+            },
+            {
+              "step": 12,
+              "startMs": 65882,
+              "genMs": 2362,
+              "tools": [
+                "bash"
+              ],
+              "msgChars": 3084
+            },
+            {
+              "step": 13,
+              "startMs": 68522,
+              "genMs": 1745,
+              "tools": [
+                "read_image"
+              ],
+              "msgChars": 1736
+            },
+            {
+              "step": 14,
+              "startMs": 70349,
+              "genMs": 11335,
+              "tools": [
+                "write"
+              ],
+              "msgChars": 38904
+            },
+            {
+              "step": 15,
+              "startMs": 81734,
+              "genMs": 2873,
+              "tools": [
+                "bash"
+              ],
+              "msgChars": 4326
+            },
+            {
+              "step": 16,
+              "startMs": 84628,
+              "genMs": 2999,
+              "tools": [
+                "job_output"
+              ],
+              "msgChars": 1863
+            },
+            {
+              "step": 17,
+              "startMs": 91275,
+              "genMs": 2806,
+              "tools": [
+                "read_image"
+              ],
+              "msgChars": 1744
+            },
+            {
+              "step": 18,
+              "startMs": 94132,
+              "genMs": 4786,
+              "tools": [],
+              "msgChars": 9929
+            }
+          ],
+          "totalStepGenMs": 80231,
+          "ready": true,
+          "scriptChars": 3813
+        },
+        {
+          "run": 2,
+          "mode": "scratch2",
+          "ms_model": 36367,
+          "ms_end_to_end": 62602,
+          "targetStepIndex": 1,
+          "targetStepGenMs": 6534,
+          "targetArgChars": 4293,
+          "steps": 6,
+          "stepsDetail": [
+            {
+              "step": 1,
+              "startMs": 749,
+              "genMs": 28951,
+              "tools": [
+                "bash"
+              ],
+              "msgChars": 94988
+            },
+            {
+              "step": 2,
+              "startMs": 29830,
+              "genMs": 6534,
+              "tools": [
+                "write"
+              ],
+              "msgChars": 23527
+            },
+            {
+              "step": 3,
+              "startMs": 36417,
+              "genMs": 2755,
+              "tools": [
+                "bash"
+              ],
+              "msgChars": 4248
+            },
+            {
+              "step": 4,
+              "startMs": 39358,
+              "genMs": 3106,
+              "tools": [
+                "bash"
+              ],
+              "msgChars": 5660
+            },
+            {
+              "step": 5,
+              "startMs": 42542,
+              "genMs": 3378,
+              "tools": [
+                "bash"
+              ],
+              "msgChars": 6058
+            },
+            {
+              "step": 6,
+              "startMs": 46004,
+              "genMs": 3517,
+              "tools": [],
+              "msgChars": 4832
+            }
+          ],
+          "totalStepGenMs": 48241,
+          "ready": true,
+          "scriptChars": 4022
+        }
+      ]
+    },
+    {
+      "mode": "template",
+      "file": "ab-template-template.json",
+      "target": "classroom_animate_template",
+      "label": "B（填模板参数）",
+      "rows": [
+        {
+          "run": 1,
+          "mode": "template",
+          "ms_model": 9983,
+          "ms_end_to_end": 16657,
+          "targetStepIndex": 0,
+          "targetStepGenMs": 9814,
+          "targetArgChars": 655,
+          "steps": 3,
+          "stepsDetail": [
+            {
+              "step": 1,
+              "startMs": 167,
+              "genMs": 9814,
+              "tools": [
+                "classroom_animate_template"
+              ],
+              "msgChars": 24044
+            },
+            {
+              "step": 2,
+              "startMs": 10012,
+              "genMs": 3080,
+              "tools": [
+                "classroom_animate_template"
+              ],
+              "msgChars": 6339
+            },
+            {
+              "step": 3,
+              "startMs": 13188,
+              "genMs": 4510,
+              "tools": [],
+              "msgChars": 6951
+            }
+          ],
+          "totalStepGenMs": 17404,
+          "ready": true,
+          "scriptChars": null
+        },
+        {
+          "run": 2,
+          "mode": "template",
+          "ms_model": 19695,
+          "ms_end_to_end": 38159,
+          "targetStepIndex": 0,
+          "targetStepGenMs": 19165,
+          "targetArgChars": 618,
+          "steps": 3,
+          "stepsDetail": [
+            {
+              "step": 1,
+              "startMs": 520,
+              "genMs": 19165,
+              "tools": [
+                "classroom_animate_template",
+                "classroom_set_phase"
+              ],
+              "msgChars": 52650
+            },
+            {
+              "step": 2,
+              "startMs": 21918,
+              "genMs": 3574,
+              "tools": [
+                "classroom_animate_template"
+              ],
+              "msgChars": 6978
+            },
+            {
+              "step": 3,
+              "startMs": 25775,
+              "genMs": 2578,
+              "tools": [],
+              "msgChars": 2478
+            }
+          ],
+          "totalStepGenMs": 25317,
+          "ready": true,
+          "scriptChars": null
+        }
+      ]
+    }
+  ]
+}

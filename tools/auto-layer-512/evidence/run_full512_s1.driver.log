@@ -1,0 +1,6 @@
+[run_measured] tag=full512_s1  maxsec=1200  cmd=/Users/wujunjie/dsh-scratch/auto-layer/venv/bin/python -u /Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/tools/auto-layer-512/scripts/40_full_call.py --steps 1 --resolution 512 --attn-slice max --tag full512_s1
+# memwatch 结束：PID=21728 采样 378 次 -> /Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/tools/auto-layer-512/evidence/mem_full512_s1.csv
+[run_measured] tag=full512_s1 退出码=0
+     1002.97 real        62.77 user       151.93 sys
+          1151467520  maximum resident set size
+         26815699392  peak memory footprint

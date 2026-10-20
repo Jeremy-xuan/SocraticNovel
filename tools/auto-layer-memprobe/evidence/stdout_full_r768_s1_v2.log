@@ -1,0 +1,5 @@
+  [patch] ✅ TransparentVAEDecoder.estimate_augmented：stack+median(5维) → result[0]（恒等，len(result)==1 已断言）
+=== 完整 call | full_r768_s1_v2 ===
+  MPS 推荐预算 17.18 GB
+  [FAIL] build_layerdiff                 
+         AttributeError: 'AutoencoderKL' object has no attribute 'enable_vae_slicing'

@@ -1,0 +1,15 @@
+  [patch] ✅ TransparentVAEDecoder.estimate_augmented：stack+median(5维) → result[0]（恒等，len(result)==1 已断言）
+=== 完整 call | full_r768_s1_v3 ===
+  MPS 推荐预算 17.18 GB
+  [OK  ] build_layerdiff                     14.46s  RSS   1.08 GB  alloc   8.52  driver  10.58
+  [OK  ] run_layerdiff(body+head)           434.43s  RSS   1.08 GB  alloc   8.52  driver  21.60
+  出层 26 张：['back hair.png', 'bottomwear.png', 'ears.png', 'earwear.png', 'eyebrow.png', 'eyelash.png', 'eyewear.png', 'eyewhite.png', 'face.png', 'footwear.png', 'front hair.png', 'handwear.png', 'head.png', 'headwear.png', 'irides.png', 'legwear.png', 'mouth.png', 'neck.png', 'neckwear.png', 'nose.png', 'objects.png', 'src_head.png', 'src_img.png', 'tail.png', 'topwear.png', 'wings.png']
+  [REL ] 释放 layerdiff -> alloc 8.52 GB  driver 11.52 GB
+  [OK  ] release_layerdiff                    0.96s  RSS   1.08 GB  alloc   8.52  driver  11.52
+  [OK  ] build_marigold                       5.27s  RSS   1.08 GB  alloc   2.60  driver   3.36
+  [FAIL] run_marigold                    
+         RuntimeError: Invalid buffer size: 15.82 GiB
+  [REL ] 释放 marigold -> alloc 2.6 GB  driver 4.04 GB
+  [OK  ] release_marigold                     0.82s  RSS   1.08 GB  alloc   2.60  driver   4.04
+
+  ✅ 完整 call 跑通 | 进程内 RSS 峰值 1.08 GB | 台账 /Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/tools/auto-layer-memprobe/out/full_full_r768_s1_v3.json

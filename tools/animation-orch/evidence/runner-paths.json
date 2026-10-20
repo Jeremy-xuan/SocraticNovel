@@ -1,0 +1,93 @@
+{
+  "generatedAt": "2026-09-24T04:57:52.711Z",
+  "work": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-runner-paths",
+  "results": [
+    {
+      "key": "ready",
+      "title": "FIFO 让长任务堵住短任务（PoC 判定「能用」的脚本）",
+      "source": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_动画可写性/raw/B_P3.py",
+      "gateConfigured": false,
+      "taskId": "L03-T02-20260924-125720",
+      "dir": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-runner-paths/ready/runtime/animations/L03-T02-20260924-125720",
+      "state": "ready",
+      "status": {
+        "startedAt": 1790225840756,
+        "runnerPid": 49785,
+        "heartbeatAt": 1790225840756,
+        "manim": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_动画可写性/env/bin/manim",
+        "quality": "l",
+        "state": "ready",
+        "updatedAt": 1790225846718,
+        "gateRan": false,
+        "gateNote": "未配置质量闸门（config.animation.gate 为空）",
+        "finishedAt": 1790225846718,
+        "renderMs": 5919,
+        "mp4": "L03-T02-20260924-125720.mp4",
+        "bytes": 360019,
+        "durationSec": 11.599023,
+        "exit": 0
+      }
+    },
+    {
+      "key": "precheck-refused",
+      "error": "classroom_animate 拒绝这次调用，什么都没有落盘、也没有起渲染。\n- script 第 5 行用了 NumberLine(…)：**本机没有装 LaTeX**，这类调用一定会崩在 `FileNotFoundError: No such file or directory: 'latex'`。请改用 `Text`/`MarkupText` 把公式或刻度**写成普通文本**（例如刻度用 Text 逐个摆），不要用 Tex / MathTex / MathTexTemplate / 任何内部走 LaTeX 的参数（如 NumberLine(include_numbers=True)）。"
+    },
+    {
+      "key": "failed",
+      "title": "运行期报错的脚本 —— 渲染真的失败，状态必须是 failed 并带原因",
+      "source": "(内联脚本)",
+      "gateConfigured": false,
+      "taskId": "L03-T02-20260924-125726",
+      "dir": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-runner-paths/failed/runtime/animations/L03-T02-20260924-125726",
+      "state": "failed",
+      "status": {
+        "startedAt": 1790225846799,
+        "runnerPid": 49851,
+        "heartbeatAt": 1790225846799,
+        "manim": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_动画可写性/env/bin/manim",
+        "quality": "l",
+        "state": "failed",
+        "updatedAt": 1790225849403,
+        "reason": "manim 退出码 1，且没有产出 mp4",
+        "exit": 1,
+        "renderMs": 2603,
+        "logTail": "Manim Community v0.21.0\n\n[09/24/26 12:57:28] INFO     Caching disabled.              cairo_renderer.py:81\n[09/24/26 12:57:29] INFO     Animation 0 : Partial      scene_file_writer.py:192\n                             movie file written in                              \n                             '/private/var/folders/df/8                         \n                             fgt_lnd23q_5f3m_51vf4s8000                         \n                             0gn/T/animorch-runner-path                         \n                             s/failed/runtime/animation                         \n                             s/L03-T02-20260924-125726/                         \n                             media/videos/scene/480p15/                         \n                             partial_movie_files/Boom/u                         \n                             ncached_00000.mp4'                                 \n\nAnimation 0: Write(Text('这一行没问题')):   0%|          | 0/15 [00:00<?, ?it/s]\nAnimation 0: Write(Text('这一行没问题')): 100%|██████████| 15/15 [00:00<00:00, 146.64it/s]\n                                                                                          \n╭───────────────────── Traceback (most recent call last) ──────────────────────╮\n│ /Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_动画可写性/env │\n│ /lib/python3.13/site-packages/manim/cli/render/commands.py:125 in render     │\n│                                                                              │\n│   122 │   │   │   try:                                                       │\n│   123 │   │   │   │   with tempconfig({}):                                   │\n│   124 │   │   │   │   │   scene = SceneClass()                               │\n│ ❱ 125 │   │   │   │   │   scene.render()                                     │\n│   126 │   │   │   except Exception:                                          │\n│   127 │   │   │   │   error_console.print_exception()                        │\n│   128 │   │   │   │   sys.exit(1)                                            │\n│                                                                              │\n│ /Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_动画可写性/env │\n│ /lib/python3.13/site-packages/manim/scene/scene.py:259 in render             │\n│                                                                              │\n│    256 │   │   \"\"\"                                                           │\n│    257 │   │   self.setup()                                                  │\n│    258 │   │   try:                                                          │\n│ ❱  259 │   │   │   self.construct()                                          │\n│    260 │   │   except EndSceneEarlyException:                                │\n│    261 │   │   │   pass                                                      │\n│    262 │   │   except RerunSceneException:                                   │\n│                                                                              │\n│ /var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-runner-paths/faile │\n│ d/runtime/animations/L03-T02-20260924-125726/scene.py:7 in construct         │\n│                                                                              │\n│   4 │   def construct(self):                                                 │\n│   5 │   │   t = Text(\"这一行没问题\", font=\"PingFang SC\")                     │\n│   6 │   │   self.play(Write(t))                                              │\n│ ❱ 7 │   │   self.play(Write(this_name_does_not_exist))                       │\n│   8                                                                          │\n╰──────────────────────────────────────────────────────────────────────────────╯\nNameError: name 'this_name_does_not_exist' is not defined",
+        "finishedAt": 1790225849402
+      }
+    },
+    {
+      "key": "blocked",
+      "title": "PoC 判定「不能用」的脚本（画面成片文字重叠）→ 过质量闸门",
+      "source": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_动画可写性/raw2/C_P1.py",
+      "gateConfigured": true,
+      "taskId": "L03-T02-20260924-125729",
+      "dir": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-runner-paths/blocked/runtime/animations/L03-T02-20260924-125729",
+      "state": "blocked",
+      "status": {
+        "startedAt": 1790225849583,
+        "runnerPid": 49860,
+        "heartbeatAt": 1790225869593,
+        "manim": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_动画可写性/env/bin/manim",
+        "quality": "l",
+        "state": "blocked",
+        "updatedAt": 1790225872586,
+        "renderMs": 6161,
+        "mp4": "L03-T02-20260924-125729.mp4",
+        "bytes": 310090,
+        "durationSec": 10.666016,
+        "exit": 0,
+        "reason": "闸门判 BLOCK：5 处阻断级画面缺陷（）",
+        "gate": {
+          "ran": true,
+          "exit": 1,
+          "verdict": "BLOCK",
+          "blockingCount": 5,
+          "blockingCodes": [],
+          "summary": "",
+          "verdictFile": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-runner-paths/blocked/runtime/animations/L03-T02-20260924-125729/gate/verdict.json"
+        },
+        "finishedAt": 1790225872586
+      }
+    }
+  ]
+}

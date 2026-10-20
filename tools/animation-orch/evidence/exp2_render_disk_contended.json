@@ -1,0 +1,328 @@
+{
+  "generatedAt": "2026-09-24T04:37:05.717Z",
+  "manim": "Manim Community v0.21.0",
+  "python": "3.13.2",
+  "coldStartImportManimMs": [
+    {
+      "ms": 703.0049999952316,
+      "exit": 0
+    },
+    {
+      "ms": 884.7989999651909,
+      "exit": 0
+    },
+    {
+      "ms": 886.2750000357628,
+      "exit": 0
+    }
+  ],
+  "renders": [
+    {
+      "script": "A_P1.py",
+      "sceneClass": "P1ContextSwitch",
+      "exit": 0,
+      "renderMs": 4374.088999986649,
+      "mp4": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-exp2/media/videos/A_P1/480p15/orch_A_P1.mp4",
+      "bytes": 428550,
+      "durSec": 9.799349
+    },
+    {
+      "script": "A_P2.py",
+      "sceneClass": "P2TimerInterrupt",
+      "exit": 0,
+      "renderMs": 4141.964000046253,
+      "mp4": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-exp2/media/videos/A_P2/480p15/orch_A_P2.mp4",
+      "bytes": 423679,
+      "durSec": 12.532682
+    },
+    {
+      "script": "A_P3.py",
+      "sceneClass": "P3FifoBlocking",
+      "exit": 0,
+      "renderMs": 2495.5400000214577,
+      "mp4": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-exp2/media/videos/A_P3/480p15/orch_A_P3.mp4",
+      "bytes": 381490,
+      "durSec": 15.666341
+    },
+    {
+      "script": "A_P4.py",
+      "sceneClass": "P4TurnaroundVsResponse",
+      "exit": 0,
+      "renderMs": 3053.4469999670982,
+      "mp4": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-exp2/media/videos/A_P4/480p15/orch_A_P4.mp4",
+      "bytes": 219385,
+      "durSec": 14.866667
+    },
+    {
+      "script": "B_P1.py",
+      "sceneClass": "B_P1ContextSwitch",
+      "exit": 0,
+      "renderMs": 2800.639999985695,
+      "mp4": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-exp2/media/videos/B_P1/480p15/orch_B_P1.mp4",
+      "bytes": 323275,
+      "durSec": 10.264714
+    },
+    {
+      "script": "B_P2.py",
+      "sceneClass": "B_P2TimerInterrupt",
+      "exit": 0,
+      "renderMs": 2911.839000046253,
+      "mp4": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-exp2/media/videos/B_P2/480p15/orch_B_P2.mp4",
+      "bytes": 281244,
+      "durSec": 8.66569
+    },
+    {
+      "script": "B_P3.py",
+      "sceneClass": "B_P3FifoBlocking",
+      "exit": 0,
+      "renderMs": 2996.776999950409,
+      "mp4": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-exp2/media/videos/B_P3/480p15/orch_B_P3.mp4",
+      "bytes": 360019,
+      "durSec": 11.599023
+    },
+    {
+      "script": "B_P4.py",
+      "sceneClass": "B_P4TurnaroundVsResponse",
+      "exit": 0,
+      "renderMs": 3133.4990000128746,
+      "mp4": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-exp2/media/videos/B_P4/480p15/orch_B_P4.mp4",
+      "bytes": 208340,
+      "durSec": 12.4
+    },
+    {
+      "script": "C_P1.py",
+      "sceneClass": "C_P1ContextSwitch",
+      "exit": 0,
+      "renderMs": 3583.1139999628067,
+      "mp4": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-exp2/media/videos/C_P1/480p15/orch_C_P1.mp4",
+      "bytes": 573680,
+      "durSec": 12.733333
+    },
+    {
+      "script": "C_P2.py",
+      "sceneClass": "C_P2TimerInterrupt",
+      "exit": 0,
+      "renderMs": 2300.544000029564,
+      "mp4": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-exp2/media/videos/C_P2/480p15/orch_C_P2.mp4",
+      "bytes": 222638,
+      "durSec": 9.266341
+    },
+    {
+      "script": "C_P3.py",
+      "sceneClass": "C_P3FifoBlocking",
+      "exit": 0,
+      "renderMs": 5595.651999950409,
+      "mp4": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-exp2/media/videos/C_P3/480p15/orch_C_P3.mp4",
+      "bytes": 415505,
+      "durSec": 13.532357
+    },
+    {
+      "script": "C_P4.py",
+      "sceneClass": "C_P4TurnaroundVsResponse",
+      "exit": 0,
+      "renderMs": 2485.069000005722,
+      "mp4": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/animorch-exp2/media/videos/C_P4/480p15/orch_C_P4.mp4",
+      "bytes": 425302,
+      "durSec": 15.331055
+    }
+  ],
+  "summary": {
+    "renderMs": {
+      "n": 12,
+      "min": 2300.544000029564,
+      "max": 5595.651999950409,
+      "mean": 3322.681166663766,
+      "median": 3053.4469999670982
+    },
+    "videoDurSec": {
+      "n": 12,
+      "min": 8.66569,
+      "max": 15.666341,
+      "mean": 12.221462666666666,
+      "median": 12.532682
+    },
+    "bytes": {
+      "n": 12,
+      "min": 208340,
+      "max": 573680,
+      "mean": 355258.9166666667,
+      "median": 381490
+    },
+    "writeMs": {
+      "n": 12,
+      "min": 1.7599999904632568,
+      "max": 5.14900004863739,
+      "mean": 2.8277499924103418,
+      "median": 2.746999979019165
+    },
+    "hashMs": {
+      "n": 12,
+      "min": 0.1470000147819519,
+      "max": 0.781000018119812,
+      "mean": 0.2694166600704193,
+      "median": 0.2250000238418579
+    },
+    "pyWriteMs": {
+      "n": 12,
+      "min": 1.5270000100135803,
+      "max": 1.981000006198883,
+      "mean": 1.7402500063180923,
+      "median": 1.734000027179718
+    },
+    "coldStartMs": {
+      "n": 3,
+      "min": 703.0049999952316,
+      "max": 886.2750000357628,
+      "mean": 824.6929999987284,
+      "median": 884.7989999651909
+    }
+  },
+  "diskRows": [
+    {
+      "file": "A_P1.mp4",
+      "bytes": 428550,
+      "writeMs": 5.14900004863739,
+      "hashMs": 0.781000018119812,
+      "sha256": "5edaaccc87308770"
+    },
+    {
+      "file": "A_P2.mp4",
+      "bytes": 423679,
+      "writeMs": 2.727999985218048,
+      "hashMs": 0.23499995470046997,
+      "sha256": "04e6a4aa2eec8994"
+    },
+    {
+      "file": "A_P3.mp4",
+      "bytes": 381490,
+      "writeMs": 3.0640000104904175,
+      "hashMs": 0.3569999933242798,
+      "sha256": "98905388fd2fd87f"
+    },
+    {
+      "file": "A_P4.mp4",
+      "bytes": 219385,
+      "writeMs": 3.1869999766349792,
+      "hashMs": 0.17499995231628418,
+      "sha256": "a83775e57d41c253"
+    },
+    {
+      "file": "B_P1.mp4",
+      "bytes": 323275,
+      "writeMs": 2.7770000100135803,
+      "hashMs": 0.19099998474121094,
+      "sha256": "cfe80a0130150b66"
+    },
+    {
+      "file": "B_P2.mp4",
+      "bytes": 281244,
+      "writeMs": 2.36899995803833,
+      "hashMs": 0.18900001049041748,
+      "sha256": "ae5270d78fbfb9e7"
+    },
+    {
+      "file": "B_P3.mp4",
+      "bytes": 360019,
+      "writeMs": 2.6269999742507935,
+      "hashMs": 0.2149999737739563,
+      "sha256": "a0d8263d0c75e095"
+    },
+    {
+      "file": "B_P4.mp4",
+      "bytes": 208340,
+      "writeMs": 3.459999978542328,
+      "hashMs": 0.16100001335144043,
+      "sha256": "84bebce84a0eba09"
+    },
+    {
+      "file": "C_P1.mp4",
+      "bytes": 573680,
+      "writeMs": 2.746999979019165,
+      "hashMs": 0.328000009059906,
+      "sha256": "f8a5ebbe345022e2"
+    },
+    {
+      "file": "C_P2.mp4",
+      "bytes": 222638,
+      "writeMs": 1.7599999904632568,
+      "hashMs": 0.1470000147819519,
+      "sha256": "35213b2afe46f017"
+    },
+    {
+      "file": "C_P3.mp4",
+      "bytes": 415505,
+      "writeMs": 2.1729999780654907,
+      "hashMs": 0.2250000238418579,
+      "sha256": "afd71ed9d515f36c"
+    },
+    {
+      "file": "C_P4.mp4",
+      "bytes": 425302,
+      "writeMs": 1.8920000195503235,
+      "hashMs": 0.22899997234344482,
+      "sha256": "2495f6949967020b"
+    }
+  ],
+  "pyDisk": [
+    {
+      "file": "A_P1.py",
+      "bytes": 7571,
+      "writeMs": 1.981000006198883
+    },
+    {
+      "file": "A_P2.py",
+      "bytes": 9318,
+      "writeMs": 1.809000015258789
+    },
+    {
+      "file": "A_P3.py",
+      "bytes": 9385,
+      "writeMs": 1.7179999947547913
+    },
+    {
+      "file": "A_P4.py",
+      "bytes": 2930,
+      "writeMs": 1.7800000309944153
+    },
+    {
+      "file": "B_P1.py",
+      "bytes": 4546,
+      "writeMs": 1.734000027179718
+    },
+    {
+      "file": "B_P2.py",
+      "bytes": 4044,
+      "writeMs": 1.731000006198883
+    },
+    {
+      "file": "B_P3.py",
+      "bytes": 3480,
+      "writeMs": 1.6669999957084656
+    },
+    {
+      "file": "B_P4.py",
+      "bytes": 3483,
+      "writeMs": 1.781000018119812
+    },
+    {
+      "file": "C_P1.py",
+      "bytes": 5400,
+      "writeMs": 1.852999985218048
+    },
+    {
+      "file": "C_P2.py",
+      "bytes": 3412,
+      "writeMs": 1.7139999866485596
+    },
+    {
+      "file": "C_P3.py",
+      "bytes": 3424,
+      "writeMs": 1.5879999995231628
+    },
+    {
+      "file": "C_P4.py",
+      "bytes": 3380,
+      "writeMs": 1.5270000100135803
+    }
+  ]
+}

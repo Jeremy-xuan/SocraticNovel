@@ -1,0 +1,12 @@
+A_P1.py	P1ContextSwitch	exit=0	render_ms=2886	bytes=428550	dur_s=9.80
+A_P2.py	P2TimerInterrupt	exit=0	render_ms=3088	bytes=423679	dur_s=12.53
+A_P3.py	P3FifoBlocking	exit=0	render_ms=2772	bytes=381490	dur_s=15.67
+A_P4.py	P4TurnaroundVsResponse	exit=0	render_ms=2149	bytes=219385	dur_s=14.87
+B_P1.py	B_P1ContextSwitch	exit=0	render_ms=3983	bytes=323275	dur_s=10.26
+B_P2.py	B_P2TimerInterrupt	exit=0	render_ms=2550	bytes=281244	dur_s=8.67
+B_P3.py	B_P3FifoBlocking	exit=0	render_ms=2596	bytes=360019	dur_s=11.60
+B_P4.py	B_P4TurnaroundVsResponse	exit=0	render_ms=2438	bytes=208340	dur_s=12.40
+C_P1.py	C_P1ContextSwitch	exit=0	render_ms=3379	bytes=573680	dur_s=12.73
+C_P2.py	C_P2TimerInterrupt	exit=0	render_ms=2602	bytes=222638	dur_s=9.27
+C_P3.py	C_P3FifoBlocking	exit=0	render_ms=3104	bytes=415505	dur_s=13.53
+C_P4.py	C_P4TurnaroundVsResponse	exit=0	render_ms=2598	bytes=425302	dur_s=15.33

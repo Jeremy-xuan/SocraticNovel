@@ -1,0 +1,6 @@
+=== UNet 载入 dtype 实验 | mode=fp32 ===
+  参数 4071.3 M | dtype 直方图(M 参数) {'torch.float32': 4071.3} | RSS 13.20 GB
+  [OK  ] from_pretrained              16.52s  RSS  13.20 GB
+  [OK  ] to(mps,bf16/fp16)            11.74s  RSS  13.20 GB
+
+  进程内 RSS 峰值 13.2 GB | 台账 /Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/tools/auto-layer-memprobe/out/unet_load_fp32.json

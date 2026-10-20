@@ -1,0 +1,3 @@
+elapsed_s,swap_total_mb,swap_used_mb,swap_free_mb,compressor_mb,free_mb,wired_mb,proc_mem_mb,proc_rsize,swapins,swapouts
+0,5120.00,3465.50,1654.50,865.0,11426.4,3029.0,125,125,19268915,23135011
+3,5120.00,3465.50,1654.50,865.4,11061.8,3064.9,282,282,19268974,23135011

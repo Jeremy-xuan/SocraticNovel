@@ -1,0 +1,154 @@
+{
+  "point": "fifo",
+  "generatedAt": "2026-09-24T05:29:56.299Z",
+  "exit": 0,
+  "wallMs": 157067,
+  "classroomSrc": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/classrooms/cs-os",
+  "classroom": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/anim-enable-fifo/classroom",
+  "patchPath": "/var/folders/df/8fgt_lnd23q_5f3m_51vf4s80000gn/T/anim-enable-fifo/patch.yml",
+  "logFile": "/Users/wujunjie/Library/Application Support/dsh-desktop/harness/sessions/--private-var-folders-df-8fgt_lnd23q_5f3m_51vf4s80000gn-T-anim-enable-fifo-classroom--/session-5b9f4916-cd37-466e-be90-bd1a0d440918/session.v3.jsonl.zstd",
+  "classroomDeclaredAnimation": true,
+  "anchorMentionsAnimate": true,
+  "turnGapMs": 20000,
+  "prompts": [
+    "开始第 3 讲。学生问：「为什么 FIFO 会让一个很长的任务把后面短的任务全堵住？」请按你的教学判断讲这一小段。",
+    "继续讲：那换成时间片轮转会怎么样？"
+  ],
+  "driverReport": {
+    "turns": 2,
+    "prompts": [
+      "开始第 3 讲。学生问：「为什么 FIFO 会让一个很长的任务把后面短的任务全堵住？」请按你的教学判断讲这一小段。",
+      "继续讲：那换成时间片轮转会怎么样？"
+    ],
+    "sessionId": "session-5b9f4916-cd37-466e-be90-bd1a0d440918",
+    "turnStarts": [
+      1,
+      2
+    ],
+    "turnEnds": [
+      {
+        "turn": 1,
+        "reason": {
+          "kind": "completed"
+        }
+      },
+      {
+        "turn": 2,
+        "reason": {
+          "kind": "completed"
+        }
+      }
+    ],
+    "injections": [
+      {
+        "turn": 1,
+        "seq": 11,
+        "form": "classroom-block",
+        "block": "anchor.rules",
+        "time": 1790227641752
+      },
+      {
+        "turn": 1,
+        "seq": 12,
+        "form": "classroom-block",
+        "block": "anchor.lesson_ban",
+        "time": 1790227641752
+      },
+      {
+        "turn": 1,
+        "seq": 13,
+        "form": "classroom-block",
+        "block": "story.arc_gate",
+        "time": 1790227641753
+      },
+      {
+        "turn": 1,
+        "seq": 14,
+        "form": "classroom-block",
+        "block": "curriculum.map",
+        "time": 1790227641753
+      },
+      {
+        "turn": 1,
+        "seq": 15,
+        "form": "classroom-block",
+        "block": "story.node.01",
+        "time": 1790227641753
+      },
+      {
+        "turn": 1,
+        "seq": 16,
+        "form": "classroom-block",
+        "block": "state.progress",
+        "time": 1790227641753
+      },
+      {
+        "turn": 1,
+        "seq": 17,
+        "form": "classroom-block",
+        "block": "state.mistakes",
+        "time": 1790227641754
+      },
+      {
+        "turn": 1,
+        "seq": 18,
+        "form": "classroom-block",
+        "block": "state.review",
+        "time": 1790227641754
+      },
+      {
+        "turn": 2,
+        "seq": 65,
+        "form": "classroom-block",
+        "block": "anchor.rules",
+        "time": 1790227741224
+      },
+      {
+        "turn": 2,
+        "seq": 66,
+        "form": "classroom-block",
+        "block": "anchor.lesson_ban",
+        "time": 1790227741224
+      },
+      {
+        "turn": 2,
+        "seq": 67,
+        "form": "classroom-block",
+        "block": "story.node.01",
+        "time": 1790227741224
+      },
+      {
+        "turn": 2,
+        "seq": 68,
+        "form": "classroom-block",
+        "block": "state.progress",
+        "time": 1790227741224
+      },
+      {
+        "turn": 2,
+        "seq": 69,
+        "form": "classroom-block",
+        "block": "state.mistakes",
+        "time": 1790227741224
+      },
+      {
+        "turn": 2,
+        "seq": 70,
+        "form": "classroom-block",
+        "block": "state.review",
+        "time": 1790227741224
+      },
+      {
+        "turn": 2,
+        "seq": 71,
+        "form": "animation-notice",
+        "block": "animation-notice:L01-T01-20260924-132838",
+        "time": 1790227741224
+      }
+    ],
+    "turnGapMs": 20000,
+    "outcome": "completed"
+  },
+  "stdoutTail": "",
+  "stderrTail": "[anim-driver] session=session-5b9f4916-cd37-466e-be90-bd1a0d440918 turns=2 gapMs=20000\n[anim-driver] turn 1/2: \"开始第 3 讲。学生问：「为什么 FIFO 会让一个很长的任务把后面短的任务全堵\"\n[anim-driver] 轮间等待 20000 ms（模拟学生读完上一段再开口）\n[anim-driver] turn 2/2: \"继续讲：那换成时间片轮转会怎么样？\"\n[anim-driver] SUMMARY {\"turns\":2,\"injections\":15,\"notices\":1}\n"
+}
