@@ -1,0 +1,8 @@
+[
+  "dsh-win-terminal-inspector",
+  "dsh-session-context-menu",
+  "dsh-notification",
+  "dsh-tauri-panel",
+  "dsh-tauri-turnrewind",
+  "dsh-tauri-connection"
+]

@@ -1,0 +1,33 @@
+socratic-classroom 自检
+================================================================
+教室目录：/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/分发证据/验证_技能包安装/.dsh/skills/socratic-classroom/classroom
+教室标识：cs-os · 计算机系教室 · 操作系统
+声明讲数：14 讲
+
+[①] 必需文件
+  ✓ 17 个必需文件齐全，角色 1 份，story/ 与 materials/ 目录存在
+
+[②] classroom.yaml 声明的材料
+  ✓ 48 条声明路径全部存在于磁盘
+
+[③] 讲次序号与讲数
+  ✓ 声明 14 讲 ＝ story/ 实际 14 个节点；29 个讲次门全部落在 1–14 内
+
+[④] 教材正文（materials/ch{NN}.md）
+  ✓ 第 1–14 讲正文齐全（14 份）
+
+[⑤] 发现链路（本技能包在不在扫描根下）
+  本包位置：/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/分发证据/验证_技能包安装/.dsh/skills/socratic-classroom
+  项目根（--project-root 显式指定）：/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/分发证据/验证_技能包安装
+  三类扫描根逐个判：
+    ✓ 在  项目级 · .dsh/skills  [project-dsh rank=100]  →  /Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/分发证据/验证_技能包安装/.dsh/skills
+    ✗ 不在  项目级 · .agents/skills  [project-agents rank=200]  →  /Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/分发证据/验证_技能包安装/.agents/skills（该根当前不存在）
+    ✗ 不在  用户级 · $DSH_HOME/skills  [user-dsh rank=400]  →  /Users/wujunjie/Library/Application Support/dsh-desktop/harness/skills（该根当前不存在）
+    ✗ 不在  用户级 · ~/.agents/skills  [user-agents rank=500]  →  /Users/wujunjie/.agents/skills
+    （宿主内置的 bundledSkillDir 是打包目录，本机无法从工作区判定，故不列出——它也不是本包的落点）
+  ✓ 在扫描根下：项目级 · .dsh/skills[project-dsh rank=100]
+  ✓ frontmatter name 合法：socratic-classroom（第 2 行）
+  ✓ frontmatter description 非空：228 字符（第 3 行）
+
+================================================================
+结论：全部通过（退出码 0）

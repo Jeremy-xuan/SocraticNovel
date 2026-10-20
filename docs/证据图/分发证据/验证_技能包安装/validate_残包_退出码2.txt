@@ -1,0 +1,9 @@
+socratic-classroom 自检
+================================================================
+教室目录：/Users/wujunjie/Documents/ChatGPT/大学申请/.dsh/skills/socratic-classroom/classroom
+
+错误：找不到 YAML 解析器（require('yaml') 失败）：Cannot find module 'yaml'
+Require stack:
+- /Users/wujunjie/Documents/ChatGPT/大学申请/.dsh/skills/socratic-classroom/validate
+查找位置：/Users/wujunjie/Documents/ChatGPT/大学申请/.dsh/skills/socratic-classroom/node_modules/yaml
+本技能包应自带该依赖（见 README.md「依赖来源」）。缺了它就无法检查 classroom.yaml，故直接失败，不跳过检查。

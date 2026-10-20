@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SAKIKO</title>
+<link rel="stylesheet" href="/sakiko/web/panel.css">
+</head>
+<body>
+  <div id="phone">
+    <div id="screen">
+      <!-- ===== iPhone 灵动岛状态条（纯静态装饰；#screen-clock 为既有时钟元素，仅做 CSS 定位） ===== -->
+      <div id="sb-bar" class="sb-bar">
+        <div id="sb-island" class="sb-island" aria-hidden="true"></div>
+        <div id="sb-right" class="sb-right" aria-hidden="true"><i></i><i></i><i></i></div>
+      </div>
+
+      <canvas id="sakiko-canvas"></canvas>
+      <img id="sakiko-img" alt="Sakiko" title="Sakiko" hidden>
+      <div id="sakiko-placeholder" hidden>
+        <svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sakiko 剪影占位">
+          <!-- 蓝发整体轮廓 -->
+          <path d="M100 30 C 58 30 40 68 37 130 C 35 182 46 232 100 232 C 154 232 165 182 163 130 C 160 68 142 30 100 30 Z" fill="#2b3a67"/>
+          <!-- 发丝层次 -->
+          <path d="M100 44 C 72 44 54 68 49 112 C 62 84 80 66 100 64 C 122 66 140 84 151 112 C 146 68 128 44 100 44 Z" fill="#3a4d80"/>
+          <!-- 月白长裙 -->
+          <path d="M56 152 L100 120 L144 152 L159 240 L41 240 Z" fill="#eef2fb"/>
+          <!-- 裙摆层次 -->
+          <path d="M100 226 L48 236 L56 152 L100 120 L144 152 L152 236 Z" fill="#dde6fa" opacity="0.5"/>
+          <!-- 金腰带 -->
+          <path d="M66 160 L100 143 L134 160 L130 174 L100 164 L70 174 Z" fill="#c9a86a"/>
+          <!-- 衣领金饰 -->
+          <path d="M93 124 L100 136 L107 124 L104 146 L100 150 L96 146 Z" fill="#c9a86a" opacity="0.9"/>
+          <!-- 脸 -->
+          <ellipse cx="100" cy="104" rx="40" ry="46" fill="#f7ead9"/>
+          <!-- 前发 -->
+          <path d="M62 92 C 62 54 90 40 100 40 C 114 40 138 54 138 92 C 126 68 110 60 100 62 C 88 60 74 68 62 92 Z" fill="#2b3a67"/>
+          <!-- 侧发 -->
+          <path d="M62 92 C 54 126 56 164 68 172 C 62 136 68 108 78 90 Z" fill="#2b3a67"/>
+          <path d="M138 92 C 146 126 144 164 132 172 C 138 136 132 108 122 90 Z" fill="#2b3a67"/>
+          <!-- 金发饰 -->
+          <circle cx="139" cy="64" r="5" fill="#c9a86a"/>
+          <circle cx="139" cy="64" r="2" fill="#0b1224" opacity="0.3"/>
+          <!-- 眼 -->
+          <ellipse cx="84" cy="106" rx="7.5" ry="5.2" fill="#8fb3ff"/>
+          <ellipse cx="116" cy="106" rx="7.5" ry="5.2" fill="#8fb3ff"/>
+          <circle cx="85.5" cy="107" r="2.2" fill="#0b1224"/>
+          <circle cx="117.5" cy="107" r="2.2" fill="#0b1224"/>
+          <circle cx="83.5" cy="104.5" r="1.2" fill="#eef2fb" opacity="0.9"/>
+          <circle cx="115.5" cy="104.5" r="1.2" fill="#eef2fb" opacity="0.9"/>
+          <!-- 眉 -->
+          <path d="M74 93 Q 82 89 92 92" stroke="#1b2746" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+          <path d="M126 93 Q 118 89 108 92" stroke="#1b2746" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+          <!-- 腮红 -->
+          <ellipse cx="70" cy="120" rx="5" ry="3" fill="#d9a08c" opacity="0.4"/>
+          <ellipse cx="130" cy="120" rx="5" ry="3" fill="#d9a08c" opacity="0.4"/>
+          <!-- 微笑 -->
+          <path d="M93 128 Q 100 134 107 128" stroke="#7c6a7d" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+          <!-- 呆毛 -->
+          <path d="M100 40 Q 108 24 118 22 Q 110 32 108 44 Z" fill="#2b3a67"/>
+        </svg>
+      </div>
+
+      <div id="screen-clock">--:--</div>
+
+      <button id="close-btn" title="关闭 SAKIKO 系统">×</button>
+      <button id="calib-btn" title="L2D 校准" hidden>⚙</button>
+
+      <div id="boot">
+        <div class="boot-logo">
+          <img id="boot-logo-img" src="" alt="SAKIKO">
+        </div>
+        <div class="boot-title">SAKIKO</div>
+        <div class="boot-lines">
+          <div class="boot-line" id="boot-line1"></div>
+          <div class="boot-line" id="boot-line2"></div>
+          <div class="boot-line" id="boot-line3"></div>
+        </div>
+        <div class="boot-loading">Loading Sakiko System...</div>
+        <div class="boot-version">v1.0.0</div>
+      </div>
+
+      <div id="unlock" class="hidden">
+        <button id="unlock-btn">🔊 点击以启用语音</button>
+      </div>
+
+      <div id="call-overlay" class="hidden">
+        <div id="call-portrait-wrap">
+          <img id="call-portrait" src="" alt="Sakiko">
+        </div>
+        <div class="call-name">SAKIKO</div>
+        <div class="call-sub">着信中…</div>
+        <div class="call-btns">
+          <button id="call-accept" class="call-accept">応答</button>
+          <button id="call-deny" class="call-deny">拒否</button>
+        </div>
+      </div>
+
+      <div id="errline" class="hidden"></div>
+      <div id="status-chip">● connecting…</div>
+    </div>
+
+    <div id="keypad">
+      <div id="history"></div>
+      <div id="chat-row">
+        <button id="chat-mic" title="语音输入" class="mic-btn">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="9" y="2" width="6" height="12" rx="3"></rect>
+            <path d="M5 10v1a7 7 0 0 0 14 0v-1"></path>
+            <line x1="12" y1="18" x2="12" y2="22"></line>
+          </svg>
+        </button>
+        <button id="chat-lang" title="识别语言">中</button>
+        <input id="chat-input" type="text" placeholder="和 Sakiko 说话…" autocomplete="off">
+        <button id="chat-send" title="发送">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <audio id="ring-audio" loop preload="none">
+    <!-- 铃声：Ave Mujica《Imprisoned XII》前奏 0:00-0:20（已换；assets 路由缓存 1h，换文件时递增 v= 数字防缓存） -->
+    <source src="/sakiko/assets/audio/ring.mp3?v=2" type="audio/mpeg">
+  </audio>
+
+  <script src="/sakiko/web/emotion.js"></script>
+  <script src="/sakiko/web/panel.js"></script>
+</body>
+</html>

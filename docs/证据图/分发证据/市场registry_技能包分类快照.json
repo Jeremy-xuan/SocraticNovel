@@ -1,0 +1,1530 @@
+{
+ "_note": "awesome-dsh-plugin registry 的 skill（技能包）分类快照。完整 registry 见 https://awesome-dsh-plugin.com/plugins.json（本轮实测 4.4MB / count=4262）",
+ "source": "https://github.com/awesome-dsh-plugin/awesome-dsh-plugin",
+ "updated": "2026-09-24",
+ "totalCount": 4262,
+ "skillCategoryCount": 169,
+ "plugins": [
+  {
+   "name": "dsh-at-skill",
+   "npm": null,
+   "version": null,
+   "stars": 2,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:452926826/dsh-at-skill",
+   "desc": "通过 @名称 标记调用用户可用的 Skill，并在对话输入框中显示匹配的 Skill 候选项。"
+  },
+  {
+   "name": "dsh-skill-7d-code-reviewer",
+   "npm": null,
+   "version": null,
+   "stars": 11,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:7dgroup-ai/dsh-skill-7d-code-reviewer",
+   "desc": "模板驱动的代码审查技能：五步审查流程、严重/中等/轻微三级分级、四维评分（质量、安全、性能、可维护性），同时输出文本与 HTML 报告，内置按需加载的参考知识库。"
+  },
+  {
+   "name": "dsh-fact-check",
+   "npm": "dsh-fact-check",
+   "version": "1.3.0",
+   "stars": 0,
+   "downloads": 107,
+   "install": "dsh plugin --profile web add dsh-fact-check",
+   "desc": "事实核查技能：不依赖模型记忆，去公开互联网核实——把论断拆成可独立验证的事实点，先按事实范畴（政策、学术、医疗、金融、灾害事故、食品安全、科学常识、教育考试、体育、娱乐名人、司法案件等）选定该范畴的一手来源阶梯，国内外信息生态并行搜索，抓取一手页面并按来源类型分级，再用质疑关键词反查一轮，最后结论先行地输出报告，每条论断都带完整 URL 与引用位置，「未证实」「无法裁定」与「已证实」分档呈现。三类事实判断在配置了密钥时可交给 TypeSafe Jev（System One）决策模型，未配置则回退到内置的确定性规则；模型的判断只能降档、不能升档。"
+  },
+  {
+   "name": "dsh-starter-zh",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:863683348/dsh-starter-zh",
+   "desc": "DSH 新手入门包：欢迎语、从 0 到 1 学习路径、按场景推荐插件与新手自查清单，联动 dsh-handbook-zh 中文教程仓库。"
+  },
+  {
+   "name": "dsh-math-olympiad",
+   "npm": null,
+   "version": null,
+   "stars": 1,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:988hj7tczd-oss/dsh-math-olympiad",
+   "desc": "竞赛数学解题（IMO/Putnam/USAMO/AIME）：纯推理求解 + 新鲜上下文 subagent 对抗验证 + 校准信心输出（high / medium / 诚实「无把握解」）；可选 LaTeX 编译 PDF。"
+  },
+  {
+   "name": "dsh-modernize-code",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:988hj7tczd-oss/dsh-modernize-code",
+   "desc": "遗留代码现代化工作流（preflight → assess → map → transform），含 Cordis 挂载插件、离线 Python 脚本与冒烟测试。"
+  },
+  {
+   "name": "dsh-skill-creator",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:988hj7tczd-oss/dsh-skill-creator",
+   "desc": "一键生成 DSH 技能（SKILL.md）的 Cordis 插件：在会话内捕获意图、起草、校验、打包分发并优化技能描述（skill_new / skill_validate / skill_package / skill_improve_description）。"
+  },
+  {
+   "name": "dsh-mattpocock-skills",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add \"https://github.com/addie-ace/dsh-mattpocock-skills/releases/download/v0.2.0/dsh-mattpocock-skills-0.2.0.tgz\"",
+   "desc": "技能包插件：把 mattpocock/skills 的 25 个 promoted 技能（工程与效率）全文汉化，注册为 DSH 捆绑技能 provider，经技能系统发现与调用。"
+  },
+  {
+   "name": "embedded-workbench",
+   "npm": "dsh-embedded-workbench",
+   "version": "0.8.12",
+   "stars": 12,
+   "downloads": 1861,
+   "install": "dsh plugin --profile web add dsh-embedded-workbench",
+   "desc": "嵌入式 C/C++ 固件开发工具箱：代理与技能覆盖 FreeRTOS、中断、NVM 存储、Keil MDK、ARMCLANG、HardFault 分析、状态机、架构原则与 LVGL 陷阱。"
+  },
+  {
+   "name": "logicprobe",
+   "npm": "dsh-logicprobe",
+   "version": "0.6.8",
+   "stars": 5,
+   "downloads": 2630,
+   "install": "dsh plugin --profile web add dsh-logicprobe",
+   "desc": "声称核查技能：将设计文档与计划中的每条声称对照代码库事实核验，行为类声称升级为状态机/数据模型逻辑原语验证，支持前后回归、领域约束与并发风险挖掘。"
+  },
+  {
+   "name": "dsh-ultramath",
+   "npm": "dsh-ultramath",
+   "version": "0.6.3",
+   "stars": 35,
+   "downloads": 1291,
+   "install": "dsh plugin --profile web add dsh-ultramath",
+   "desc": "数学建模竞赛多 Agent 求解工作流：「UltraMath」主控预设一个预设跑通 读题→框架→推导→编码→验算→论文→审稿 全流程，另有 数学家/工程师/作家/审稿人 4 个单阶段角色预设与 33 篇模型库技能文档。"
+  },
+  {
+   "name": "dsh-skills-manager-plus",
+   "npm": "dsh-skills-manager-plus",
+   "version": "0.2.0",
+   "stars": 2,
+   "downloads": 342,
+   "install": "dsh plugin --profile web add dsh-skills-manager-plus",
+   "desc": "在 DSH 设置中管理技能与命令：跨全局与项目作用域查看、启用/停用、编辑、删除与添加技能，并把常用提示词保存为斜杠命令。"
+  },
+  {
+   "name": "agent-useful-skills",
+   "npm": null,
+   "version": null,
+   "stars": 9,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:Azzygoatcoder/agent-useful-skills",
+   "desc": "模块化 AI 科研/工程技能包，dsh plugin add 一键安装——在 ctx.skills 注册 27 个技能（安全审计、论文读写、绘图、开发工作流、存储分析）。"
+  },
+  {
+   "name": "hermes-dsh-collab",
+   "npm": null,
+   "version": null,
+   "stars": 5,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:Cavan-Ou/hermes-dsh-collab",
+   "desc": "把 DeepSeek Harness 接进 Hermes 管线：派单 spec 模板、模型档位路由、质量门、git 唯一写者约定，SKILL.md 技能包（bundle 可安装）。"
+  },
+  {
+   "name": "dsh-skill-hub",
+   "npm": "dsh-skill-hub",
+   "version": "0.3.15",
+   "stars": 21,
+   "downloads": 4909,
+   "install": "dsh plugin --profile web add dsh-skill-hub",
+   "desc": "DSH Web GUI 技能中枢：基于官方 ctx.skills 注册表浏览、搜索、启停、查看、诊断并新建本地技能，附技能市场：来源快照跟踪、一键全量更新。"
+  },
+  {
+   "name": "wanjiqi-meme",
+   "npm": null,
+   "version": null,
+   "stars": 13,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:Chu-Xin-r/wanjiqi-meme",
+   "desc": "玩机器（6657 直播间）烂梗技能包：22771 条真实弹幕蒸馏而成，涵盖玩机器式弹幕烂梗、CS×DOTA 双料梗、选手锐评与解说吐槽。"
+  },
+  {
+   "name": "dsh-math-modeling-skills-Gatecraft-",
+   "npm": null,
+   "version": null,
+   "stars": 8,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:Crayonnan/dsh-math-modeling-skills-Gatecraft-",
+   "desc": "面向 DeepSeek Harness 的门控式数学建模 skill 套件：五阶段流水线、阶段门、国奖写作范式、灵敏度分析、统计诊断与竞赛预设。"
+  },
+  {
+   "name": "skills",
+   "npm": null,
+   "version": null,
+   "stars": 10,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:creght-dev/skills",
+   "desc": "Creght 平台建站技能包：CLI 拉取/推送同步、页面与组件规范、CMS、表单、Auth、SEO、发布与版本回滚。"
+  },
+  {
+   "name": "dsh-skill-manager#plugin",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:DaLongggggg/dsh-skill-manager#path:/plugin",
+   "desc": "在设置中管理 DSH 已安装技能：列表、搜索、查看渲染后的文档、复制内容、打开文件夹、软删除到可恢复的回收站、立即试用。"
+  },
+  {
+   "name": "dsh-plugin-coaligne",
+   "npm": "dsh-plugin-coaligne",
+   "version": "0.1.2",
+   "stars": 1,
+   "downloads": 610,
+   "install": "dsh plugin --profile web add dsh-plugin-coaligne",
+   "desc": "安装 CoAligne 团队协作的 coaligne-workflow skill；MCP 连接由登录后的 CoAligne Desktop 提供，不安装 Desktop 则无法使用。"
+  },
+  {
+   "name": "dsh-plugins#dsh-skills",
+   "npm": "@dennisrongo/dsh-skills",
+   "version": "0.1.1",
+   "stars": 0,
+   "downloads": 344,
+   "install": "dsh plugin --profile web add @dennisrongo/dsh-skills",
+   "desc": "技能提供者：将整个 @dennisrongo/skills 目录作为一个 npm 依赖安装，无需克隆仓库或链接目录即可完成技能的安装与更新。"
+  },
+  {
+   "name": "dsh-plugins#dsh-superpowers",
+   "npm": "@dennisrongo/dsh-superpowers",
+   "version": "0.4.0",
+   "stars": 0,
+   "downloads": 709,
+   "install": "dsh plugin --profile web add @dennisrongo/dsh-superpowers",
+   "desc": "向 dsh 提供 obra/superpowers 技能目录，并将其 using-superpowers 引导作为持久、压缩安全的系统提示区块注入。"
+  },
+  {
+   "name": "dsh-chinese-traditional-wisdom-skill",
+   "npm": null,
+   "version": null,
+   "stars": 44,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:dhicoc/dsh-chinese-traditional-wisdom-skill",
+   "desc": "完整中华传统智慧（玄枢 / XuanShu）技能包，封装为 DeepSeek Harness Cordis 插件：八字、紫微斗数、六爻、梅花易数、奇门遁甲、大六壬、太乙、五运六气、中医体质与风水推算，内置本地确定性引擎与可视化 Dashboard。"
+  },
+  {
+   "name": "dsh-reverse-skill",
+   "npm": "@dhicoc/dsh-reverse-skill",
+   "version": "1.0.5",
+   "stars": 166,
+   "downloads": 3124,
+   "install": "dsh plugin --profile web add @dhicoc/dsh-reverse-skill",
+   "desc": "完整 reverse-skill（85 个 SKILL.md）的 DeepSeek Harness 插件：逆向工程、授权渗透测试与安全研究的技能路由包。"
+  },
+  {
+   "name": "dsh-wuyun-liuqi",
+   "npm": "@dhicoc/dsh-wuyun-liuqi",
+   "version": "1.0.4",
+   "stars": 5,
+   "downloads": 524,
+   "install": "dsh plugin --profile web add @dhicoc/dsh-wuyun-liuqi",
+   "desc": "完整 wuyun-liuqi（五运六气）中医运气学技能包，封装为 DeepSeek Harness 插件：年度与客气推算、临床辨证、病机推演。"
+  },
+  {
+   "name": "dsh-imagegen-skill",
+   "npm": null,
+   "version": null,
+   "stars": 1,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:dingchenhui0618-arch/dsh-imagegen-skill",
+   "desc": "把 imagegen skill 注册进 skill 注册表，无需往 $DSH_HOME/skills 手工拷贝文件，每个会话都能生成或编辑图片：agent 调用随包附带的 image_gen.py CLI，对接任意 OpenAI 兼容的 GPT Image 端点，支持文生图、参考图编辑与透明背景抠图。"
+  },
+  {
+   "name": "dsh-preset-scaffold",
+   "npm": "dsh-preset-scaffold",
+   "version": "0.1.4",
+   "stars": 0,
+   "downloads": 511,
+   "install": "dsh plugin --profile web add dsh-preset-scaffold",
+   "desc": "DSH 项目初始化脚手架预设：严格 5 阶段初始化流程 + 工程规范 + 六套可运行模板（node-ts / react-vite / python / go / spring-boot / monorepo）。"
+  },
+  {
+   "name": "dknowc-dsh",
+   "npm": null,
+   "version": null,
+   "stars": 1,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:dylanzhangzx/dknowc-dsh",
+   "desc": "彩智科技深知可信智能出品的可信办公全家桶 dsh 插件：包含深知可信咨询（政策/法规/办事问答，带真实来源角标 + 可点击溯源 HTML）、深知可信搜索（权威政策/标准检索与深度研究，溯源 HTML + 干净 Markdown）、深知公文写作（正式公文起草/改写/Word/红头交付）三个 Skill；接口统一经深知可信工作台 MCP 转接（Bearer 认证），产物写入会话工作区，API Key 一次配置长期免注册；已发布 npm 包 dknowc-dsh。"
+  },
+  {
+   "name": "web-clone",
+   "npm": null,
+   "version": null,
+   "stars": 1,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:Edisonzszs/web-clone",
+   "desc": "网站复刻方法论 skill：以「真源码至上」决策树覆盖静态站、React/Vue/Next 内容站与 WebGL/Canvas 重前端站，强制核对二手 AI 分析里的可执行代码，内置 13 个零依赖 Node 脚本（CDP 浏览器侦察、素材/字体抓取、路由爬取、source map 挖掘、像素 diff 审计）。"
+  },
+  {
+   "name": "dsh-skill-scoreboard",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:EIGHTfs/dsh-skill-scoreboard",
+   "desc": "DSH 的 Skill 使用记分板：同时记录按会话去重与每次加载两种次数，统计 skill 工具调用与直接 read skill 文件两种记分来源，设置页三选项卡（Skill 排行 / 会话榜 / 管理）展示，支持分页与记分 JSON 导入导出。"
+  },
+  {
+   "name": "dsh-shared-handoff",
+   "npm": "shared-handoff-dsh",
+   "version": "0.3.0",
+   "stars": 0,
+   "downloads": 300,
+   "install": "dsh plugin --profile web add shared-handoff-dsh",
+   "desc": "共享交接套件的 dsh 版:handoff 与 task-id-bootstrap 技能 + host 侧自动化——基线状态注入、每轮快照与 Auto Log 轨迹、task=<id> 路由、续接关键词重注入、达阈值报警的压缩守护、子代理只读保护;与 Codex、Claude、pi 版写同一份 .agents/state/,一个仓库多代理共享交接。"
+  },
+  {
+   "name": "dsh-mattpocock-skills-deck",
+   "npm": "dsh-mattpocock-skills-deck",
+   "version": "1.7.26",
+   "stars": 79,
+   "downloads": 5483,
+   "install": "dsh plugin --profile web add dsh-mattpocock-skills-deck",
+   "desc": "安装即自带mattpocock/skills v1.2.3的25个工程与效率技能，无需手动装技能。300亿token打造。本插件在原始技能之上提供10倍的开发效率。主力支持GitHub issue；Markdown为预览版；GitLab暂不支持。"
+  },
+  {
+   "name": "code-ownership-audit",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:ffseika0304/code-ownership-audit",
+   "desc": "判定 Python 代码是原创还是演绎作品：给出与上游最长相同表达片段、逐条豁免依据和风险清单。纯标准库 `ast` 分析——离线运行，不调用模型。"
+  },
+  {
+   "name": "qa-skills",
+   "npm": "dsh-qa-skills",
+   "version": "0.6.0",
+   "stars": 35,
+   "downloads": 713,
+   "install": "dsh plugin --profile web add dsh-qa-skills",
+   "desc": "软件测试全流程技能包：10 个技能覆盖需求分析、测试策略、用例编写与审查、E2E（Playwright）与 API 自动化、探索式测试、回归范围与 Bug 分析，共享知识库提供格式规范、风险模型与 Schema 校验脚本。"
+  },
+  {
+   "name": "dsh-wechat-mp-studio",
+   "npm": null,
+   "version": null,
+   "stars": 3,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:FuncWei/dsh-wechat-mp-studio",
+   "desc": "微信公众号内容生产工作台：防低创作度结构轮换写作法、低创作度整改实战、祝福图视觉基线、gpt-image 配图管线与 OCR 验收、小绿书草稿网页接口实测参数。"
+  },
+  {
+   "name": "dsh-skill-manage",
+   "npm": "dsh-skill-manage",
+   "version": "0.2.2",
+   "stars": 2,
+   "downloads": 329,
+   "install": "dsh plugin --profile web add dsh-skill-manage",
+   "desc": "代理自管的程序性记忆：skill_manage 工具可创建、修补、禁用、删除 agent 自己的技能（用户级/项目级双作用域），带删除守卫（agent 创建标记、pin、路径限制）与触发纪律提示。"
+  },
+  {
+   "name": "Aegis",
+   "npm": null,
+   "version": null,
+   "stars": 1268,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:GanyuanRan/Aegis",
+   "desc": "面向编码 Agent 的软件工程方法包，提供基线优先规划、系统化调试、提示词卫生、完成前验证，以及修复/退役双轨跟踪技能。"
+  },
+  {
+   "name": "dsh-plugin-development",
+   "npm": "dsh-plugin-development",
+   "version": "0.1.4",
+   "stars": 0,
+   "downloads": 777,
+   "install": "dsh plugin --profile web add dsh-plugin-development",
+   "desc": "携带一份技能，讲怎么开发、调试、发布 DSH 插件——host/client 双半包骨架、把 fork 挂进丢弃式 profile 开发、发布到 GitHub 与 npm，以及发布过程中实际踩到的坑。安装插件即注册该技能。"
+  },
+  {
+   "name": "dsh-skill-authoring",
+   "npm": "dsh-skill-authoring",
+   "version": "0.1.1",
+   "stars": 0,
+   "downloads": 367,
+   "install": "dsh plugin --profile web add dsh-skill-authoring",
+   "desc": "携带一份讲怎么写 DSH 技能的技能——SKILL.md 的 frontmatter 与技能根优先级、description 怎么写才会被触发、篇幅与拆分标准，以及「写完后怎么证明它真管用」的 A/B 验证。包里还带着供这份技能校验技能目录的检查脚本。"
+  },
+  {
+   "name": "dao-zang-skill",
+   "npm": "dao-zang-skill",
+   "version": "2.0.0",
+   "stars": 1,
+   "downloads": 446,
+   "install": "dsh plugin --profile web add dao-zang-skill",
+   "desc": "道藏知识库离线检索与原文提取：对 28.5 万段经文进行关键词或语义检索，精确提取原文（带行号与命中标记），可从 Godners/DaoZang 数据集一键搭建工作区。"
+  },
+  {
+   "name": "dsh-ecc",
+   "npm": "dsh-ecc-skills",
+   "version": "0.6.0",
+   "stars": 7,
+   "downloads": 1039,
+   "install": "dsh plugin --profile web add dsh-ecc-skills",
+   "desc": "ECC（227k⭐ 操作员系统）273 个技能（95.8%）分四批移植到 DSH。"
+  },
+  {
+   "name": "dsh-ponytail",
+   "npm": "dsh-ponytail-skills",
+   "version": "0.1.6",
+   "stars": 13,
+   "downloads": 1388,
+   "install": "dsh plugin --profile web add dsh-ponytail-skills",
+   "desc": "Ponytail 最懒资深工程师模式：6 个技能，改编自 DietrichGebert/ponytail。"
+  },
+  {
+   "name": "mattpocock-skills-dsh",
+   "npm": "mattpocock-skills-dsh",
+   "version": "0.1.7",
+   "stars": 15,
+   "downloads": 1447,
+   "install": "dsh plugin --profile web add mattpocock-skills-dsh",
+   "desc": "Matt Pocock 完整发布技能集（25 个 SKILL.md）的 DSH 移植。"
+  },
+  {
+   "name": "mattpocock-skills-dsh-zh",
+   "npm": "mattpocock-skills-dsh-zh",
+   "version": "0.1.5",
+   "stars": 4,
+   "downloads": 1101,
+   "install": "dsh plugin --profile web add mattpocock-skills-dsh-zh",
+   "desc": "Matt Pocock 25 个技能正文全译中文（技术术语保留英文并附注释）。"
+  },
+  {
+   "name": "dsh-goal",
+   "npm": "@goodandready/dsh-goal",
+   "version": "0.2.9",
+   "stars": 1,
+   "downloads": 2828,
+   "install": "dsh plugin --profile web add @goodandready/dsh-goal",
+   "desc": "DeepSeek Harness 的目标模式与自主执行插件：顶部吸附横幅在每轮对话中保持当前目标可见，同时 Agent 自主推进完成目标。"
+  },
+  {
+   "name": "dsh-desktop-app",
+   "npm": "dsh-desktop-app",
+   "version": "0.4.0",
+   "stars": 0,
+   "downloads": 266,
+   "install": "dsh plugin --profile web add dsh-desktop-app",
+   "desc": "把 DeepSeek Harness 封装成 Tauri 2 桌面应用（macOS + Windows）的技能包：双平台安装、国内镜像加速（含 subagent 超时哨兵）、无管理员 Windows 工具链方案、三路径验收清单。"
+  },
+  {
+   "name": "dsh-fight-scene-director",
+   "npm": null,
+   "version": null,
+   "stars": 1,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:hatsuyuki0103/dsh-fight-scene-director",
+   "desc": "把 fight-scene-director 打戏设计技能注册进 DSH，移植自同名 Codex 技能。输出适配 Seedance 2.0/2.5 与 MiniMax H3 的结构化中文提示词，并支持轨迹图与初始站位图生图提示词。"
+  },
+  {
+   "name": "oh-my-deepseek-harness",
+   "npm": null,
+   "version": null,
+   "stars": 4,
+   "downloads": null,
+   "install": "dsh plugin --profile web add \"https://github.com/hatsuyuki0103/oh-my-deepseek-harness/releases/latest/download/oh-my-deepseek-harness.tgz\"",
+   "desc": "OMX 风格工作流技能集：deep-interview、ralplan、ralph、autopilot、team、code-review 等 23 个技能，基于 DSH 原生工具重写，不含视觉技能。"
+  },
+  {
+   "name": "dsh-smart-charts",
+   "npm": null,
+   "version": null,
+   "stars": 13,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:hherosoul/dsh-smart-charts",
+   "desc": "图表生成技能：将 CSV、Excel 或 JSON 数据离线渲染为 26 类交互式 ECharts HTML 图表，支持多文件合并与沙箱化数据转换。"
+  },
+  {
+   "name": "dsh-best-ponytail",
+   "npm": "dsh-best-ponytail",
+   "version": "0.1.0",
+   "stars": 0,
+   "downloads": 175,
+   "install": "dsh plugin --profile web add dsh-best-ponytail",
+   "desc": "把「最懒资深工程师」规则集 ponytail 装进 DeepSeek Harness：7 级最小代码阶梯（YAGNI、复用、标准库、平台原生、已装依赖、一行、最小实现），六个技能（主规则、过度工程 review、全仓 audit、debt 欠账台账、gain 计分板、help 速查），/ponytail 会话级调档命令（lite/full/ultra/off），以及可选的每轮常驻规则注入。上游内容 MIT 原样打包，零工具注册，卸载零残留。"
+  },
+  {
+   "name": "dsh_superpowers",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:icanfinish11/dsh_superpowers",
+   "desc": "把 obra/superpowers 的 14 个技能按已记录的上游 tag（v6.3.0）打包进 dsh，并可用带差异报告的命令重新同步；任务匹配时自动触发。"
+  },
+  {
+   "name": "shidi-skill",
+   "npm": "shidi-dsh-plugin",
+   "version": "0.3.0",
+   "stars": 10,
+   "downloads": 401,
+   "install": "dsh plugin --profile web add shidi-dsh-plugin",
+   "desc": "AI4S 科研工作流技能包，面向 AI for Science 与研究生/科研 Agent 用户：多角度文献调研（每角度落盘）、实验方案（含漏洞清单）、作图与精读；每单交付文件，附交叉验证任务书。零依赖，MIT。"
+  },
+  {
+   "name": "dsh-superpowers",
+   "npm": "@jasonfreelab/dsh-superpowers",
+   "version": "0.2.0",
+   "stars": 2,
+   "downloads": 1349,
+   "install": "dsh plugin --profile web add @jasonfreelab/dsh-superpowers",
+   "desc": "将 obra/superpowers 方法论移植为 14 个原生 DSH 技能，覆盖规划、TDD、调试与代码评审。"
+  },
+  {
+   "name": "dsh-skill-dossier",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:JeffreySuen-x/dsh-skill-dossier",
+   "desc": "DSH 技能档案与工作汇报：浏览、搜索并为每个技能建档（方向/使用范围/能力边界/应用场景），复审与删除技能，并把每日简报汇成日报/周报/月报。"
+  },
+  {
+   "name": "dsh-skill-pack",
+   "npm": "@jeremy9682/dsh-skill-pack",
+   "version": "0.2.0",
+   "stars": 4,
+   "downloads": 339,
+   "install": "dsh plugin --profile web add @jeremy9682/dsh-skill-pack",
+   "desc": "11 个可分享的工作流 skills（handoff、triage、to-spec、to-tickets、wayfinder、teach、wait-what、dsh-mode-routing、ask-matt、overnight-execution、full-throttle），打包为可安装 bundle。"
+  },
+  {
+   "name": "docgen",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:JohnXu22786/docgen",
+   "desc": "文档工坊技能包：四个纯提示词 Agent Skills，从代码库生成 README、PR 描述、changelog 与代码审查意见，以 dsh.bundle 插件行接入 dsh，也可文件式发现免拷贝使用。"
+  },
+  {
+   "name": "skill-framework",
+   "npm": null,
+   "version": null,
+   "stars": 1,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:JohnXu22786/skill-framework",
+   "desc": "以单个 Cordis 插件打包一整套工程方法论技能库：14 个 Agent Skills（规划、测试、排障、评审、交付）注册到 DeepSeek Harness 的 ctx.skills。"
+  },
+  {
+   "name": "spec-driven",
+   "npm": null,
+   "version": null,
+   "stars": 2,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:JohnXu22786/spec-driven",
+   "desc": "规格驱动开发纪律技能包（keel）：五个技能（锚定/立规/探针/建造/审计）、三个审查工具与六个规格模板，强制先规格后代码、假设先行验证并约束范围蔓延。"
+  },
+  {
+   "name": "mattpocock-skills-dsh",
+   "npm": null,
+   "version": null,
+   "stars": 1,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:JUNQINGV587/mattpocock-skills-dsh",
+   "desc": "将 Matt Pocock 的 25 个精选工程与效率 Agent 技能（grilling、TDD、代码审查、领域建模等）移植为 DeepSeek Harness 插件包。"
+  },
+  {
+   "name": "dsh-moments-aieo",
+   "npm": null,
+   "version": null,
+   "stars": 2,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:Kenerlee/dsh-moments-aieo",
+   "desc": "AIEO（GEO/AEO）交付方法论，挂载为一个独立的 skill provider：0-9 分制的 AI 可见性诊断、产品定位、仅限白名单平台导出数据的搜索热词挖掘、周期性效果监控与 HTML 监控面板，由同一份共享问题库串联，另附一个落地页复刻 skill。"
+  },
+  {
+   "name": "dsh-project-based-learning",
+   "npm": "dsh-project-based-learning",
+   "version": "2.0.1",
+   "stars": 0,
+   "downloads": 517,
+   "install": "dsh plugin --profile web add dsh-project-based-learning",
+   "desc": "项目制教学教练：学科无关的教学引擎 + 可替换领域包（随包提供 Unity/C#），同时以 DSH 技能与可安装组合包分发。技能协议强制\"先做后教\"与分级提示；零依赖校验器会拒绝证据不支撑的能力结论，并在存在未解决阻塞项时阻止阶段通过。"
+  },
+  {
+   "name": "Big8",
+   "npm": null,
+   "version": null,
+   "stars": 3,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:kobenfang/Big8",
+   "desc": "AI玄学助手技能：风水、面相、八字、星座、每日一卦与老黄历。"
+  },
+  {
+   "name": "bigA",
+   "npm": null,
+   "version": null,
+   "stars": 9,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:kobenfang/bigA",
+   "desc": "A股智能选股技能：实时行情、技术面择时分、买卖信号与动态股票池。"
+  },
+  {
+   "name": "BigFish",
+   "npm": null,
+   "version": null,
+   "stars": 2,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:kobenfang/BigFish",
+   "desc": "AI钓鱼助手技能：水面照片分析鱼情，结合天气气压推荐鱼种、钓法与饵料。"
+  },
+  {
+   "name": "BigFocus",
+   "npm": null,
+   "version": null,
+   "stars": 2,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:kobenfang/BigFocus",
+   "desc": "追踪管家技能：追踪商品价格、明星动态与自定义指标，变动自动汇报，支持定时推送。"
+  },
+  {
+   "name": "BigFood",
+   "npm": null,
+   "version": null,
+   "stars": 2,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:kobenfang/BigFood",
+   "desc": "AI冰箱管家技能：食材图片识别并推荐菜谱，支持库存管理与采购提醒。"
+  },
+  {
+   "name": "BigLead",
+   "npm": null,
+   "version": null,
+   "stars": 4,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:kobenfang/BigLead",
+   "desc": "精准客户线索挖掘技能：按行业/产品/地区搜索目标公司，多渠道验证并提取联系方式。"
+  },
+  {
+   "name": "BigPlan",
+   "npm": null,
+   "version": null,
+   "stars": 3,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:kobenfang/BigPlan",
+   "desc": "AI产品调研技能：分析市场、技术与供应链，输出高中低三套产品规格方案。"
+  },
+  {
+   "name": "BigSeedSkill",
+   "npm": null,
+   "version": null,
+   "stars": 3,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:kobenfang/BigSeedSkill",
+   "desc": "闪念记录与人生拼图技能：捕捉生活点滴，构建画像并生成小说、剧本或自传。"
+  },
+  {
+   "name": "BigTimer",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:kobenfang/BigTimer",
+   "desc": "定时任务与消息推送管家：统一管理 cron 调度，自动推送飞书/多端，兼容 OpenClaw 与 DSH 双环境。"
+  },
+  {
+   "name": "Eyes",
+   "npm": null,
+   "version": null,
+   "stars": 2,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:kobenfang/Eyes",
+   "desc": "全球热点监控技能：追踪全球事件，按行业、汇率与大宗商品链路分析影响。"
+  },
+  {
+   "name": "FruitPi",
+   "npm": null,
+   "version": null,
+   "stars": 2,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:kobenfang/FruitPi",
+   "desc": "全球水果价格追踪技能：采集与查询国内外水果批发价，支持人民币/公斤换算。"
+  },
+  {
+   "name": "ListForm",
+   "npm": null,
+   "version": null,
+   "stars": 3,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:kobenfang/ListForm",
+   "desc": "智能表单技能：支出账单、台账与日志的结构化记录，自动归类并生成周期报表。"
+  },
+  {
+   "name": "dsh-skills-input",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:konglong87/dsh-skills-input",
+   "desc": "DSH composer 界面：搜索当前会话可手动调用的 Skill，并将宿主可识别的斜杠命令写入草稿，不自动发送。"
+  },
+  {
+   "name": "dsh-plugins#dsh-learn",
+   "npm": "dsh-plugins-learn",
+   "version": "1.0.1",
+   "stars": 2,
+   "downloads": 121,
+   "install": "dsh plugin --profile web add dsh-plugins-learn",
+   "desc": "dsh 自我学习闭环：记录经验、生成并发布技能，定期审查修正、合并与退役技能。"
+  },
+  {
+   "name": "dsh-skill-router",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:lau4tin1/dsh-skill-router",
+   "desc": "DeepSeek Harness 的 skill 路由插件：用本地模型为 skill 和用户任务生成向量，按基于分差的规则保留明确相关的 skill，并自动把它们的完整正文注入提示词。"
+  },
+  {
+   "name": "superpowers-dsh",
+   "npm": null,
+   "version": null,
+   "stars": 93,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:LayneChai/superpowers-dsh",
+   "desc": "DeepSeek Harness 版 Superpowers 技能包：移植自 obra/superpowers 的 TDD、调试、规划与协作技能，以 Cordis 插件安装并注册 14 个技能（零运行时依赖）。"
+  },
+  {
+   "name": "dsh-experience-library",
+   "npm": null,
+   "version": null,
+   "stars": 1,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:libiwolve/dsh-experience-library",
+   "desc": "DSH 经验验证固化层：零 token 采集工具失败/重试/搜索信号，加工轮提炼成经三层检验的技能书，任务开局翻书复用。内置 10 本试验经验 + benchmark 数据（复杂任务成功率 100% vs 裸环境 60%）。"
+  },
+  {
+   "name": "harmony-next.skills",
+   "npm": null,
+   "version": null,
+   "stars": 354,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:linhay/harmony-next.skills",
+   "desc": "为 DeepSeek Harness 提供 HarmonyOS NEXT 技能包、离线 API 参考及 DevEco、HDC 与模拟器自动化指南。"
+  },
+  {
+   "name": "gongwen-skill",
+   "npm": "gongwen-skill",
+   "version": "2.13.0",
+   "stars": 66,
+   "downloads": 3632,
+   "install": "dsh plugin --profile web add gongwen-skill",
+   "desc": "中文公文全流程处理工具：GB/T 9704 格式检查、自动修复、内容修订（红色标注+删除线）、模板生成、Markdown 转公文、版头/版记/页码注入，覆盖通知/请示/报告/函/会议纪要等 24 类公文。"
+  },
+  {
+   "name": "dsh-rigorquant",
+   "npm": null,
+   "version": null,
+   "stars": 5,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:linxichen/dsh-rigorquant",
+   "desc": "RigorQuant 预设与技能包：面向实证与计算数学（经济学、金融、组合）的无人值守隔离多智能体研究，内置四重实现前校验与 jacobian/Lean 升级通道。"
+  },
+  {
+   "name": "dsh-courseware",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:lnsdlszsqxxx/dsh-courseware",
+   "desc": "拿用户自己的 .pptx 模板 + 一份课程大纲（教案/文档/纯文本），产出套用该模板背景、配色、字体、页面骨架的课件 .pptx。纯插件包，无内置密钥，图片后端需用户自行配置。"
+  },
+  {
+   "name": "dsh-super-pm",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:Lohaslee/dsh-super-pm",
+   "desc": "DeepSeek Harness 的产品思考助手：先明确负向边界，拆开事实与假设，经七套产品视角讨论取舍，并将确认的决策沉淀到项目记忆中。"
+  },
+  {
+   "name": "shopline-ai-toolkit-dsh",
+   "npm": null,
+   "version": null,
+   "stars": 5,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:lunw/shopline-ai-toolkit-dsh",
+   "desc": "SHOPLINE AI 工具包：接入 SHOPLINE 官方开发者 MCP 服务器，内置七个 SHOPLINE 平台技能（Admin REST、GraphQL、OAuth、Webhook、Sline），是 Shopify AI Toolkit 的 SHOPLINE 对应版。"
+  },
+  {
+   "name": "dsh-mattpocock-skills",
+   "npm": "@maoleijin/dsh-mattpocock-skills",
+   "version": "0.1.0",
+   "stars": 0,
+   "downloads": 98,
+   "install": "dsh plugin --profile web add @maoleijin/dsh-mattpocock-skills",
+   "desc": "将完整 mattpocock/skills 技能树打包为 DSH 插件，保留上游调用策略，并在自动同步上游时校验和应用精确匹配的 DSH 语义适配层。"
+  },
+  {
+   "name": "dsh-prompt-library",
+   "npm": "@sunjuntao/dsh-prompt-library",
+   "version": "0.15.0",
+   "stars": 11,
+   "downloads": 3615,
+   "install": "dsh plugin --profile web add @sunjuntao/dsh-prompt-library",
+   "desc": "DSH提示词库插件：支持提示词增删改查、分类标签、导入导出、AI智能优化、选中文本一键剪藏，附带侧边栏与词库助手气泡提醒。"
+  },
+  {
+   "name": "mattpocock-skills-for-dsh",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:Meteor-system/mattpocock-skills-for-dsh",
+   "desc": "将 mattpocock/skills 的 25 个正式技能打包为 DeepSeek Harness bundle，附原生 Agent 预设、区分人触发与模型调用的技能 provider，以及轻量 grilling 到 implement 引导。"
+  },
+  {
+   "name": "superpowers-for-dsh",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:Meteor-system/superpowers-for-dsh",
+   "desc": "将 obra/superpowers 的 14 个工程技能打包为 DeepSeek Harness bundle，附原生 Agent 预设、自动会话引导和 Windows 沙箱兼容。"
+  },
+  {
+   "name": "dsh-agency-agents",
+   "npm": "@michengai/dsh-agency-agents",
+   "version": "1.0.3",
+   "stars": 63,
+   "downloads": 61368,
+   "install": "dsh plugin --profile web add @michengai/dsh-agency-agents",
+   "desc": "增加可召唤的领域专家名单，专家以子代理运行，主会话保留任务和最终答复。"
+  },
+  {
+   "name": "skill-bartender",
+   "npm": null,
+   "version": null,
+   "stars": 1,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:MJorgin/skill-bartender",
+   "desc": "任务到技能配对元技能：懒人阶梯最小化加载、可编辑路由表、隔离-SkillSpector 扫描-人工确认的安装流程。"
+  },
+  {
+   "name": "dsh-skill-mover",
+   "npm": null,
+   "version": null,
+   "stars": 4,
+   "downloads": null,
+   "install": "dsh plugin --profile web add \"https://github.com/mjylfz/dsh-skill-mover/releases/download/v1.1.0/dsh-skill-mover-1.1.0.tgz\"",
+   "desc": "把其他 Agent（Cursor、Claude Code、Codex、OpenCode 等）的技能一键搬进 DeepSeek Harness：扫描 14 个平台外加共享的 ~/.agents 技能层，识别不同来源的同名技能，可挑选每个技能的最佳来源，复制到 DSH 技能目录，支持回滚移除已迁移的技能。"
+  },
+  {
+   "name": "dsh-skill-slash-fuzzy",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:NecromanAlbert/dsh-skill-slash-fuzzy",
+   "desc": "用唯一 kebab 片段解析斜杠 skill，例如 /oneshot 可加载 game-package-oneshot。"
+  },
+  {
+   "name": "dsh-skills-anywhere",
+   "npm": "dsh-skills-anywhere",
+   "version": "0.12.1",
+   "stars": 6,
+   "downloads": 2202,
+   "install": "dsh plugin --profile web add dsh-skills-anywhere",
+   "desc": "实时技能提供器：把 60+ 个其他 Agent（Claude Code、Codex、Cursor、Gemini CLI、Copilot）的技能目录、Claude Code 插件市场以及任意 git 技能仓库中的技能接入 dsh 目录，零拷贝零软链接；自动去重、修复 frontmatter、处理同名冲突，并附带 CLI（list、add、sync、doctor）。"
+  },
+  {
+   "name": "dsh-academic-research-skills",
+   "npm": null,
+   "version": null,
+   "stars": 12,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:nullptr-DZF/dsh-academic-research-skills",
+   "desc": "移植自 ARS Claude Code 插件（GitHub 44k+ stars）：面向 DeepSeek Harness 的学术研究技能套件——深度调研 agent 团队、论文写作流水线、多视角同行评审小组与端到端编排器，外加十六个 /ars-* 命令。"
+  },
+  {
+   "name": "internal-skill-workshop-plugin",
+   "npm": "internal-skill-workshop",
+   "version": "0.2.0",
+   "stars": 0,
+   "downloads": 508,
+   "install": "dsh plugin --profile web add internal-skill-workshop",
+   "desc": "在 DSH Web 中浏览、登录并安全安装来自团队 Skill Base 的公开或私有 Skill。"
+  },
+  {
+   "name": "kimi-ppt-skill",
+   "npm": null,
+   "version": null,
+   "stars": 6,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:OMSociety/kimi-ppt-skill",
+   "desc": "内含 kimi-ppt 技能的 DSH 插件：本地生成 .pptx 完成 PPT 的创建、编辑与导出，Pillow 生成预览图；衍生自 MIT 项目 open-kimi-ppt-skill。"
+  },
+  {
+   "name": "dsh-plugin-guide",
+   "npm": "dsh-plugin-guide",
+   "version": "0.3.17",
+   "stars": 40,
+   "downloads": 3481,
+   "install": "dsh plugin --profile web add dsh-plugin-guide",
+   "desc": "DSH 插件开发知识库，作为按需加载的 agent 技能随 bundle 安装：官方约束、任务工作流、API 参考与社区踩坑，写插件时让 DSH 自己查。"
+  },
+  {
+   "name": "dsh-plugin-upgrade",
+   "npm": "dsh-plugin-upgrade",
+   "version": "2.0.2",
+   "stars": 0,
+   "downloads": 1080,
+   "install": "dsh plugin --profile web add dsh-plugin-upgrade",
+   "desc": "面向 DeepSeek Harness 插件作者的升级技能：一个包只放一份走廊索引，自动识别调用方的 peer 区间并路由到对应已封版的升级卡片（0.1.3-alpha.1 至 0.1.5-rc.1 为 A+B 两条腿，0.1.5-rc.2 至 0.1.6-alpha.2 为 C 腿），并附带以 bundle 技能与 npx CLI 两种形态提供的零依赖接缝扫描器。"
+  },
+  {
+   "name": "dsh-plugin-upgrade-015",
+   "npm": "dsh-plugin-upgrade-015",
+   "version": "0.1.1",
+   "stars": 0,
+   "downloads": 425,
+   "install": "dsh plugin --profile web add dsh-plugin-upgrade-015",
+   "desc": "合并后的版本锁定插件升级技能（0.1.3-alpha.1 → 0.1.5-rc.1，两条闭环腿）：证据绑定版本卡 + 零依赖 20 接缝扫描器，以 bundle 技能 + npx CLI 两种形态发布。"
+  },
+  {
+   "name": "dsh-ppt-master",
+   "npm": null,
+   "version": null,
+   "stars": 2,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:pn1024/dsh-ppt-master",
+   "desc": "AI 驱动的演示文稿工作流：从 PDF、DOCX、网址或 Markdown 生成可编辑 PPTX 与 SVG 快照，支持原生 PPTX 模板填充与成品演示文稿增强。"
+  },
+  {
+   "name": "dsh-run2skill",
+   "npm": "dsh-run2skill",
+   "version": "0.4.0",
+   "stars": 109,
+   "downloads": 1236,
+   "install": "dsh plugin --profile web add dsh-run2skill",
+   "desc": "将 DSH 会话中明确表达的经验整理为可审核的原生 Skill 草稿，并仅在用户确认后保存。"
+  },
+  {
+   "name": "dsh-skill-folder",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:QWE13-ART/dsh-skill-folder",
+   "desc": "折叠 DSH 技能目录提示面：KV 缓存稳定渲染 + BM25/bge-m3 混合技能检索 + 可选自动路由提示。"
+  },
+  {
+   "name": "redfox-community-dsh",
+   "npm": null,
+   "version": null,
+   "stars": 6,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:redfox-data/redfox-community-dsh",
+   "desc": "100+ 多平台社媒数据技能 + 40 个原生 MCP 工具（数据 API、AI 搜索、AI 生成），一键安装。"
+  },
+  {
+   "name": "word-docx-writer",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add \"https://github.com/RempleXI/word-docx-writer/releases/download/v1.0.0/dsh-plugin-word-docx-writer-1.0.0.tgz\"",
+   "desc": "用简单标记稿生成并排版中文 Word（.docx）文档，使用内置标题样式、宋体与 Times New Roman 字体，图表题注按章自动编号。"
+  },
+  {
+   "name": "dsh-webnovel-writer",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:RrcoVer0/dsh-webnovel-writer",
+   "desc": "为现有 Agent 添加基于文件记忆的中文网文策划、逐章写作、一致性审校、回滚与文风画像技能。"
+  },
+  {
+   "name": "dsh-douyin-oem-touliu-report",
+   "npm": null,
+   "version": null,
+   "stars": 1,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:ruiyukirin/dsh-douyin-oem-touliu-report",
+   "desc": "抖音本地推 OEM 广告日报/周报自动生成（作者：Kirin）：一次 Edge 登录后自动采集三大数据源（来客客资、计划级投放明细、视频分析），计算指标并生成 A4 排版 docx 报告，支持自由选择定时运行时间和邮件通知。"
+  },
+  {
+   "name": "dsh-awesome-skills",
+   "npm": null,
+   "version": null,
+   "stars": 1,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:ryasrk/dsh-awesome-skills",
+   "desc": "安装一个 skill 路由技能：按需对本地技能库做语义检索，让庞大的技能库不占每轮的模型目录。"
+  },
+  {
+   "name": "sandbase-skills",
+   "npm": null,
+   "version": null,
+   "stars": 197,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:sandbaseai/sandbase-skills",
+   "desc": "通过文件系统 Skill provider 将 88 个研究、社交情报、营销与商业 Agent Skills 挂载到 dsh。"
+  },
+  {
+   "name": "specpowers",
+   "npm": null,
+   "version": null,
+   "stars": 2,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:SAXEM1997/specpowers",
+   "desc": "为 DeepSeek Harness 注册 6 个 SDD+TDD 工作流技能：把 OpenSpec 规格编写与 Superpowers 测试驱动纪律衔接为带审查 Gate 的 Phase 0-4 流水线，零运行时依赖。"
+  },
+  {
+   "name": "law-thesis-review",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:Signalight/law-thesis-review",
+   "desc": "DeepSeek Harness 技能插件：批改法学论文（国际经济法等）。读取学生 Word 论文，对照打包的常见问题清单逐项检查；可直接确定的错漏以 Word 修订模式修改，对部分整体问题、缺依据/缺澄清之处写 Word 批注；并输出简短、客观、以宏观点评为主的总体评语与待修改清单。"
+  },
+  {
+   "name": "minecraft-dev",
+   "npm": "minecraft-dev",
+   "version": "0.9.0",
+   "stars": 18,
+   "downloads": 1070,
+   "install": "dsh plugin --profile web add minecraft-dev",
+   "desc": "面向 DeepSeek Harness 的 Minecraft 开发技能与工具：8 个技能覆盖 Paper/Spigot 插件、Fabric、Forge 与 NeoForge 模组、大型模组附属开发，以及 Minecraft 1.7.10 至 26.x 全时代的 Gradle/JDK 构建配置；另含 mc_scaffold 项目生成器与 mc_gradle 构建执行器、开工前先批量询问缺失版本/平台信息的 intake 技能、4 个内置子代理，以及第二个「Minecraft 架构师」预设——其 mc_codex 工具通过 codex app-server 协议驱动你自己的 Codex CLI 写出骨架，再由 DSH 填充标记处的方法体并验证构建。"
+  },
+  {
+   "name": "dsh-skill-manager",
+   "npm": null,
+   "version": null,
+   "stars": 1,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:SLin-code/dsh-skill-manager",
+   "desc": "在 DSH Web 设置中查看本地 Skills，并编辑自动调用与 /name 调用策略；内置和软链接条目保持只读。"
+  },
+  {
+   "name": "dsh-hyperframes",
+   "npm": "dsh-hyperframes",
+   "version": "0.3.2",
+   "stars": 7,
+   "downloads": 1738,
+   "install": "dsh plugin --profile web add dsh-hyperframes",
+   "desc": "同步 HyperFrames by HeyGen 官方上游的二十技能：HTML 写视频/动画/关键帧/音频与音乐转视频/CLI/注册表/幻灯片/口播重剪/网址·产品·PR 转视频等，附随包资源完整性自检。"
+  },
+  {
+   "name": "dsh-remotion",
+   "npm": "dsh-remotion",
+   "version": "0.3.2",
+   "stars": 7,
+   "downloads": 1880,
+   "install": "dsh plugin --profile web add dsh-remotion",
+   "desc": "Remotion 官方移植技能：React 编程式视频（动画/音频/字幕/3D/图表/字体，38 规则文件），安装即用，附随包资源完整性自检。"
+  },
+  {
+   "name": "dsh-agent-extension",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:SugarFatFree/dsh-agent-extension",
+   "desc": "从 .dsh 与 .agents 目录发现工作区 Markdown 命令、技能和按路径生效的规则。"
+  },
+  {
+   "name": "SumSec-Skills",
+   "npm": null,
+   "version": null,
+   "stars": 8,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:SummerSec/SumSec-Skills",
+   "desc": "多平台 Agent Skills 集合，作为 DeepSeek Harness profile bundle 挂载，提供中文写作、Git、插件开发、Taste 与语义边界检测等 Skill。"
+  },
+  {
+   "name": "superdesign-skill",
+   "npm": null,
+   "version": null,
+   "stars": 599,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:superdesigndev/superdesign-skill",
+   "desc": "在 Superdesign 画布上做 UI 与营销图的设计技能：先读代码库拿上下文、抽取现有设计系统，再通过 Superdesign CLI 生成并迭代可分支的设计稿、流程页与可复用组件。"
+  },
+  {
+   "name": "math-agent-framework#dsh-plugin",
+   "npm": null,
+   "version": null,
+   "stars": 5,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:symmetryseeker/math-agent-framework#path:/dsh-plugin",
+   "desc": "数学 Agent 框架接入 DeepSeek Harness：符号推导引擎（CES/二次型/ODE/PDE）、SymPy 验证、Lean 4 真编译验证的形式化证明、QED 多 Agent 对抗验证，经 TS 壳桥接 Python 引擎暴露为 DSH 原生工具。需先克隆 math-agent-framework 仓库并 `pip install -r requirements.txt`，将 MATH_AGENT_HOME 指向仓库根目录。所有结果携带 provenance（引擎版本/seed/容差）并标记为不可信数据。"
+  },
+  {
+   "name": "cloudq-for-dsh",
+   "npm": "dsh-cloudq",
+   "version": "0.3.0",
+   "stars": 6,
+   "downloads": 2404,
+   "install": "dsh plugin --profile web add dsh-cloudq",
+   "desc": "腾讯云智能顾问集成：CloudQ 对话模式，附用量、灵感、制品与架构图面板。"
+  },
+  {
+   "name": "deep-structural-analysis-skill",
+   "npm": null,
+   "version": null,
+   "stars": 5,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:tetckx/deep-structural-analysis-skill",
+   "desc": "多视角深层结构分析技能：16 透镜 4 类别、10 个结构工具，先攻击默认立场，产出置信度校准、事实绑定的分层结论。"
+  },
+  {
+   "name": "dsh-we-wallpaper-sync",
+   "npm": null,
+   "version": null,
+   "stars": 2,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:tiger0012/dsh-we-wallpaper-sync",
+   "desc": "可复用技能：批量浏览、搜索、下载 Wallpaper Engine（小红车，Steam 431960）创意工坊壁纸并接入 DSH 皮肤中心；含绕过 Steam HTTP 封锁与异地登录拦截（经出口 IP 与账号一致的 SOCKS 代理）。"
+  },
+  {
+   "name": "dsh-skill-evolution",
+   "npm": null,
+   "version": null,
+   "stars": 2,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:VanadisGithub/dsh-skill-evolution",
+   "desc": "观察 agent 执行轨迹，在每个成功回合结束时按信号触发 LLM 评审，把值得复用的工作流结晶为已注册技能，并随后续运行持续改进。"
+  },
+  {
+   "name": "Tripo3D-Plugin-dsh#plugin",
+   "npm": "tripo-dsh",
+   "version": "0.1.2",
+   "stars": 4,
+   "downloads": 268,
+   "install": "dsh plugin --profile web add tripo-dsh",
+   "desc": "通过 shell 驱动 tripo-cli 的 Tripo 3D 生成 Skill：文生 3D、图生 3D、绑骨与走跑动画、减面与 LOD 链，导出 GLB/FBX/OBJ/STL/USDZ/3MF，支持国内站与海外站账号的无头设备码登录；npm 包名 `tripo-dsh`。"
+  },
+  {
+   "name": "dsh-echocat-skill-panel",
+   "npm": "dsh-echocat-skill-panel",
+   "version": "5.1.0",
+   "stars": 201,
+   "downloads": null,
+   "install": "dsh plugin --profile web add dsh-echocat-skill-panel",
+   "desc": "每轮对话报告本轮调用了哪些 skill（模型自动加载、用户输入 /name，或一个都没用），并管理本机 skill 目录：粘贴仓库、文件夹、SKILL.md 或 zip 地址即可安装，中文显示名写入该 skill 的 meta.yaml，删除时保留备份。"
+  },
+  {
+   "name": "InfiniteDSH",
+   "npm": null,
+   "version": null,
+   "stars": 5,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:vdnight89/InfiniteDSH",
+   "desc": "诸天万界DSH：一个会话就是一本书。封面开书，十九界任选，文学预设只写正文，规则书按关键词注入，/export-story 把整场会话誊成 Markdown 小说。"
+  },
+  {
+   "name": "humanizer-ru#dsh",
+   "npm": null,
+   "version": null,
+   "stars": 127,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:Vladimir-Human/humanizer-ru#path:/dsh",
+   "desc": "清理俄语文本中的 AI 痕迹：识别聊天机器人复制粘贴残留（ChatGPT、Gemini、Grok、Perplexity、DeepSeek），移除隐藏文本标记（零宽字符、隐形排版；影子扫描捕获被不可见字符拆分的标记），并按需求改写为自然行文；40 个正则标记，其中 38 个有完整证据登记；156 个门控，530 个测试；离线运行，纯文本 bundle（二进制元数据移除在 scripts/ 中）。"
+  },
+  {
+   "name": "ru-marketplace-mcp#dsh",
+   "npm": null,
+   "version": null,
+   "stars": 116,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:Vladimir-Human/ru-marketplace-mcp#path:/dsh",
+   "desc": "面向十一家电商平台的技能与可选 MCP 行：跨 Wildberries、Detsky Mir、Yandex Market 比价，以及各平台（含 Ozon、Avito、AliExpress）的搜索、商品卡与评论。安装后 14 个技能立即可用；两行 MCP 默认关闭，需将 RU_MARKETPLACE_MCP_DIR 指向本地克隆，该克隆需要 Python 3.12+ 与 uv。"
+  },
+  {
+   "name": "dsh-skillhub",
+   "npm": null,
+   "version": null,
+   "stars": 4,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:vonweller/dsh-skillhub",
+   "desc": "在设置页浏览 skillhub.cn 公开技能目录，并将选中的 SKILL.md 技能包安装到 ~/.dsh/skills。"
+  },
+  {
+   "name": "ai-eight-honors-eight-shames",
+   "npm": null,
+   "version": null,
+   "stars": 1,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:w2310670047-code/ai-eight-honors-eight-shames",
+   "desc": "注册 ai-eight-honors-eight-shames skill 的 DSH 插件：面向编码代理的八条可核对工作准则（先查证再调用、有歧义先确认、业务规则给出处、先复用再新造、先测试再声称完成、按既有约定写、区分事实与推断、改动可回滚），外加第 9 条——用户每次提出需求或问题，都在工作区根的两份固定报告里成对记录诉求与改动。"
+  },
+  {
+   "name": "new-project-init",
+   "npm": null,
+   "version": null,
+   "stars": 2,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:warm-flame-core/new-project-init",
+   "desc": "项目文档体系初始化 skill：提问驱动落实文档规范、固化 AI 协作工作流，跨 DSH / Reasonix / Claude Code / Codex 可用。"
+  },
+  {
+   "name": "wavespeed-dsh-skill",
+   "npm": null,
+   "version": null,
+   "stars": 3,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:WaveSpeedAI/wavespeed-dsh-skill",
+   "desc": "通过开源 wavespeed CLI 用 WaveSpeed 模型生成与编辑 AI 媒体（图像、视频、音频、3D）：实时目录搜索、逐模型输入 schema 自省、@path 标记本地文件上传、运行前价格查询。"
+  },
+  {
+   "name": "skills-management",
+   "npm": "@weibaohui/skills-management",
+   "version": "0.6.2",
+   "stars": 13,
+   "downloads": 2689,
+   "install": "dsh plugin --profile web add @weibaohui/skills-management",
+   "desc": "技能市场：一个页面管理本机所有 coding agent 的技能，一键收编进 DSH 用户库；内置 6600+ 技能市场，支持注入开销（≈token）统计与模型可见性治理。"
+  },
+  {
+   "name": "dsh-ponytail",
+   "npm": "@wenaixi/dsh-ponytail",
+   "version": "4.9.0-dsh.5",
+   "stars": 11,
+   "downloads": 489,
+   "install": "dsh plugin --profile web add @wenaixi/dsh-ponytail",
+   "desc": "DietrichGebert/ponytail v4.9.0 的 DSH 完整移植：常驻懒人 senior 模式与七阶梯子（YAGNI 到最小实现），含 6 个技能（评审、审计、债务、收益、帮助）且无空 tool。"
+  },
+  {
+   "name": "dsh-superpower",
+   "npm": "@wenaixi/dsh-superpower",
+   "version": "6.3.1",
+   "stars": 15,
+   "downloads": 1598,
+   "install": "dsh plugin --profile web add @wenaixi/dsh-superpower",
+   "desc": "obra/superpowers 的 DSH 完整移植：通过原生 SkillProvider（rank 550）注入 14 个方法论技能，覆盖需求澄清、计划拆解、TDD、系统化调试、并行分发等，文档全中文化，开箱即用、零构建安装。"
+  },
+  {
+   "name": "screenshot-review",
+   "npm": null,
+   "version": null,
+   "stars": 1,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:wenyixiaoqingnian/screenshot-review",
+   "desc": "截图审阅 skill：模型自己打开页面、截图、看图、改代码，反复迭代直到前端效果符合要求。以 dsh.bundle 打包，可用 `dsh plugin add` 一键安装。"
+  },
+  {
+   "name": "dsh-stock-jt",
+   "npm": null,
+   "version": null,
+   "stars": 3,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:westwind2022/dsh-stock-jt",
+   "desc": "A股技术面研判（架梯动力学）插件：基于缠论结构给出挂坡 D⁺/D/D⁻ 与强势起步 E⁺/E/E⁻ 信号，附设置页与工作提示词。"
+  },
+  {
+   "name": "dsh-skill-station",
+   "npm": "dsh-skill-station",
+   "version": "0.1.0",
+   "stars": 1,
+   "downloads": 425,
+   "install": "dsh plugin --profile web add dsh-skill-station",
+   "desc": "侧边栏技能站：扫描 Claude/Codex/Cursor/Gemini 技能目录一键导入，管理全局与项目技能（启停、回收站），支持拖拽文件夹、zip 包与本地路径（不限大小）安装。"
+  },
+  {
+   "name": "dsh-plugin-hub#packages/dsh-verify-isolated",
+   "npm": null,
+   "version": null,
+   "stars": 20,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:wingsky-1/dsh-plugin-hub#path:/packages/dsh-verify-isolated",
+   "desc": "面向 DSH 插件开发的隔离环境浏览器验证 skill：一条命令拉起临时 DSH_HOME、独立 `verify_<随机>` profile、独立端口与独立浏览器实例，退出自动清理，不污染正在使用的 profile；自带零依赖 raw-CDP 浏览器驱动（快照 / 点击 / 截图 / 求值）与可选隔离审计。"
+  },
+  {
+   "name": "dsh-skills-manager-plugin",
+   "npm": "@wisdoverse/dsh-skills-manager",
+   "version": "1.0.4",
+   "stars": 1,
+   "downloads": 979,
+   "install": "dsh plugin --profile web add @wisdoverse/dsh-skills-manager",
+   "desc": "根据提示词自动激活已安装的 Skill，应用 Skill 声明的生命周期 Hook 与工具策略，并通过设置页或 skill_manager 工具管理 GitHub 托管的 Skill。"
+  },
+  {
+   "name": "dsh-any-skills",
+   "npm": null,
+   "version": null,
+   "stars": 2,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:wmengxiang/dsh-any-skills",
+   "desc": "从 Codex / Claude Code / OpenCode / GitHub / npm 导入并安装技能到 ~/.dsh/skills，模型自动读取、/技能名 立即可用；对话框旁 ⚡ 一键插入调用，设置页支持按来源/单技能导入、路径与数量展示、卸载与一键恢复。"
+  },
+  {
+   "name": "dsh-google-skills",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:WODE25500/dsh-google-skills",
+   "desc": "Google 的 Agent Skills(google/skills)for DeepSeek Harness：128 个打包的 SKILL.md 技能，覆盖 Google Cloud、BigQuery、GKE、Gemini、Firebase、广告与分析。"
+  },
+  {
+   "name": "dsh-skillopt",
+   "npm": null,
+   "version": null,
+   "stars": 3,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:WODE25500/dsh-skillopt",
+   "desc": "为 DeepSeek Harness agent 提供夜间自我进化：离线复盘过往会话，在你的 API 预算内重放高频任务，并把学到的技能凝练成经得起门禁验证的技能。把 microsoft/SkillOpt 的 SkillOpt-Sleep 引擎带进 dsh，作为原生工具加内置技能——无需模型训练。需 Python 3.10+ 并安装 SkillOpt-Sleep 引擎(pip install skillopt)。"
+  },
+  {
+   "name": "dsh-token-caveman",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:WODE25500/dsh-token-caveman",
+   "desc": "DeepSeek Harness 的输出极简——压缩 agent 自己的输出让每句回复更省 token(layer 4)。只改措辞，不丢内容。"
+  },
+  {
+   "name": "dsh-token-handoff",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:WODE25500/dsh-token-handoff",
+   "desc": "DeepSeek Harness 的会话上下文交接——不再每会话重读/重建上下文。单个 skill(layer ①),让下一会话暖启动。"
+  },
+  {
+   "name": "dsh-token-headroom",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:WODE25500/dsh-token-headroom",
+   "desc": "DeepSeek Harness 的上下文压缩/headroom——压缩在线上下文让 prompt 保持小，又不丢关键状态(layer 3)。"
+  },
+  {
+   "name": "dsh-token-rtk",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:WODE25500/dsh-token-rtk",
+   "desc": "DeepSeek Harness 的输入冗余剪枝——送进模型前剪掉重复/冗余 token(layer ②)。"
+  },
+  {
+   "name": "dsh-token-skills",
+   "npm": null,
+   "version": null,
+   "stars": 1,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:WODE25500/dsh-token-skills",
+   "desc": "四层省 Token，不牺牲模型智能：handoff、rtk、headroom、caveman 四个省 token 的 skill，每个也是独立可装插件。"
+  },
+  {
+   "name": "dsh-skill-select",
+   "npm": null,
+   "version": null,
+   "stars": 3,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:wyzh0117/dsh-skill-select",
+   "desc": "侧边栏技能选择器：列出已安装技能并标注 Global 与所属 repo，支持本会话勾选与常驻默认启动、可选 Guard、Codex/Grok/Hermes 用户技能，以及 /skill 注入。"
+  },
+  {
+   "name": "dsh-amphoreus",
+   "npm": "dsh-amphoreus",
+   "version": "0.4.0",
+   "stars": 3,
+   "downloads": 1127,
+   "install": "dsh plugin --profile web add dsh-amphoreus",
+   "desc": "把 δ-me13（翁法罗斯）的 13 张黄金裔角色技能卡变成席位工作区：逐席配色与壁纸、首轮自动注入技能卡、对话表情、每席记忆便签与预设、Alt+数字切席，以及用于派发与移交的总览画布；技能套件本身从可配置的本地目录读取，不随插件打包。"
+  },
+  {
+   "name": "dsh-skills-nexus",
+   "npm": "dsh-skills-nexus",
+   "version": "0.3.0",
+   "stars": 2,
+   "downloads": null,
+   "install": "dsh plugin --profile web add dsh-skills-nexus",
+   "desc": "通用 skill 适配器，将含 SKILL.md 的 GitHub 仓库克隆并 symlink 到官方 skills 根目录，注册为 DSH skill。"
+  },
+  {
+   "name": "math-research-dsh",
+   "npm": null,
+   "version": null,
+   "stars": 3,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:xsoc1/math-research-dsh",
+   "desc": "严谨开放数学研究套件：4 个 agent skill（rigorous-open-math-research、manage-math-research-program、math-research-workflow、lean-verify），覆盖对抗性审计的定理求解、研究项目管理、流水线编排与 Lean 4 形式化审计；CI 测试与机械式上游同步。"
+  },
+  {
+   "name": "dsh-web-artifact-designer",
+   "npm": "dsh-web-artifact-designer",
+   "version": "1.0.0",
+   "stars": 3,
+   "downloads": 593,
+   "install": "dsh plugin --profile web add dsh-web-artifact-designer",
+   "desc": "面向 DSH 的设计稿生成 skill（改编自 Anthropic canvas-design / web-artifacts-builder）：把设计需求做成可直接打开的自包含 HTML/SVG 设计稿（海报、信息图、落地页、图表、组件稿），内置交付前质量清单与「去 AI 味」反模式清单。"
+  },
+  {
+   "name": "dsh-plugin-zerone",
+   "npm": "@vigalai/dsh-plugin-zerone",
+   "version": "0.1.3",
+   "stars": 2,
+   "downloads": 671,
+   "install": "dsh plugin --profile web add @vigalai/dsh-plugin-zerone",
+   "desc": "会进化的项目级 Agent：以 SDD 规格驱动掌舵全流程，内置 16 个技能覆盖澄清、PRD、issue、编码、定位、验收、审查；会记忆、会沉淀，越用越懂你的项目。"
+  },
+  {
+   "name": "dsh-knj-extension-center",
+   "npm": "dsh-knj-extension-center",
+   "version": "2026.9.13",
+   "stars": 0,
+   "downloads": 745,
+   "install": "dsh plugin --profile web add dsh-knj-extension-center",
+   "desc": "技能中心：按区域浏览技能、从 zip 安装，并支持启用停用、卸载、回收站恢复与搜索。"
+  },
+  {
+   "name": "dsh-skill-manager",
+   "npm": "@yanglaofish/dsh-skill-manager",
+   "version": "4.3.5",
+   "stars": 1,
+   "downloads": 772,
+   "install": "dsh plugin --profile web add @yanglaofish/dsh-skill-manager",
+   "desc": "DeepSeek Harness 技能生命周期管理：技能库（纯技能池）、工作区启用白名单、会话勾选三层模型；Web 设置面板与对话页内嵌视图，支持技能文件浏览/编辑、zip 与文件夹批量导入、引擎实际加载校验。"
+  },
+  {
+   "name": "yinchao-ai-music-skill",
+   "npm": null,
+   "version": null,
+   "stars": 12,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:yinhcao/yinchao-ai-music-skill",
+   "desc": "根据提示词或歌词生成完整 AI 歌曲和 BGM，并支持参考音频创作与歌曲续写。"
+  },
+  {
+   "name": "dsh-creative-studio",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add \"https://github.com/Ylight-cpu/dsh-creative-studio/releases/latest/download/dsh-creative-studio.tgz\"",
+   "desc": "面向 DeepSeek Harness 的美工与视频剪辑工具包——可分档抠图、局部重绘改图、标题与 logo 合成、平台规格批量导出与图片体检；视频侧含 AI 抠像换背景（RVM ONNX，另有绿幕色键路径）、淡入/滑入/打字机/卡拉OK 动效文字、53 种转场与风格化变体、光效与调色预设（支持 LUT），以及素材通览、精确裁切、字幕烧入、配乐混音与平台规格导出；通过内置引导脚本自备本地 Python 运行时。"
+  },
+  {
+   "name": "dsh-i-have-adhd",
+   "npm": "dsh-i-have-adhd",
+   "version": "1.0.2",
+   "stars": 1,
+   "downloads": 964,
+   "install": "dsh plugin --profile web add dsh-i-have-adhd",
+   "desc": "常驻的 ADHD 友好输出塑形：一个系统提示词区段让回复行动先行、步骤编号、时间估算具体；adhd_on / adhd_off / adhd_status 三个工具让模式跨重启保持。"
+  },
+  {
+   "name": "cot-lint",
+   "npm": "cot-lint",
+   "version": "0.2.1",
+   "stars": 2,
+   "downloads": 395,
+   "install": "dsh plugin --profile web add cot-lint",
+   "desc": "思维链泄漏检测：零依赖 CLI 扫描 AI 留在文档与注释里的会话残留（死设计引用、PR 视角、变更叙述、评审编排），内置 cot-trim 语义修复技能包。"
+  },
+  {
+   "name": "skill-injector-plugin",
+   "npm": null,
+   "version": null,
+   "stars": 3,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:Zenjibad/skill-injector-plugin",
+   "desc": "在 DSH 会话中自动注入所选技能（如 caveman、ponytail）：每轮提示或仅在会话开始时，含设置页与输入区指示。"
+  },
+  {
+   "name": "dsh-design-skills",
+   "npm": null,
+   "version": null,
+   "stars": 21,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:zhaiyateng/dsh-design-skills",
+   "desc": "设计美学技能包：10 种风格（深色 SaaS、极简白、新拟态、粗野主义、毛玻璃、日式极简、便当盒、赛博朋克、蒸汽波、装饰艺术），每种含 token、组件规则、禁用清单与验收清单，附可运行落地页 demo。"
+  },
+  {
+   "name": "dsh-session-lab",
+   "npm": null,
+   "version": null,
+   "stars": 0,
+   "downloads": null,
+   "install": "dsh plugin --profile web add \"https://github.com/zhangguiping-xydt/dsh-session-lab/releases/download/v0.1.0/dsh-session-lab-v0.1.0.tgz\"",
+   "desc": "用于打包可验证会话、评测可复用技能和对比受控会话轨迹的 DSH 工作流。"
+  },
+  {
+   "name": "dsh-fix-duplicate-loader-id",
+   "npm": null,
+   "version": null,
+   "stars": 3,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:zhao1012/dsh-fix-duplicate-loader-id",
+   "desc": "检测并修复 dsh 启动的 \"duplicate loader entry id\" 崩溃：扫描 profile 各 bundle 的重复 loader row，转换为 id-targeted patch，附带零依赖 CLI（检测/预览/修复/复检）。"
+  },
+  {
+   "name": "dsh-skill-studio",
+   "npm": "dsh-skill-studio",
+   "version": "0.2.1",
+   "stars": 2,
+   "downloads": 763,
+   "install": "dsh plugin --profile web add dsh-skill-studio",
+   "desc": "DSH skill 可视化与管理插件：在设置面板列出全部 skill（含来源、嵌套标记与模型/用户调用状态），查看并编辑 SKILL.md 正文，一键启用/禁用模型与用户调用；并可从会话日志提取可复用内容，沉淀为 agent 可自动加载的个人 skill。提供 skillmgr_list/get/save/policy 及 skillmgr_extract_* 工具。"
+  },
+  {
+   "name": "dsh-web#packages/dsh-skill-explorer",
+   "npm": "@linxin666/dsh-client-ui-skill-explorer",
+   "version": "0.4.1",
+   "stars": 7971,
+   "downloads": 178535,
+   "install": "dsh plugin --profile web add @linxin666/dsh-client-ui-skill-explorer",
+   "desc": "技能中心：按来源分级浏览已加载的全部 skill，启用/禁用模型调用、创建新技能、删除进可恢复回收站。"
+  },
+  {
+   "name": "Stata-AI-Skill#dsh-plugin",
+   "npm": "@zihaovistonwang/stata-ai-skill",
+   "version": "1.3.0",
+   "stars": 3,
+   "downloads": 168,
+   "install": "dsh plugin --profile web add @zihaovistonwang/stata-ai-skill",
+   "desc": "在 DeepSeek Harness 中运行 Stata：Stata AI Skill 原生服务随 DSH 自动启动（内置 macOS/Windows 多平台二进制），无需手动配置即可跑回归、do 文件与计量工作流。"
+  },
+  {
+   "name": "dsh-adhd-copilot",
+   "npm": null,
+   "version": null,
+   "stars": 5,
+   "downloads": null,
+   "install": "dsh plugin --profile web add github:zimai233/dsh-adhd-copilot",
+   "desc": "ADHD 行为辅导技能：任务拆解、事项过载管理、启动仪式与失败重启。"
+  },
+  {
+   "name": "commercial-ui-ux-codex-skill#dsh-commercial-ui-ux",
+   "npm": "dsh-commercial-ui-ux",
+   "version": "0.1.0",
+   "stars": 3,
+   "downloads": 231,
+   "install": "dsh plugin --profile web add dsh-commercial-ui-ux",
+   "desc": "注册 commercial-ui-ux 技能：以任务为中心的商业界面 UI/UX/GUI 设计、审查、修复与实现（SaaS、仪表盘、后台、表单、表格、设计系统），带参考文档体系与质量门禁。"
+  },
+  {
+   "name": "lunheng-article-pipeline-dsh",
+   "npm": "lunheng-article-pipeline",
+   "version": "18.8.0",
+   "stars": 5,
+   "downloads": 6667,
+   "install": "dsh plugin --profile web add lunheng-article-pipeline",
+   "desc": "DSH bundle 技能包：把深度长文生产（学术论文 / 行业分析 / 商业评论）拆成 9 角色流水线——T1 文献 / T2 数据 / T3 案例三线并行检索、T4 分析、T5 写作、T6 批判伙伴、T7 审计、T8 终检（主控亲执行）、T9 同行评审，跨 6 个阶段，含三角验证、M 门 23 项机械终检、G0-G14 独立审计（含中文 AI 痕迹闸）、审稿评分与期刊匹配，以及 4 个人在环节点。以 bundle 分发（`package.json#dsh.bundle.patch` + `lib/index.js` 入口注册技能），`dsh plugin add lunheng-article-pipeline` 即装；随包 T1-T9 角色卡、模板与 11 个零依赖校验脚本，README 五语。"
+  }
+ ]
+}

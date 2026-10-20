@@ -1,0 +1,358 @@
+{
+  "warm_s2_band_right_blank": {
+    "file": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/度量脚本_魔夜UI密度_2026-09-30/strip_warm_s2_band_right_blank.png",
+    "src_mode": "RGBA",
+    "size": [
+      500,
+      435
+    ],
+    "W": 500,
+    "H": 435,
+    "pixels_total": 217500,
+    "pixels_visible_gt0": 217500,
+    "alpha_ratio_gt0": 1.0,
+    "pixels_solid_ge128": 217500,
+    "alpha_ge128_ratio": 1.0,
+    "alpha_max": 255,
+    "alpha_p95_of_visible": 255,
+    "outline_pixels": 1866,
+    "outline_ratio_visible": 0.008579,
+    "outline_ratio_full": 0.008579,
+    "stroke_pixels_inner": 1188,
+    "stroke_ratio_visible": 0.005462,
+    "stroke_ratio_inner": 0.005509,
+    "stroke_ratio_cellarea": 0.005462,
+    "stroke_ratio_cellarea_t003": 0.007471,
+    "grad_p50": 0.00261,
+    "grad_p90": 0.0034,
+    "grad_p99": 0.02001,
+    "grad_max": 0.25456,
+    "sat_median": 0.1029,
+    "val_median": 0.9529,
+    "rgb_mean_visible": [
+      238,
+      228,
+      214
+    ],
+    "hue_eligible_pixels": 3529,
+    "hue_eligible_ratio": 0.016225,
+    "hue_circ_median_deg": 26.25,
+    "hue_bin_top3": [
+      {
+        "bin_deg": "20-30",
+        "center": 25,
+        "share": 0.9694
+      },
+      {
+        "bin_deg": "30-40",
+        "center": 35,
+        "share": 0.0306
+      }
+    ],
+    "hue_arc_30_share": 1.0,
+    "box_xyxy": [
+      1400,
+      640,
+      1900,
+      1075
+    ],
+    "source": "warm_avalon_s2.png"
+  },
+  "warm_s2_band_top7px": {
+    "file": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/度量脚本_魔夜UI密度_2026-09-30/strip_warm_s2_band_top7px.png",
+    "src_mode": "RGBA",
+    "size": [
+      1920,
+      8
+    ],
+    "W": 1920,
+    "H": 8,
+    "pixels_total": 15360,
+    "pixels_visible_gt0": 15360,
+    "alpha_ratio_gt0": 1.0,
+    "pixels_solid_ge128": 15360,
+    "alpha_ge128_ratio": 1.0,
+    "alpha_max": 255,
+    "alpha_p95_of_visible": 255,
+    "outline_pixels": 3852,
+    "outline_ratio_visible": 0.250781,
+    "outline_ratio_full": 0.250781,
+    "stroke_pixels_inner": 5394,
+    "stroke_ratio_visible": 0.351172,
+    "stroke_ratio_inner": 0.468717,
+    "stroke_ratio_cellarea": 0.351172,
+    "stroke_ratio_cellarea_t003": 0.499544,
+    "grad_p50": 0.06231,
+    "grad_p90": 0.17078,
+    "grad_p99": 0.22149,
+    "grad_max": 0.22947,
+    "sat_median": 0.1042,
+    "val_median": 0.9373,
+    "rgb_mean_visible": [
+      200,
+      182,
+      161
+    ],
+    "hue_eligible_pixels": 5671,
+    "hue_eligible_ratio": 0.369206,
+    "hue_circ_median_deg": 24.74,
+    "hue_bin_top3": [
+      {
+        "bin_deg": "20-30",
+        "center": 25,
+        "share": 0.468
+      },
+      {
+        "bin_deg": "30-40",
+        "center": 35,
+        "share": 0.3684
+      },
+      {
+        "bin_deg": "10-20",
+        "center": 15,
+        "share": 0.1312
+      }
+    ],
+    "hue_arc_30_share": 0.9929,
+    "box_xyxy": [
+      0,
+      558,
+      1920,
+      566
+    ],
+    "source": "warm_avalon_s2.png"
+  },
+  "warm_s2_band_text_area": {
+    "file": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/度量脚本_魔夜UI密度_2026-09-30/strip_warm_s2_band_text_area.png",
+    "src_mode": "RGBA",
+    "size": [
+      1400,
+      435
+    ],
+    "W": 1400,
+    "H": 435,
+    "pixels_total": 609000,
+    "pixels_visible_gt0": 609000,
+    "alpha_ratio_gt0": 1.0,
+    "pixels_solid_ge128": 609000,
+    "alpha_ge128_ratio": 1.0,
+    "alpha_max": 255,
+    "alpha_p95_of_visible": 255,
+    "outline_pixels": 3666,
+    "outline_ratio_visible": 0.00602,
+    "outline_ratio_full": 0.00602,
+    "stroke_pixels_inner": 39455,
+    "stroke_ratio_visible": 0.064787,
+    "stroke_ratio_inner": 0.065179,
+    "stroke_ratio_cellarea": 0.064787,
+    "stroke_ratio_cellarea_t003": 0.103547,
+    "grad_p50": 0.00267,
+    "grad_p90": 0.0343,
+    "grad_p99": 0.1935,
+    "grad_max": 0.24821,
+    "sat_median": 0.1029,
+    "val_median": 0.9529,
+    "rgb_mean_visible": [
+      236,
+      226,
+      211
+    ],
+    "hue_eligible_pixels": 20482,
+    "hue_eligible_ratio": 0.033632,
+    "hue_circ_median_deg": 30.0,
+    "hue_bin_top3": [
+      {
+        "bin_deg": "30-40",
+        "center": 35,
+        "share": 0.5107
+      },
+      {
+        "bin_deg": "20-30",
+        "center": 25,
+        "share": 0.487
+      },
+      {
+        "bin_deg": "10-20",
+        "center": 15,
+        "share": 0.0023
+      }
+    ],
+    "hue_arc_30_share": 1.0,
+    "box_xyxy": [
+      0,
+      640,
+      1400,
+      1075
+    ],
+    "source": "warm_avalon_s2.png"
+  },
+  "warm_v2ao_dock_left_pad": {
+    "file": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/度量脚本_魔夜UI密度_2026-09-30/strip_warm_v2ao_dock_left_pad.png",
+    "src_mode": "RGBA",
+    "size": [
+      44,
+      640
+    ],
+    "W": 44,
+    "H": 640,
+    "pixels_total": 28160,
+    "pixels_visible_gt0": 28160,
+    "alpha_ratio_gt0": 1.0,
+    "pixels_solid_ge128": 28160,
+    "alpha_ge128_ratio": 1.0,
+    "alpha_max": 255,
+    "alpha_p95_of_visible": 255,
+    "outline_pixels": 1364,
+    "outline_ratio_visible": 0.048438,
+    "outline_ratio_full": 0.048438,
+    "stroke_pixels_inner": 0,
+    "stroke_ratio_visible": 0.0,
+    "stroke_ratio_inner": 0.0,
+    "stroke_ratio_cellarea": 0.0,
+    "stroke_ratio_cellarea_t003": 0.0,
+    "grad_p50": 0.0,
+    "grad_p90": 0.0,
+    "grad_p99": 0.0,
+    "grad_max": 0.0,
+    "sat_median": 0.1029,
+    "val_median": 0.9529,
+    "rgb_mean_visible": [
+      243,
+      233,
+      218
+    ],
+    "hue_eligible_pixels": 0,
+    "hue_eligible_ratio": 0.0,
+    "hue_circ_median_deg": null,
+    "box_xyxy": [
+      372,
+      310,
+      416,
+      950
+    ],
+    "source": "warm_reading_v2_ao.png"
+  },
+  "warm_v2ao_dock_right_pad": {
+    "file": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/度量脚本_魔夜UI密度_2026-09-30/strip_warm_v2ao_dock_right_pad.png",
+    "src_mode": "RGBA",
+    "size": [
+      46,
+      640
+    ],
+    "W": 46,
+    "H": 640,
+    "pixels_total": 29440,
+    "pixels_visible_gt0": 29440,
+    "alpha_ratio_gt0": 1.0,
+    "pixels_solid_ge128": 29440,
+    "alpha_ge128_ratio": 1.0,
+    "alpha_max": 255,
+    "alpha_p95_of_visible": 255,
+    "outline_pixels": 1368,
+    "outline_ratio_visible": 0.046467,
+    "outline_ratio_full": 0.046467,
+    "stroke_pixels_inner": 44,
+    "stroke_ratio_visible": 0.001495,
+    "stroke_ratio_inner": 0.001567,
+    "stroke_ratio_cellarea": 0.001495,
+    "stroke_ratio_cellarea_t003": 0.002208,
+    "grad_p50": 0.0,
+    "grad_p90": 0.0,
+    "grad_p99": 0.00138,
+    "grad_max": 0.2469,
+    "sat_median": 0.1029,
+    "val_median": 0.9529,
+    "rgb_mean_visible": [
+      243,
+      233,
+      218
+    ],
+    "hue_eligible_pixels": 32,
+    "hue_eligible_ratio": 0.001087,
+    "hue_circ_median_deg": 28.42,
+    "hue_bin_top3": [
+      {
+        "bin_deg": "20-30",
+        "center": 25,
+        "share": 0.5312
+      },
+      {
+        "bin_deg": "30-40",
+        "center": 35,
+        "share": 0.4688
+      }
+    ],
+    "hue_arc_30_share": 1.0,
+    "box_xyxy": [
+      1500,
+      310,
+      1546,
+      950
+    ],
+    "source": "warm_reading_v2_ao.png"
+  },
+  "real_mu_text0_row0_mid": {
+    "file": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/度量脚本_魔夜UI密度_2026-09-30/strip_real_mu_text0_row0_mid.png",
+    "src_mode": "RGBA",
+    "size": [
+      320,
+      64
+    ],
+    "W": 320,
+    "H": 64,
+    "pixels_total": 20480,
+    "pixels_visible_gt0": 20480,
+    "alpha_ratio_gt0": 1.0,
+    "pixels_solid_ge128": 20160,
+    "alpha_ge128_ratio": 0.984375,
+    "alpha_max": 230,
+    "alpha_p95_of_visible": 230,
+    "outline_pixels": 764,
+    "outline_ratio_visible": 0.037305,
+    "outline_ratio_full": 0.037305,
+    "stroke_pixels_inner": 836,
+    "stroke_ratio_visible": 0.04082,
+    "stroke_ratio_inner": 0.042402,
+    "stroke_ratio_cellarea": 0.04082,
+    "stroke_ratio_cellarea_t003": 0.121777,
+    "grad_p50": 0.00373,
+    "grad_p90": 0.0371,
+    "grad_p99": 0.10244,
+    "grad_max": 0.11236,
+    "sat_median": 0.744,
+    "val_median": 0.2235,
+    "rgb_mean_visible": [
+      17,
+      47,
+      60
+    ],
+    "hue_eligible_pixels": 17338,
+    "hue_eligible_ratio": 0.846582,
+    "hue_circ_median_deg": 198.62,
+    "hue_bin_top3": [
+      {
+        "bin_deg": "190-200",
+        "center": 195,
+        "share": 0.6573
+      },
+      {
+        "bin_deg": "200-210",
+        "center": 205,
+        "share": 0.3258
+      },
+      {
+        "bin_deg": "180-190",
+        "center": 185,
+        "share": 0.017
+      }
+    ],
+    "hue_arc_30_share": 1.0,
+    "box_xyxy": [
+      108,
+      8,
+      428,
+      72
+    ],
+    "source": "/Users/wujunjie/Desktop/moye/hfa_png/out/data00000/mu_text0.cbg.png"
+  }
+}

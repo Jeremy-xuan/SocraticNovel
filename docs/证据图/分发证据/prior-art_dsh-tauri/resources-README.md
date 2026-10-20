@@ -1,0 +1,111 @@
+# Resources
+
+This directory is bundled into the installer as `resources/**`.
+
+At runtime, the application downloads everything it needs into the OS user-data
+directory (the Tauri app-data dir for identifier `dsh-tauri`, e.g.
+`%APPDATA%/dsh-tauri/` on Windows):
+
+- `runtime/` — the bundled Node.js runtime (downloaded on first run)
+- `dependencies/dsh/` — the packaged DeepSeek Harness distribution (downloaded from the
+  `dsh-tauri/deepseek-harness-pkg` release feed)
+- `data/dsh/` — **legacy** `$DSH_HOME` location (pre-migration builds only; see below)
+- `logs/` — application and `dsh` service logs
+- `.store.dat` — desktop settings (port, auto-start, language, etc.)
+
+No manual Node.js or pnpm installation is required.
+
+On the first launch after the identifier was shortened from
+`io.github.hairyf.deepseek-harness-desktop` to `dsh-tauri`, the app **moves** the
+whole legacy app-data directory (settings store, logs, downloaded runtime and
+`dependencies/`) into the new one, so upgrades keep their configuration. The move
+runs before the first-install check and is non-fatal on failure (legacy data stays
+in place and the next launch retries).
+
+## `$DSH_HOME` — shared with the official Node.js install
+
+The user data directory (`$DSH_HOME`) used by the running `dsh` process follows
+the **official dsh convention** (`${DSH_HOME:-$HOME/.dsh}`): the `DSH_HOME`
+environment variable when set, otherwise `~/.dsh`
+(`C:\Users\<you>\.dsh` on Windows). This way the desktop app and a
+`npm i -g @deepseek-ai/dsh` install share the same profiles, sessions, settings
+and credentials — no data switching needed.
+
+On the first launch of a build that introduced this change, the app
+**migrates** any existing legacy data from `%APPDATA%/.../data/dsh` into the
+new `$DSH_HOME` (recursive merge, newer mtime wins; `node_modules` trees are
+skipped — they are regenerated on boot). The legacy directory is removed after
+a successful migration, and the one-shot migration is recorded in `.store.dat`
+(`dsh_home_migrated`). Migration failures are non-fatal: legacy data stays in
+place and the migration retries on the next launch.
+
+## Preset plugins — `preset-plugins.json`
+
+The first-run wizard / sidebar preset list is driven by `preset-plugins.json`
+(loaded at runtime by `src-tauri/src/service/plugin/mod.rs` — **no Rust code
+change needed to add a preset**). To propose a new preset plugin, open a PR
+that adds one entry to the JSON array:
+
+> **Note on "new preset" detection**: the file ships with the installer and is
+> force-overwritten on every install, so the app records a fingerprint of its
+> content into the user-data settings after the wizard ends (install or skip)
+> and re-opens the wizard on the next launch when the content differs. No extra
+> action is needed when adding an entry.
+
+```json
+{
+  "id": "npm-package-name",
+  "spec": "npm-package-name | github:owner/repo",
+  "name": "Display name",
+  "description": "English description. · 中文描述",
+  "repoUrl": "https://github.com/owner/repo",
+  "recommended": true,
+  "fix": false,
+  "winOnly": false
+}
+```
+
+| Field         | Required | Meaning                                                                 |
+| ------------- | -------- | ----------------------------------------------------------------------- |
+| `id`          | yes      | Unique front-end key; must be a legal npm dependency name               |
+| `spec`        | yes      | Dependency form passed to `dsh plugin add` (npm name or `github:owner/repo`) |
+| `version`     | no       | Inclusive installed-plugin version cap for core-driven automatic removal; not an installation pin |
+| `dshSupportedVersion` | no | Highest supported core version; a newer core disables the preset in the UI and makes it eligible for automatic cleanup |
+| `name`        | yes      | Display name                                                            |
+| `description` | yes      | Shown in the wizard; bilingual (`en. · 中文`) is encouraged             |
+| `repoUrl`     | yes      | Repository page, opened via the "open repo" button                      |
+| `recommended` | no       | Green "recommended" chip, checked by default (defaults to `false`)      |
+| `fix`         | no       | Yellow "fix" chip, checked by default — reserved for Windows minimal-mode fixes (defaults to `false`) |
+| `defaultUnchecked` | no  | Listed with the "recommended" chip but **not** pre-checked in the wizard (defaults to `false`) |
+| `winOnly`     | no       | Only listed on Windows (defaults to `false`)                            |
+
+`id` must be unique across the file. The plugin itself is **not** vendored into
+this repository — it is installed on the user's machine from `spec` at setup
+time, so the PR only needs to add the JSON entry.
+
+### Core-driven automatic removal
+
+When the running core is newer than `dshSupportedVersion`, startup cleanup can
+remove the installed plugin. An optional `version` limits this cleanup to installed
+versions **less than or equal to** that cap, using semantic-version precedence.
+Higher installed versions are kept. If a cap is present but the installed version
+is unknown or invalid, or the cap itself is invalid, core-driven cleanup is skipped.
+Omitting `version` retains the previous uncapped cleanup behavior.
+
+`version` is metadata for automatic removal, **not** an installation pin: installation
+still uses `spec`. It does not change the core-based UI compatibility check or manual
+uninstall. The separate `deprecated-plugins.json` list is unaffected and continues
+to remove listed plugins independently of these version caps.
+
+### Built-in (internal) plugins
+
+Plugins that must ship *with* the installer and are treated as part of the app
+(auto-installed and auto-healed at startup) live in `internal-plugins.json`,
+separate from the community preset list. Add an extra `package` field when the
+real npm name differs from `id`. The entries are bundled at build time by
+`scripts/build-plugins.ts` (via `pnpm deploy` of the workspace packages listed in
+`packages/dsh-tauri-bundle`) into `resources/node_modules/<name>` (via
+`bundle.resources`) and never appear in the first-run checklist. On startup the
+app removes the legacy `resources/preset-plugins/` directory left by upgrades.
+See the [built-in plugin guide](../../docs/BUILTIN_PLUGINS.md) for the full
+workflow.

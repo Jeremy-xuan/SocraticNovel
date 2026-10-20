@@ -1,0 +1,17 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Session/temp
+.copilot/
+
+# Copyrighted materials (textbooks, workbooks)
+AP_Physics_EM/materials/textbook/
+AP_Physics_EM/materials/练习册/
+AP_Physics_EM/materials/讲义/

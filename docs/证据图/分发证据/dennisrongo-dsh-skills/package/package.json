@@ -1,0 +1,56 @@
+{
+  "name": "@dennisrongo/dsh-skills",
+  "version": "0.1.1",
+  "description": "Serves the @dennisrongo/skills library to dsh as a skill provider: the whole catalog installs and updates as one npm dependency",
+  "type": "module",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "!lib/*.test.mjs",
+    "README.md",
+    "cordis.patch.yml"
+  ],
+  "scripts": {
+    "test": "node test/smoke.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dennisrongo/dsh-plugins.git",
+    "directory": "plugins/dsh-skills"
+  },
+  "dependencies": {
+    "yaml": "^2.8.1"
+  },
+  "optionalDependencies": {
+    "@dennisrongo/skills": "^0.16.1"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/schemastery": "^3.18.1"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "homepage": "https://github.com/dennisrongo/dsh-plugins/tree/main/plugins/dsh-skills#readme",
+  "bugs": {
+    "url": "https://github.com/dennisrongo/dsh-plugins/issues"
+  },
+  "author": {
+    "name": "Dennis Rongo",
+    "url": "https://www.youtube.com/@codingmenace"
+  },
+  "keywords": [
+    "ai-coding-agent",
+    "claude-code-alternative",
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin"
+  ]
+}

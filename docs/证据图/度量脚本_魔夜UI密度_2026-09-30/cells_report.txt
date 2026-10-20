@@ -1,0 +1,136 @@
+mu_text1_select_zc         canvas=[1072, 1024] ybands=14 xbands=2 cell=517x64
+    [0,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.17866 hue=197.0 sat=0.7431 val=0.3255 rgb=[31, 71, 84]
+    [0,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.15592 hue=197.81 sat=0.75 val=0.3137 rgb=[28, 68, 81]
+    [1,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.10904 hue=198.31 sat=0.75 val=0.2902 rgb=[23, 58, 71]
+    [1,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.13318 hue=198.0 sat=0.7674 val=0.3098 rgb=[24, 61, 74]
+    [2,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.10092 hue=198.31 sat=0.7668 val=0.2824 rgb=[23, 57, 70]
+    [2,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.14952 hue=197.81 sat=0.7638 val=0.3137 rgb=[27, 66, 79]
+    [3,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.13364 hue=198.14 sat=0.7286 val=0.3098 rgb=[25, 62, 75]
+    [3,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.11341 hue=198.31 sat=0.7596 val=0.2902 rgb=[23, 58, 71]
+    [4,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.09828 hue=198.39 sat=0.731 val=0.2902 rgb=[21, 56, 68]
+    [4,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.11126 hue=198.31 sat=0.75 val=0.2902 rgb=[24, 59, 72]
+    [5,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.11917 hue=198.21 sat=0.7596 val=0.298 rgb=[23, 59, 72]
+    [5,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.13570 hue=198.0 sat=0.75 val=0.3059 rgb=[25, 63, 76]
+    [6,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.13803 hue=198.0 sat=0.7286 val=0.3137 rgb=[25, 63, 76]
+    [6,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.07930 hue=198.57 sat=0.731 val=0.2745 rgb=[20, 53, 66]
+    [7,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.11778 hue=198.14 sat=0.7545 val=0.2941 rgb=[24, 60, 73]
+    [7,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.11571 hue=198.14 sat=0.7674 val=0.298 rgb=[23, 59, 72]
+    [8,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.10098 hue=198.46 sat=0.7286 val=0.2902 rgb=[21, 56, 70]
+    [8,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.11074 hue=198.31 sat=0.7525 val=0.2902 rgb=[23, 59, 71]
+    [9,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.13288 hue=198.0 sat=0.731 val=0.3098 rgb=[25, 62, 75]
+    [9,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.10886 hue=198.31 sat=0.7647 val=0.2902 rgb=[22, 58, 71]
+    [10,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.14006 hue=198.0 sat=0.7315 val=0.3098 rgb=[26, 64, 77]
+    [10,1] 517x64 a>0=0.0000 outl=empty strk=empty hue=None sat=None val=None rgb=None
+    [11,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.14167 hue=198.0 sat=0.7286 val=0.3137 rgb=[26, 64, 77]
+    [11,1] 517x64 a>0=0.0000 outl=empty strk=empty hue=None sat=None val=None rgb=None
+    [12,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.16526 hue=197.7 sat=0.7674 val=0.3176 rgb=[27, 67, 81]
+    [12,1] 517x64 a>0=0.0000 outl=empty strk=empty hue=None sat=None val=None rgb=None
+    [13,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.14015 hue=198.0 sat=0.7455 val=0.3137 rgb=[27, 65, 78]
+    [13,1] 517x64 a>0=0.0000 outl=empty strk=empty hue=None sat=None val=None rgb=None
+mu_text1_selecting_zc      canvas=[1072, 1024] ybands=14 xbands=2 cell=517x64
+    [0,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.30208 hue=194.18 sat=0.7255 val=0.3451 rgb=[39, 102, 111]
+    [0,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.27934 hue=195.79 sat=0.7255 val=0.3333 rgb=[36, 98, 108]
+    [1,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.23246 hue=197.42 sat=0.7255 val=0.3137 rgb=[31, 89, 98]
+    [1,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.25660 hue=196.88 sat=0.7255 val=0.3216 rgb=[32, 92, 101]
+    [2,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.22433 hue=197.5 sat=0.7255 val=0.3137 rgb=[31, 88, 97]
+    [2,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.27294 hue=196.36 sat=0.7255 val=0.3333 rgb=[35, 96, 106]
+    [3,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.25705 hue=197.0 sat=0.7255 val=0.3255 rgb=[33, 93, 102]
+    [3,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.23683 hue=197.5 sat=0.7255 val=0.3137 rgb=[31, 89, 98]
+    [4,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.22169 hue=197.7 sat=0.7255 val=0.3098 rgb=[29, 86, 96]
+    [4,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.23467 hue=197.42 sat=0.7255 val=0.3137 rgb=[32, 90, 99]
+    [5,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.24259 hue=197.14 sat=0.7255 val=0.3216 rgb=[31, 90, 100]
+    [5,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.25911 hue=196.88 sat=0.7255 val=0.3216 rgb=[33, 93, 103]
+    [6,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.26145 hue=196.88 sat=0.7255 val=0.3294 rgb=[33, 93, 103]
+    [6,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.20271 hue=198.0 sat=0.7255 val=0.2902 rgb=[28, 83, 93]
+    [7,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.24119 hue=197.14 sat=0.7255 val=0.3216 rgb=[32, 90, 100]
+    [7,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.23913 hue=197.14 sat=0.7255 val=0.3176 rgb=[31, 89, 99]
+    [8,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.22439 hue=197.73 sat=0.7255 val=0.3098 rgb=[29, 87, 97]
+    [8,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.23416 hue=197.5 sat=0.7255 val=0.3137 rgb=[31, 89, 98]
+    [9,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.25629 hue=196.88 sat=0.7255 val=0.3255 rgb=[33, 93, 103]
+    [9,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.23228 hue=197.42 sat=0.7255 val=0.3137 rgb=[30, 88, 98]
+    [10,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.26348 hue=196.8 sat=0.7255 val=0.3255 rgb=[34, 94, 104]
+    [10,1] 517x64 a>0=0.0000 outl=empty strk=empty hue=None sat=None val=None rgb=None
+    [11,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.26509 hue=196.88 sat=0.7255 val=0.3255 rgb=[34, 94, 104]
+    [11,1] 517x64 a>0=0.0000 outl=empty strk=empty hue=None sat=None val=None rgb=None
+    [12,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.28868 hue=195.27 sat=0.7255 val=0.3373 rgb=[35, 98, 108]
+    [12,1] 517x64 a>0=0.0000 outl=empty strk=empty hue=None sat=None val=None rgb=None
+    [13,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.26357 hue=196.88 sat=0.7255 val=0.3294 rgb=[35, 95, 105]
+    [13,1] 517x64 a>0=0.0000 outl=empty strk=empty hue=None sat=None val=None rgb=None
+mu_text1_b_select_zc       canvas=[1072, 1024] ybands=14 xbands=2 cell=517x64
+    [0,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.27070 hue=187.65 sat=0.6944 val=0.5647 rgb=[46, 136, 147]
+    [0,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.25314 hue=187.59 sat=0.6944 val=0.5608 rgb=[44, 134, 144]
+    [1,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.21305 hue=187.59 sat=0.6929 val=0.5451 rgb=[39, 128, 138]
+    [1,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.23367 hue=187.59 sat=0.6944 val=0.549 rgb=[40, 130, 140]
+    [2,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.20365 hue=187.59 sat=0.6944 val=0.5451 rgb=[39, 127, 137]
+    [2,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.24665 hue=187.59 sat=0.6944 val=0.5569 rgb=[43, 133, 143]
+    [3,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.23658 hue=187.59 sat=0.6928 val=0.5569 rgb=[41, 131, 141]
+    [3,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.21675 hue=187.59 sat=0.6929 val=0.5451 rgb=[39, 128, 138]
+    [4,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.20435 hue=187.59 sat=0.6929 val=0.5373 rgb=[37, 126, 136]
+    [4,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.21451 hue=187.59 sat=0.6929 val=0.5451 rgb=[40, 128, 139]
+    [5,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.22257 hue=187.59 sat=0.6944 val=0.549 rgb=[39, 129, 139]
+    [5,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.23525 hue=187.59 sat=0.6944 val=0.5529 rgb=[41, 131, 141]
+    [6,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.24013 hue=187.59 sat=0.6929 val=0.5569 rgb=[41, 131, 142]
+    [6,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.18752 hue=187.59 sat=0.6929 val=0.5255 rgb=[37, 124, 134]
+    [7,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.21821 hue=187.59 sat=0.6944 val=0.549 rgb=[40, 129, 139]
+    [7,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.21845 hue=187.59 sat=0.6944 val=0.5451 rgb=[39, 128, 139]
+    [8,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.20787 hue=187.59 sat=0.6908 val=0.5451 rgb=[38, 127, 137]
+    [8,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.21493 hue=187.59 sat=0.6929 val=0.5451 rgb=[39, 128, 138]
+    [9,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.23413 hue=187.59 sat=0.6929 val=0.5529 rgb=[41, 131, 141]
+    [9,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.21232 hue=187.59 sat=0.6929 val=0.5451 rgb=[38, 127, 138]
+    [10,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.23907 hue=187.59 sat=0.694 val=0.5569 rgb=[42, 131, 142]
+    [10,1] 517x64 a>0=0.0000 outl=empty strk=empty hue=None sat=None val=None rgb=None
+    [11,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.24252 hue=187.6 sat=0.6929 val=0.5569 rgb=[42, 132, 142]
+    [11,1] 517x64 a>0=0.0000 outl=empty strk=empty hue=None sat=None val=None rgb=None
+    [12,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.25975 hue=187.59 sat=0.6944 val=0.5569 rgb=[43, 134, 144]
+    [12,1] 517x64 a>0=0.0000 outl=empty strk=empty hue=None sat=None val=None rgb=None
+    [13,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.23943 hue=187.59 sat=0.6944 val=0.5569 rgb=[43, 132, 142]
+    [13,1] 517x64 a>0=0.0000 outl=empty strk=empty hue=None sat=None val=None rgb=None
+mu_text1_b_selecting_zc    canvas=[1072, 1024] ybands=14 xbands=2 cell=517x64
+    [0,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.14837 hue=183.5 sat=0.6185 val=0.7412 rgb=[66, 161, 166]
+    [0,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.13776 hue=183.72 sat=0.6199 val=0.7373 rgb=[64, 159, 164]
+    [1,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.11805 hue=183.93 sat=0.6199 val=0.6784 rgb=[60, 153, 158]
+    [1,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.13888 hue=183.93 sat=0.6199 val=0.698 rgb=[61, 155, 161]
+    [2,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.11077 hue=183.93 sat=0.6199 val=0.6745 rgb=[60, 152, 158]
+    [2,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.13821 hue=183.82 sat=0.6199 val=0.7216 rgb=[63, 158, 163]
+    [3,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.13958 hue=183.93 sat=0.6163 val=0.7176 rgb=[62, 156, 162]
+    [3,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.11993 hue=183.93 sat=0.6199 val=0.6824 rgb=[60, 153, 159]
+    [4,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.11744 hue=184.04 sat=0.6185 val=0.6824 rgb=[58, 151, 157]
+    [4,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.11462 hue=183.93 sat=0.6199 val=0.6824 rgb=[61, 153, 159]
+    [5,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.12478 hue=183.93 sat=0.6199 val=0.6824 rgb=[60, 154, 159]
+    [5,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.13309 hue=183.91 sat=0.6199 val=0.698 rgb=[62, 156, 161]
+    [6,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.14282 hue=183.93 sat=0.6163 val=0.7176 rgb=[62, 157, 162]
+    [6,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.10058 hue=184.04 sat=0.6199 val=0.6706 rgb=[58, 149, 155]
+    [7,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.11917 hue=183.93 sat=0.6199 val=0.6824 rgb=[61, 154, 160]
+    [7,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.12223 hue=183.93 sat=0.6199 val=0.6824 rgb=[60, 153, 159]
+    [8,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.12135 hue=184.04 sat=0.6163 val=0.6902 rgb=[59, 152, 158]
+    [8,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.11911 hue=183.93 sat=0.6199 val=0.6784 rgb=[60, 153, 159]
+    [9,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.13606 hue=183.93 sat=0.6163 val=0.7098 rgb=[62, 156, 162]
+    [9,1] 517x64 a>0=0.9967 outl=0.03439 strk=0.11708 hue=183.93 sat=0.6199 val=0.6745 rgb=[59, 152, 158]
+    [10,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.13645 hue=183.9 sat=0.6176 val=0.7176 rgb=[62, 157, 162]
+    [10,1] 517x64 a>0=0.0000 outl=empty strk=empty hue=None sat=None val=None rgb=None
+    [11,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.13897 hue=183.91 sat=0.6163 val=0.7176 rgb=[63, 157, 163]
+    [11,1] 517x64 a>0=0.0000 outl=empty strk=empty hue=None sat=None val=None rgb=None
+    [12,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.15025 hue=183.64 sat=0.6199 val=0.7294 rgb=[64, 159, 164]
+    [12,1] 517x64 a>0=0.0000 outl=empty strk=empty hue=None sat=None val=None rgb=None
+    [13,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.13266 hue=183.89 sat=0.6163 val=0.7176 rgb=[63, 157, 163]
+    [13,1] 517x64 a>0=0.0000 outl=empty strk=empty hue=None sat=None val=None rgb=None
+mu_text0                   canvas=[536, 296] ybands=4 xbands=1 cell=517x64
+    [0,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.04734 hue=198.89 sat=0.731 val=0.2157 rgb=[16, 47, 59]
+    [1,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.17075 hue=198.46 sat=0.7255 val=0.2745 rgb=[24, 77, 86]
+    [2,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.15962 hue=187.59 sat=0.6928 val=0.5137 rgb=[33, 120, 130]
+    [3,0] 517x64 a>0=0.9967 outl=0.03439 strk=0.08688 hue=184.29 sat=0.6199 val=0.5804 rgb=[54, 145, 151]
+back_win                   canvas=[1796, 840] ybands=3 xbands=1 cell=1692x223
+    [0,0] 1692x223 a>0=0.9641 outl=0.03112 strk=0.02064 hue=195.0 sat=0.9474 val=0.1647 rgb=[10, 38, 47]
+    [1,0] 1692x233 a>0=0.9997 outl=0.00970 strk=0.01890 hue=194.55 sat=0.4844 val=0.2941 rgb=[51, 84, 91]
+    [2,0] 1692x223 a>0=0.9939 outl=0.01009 strk=0.00000 hue=None sat=0.0 val=1.0 rgb=[255, 255, 255]
+archive_window_waku        canvas=[800, 272] ybands=1 xbands=1 cell=766x238
+    [0,0] 766x238 a>0=0.1290 outl=0.16650 strk=0.00000 hue=30.0 sat=0.4516 val=0.1216 rgb=[31, 24, 17]
+menu_window                canvas=[700, 1080] ybands=1 xbands=1 cell=650x1080
+    [0,0] 650x1080 a>0=0.9963 outl=0.00653 strk=0.00000 hue=211.03 sat=0.5758 val=0.1686 rgb=[19, 31, 43]
+modepanel_window           canvas=[1920, 104] ybands=1 xbands=1 cell=1892x96
+    [0,0] 1892x96 a>0=0.9992 outl=0.02177 strk=0.02097 hue=191.88 sat=0.9806 val=0.4039 rgb=[3, 85, 105]
+archive_txtsentaku         canvas=[800, 160] ybands=2 xbands=1 cell=768x58
+    [0,0] 768x58 a>0=1.0000 outl=0.03700 strk=0.00000 hue=30.44 sat=0.8712 val=0.9137 rgb=[233, 133, 30]
+    [1,0] 768x58 a>0=1.0000 outl=0.03700 strk=0.00000 hue=6.7 sat=0.8455 val=0.9137 rgb=[233, 58, 36]
+
+wrote cells.json

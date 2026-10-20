@@ -1,0 +1,612 @@
+{
+  "mu_text1_select_zc": {
+    "file": "/Users/wujunjie/Desktop/moye/hfa_png/out/data00000/mu_text1_select_zc.cbg.png",
+    "src_mode": "RGBA",
+    "size": [
+      1072,
+      1024
+    ],
+    "W": 1072,
+    "H": 1024,
+    "pixels_total": 1097728,
+    "pixels_visible_gt0": 791472,
+    "alpha_ratio_gt0": 0.721009,
+    "pixels_solid_ge128": 777576,
+    "alpha_ge128_ratio": 0.70835,
+    "alpha_max": 255,
+    "alpha_p95_of_visible": 245,
+    "outline_pixels": 27216,
+    "outline_ratio_visible": 0.034387,
+    "outline_ratio_full": 0.024793,
+    "stroke_pixels_inner": 125151,
+    "stroke_ratio_visible": 0.158124,
+    "stroke_ratio_inner": 0.163755,
+    "stroke_ratio_cellarea": 0.114009,
+    "stroke_ratio_cellarea_t003": 0.222015,
+    "grad_p50": 0.01172,
+    "grad_p90": 0.11576,
+    "grad_p99": 0.31693,
+    "grad_max": 0.31972,
+    "sat_median": 0.74,
+    "val_median": 0.302,
+    "rgb_mean_visible": [
+      24,
+      61,
+      74
+    ],
+    "hue_eligible_pixels": 630291,
+    "hue_eligible_ratio": 0.796353,
+    "hue_circ_median_deg": 198.1,
+    "hue_bin_top3": [
+      {
+        "bin_deg": "190-200",
+        "center": 195,
+        "share": 0.6504
+      },
+      {
+        "bin_deg": "200-210",
+        "center": 205,
+        "share": 0.249
+      },
+      {
+        "bin_deg": "180-190",
+        "center": 185,
+        "share": 0.1006
+      }
+    ],
+    "hue_arc_30_share": 1.0,
+    "name": "mu_text1_select_zc",
+    "opaque_bbox_xyxy": [
+      8,
+      8,
+      1053,
+      1008
+    ]
+  },
+  "mu_text1_selecting_zc": {
+    "file": "/Users/wujunjie/Desktop/moye/hfa_png/out/data00000/mu_text1_selecting_zc.cbg.png",
+    "src_mode": "RGBA",
+    "size": [
+      1072,
+      1024
+    ],
+    "W": 1072,
+    "H": 1024,
+    "pixels_total": 1097728,
+    "pixels_visible_gt0": 791472,
+    "alpha_ratio_gt0": 0.721009,
+    "pixels_solid_ge128": 777576,
+    "alpha_ge128_ratio": 0.70835,
+    "alpha_max": 255,
+    "alpha_p95_of_visible": 245,
+    "outline_pixels": 27216,
+    "outline_ratio_visible": 0.034387,
+    "outline_ratio_full": 0.024793,
+    "stroke_pixels_inner": 185103,
+    "stroke_ratio_visible": 0.233872,
+    "stroke_ratio_inner": 0.2422,
+    "stroke_ratio_cellarea": 0.168624,
+    "stroke_ratio_cellarea_t003": 0.285203,
+    "grad_p50": 0.0191,
+    "grad_p90": 0.17125,
+    "grad_p99": 0.30563,
+    "grad_max": 0.31697,
+    "sat_median": 0.7255,
+    "val_median": 0.3216,
+    "rgb_mean_visible": [
+      32,
+      92,
+      101
+    ],
+    "hue_eligible_pixels": 654387,
+    "hue_eligible_ratio": 0.826797,
+    "hue_circ_median_deg": 197.14,
+    "hue_bin_top3": [
+      {
+        "bin_deg": "190-200",
+        "center": 195,
+        "share": 0.4796
+      },
+      {
+        "bin_deg": "200-210",
+        "center": 205,
+        "share": 0.216
+      },
+      {
+        "bin_deg": "170-180",
+        "center": 175,
+        "share": 0.2051
+      }
+    ],
+    "hue_arc_30_share": 1.0,
+    "name": "mu_text1_selecting_zc",
+    "opaque_bbox_xyxy": [
+      8,
+      8,
+      1053,
+      1008
+    ]
+  },
+  "mu_text1_b_select_zc": {
+    "file": "/Users/wujunjie/Desktop/moye/hfa_png/out/data00000/mu_text1_b_select_zc.cbg.png",
+    "src_mode": "RGBA",
+    "size": [
+      1072,
+      1024
+    ],
+    "W": 1072,
+    "H": 1024,
+    "pixels_total": 1097728,
+    "pixels_visible_gt0": 791472,
+    "alpha_ratio_gt0": 0.721009,
+    "pixels_solid_ge128": 777576,
+    "alpha_ge128_ratio": 0.70835,
+    "alpha_max": 255,
+    "alpha_p95_of_visible": 245,
+    "outline_pixels": 27216,
+    "outline_ratio_visible": 0.034387,
+    "outline_ratio_full": 0.024793,
+    "stroke_pixels_inner": 167319,
+    "stroke_ratio_visible": 0.211402,
+    "stroke_ratio_inner": 0.218931,
+    "stroke_ratio_cellarea": 0.152423,
+    "stroke_ratio_cellarea_t003": 0.301354,
+    "grad_p50": 0.02088,
+    "grad_p90": 0.14937,
+    "grad_p99": 0.30195,
+    "grad_max": 0.31519,
+    "sat_median": 0.6929,
+    "val_median": 0.549,
+    "rgb_mean_visible": [
+      40,
+      130,
+      140
+    ],
+    "hue_eligible_pixels": 731867,
+    "hue_eligible_ratio": 0.924691,
+    "hue_circ_median_deg": 187.59,
+    "hue_bin_top3": [
+      {
+        "bin_deg": "180-190",
+        "center": 185,
+        "share": 0.5963
+      },
+      {
+        "bin_deg": "190-200",
+        "center": 195,
+        "share": 0.2062
+      },
+      {
+        "bin_deg": "170-180",
+        "center": 175,
+        "share": 0.1974
+      }
+    ],
+    "hue_arc_30_share": 1.0,
+    "name": "mu_text1_b_select_zc",
+    "opaque_bbox_xyxy": [
+      8,
+      8,
+      1053,
+      1008
+    ]
+  },
+  "mu_text1_b_selecting_zc": {
+    "file": "/Users/wujunjie/Desktop/moye/hfa_png/out/data00000/mu_text1_b_selecting_zc.cbg.png",
+    "src_mode": "RGBA",
+    "size": [
+      1072,
+      1024
+    ],
+    "W": 1072,
+    "H": 1024,
+    "pixels_total": 1097728,
+    "pixels_visible_gt0": 791472,
+    "alpha_ratio_gt0": 0.721009,
+    "pixels_solid_ge128": 777576,
+    "alpha_ge128_ratio": 0.70835,
+    "alpha_max": 255,
+    "alpha_p95_of_visible": 245,
+    "outline_pixels": 27216,
+    "outline_ratio_visible": 0.034387,
+    "outline_ratio_full": 0.024793,
+    "stroke_pixels_inner": 101178,
+    "stroke_ratio_visible": 0.127835,
+    "stroke_ratio_inner": 0.132388,
+    "stroke_ratio_cellarea": 0.09217,
+    "stroke_ratio_cellarea_t003": 0.220312,
+    "grad_p50": 0.01327,
+    "grad_p90": 0.1221,
+    "grad_p99": 0.30823,
+    "grad_max": 0.31782,
+    "sat_median": 0.6199,
+    "val_median": 0.698,
+    "rgb_mean_visible": [
+      61,
+      155,
+      161
+    ],
+    "hue_eligible_pixels": 732437,
+    "hue_eligible_ratio": 0.925411,
+    "hue_circ_median_deg": 183.93,
+    "hue_bin_top3": [
+      {
+        "bin_deg": "180-190",
+        "center": 185,
+        "share": 0.9315
+      },
+      {
+        "bin_deg": "170-180",
+        "center": 175,
+        "share": 0.0685
+      }
+    ],
+    "hue_arc_30_share": 1.0,
+    "name": "mu_text1_b_selecting_zc",
+    "opaque_bbox_xyxy": [
+      8,
+      8,
+      1053,
+      1008
+    ]
+  },
+  "back_win": {
+    "file": "/Users/wujunjie/Desktop/moye/hfa_png/out/data00000/back_win.cbg.png",
+    "src_mode": "RGBA",
+    "size": [
+      1796,
+      840
+    ],
+    "W": 1796,
+    "H": 840,
+    "pixels_total": 1508640,
+    "pixels_visible_gt0": 1132910,
+    "alpha_ratio_gt0": 0.750948,
+    "pixels_solid_ge128": 1113767,
+    "alpha_ge128_ratio": 0.738259,
+    "alpha_max": 255,
+    "alpha_p95_of_visible": 255,
+    "outline_pixels": 18930,
+    "outline_ratio_visible": 0.016709,
+    "outline_ratio_full": 0.012548,
+    "stroke_pixels_inner": 14955,
+    "stroke_ratio_visible": 0.013201,
+    "stroke_ratio_inner": 0.013425,
+    "stroke_ratio_cellarea": 0.009913,
+    "stroke_ratio_cellarea_t003": 0.01931,
+    "grad_p50": 0.00081,
+    "grad_p90": 0.01024,
+    "grad_p99": 0.1231,
+    "grad_max": 0.29904,
+    "sat_median": 0.4667,
+    "val_median": 0.3098,
+    "rgb_mean_visible": [
+      106,
+      126,
+      131
+    ],
+    "hue_eligible_pixels": 621947,
+    "hue_eligible_ratio": 0.548982,
+    "hue_circ_median_deg": 195.0,
+    "hue_bin_top3": [
+      {
+        "bin_deg": "190-200",
+        "center": 195,
+        "share": 0.8657
+      },
+      {
+        "bin_deg": "180-190",
+        "center": 185,
+        "share": 0.09
+      },
+      {
+        "bin_deg": "170-180",
+        "center": 175,
+        "share": 0.0308
+      }
+    ],
+    "hue_arc_30_share": 1.0,
+    "name": "back_win",
+    "opaque_bbox_xyxy": [
+      48,
+      27,
+      1740,
+      810
+    ]
+  },
+  "archive_window_waku": {
+    "file": "/Users/wujunjie/Desktop/moye/hfa_png/out/data00000/archive_window_waku.cbg.png",
+    "src_mode": "RGBA",
+    "size": [
+      800,
+      272
+    ],
+    "W": 800,
+    "H": 272,
+    "pixels_total": 217600,
+    "pixels_visible_gt0": 23520,
+    "alpha_ratio_gt0": 0.108088,
+    "pixels_solid_ge128": 0,
+    "alpha_ge128_ratio": 0.0,
+    "alpha_max": 68,
+    "alpha_p95_of_visible": 53,
+    "outline_pixels": 3916,
+    "outline_ratio_visible": 0.166497,
+    "outline_ratio_full": 0.017996,
+    "stroke_pixels_inner": 492,
+    "stroke_ratio_visible": 0.020918,
+    "stroke_ratio_inner": 0.025097,
+    "stroke_ratio_cellarea": 0.002261,
+    "stroke_ratio_cellarea_t003": 0.002298,
+    "grad_p50": 0.0,
+    "grad_p90": 0.00206,
+    "grad_p99": 0.28867,
+    "grad_max": 0.28867,
+    "sat_median": 0.4516,
+    "val_median": 0.1216,
+    "rgb_mean_visible": [
+      31,
+      24,
+      17
+    ],
+    "hue_eligible_pixels": 23520,
+    "hue_eligible_ratio": 1.0,
+    "hue_circ_median_deg": 30.0,
+    "hue_bin_top3": [
+      {
+        "bin_deg": "30-40",
+        "center": 35,
+        "share": 1.0
+      }
+    ],
+    "hue_arc_30_share": 1.0,
+    "name": "archive_window_waku",
+    "opaque_bbox_xyxy": [
+      16,
+      16,
+      782,
+      254
+    ]
+  },
+  "menu_window": {
+    "file": "/Users/wujunjie/Desktop/moye/hfa_png/out/data00000/menu_window.cbg.png",
+    "src_mode": "RGBA",
+    "size": [
+      700,
+      1080
+    ],
+    "W": 700,
+    "H": 1080,
+    "pixels_total": 756000,
+    "pixels_visible_gt0": 699425,
+    "alpha_ratio_gt0": 0.925165,
+    "pixels_solid_ge128": 500040,
+    "alpha_ge128_ratio": 0.661429,
+    "alpha_max": 235,
+    "alpha_p95_of_visible": 235,
+    "outline_pixels": 4567,
+    "outline_ratio_visible": 0.00653,
+    "outline_ratio_full": 0.006041,
+    "stroke_pixels_inner": 0,
+    "stroke_ratio_visible": 0.0,
+    "stroke_ratio_inner": 0.0,
+    "stroke_ratio_cellarea": 0.0,
+    "stroke_ratio_cellarea_t003": 0.0,
+    "grad_p50": 0.00018,
+    "grad_p90": 0.00088,
+    "grad_p99": 0.00575,
+    "grad_max": 0.01866,
+    "sat_median": 0.5758,
+    "val_median": 0.1686,
+    "rgb_mean_visible": [
+      19,
+      31,
+      43
+    ],
+    "hue_eligible_pixels": 535322,
+    "hue_eligible_ratio": 0.765374,
+    "hue_circ_median_deg": 211.03,
+    "hue_bin_top3": [
+      {
+        "bin_deg": "210-220",
+        "center": 215,
+        "share": 0.7057
+      },
+      {
+        "bin_deg": "200-210",
+        "center": 205,
+        "share": 0.2943
+      }
+    ],
+    "hue_arc_30_share": 1.0,
+    "name": "menu_window",
+    "opaque_bbox_xyxy": [
+      50,
+      0,
+      700,
+      1080
+    ]
+  },
+  "modepanel_window": {
+    "file": "/Users/wujunjie/Desktop/moye/hfa_png/out/data00000/modepanel_window.cbg.png",
+    "src_mode": "RGBA",
+    "size": [
+      1920,
+      104
+    ],
+    "W": 1920,
+    "H": 104,
+    "pixels_total": 199680,
+    "pixels_visible_gt0": 181494,
+    "alpha_ratio_gt0": 0.908924,
+    "pixels_solid_ge128": 181460,
+    "alpha_ge128_ratio": 0.908754,
+    "alpha_max": 237,
+    "alpha_p95_of_visible": 202,
+    "outline_pixels": 3952,
+    "outline_ratio_visible": 0.021775,
+    "outline_ratio_full": 0.019792,
+    "stroke_pixels_inner": 3999,
+    "stroke_ratio_visible": 0.022034,
+    "stroke_ratio_inner": 0.022524,
+    "stroke_ratio_cellarea": 0.020027,
+    "stroke_ratio_cellarea_t003": 0.030218,
+    "grad_p50": 0.0,
+    "grad_p90": 0.0,
+    "grad_p99": 0.09201,
+    "grad_max": 0.25166,
+    "sat_median": 0.9806,
+    "val_median": 0.4039,
+    "rgb_mean_visible": [
+      3,
+      85,
+      105
+    ],
+    "hue_eligible_pixels": 181494,
+    "hue_eligible_ratio": 1.0,
+    "hue_circ_median_deg": 191.88,
+    "hue_bin_top3": [
+      {
+        "bin_deg": "190-200",
+        "center": 195,
+        "share": 0.9771
+      },
+      {
+        "bin_deg": "180-190",
+        "center": 185,
+        "share": 0.0229
+      }
+    ],
+    "hue_arc_30_share": 1.0,
+    "name": "modepanel_window",
+    "opaque_bbox_xyxy": [
+      14,
+      0,
+      1906,
+      96
+    ]
+  },
+  "archive_txtsentaku": {
+    "file": "/Users/wujunjie/Desktop/moye/hfa_png/out/data00000/archive_txtsentaku.cbg.png",
+    "src_mode": "RGBA",
+    "size": [
+      800,
+      160
+    ],
+    "W": 800,
+    "H": 160,
+    "pixels_total": 128000,
+    "pixels_visible_gt0": 89088,
+    "alpha_ratio_gt0": 0.696,
+    "pixels_solid_ge128": 89088,
+    "alpha_ge128_ratio": 0.696,
+    "alpha_max": 189,
+    "alpha_p95_of_visible": 189,
+    "outline_pixels": 3296,
+    "outline_ratio_visible": 0.036997,
+    "outline_ratio_full": 0.02575,
+    "stroke_pixels_inner": 0,
+    "stroke_ratio_visible": 0.0,
+    "stroke_ratio_inner": 0.0,
+    "stroke_ratio_cellarea": 0.0,
+    "stroke_ratio_cellarea_t003": 0.0,
+    "grad_p50": 0.0,
+    "grad_p90": 4e-05,
+    "grad_p99": 0.06026,
+    "grad_max": 0.10804,
+    "sat_median": 0.8584,
+    "val_median": 0.9137,
+    "rgb_mean_visible": [
+      233,
+      96,
+      33
+    ],
+    "hue_eligible_pixels": 89088,
+    "hue_eligible_ratio": 1.0,
+    "hue_circ_median_deg": 6.7,
+    "hue_bin_top3": [
+      {
+        "bin_deg": "0-10",
+        "center": 5,
+        "share": 0.5
+      },
+      {
+        "bin_deg": "30-40",
+        "center": 35,
+        "share": 0.5
+      }
+    ],
+    "hue_arc_30_share": 1.0,
+    "name": "archive_txtsentaku",
+    "opaque_bbox_xyxy": [
+      16,
+      16,
+      784,
+      146
+    ]
+  },
+  "mu_text0": {
+    "file": "/Users/wujunjie/Desktop/moye/hfa_png/out/data00000/mu_text0.cbg.png",
+    "src_mode": "RGBA",
+    "size": [
+      536,
+      296
+    ],
+    "W": 536,
+    "H": 296,
+    "pixels_total": 158656,
+    "pixels_visible_gt0": 131912,
+    "alpha_ratio_gt0": 0.831434,
+    "pixels_solid_ge128": 129596,
+    "alpha_ge128_ratio": 0.816836,
+    "alpha_max": 230,
+    "alpha_p95_of_visible": 230,
+    "outline_pixels": 4536,
+    "outline_ratio_visible": 0.034387,
+    "outline_ratio_full": 0.02859,
+    "stroke_pixels_inner": 15302,
+    "stroke_ratio_visible": 0.116002,
+    "stroke_ratio_inner": 0.120133,
+    "stroke_ratio_cellarea": 0.096448,
+    "stroke_ratio_cellarea_t003": 0.205772,
+    "grad_p50": 0.00892,
+    "grad_p90": 0.12642,
+    "grad_p99": 0.30563,
+    "grad_max": 0.33071,
+    "sat_median": 0.7091,
+    "val_median": 0.3608,
+    "rgb_mean_visible": [
+      32,
+      97,
+      107
+    ],
+    "hue_eligible_pixels": 117071,
+    "hue_eligible_ratio": 0.887493,
+    "hue_circ_median_deg": 188.81,
+    "hue_bin_top3": [
+      {
+        "bin_deg": "180-190",
+        "center": 185,
+        "share": 0.4081
+      },
+      {
+        "bin_deg": "190-200",
+        "center": 195,
+        "share": 0.3131
+      },
+      {
+        "bin_deg": "200-210",
+        "center": 205,
+        "share": 0.1618
+      }
+    ],
+    "hue_arc_30_share": 1.0,
+    "name": "mu_text0",
+    "opaque_bbox_xyxy": [
+      8,
+      8,
+      525,
+      288
+    ]
+  }
+}

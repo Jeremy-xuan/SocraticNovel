@@ -1,0 +1,56 @@
+{
+  "name": "sakiko-for-dsh",
+  "version": "2.2.1",
+  "description": "SAKIKO（BanG Dream! 丰川祥子 / CRYCHIC 白祥）陪伴助手：Live2D iPhone 面板 + 日语语音 + 长期记忆，DeepSeek Harness 插件（基于 yyxcnasd/amadeus-for-dsh 二次开发）",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./host.mjs",
+    "./index.js": "./index.js",
+    "./client": "./client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "platform": "web",
+      "inject": []
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "files": [
+    "index.js",
+    "host.mjs",
+    "watchdog.mjs",
+    "client.js",
+    "client.mjs",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE",
+    "NOTICE",
+    "THIRD-PARTY.md",
+    "plugin/",
+    "assets/",
+    "persona/",
+    "config/",
+    "skills/",
+    "test/",
+    "tools/"
+  ],
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "live2d",
+    "tts",
+    "gpt-sovits",
+    "bang-dream",
+    "togawa-sakiko",
+    "amadeus-for-dsh"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}

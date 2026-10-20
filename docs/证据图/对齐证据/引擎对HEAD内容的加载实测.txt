@@ -1,0 +1,15 @@
+# 引擎对「真仓库 HEAD 版教室内容」的加载实测
+
+取数时间：2026-09-24 14:55:25
+做法：把镜像教室整份拷到 /tmp/align-check/cs-os，只用 git show e961ef1:classrooms/cs-os/runtime/progress.md 覆盖 runtime/progress.md（其余保持镜像），再跑 lib/manifest.mjs 的 loadManifest / readRuntimeLesson。
+真教室零写入；跑在 /tmp 副本上。
+
+## 命令
+cd code/plugins/socratic-engine && /opt/homebrew/bin/node -e "…loadManifest + readRuntimeLesson…"
+
+## 输出
+loadManifest OK, blocks = 47
+runtime_store = {"dir":"runtime/","progress":"runtime/progress.md","lesson_key":"current_lesson"}
+readRuntimeLesson THROWS: ManifestError: classroom.yaml: progress 文件里找不到机器可读行 `current_lesson: <整数>`：/tmp/align-check/cs-os/runtime/progress.md
+  （引擎按行匹配 `current_lesson: <整数>`；找不到就不注入任何带讲次门的块——这会静默失效，故报错）
+readRuntimePhase -> {"phase":null,"file":"/tmp/align-check/cs-os/runtime/progress.md"}

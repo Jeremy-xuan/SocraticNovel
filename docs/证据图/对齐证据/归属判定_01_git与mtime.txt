@@ -1,0 +1,124 @@
+# 归属判定证据（谁改的哪一份）
+
+取数时间：2026-09-24 14:54:58
+
+## 1. 真仓库 HEAD 与提交
+e961ef1 docs: 调整教学节奏与叙事生成规则
+e4972cf feat: 仓库级入口 + META_PROMPT 升至 v2.3（六层结构标准）
+d9357b7 feat(templates): 微信聊天界面模板（数据驱动，课后更新）
+
+e961ef17fcae3d2a24a5f672de7403e85f185049
+Jeremy-xuan
+Thu Sep 24 13:49:51 2026 +0800
+docs: 调整教学节奏与叙事生成规则
+
+ AGENTS.md                                          |   8 +-
+ AI_GUIDE.md                                        |   4 +-
+ ARCHITECTURE.md                                    |   2 +
+ META_PROMPT.md                                     | 387 +++---------
+ README.md                                          |  60 +-
+ README_EN.md                                       |  45 +-
+ SOCRATIC_DESIGN.md                                 |   2 +-
+ SYNC_GUIDE.md                                      |   2 +
+ classrooms/cs-os/AGENTS.md                         |  18 +-
+ classrooms/cs-os/_anchor.md                        |  38 +-
+ classrooms/cs-os/characters/komari.md              |  19 +-
+ classrooms/cs-os/curriculum.md                     |  36 +-
+ classrooms/cs-os/knowledge_points.md               |  20 +-
+ classrooms/cs-os/materials/ch01.md                 | 117 ++--
+ classrooms/cs-os/runtime/progress.md               |   2 +-
+ classrooms/cs-os/story/ch01.md                     | 101 +--
+ classrooms/cs-os/story/ch02.md                     |   6 +-
+ classrooms/cs-os/story/ch03.md                     |   6 +-
+ classrooms/cs-os/story/ch04.md                     |   6 +-
+ classrooms/cs-os/story/ch05.md                     |   8 +-
+ classrooms/cs-os/story/ch06.md                     |   6 +-
+ classrooms/cs-os/story/ch07.md                     |   6 +-
+ classrooms/cs-os/story/ch08.md                     |   8 +-
+ classrooms/cs-os/story/ch09.md                     |   6 +-
+ classrooms/cs-os/story/ch10.md                     |   6 +-
+ classrooms/cs-os/story/ch11.md                     |   6 +-
+ classrooms/cs-os/story/ch12.md                     |   8 +-
+ classrooms/cs-os/story/ch13.md                     |   8 +-
+ classrooms/cs-os/story/ch14.md                     |   6 +-
+ classrooms/cs-os/story/overview.md                 |   4 +-
+ classrooms/cs-os/system_core.md                    | 132 +---
+ classrooms/cs-os/world/metaphor.md                 |  16 +-
+ classrooms/cs-os/world/setting.md                  |   3 +-
+ ...\256\241\350\275\254\345\220\221_2026-09-24.md" |  44 ++
+ ...257\271\350\257\235\346\265\213\350\257\225.md" | 170 +++++
+ ...272\224\345\225\206\345\244\215\346\265\213.md" | 258 ++++++++
+ ...225\277\345\272\246\345\244\215\346\265\213.md" | 174 ++++++
+ ...263\225\346\226\271\346\263\225\350\256\272.md" | 695 +--------------------
+ 38 files changed, 1063 insertions(+), 1380 deletions(-)
+
+## 2. 工作树未提交清单（git status --porcelain）
+ M README.md
+ M README_EN.md
+ M classrooms/cs-os/AGENTS.md
+ M classrooms/cs-os/runtime/progress.md
+ M classrooms/cs-os/story/ch02.md
+ M classrooms/cs-os/story/ch03.md
+ M classrooms/cs-os/story/ch04.md
+ M classrooms/cs-os/story/ch05.md
+ M classrooms/cs-os/story/ch06.md
+ M classrooms/cs-os/story/ch07.md
+ M classrooms/cs-os/story/ch08.md
+ M classrooms/cs-os/story/ch09.md
+ M classrooms/cs-os/story/ch10.md
+ M classrooms/cs-os/story/ch11.md
+ M classrooms/cs-os/story/ch12.md
+ M classrooms/cs-os/story/ch13.md
+ M classrooms/cs-os/story/ch14.md
+ M classrooms/cs-os/system_core.md
+?? classrooms/cs-os/classroom.yaml
+?? classrooms/cs-os/materials/ch02.md
+?? classrooms/cs-os/materials/ch03.md
+?? classrooms/cs-os/materials/ch04.md
+?? classrooms/cs-os/materials/ch05.md
+?? classrooms/cs-os/materials/ch06.md
+?? classrooms/cs-os/materials/ch07.md
+?? classrooms/cs-os/materials/ch08.md
+?? classrooms/cs-os/materials/ch09.md
+?? classrooms/cs-os/materials/ch10.md
+?? classrooms/cs-os/materials/ch11.md
+?? classrooms/cs-os/materials/ch12.md
+?? classrooms/cs-os/materials/ch13.md
+?? classrooms/cs-os/materials/ch14.md
+?? "classrooms/cs-os/\346\216\245\347\272\277\350\257\264\346\230\216_materials_ch02-07.md"
+?? "classrooms/cs-os/\346\216\245\347\272\277\350\257\264\346\230\216_materials_ch08-14.md"
+?? clients/
+?? demo/
+?? plugins/
+?? skills/
+
+## 3. 工作树 vs HEAD 的 diffstat
+ README.md                            | 35 +++++++++++++++++++++++++++++
+ README_EN.md                         | 37 +++++++++++++++++++++++++++++++
+ classrooms/cs-os/AGENTS.md           | 43 +++++++++++++++++++++++++++++++++---
+ classrooms/cs-os/runtime/progress.md | 12 +++++++++-
+ classrooms/cs-os/story/ch02.md       |  2 +-
+ classrooms/cs-os/story/ch03.md       |  2 +-
+ classrooms/cs-os/story/ch04.md       |  2 +-
+ classrooms/cs-os/story/ch05.md       |  2 +-
+ classrooms/cs-os/story/ch06.md       |  2 +-
+ classrooms/cs-os/story/ch07.md       |  2 +-
+ classrooms/cs-os/story/ch08.md       |  2 +-
+ classrooms/cs-os/story/ch09.md       |  2 +-
+ classrooms/cs-os/story/ch10.md       |  2 +-
+ classrooms/cs-os/story/ch11.md       |  2 +-
+ classrooms/cs-os/story/ch12.md       |  2 +-
+ classrooms/cs-os/story/ch13.md       |  2 +-
+ classrooms/cs-os/story/ch14.md       |  2 +-
+ classrooms/cs-os/system_core.md      | 39 ++++++++++++++++++++++++++++----
+ 18 files changed, 171 insertions(+), 21 deletions(-)
+
+## 4. 工作树文件 mtime（stat -f）
+2026-09-24 14:13:33 README.md
+2026-09-24 14:14:07 README_EN.md
+2026-09-24 09:45:23 classrooms/cs-os/AGENTS.md
+2026-09-24 09:45:10 classrooms/cs-os/system_core.md
+2026-09-24 13:47:28 classrooms/cs-os/_anchor.md
+2026-09-24 09:35:32 classrooms/cs-os/runtime/progress.md
+2026-09-24 10:14:48 classrooms/cs-os/story/ch02.md
+2026-09-23 19:52:59 classrooms/cs-os/curriculum.md

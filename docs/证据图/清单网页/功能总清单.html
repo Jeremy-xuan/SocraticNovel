@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SocraticNovel · 功能总清单</title>
+<meta name="generator" content="python3 开源线/DSH定制/清单网页/build.py">
+<meta name="source" content="开源线/SocraticNovel_功能总清单_2026-09-24.md">
+<meta name="source-sha256" content="fdc5cccb63760f5c1c858736f70f9e9678ff17df804d395a97f59ee577c103d3">
+<meta name="source-mtime" content="2026-09-24 12:13 +0800">
+<style>
+:root{
+  --canvas:#0a0a0a; --canvas-soft:#1a1c20; --canvas-card:#191919; --canvas-mid:#363a3f;
+  --hairline:#212327; --hairline-lit:rgba(255,255,255,.14);
+  --ink:#ffffff; --body:#dadbdf; --mute:#7d8187;
+  --sunset:#ff7a17; --sunset-soft:#ffc285; --dusk:#7c3aed; --twilight:#c4b5fd; --breeze:#a0c3ec;
+  --r-sm:8px; --r-pill:9999px;
+  --s-xxs:2px; --s-xs:4px; --s-sm:8px; --s-md:12px; --s-lg:16px; --s-xl:24px;
+  --s-2xl:32px; --s-3xl:48px; --s-4xl:64px;
+  --sans:Inter,"Universal Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",
+         "PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  --mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,Monaco,"SF Mono","Roboto Mono",monospace;
+  --t:.18s ease; --navh:60px;
+  --pad:clamp(16px,4vw,24px);
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+body{margin:0;background:var(--canvas);color:var(--body);overflow-wrap:break-word;
+  font-family:var(--sans);font-size:16px;font-weight:400;line-height:24px;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+a{color:var(--ink);text-decoration:none;transition:color var(--t),border-color var(--t);}
+a:hover{color:var(--breeze);}
+::selection{background:rgba(255,122,23,.28);}
+/* 全部字重 400：层级只靠字号/字距/字色/字面 */
+strong{font-weight:400;color:var(--ink);}
+em{font-style:normal;color:var(--mute);}
+h1,h2,h3,h4{font-weight:400;color:var(--ink);}
+code,.mono{font-family:var(--mono);font-size:.86em;letter-spacing:.4px;}
+code{background:var(--canvas-soft);border:1px solid var(--hairline);
+  padding:1px 6px;border-radius:var(--r-sm);color:var(--ink);}
+
+/* 等宽徽标（取代 emoji） */
+.mk{display:inline-flex;align-items:center;justify-content:center;
+  min-width:16px;height:16px;padding:0 4px;border-radius:var(--r-pill);
+  font-family:var(--mono);font-size:10px;line-height:1;letter-spacing:0;
+  border:1px solid var(--canvas-mid);color:var(--mute);
+  vertical-align:1px;margin:0 3px;flex:0 0 auto;}
+.mk-h{color:var(--sunset);border-color:rgba(255,122,23,.5);background:rgba(255,122,23,.10);}
+.mk-w{color:var(--sunset-soft);border-color:rgba(255,194,133,.35);background:rgba(255,194,133,.08);}
+.mk-o{color:var(--breeze);border-color:rgba(160,195,236,.35);background:rgba(160,195,236,.08);}
+.mk-x{color:var(--mute);border-color:var(--hairline);}
+.mk-done{color:var(--breeze);border-color:rgba(160,195,236,.4);background:rgba(160,195,236,.08);}
+.mk-half{color:var(--sunset-soft);border-color:rgba(255,194,133,.4);background:rgba(255,194,133,.08);}
+.mk-doing{color:var(--sunset);border-color:rgba(255,122,23,.45);background:rgba(255,122,23,.09);}
+.mk-todo{color:var(--mute);border-color:var(--canvas-mid);background:rgba(255,255,255,.02);}
+
+/* 导航 */
+.nav{position:sticky;top:0;z-index:60;background:rgba(10,10,10,.86);
+  backdrop-filter:saturate(160%) blur(18px);-webkit-backdrop-filter:saturate(160%) blur(18px);
+  border-bottom:1px solid var(--hairline);}
+.nav-inner{max-width:1240px;margin:0 auto;padding:0 var(--pad);height:var(--navh);
+  display:flex;align-items:center;gap:var(--s-lg);}
+.brand{font-family:var(--mono);font-size:12px;letter-spacing:1.4px;text-transform:uppercase;
+  color:var(--ink);white-space:nowrap;flex:0 0 auto;}
+.brand span{color:var(--mute);}
+.nav-links{display:flex;gap:var(--s-xxs);overflow-x:auto;scrollbar-width:none;
+  min-width:0;flex:1 1 auto;padding:4px 0;}
+.nav-links::-webkit-scrollbar{display:none;}
+.nav-links a{display:inline-flex;align-items:baseline;gap:6px;font-size:13px;line-height:18px;
+  color:var(--mute);white-space:nowrap;padding:5px 12px;border-radius:var(--r-pill);
+  border:1px solid transparent;}
+.nav-links a i{font-family:var(--mono);font-size:10px;font-style:normal;letter-spacing:.6px;opacity:.7;}
+.nav-links a:hover,.nav-links a:focus-visible{color:var(--ink);border-color:var(--hairline-lit);outline:none;}
+.nav-stamp{flex:0 0 auto;font-family:var(--mono);font-size:10px;letter-spacing:1.1px;
+  text-transform:uppercase;color:var(--mute);white-space:nowrap;}
+.nav-stamp b{color:var(--body);font-weight:400;}
+
+/* 版心 */
+.wrap{max-width:1240px;margin:0 auto;padding:0 var(--pad) 96px;}
+.hero{padding:var(--s-3xl) 0 var(--s-2xl);border-bottom:1px solid var(--hairline);}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:1.4px;text-transform:uppercase;
+  color:var(--mute);margin:0 0 var(--s-xl);}
+.eyebrow b{color:var(--sunset);font-weight:400;}
+h1{font-size:clamp(38px,7vw,64px);line-height:1.04;letter-spacing:-2.2px;
+  margin:0 0 var(--s-xl);max-width:20ch;}
+.lead{font-size:17px;line-height:27px;color:var(--body);max-width:74ch;margin:0 0 var(--s-md);}
+.lead .k{font-family:var(--mono);font-size:11px;letter-spacing:1.2px;text-transform:uppercase;
+  color:var(--sunset);margin-right:8px;}
+.meta-row{display:flex;flex-wrap:wrap;gap:var(--s-sm) var(--s-xl);margin-top:var(--s-xl);
+  font-family:var(--mono);font-size:11px;letter-spacing:1.1px;text-transform:uppercase;
+  color:var(--mute);border-top:1px solid var(--hairline);padding-top:var(--s-lg);}
+.meta-row b{color:var(--ink);font-weight:400;letter-spacing:.6px;text-transform:none;}
+
+/* 总览 */
+.dash{margin:var(--s-3xl) 0 var(--s-2xl);}
+.dash-h{margin-bottom:var(--s-xl);}
+.dash-h .k{font-family:var(--mono);font-size:11px;letter-spacing:1.4px;
+  text-transform:uppercase;color:var(--mute);margin:0 0 var(--s-sm);}
+.dash-h h2{margin:0;font-size:clamp(24px,3.4vw,32px);line-height:1.18;letter-spacing:-.6px;}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s-md);}
+.tile{min-width:0;background:var(--canvas-card);border:1px solid var(--hairline);
+  border-radius:var(--r-sm);padding:var(--s-xl);display:flex;flex-direction:column;
+  gap:var(--s-md);min-height:158px;}
+.tile .t-lab{font-family:var(--mono);font-size:11px;letter-spacing:1.2px;
+  text-transform:uppercase;color:var(--mute);display:flex;align-items:center;gap:7px;}
+.tile .t-num{font-family:var(--mono);font-size:40px;line-height:44px;color:var(--ink);
+  letter-spacing:-1px;display:flex;align-items:baseline;gap:8px;}
+.tile .t-num small{font-size:13px;letter-spacing:.6px;color:var(--mute);}
+.tile .t-note{font-size:13px;line-height:20px;color:var(--mute);margin:auto 0 0;}
+.tile-done .t-lab{color:var(--breeze);} .tile-done .t-num{color:var(--breeze);}
+.tile-half .t-lab{color:var(--sunset-soft);} .tile-half .t-num{color:var(--sunset-soft);}
+.tile-doing .t-lab{color:var(--sunset);} .tile-doing .t-num{color:var(--sunset);}
+.tile-todo .t-lab{color:var(--mute);}
+
+.stackbar{display:flex;gap:2px;height:10px;margin:var(--s-xl) 0 0;}
+.stackbar i{display:block;height:10px;border-radius:2px;min-width:3px;}
+.s-done{background:rgba(160,195,236,.80);}
+.s-half{background:rgba(255,194,133,.72);}
+.s-doing{background:rgba(255,122,23,.78);}
+.s-todo{background:rgba(255,255,255,.13);}
+.bar-legend{display:flex;flex-wrap:wrap;gap:var(--s-xs) var(--s-lg);margin-top:var(--s-md);
+  font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--mute);}
+.bar-legend span{display:inline-flex;align-items:center;gap:7px;}
+.bar-legend i{width:10px;height:10px;border-radius:2px;display:block;}
+.dash-note{font-size:12px;line-height:20px;color:var(--mute);margin:var(--s-lg) 0 0;max-width:96ch;}
+
+/* 一致性提示 */
+.notice{margin:0 0 var(--s-2xl);border:1px solid rgba(255,122,23,.35);background:rgba(255,122,23,.06);
+  border-radius:var(--r-sm);padding:var(--s-lg) var(--s-xl);}
+.notice .n-h{font-family:var(--mono);font-size:11px;letter-spacing:1.2px;text-transform:uppercase;
+  color:var(--sunset);margin:0 0 var(--s-sm);}
+.notice p{font-size:13px;line-height:21px;color:var(--body);margin:0 0 var(--s-sm);max-width:96ch;}
+.notice ul{margin:0;padding-left:18px;}
+.notice li{font-size:13px;line-height:21px;color:var(--body);margin:3px 0;}
+.notice .mono{color:var(--ink);}
+
+/* 工具条 */
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s-sm) var(--s-md);
+  padding:var(--s-md) 0 var(--s-lg);border-bottom:1px solid var(--hairline);margin-bottom:var(--s-2xl);}
+.toolbar .grp{display:flex;align-items:center;gap:var(--s-xs);flex-wrap:wrap;min-width:0;}
+.toolbar .grp > span{font-family:var(--mono);font-size:10px;letter-spacing:1.2px;
+  text-transform:uppercase;color:var(--mute);margin-right:var(--s-xs);}
+.btn{appearance:none;background:transparent;color:var(--mute);cursor:pointer;
+  font-family:var(--sans);font-size:13px;line-height:18px;font-weight:400;
+  padding:5px 13px;border-radius:var(--r-pill);border:1px solid var(--hairline);
+  transition:color var(--t),border-color var(--t),background-color var(--t);}
+.btn:hover{color:var(--ink);border-color:var(--hairline-lit);}
+.btn:focus-visible{outline:none;color:var(--ink);border-color:var(--hairline-lit);}
+.btn.on{color:var(--ink);border-color:var(--hairline-lit);background:var(--canvas-soft);}
+.btn .c{font-family:var(--mono);font-size:10px;color:var(--mute);margin-left:5px;}
+.btn.on .c{color:var(--sunset);}
+.btn[data-f="done"].on{border-color:rgba(160,195,236,.45);}
+.btn[data-f="half"].on{border-color:rgba(255,194,133,.45);}
+.btn[data-f="doing"].on{border-color:rgba(255,122,23,.5);}
+input[type=search]{appearance:none;-webkit-appearance:none;font-family:var(--sans);
+  font-size:13px;line-height:18px;font-weight:400;color:var(--ink);
+  background:var(--canvas-soft);border:1px solid var(--hairline);border-radius:var(--r-pill);
+  padding:6px 14px;min-width:180px;flex:1 1 180px;max-width:280px;}
+input[type=search]::placeholder{color:var(--mute);}
+input[type=search]:focus{outline:none;border-color:var(--hairline-lit);}
+.count{margin-left:auto;font-family:var(--mono);font-size:11px;letter-spacing:1px;
+  text-transform:uppercase;color:var(--mute);white-space:nowrap;}
+.count b{color:var(--ink);font-weight:400;}
+
+/* 分组 */
+.gsec{margin:0 0 var(--s-4xl);scroll-margin-top:calc(var(--navh) + 24px);}
+.gsec[hidden]{display:none;}
+.gsec > h2{font-size:clamp(22px,3vw,28px);line-height:1.2;letter-spacing:-.4px;
+  margin:0 0 var(--s-md);padding-top:var(--s-xl);border-top:1px solid var(--hairline);}
+.gsec > h2::before{content:attr(data-eyebrow);display:block;font-family:var(--mono);
+  font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--sunset);
+  margin-bottom:var(--s-md);}
+.gsec .g-note{font-size:12px;line-height:19px;color:var(--mute);margin:0 0 var(--s-lg);max-width:96ch;}
+.gsec .g-note .mono{color:var(--body);}
+
+/* 条目卡片 */
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s-lg);}
+.sc{min-width:0;background:var(--canvas-card);border:1px solid var(--hairline);
+  border-radius:var(--r-sm);padding:var(--s-xl);display:flex;flex-direction:column;
+  gap:var(--s-md);scroll-margin-top:calc(var(--navh) + 24px);}
+.sc[hidden]{display:none;}
+.sc-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--s-xs) var(--s-md);min-width:0;}
+.sc-num{font-family:var(--mono);font-size:11px;letter-spacing:1.2px;color:var(--mute);flex:0 0 auto;}
+.sc-h h4{margin:0;font-size:19px;line-height:26px;letter-spacing:-.2px;min-width:0;flex:1 1 auto;}
+.sc-chips{display:flex;flex-wrap:wrap;gap:6px;flex:0 0 auto;margin-left:auto;}
+.sc-desc{margin:0;font-size:14px;line-height:22px;color:var(--body);}
+.sc-note{margin:auto 0 0;border-top:1px solid var(--hairline);padding-top:var(--s-md);
+  font-size:12.5px;line-height:20px;color:var(--mute);}
+.sc-note .k{font-family:var(--mono);font-size:10px;letter-spacing:1.2px;text-transform:uppercase;
+  color:var(--canvas-mid);display:block;margin-bottom:5px;}
+.sc-note strong{color:var(--body);}
+.sc-note code{font-size:.9em;}
+
+/* 徽标 */
+.chip{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;max-width:100%;
+  font-family:var(--mono);font-size:11px;letter-spacing:.6px;padding:3px 10px;
+  border-radius:var(--r-pill);border:1px solid var(--canvas-mid);color:var(--mute);}
+.chip-done{color:var(--breeze);border-color:rgba(160,195,236,.42);background:rgba(160,195,236,.08);}
+.chip-half{color:var(--sunset-soft);border-color:rgba(255,194,133,.4);background:rgba(255,194,133,.08);}
+.chip-doing{color:var(--sunset);border-color:rgba(255,122,23,.45);background:rgba(255,122,23,.09);}
+.chip-todo{color:var(--mute);border-color:var(--hairline);background:rgba(255,255,255,.02);}
+.chip-who{color:var(--body);border-color:var(--hairline);}
+.chip-who.reuse{color:var(--twilight);border-color:rgba(196,181,253,.32);background:rgba(196,181,253,.07);}
+.chip sup{font-family:var(--mono);font-size:9px;color:var(--mute);letter-spacing:0;}
+
+.empty{border:1px solid var(--hairline);border-radius:var(--r-sm);padding:var(--s-3xl) var(--s-xl);
+  text-align:center;color:var(--mute);font-size:14px;}
+.empty[hidden]{display:none;}
+
+/* 页脚 */
+.foot{border-top:1px solid var(--hairline);padding:var(--s-3xl) var(--pad);}
+.foot-inner{max-width:1240px;margin:0 auto;color:var(--mute);font-size:13px;line-height:22px;}
+.foot-inner .f-h{font-family:var(--mono);font-size:11px;letter-spacing:1.4px;
+  text-transform:uppercase;color:var(--ink);margin:0 0 var(--s-md);}
+.foot-inner p{margin:0 0 var(--s-sm);max-width:100ch;}
+.foot-inner .mono{color:var(--body);}
+
+/* 窄屏 */
+@media (max-width:1000px){
+  .tiles{grid-template-columns:repeat(2,1fr);}
+  .cards{grid-template-columns:1fr;}
+}
+@media (max-width:640px){
+  h1{letter-spacing:-1.4px;}
+  .tiles{grid-template-columns:1fr;}
+  .tile{min-height:0;padding:var(--s-lg);}
+  .nav-links{display:none;}
+  .count{margin-left:0;}
+  input[type=search]{max-width:none;}
+  .toolbar{gap:var(--s-sm);}
+  .sc{padding:var(--s-lg);}
+  .lead{font-size:16px;line-height:25px;}
+}
+</style>
+</head>
+<body>
+<div class="nav"><div class="nav-inner">
+<div class="brand">SocraticNovel <span>/ 功能总清单</span></div>
+<nav class="nav-links" aria-label="分组跳转">
+<a href="#overview">总览</a>
+<a href="#g0"><i>〇</i>教室内容本身</a>
+<a href="#g1"><i>一</i>后台：把一堂课真的跑起来</a>
+<a href="#g2"><i>二</i>看得见的东西</a>
+<a href="#g3"><i>三</i>记忆与长期陪伴</a>
+<a href="#g4"><i>四</i>教材</a>
+<a href="#g5"><i>五</i>打包与分发</a>
+<a href="#g6"><i>六</i>产出与证明</a>
+<a href="#g7"><i>七</i>社区</a>
+<a href="#g8"><i>八</i>护城河那一层</a>
+</nav>
+<div class="nav-stamp">数据源 <b>2026-09-24</b></div>
+</div></div>
+<div class="wrap">
+<header class="hero">
+<p class="eyebrow">开源线 <b>·</b> SocraticNovel <b>·</b> 由 md 生成</p>
+<h1>功能总清单</h1>
+<p class="lead"><span class="k">这一页是什么</span>把《完全体能力清单 v2》重排成的 <strong>63 项功能总表</strong>（19 项已经能跑 / 9 项做了一半 / 8 项正在做 / 27 项还没开始）。本页不是手写的 HTML —— 它由 <code>开源线/SocraticNovel_功能总清单_2026-09-24.md</code> 生成，那份 md 是唯一数据源，这里没有第二份清单。</p>
+<p class="lead"><span class="k">怎么更新</span>改 md 表格里的任意单元格（通常是「状态」列）→ 跑 <code>python3 开源线/DSH定制/清单网页/build.py</code> → 刷新本页。不需要动 HTML，也不需要在两个地方各改一遍。</p>
+<div class="meta-row">
+<span>数据源最后修改 <b>2026-09-24 12:13 +0800</b></span>
+<span>数据源 SHA-256 <b>fdc5cccb6376</b></span>
+<span>项数 <b>63</b></span>
+<span>复用 <b>13</b> · 自研 <b>50</b></span>
+</div>
+</header>
+<section class="dash" id="overview">
+<div class="dash-h"><p class="k">完成度总览</p><h2>63 项功能，19 项已经能跑（30%）</h2></div>
+<div class="tiles">
+<div class="tile tile-done">
+<div class="t-lab"><span class="mk mk-done">v</span>已经能跑</div>
+<div class="t-num">19<small>项 · 30%</small></div>
+<div class="t-note">源文件状态列写「已经能跑」</div>
+</div>
+<div class="tile tile-half">
+<div class="t-lab"><span class="mk mk-half">~</span>做了一半</div>
+<div class="t-num">9<small>项 · 14%</small></div>
+<div class="t-note">骨架在、机制没做完</div>
+</div>
+<div class="tile tile-doing">
+<div class="t-lab"><span class="mk mk-doing">!</span>正在做</div>
+<div class="t-num">8<small>项 · 13%</small></div>
+<div class="t-note">本季在推进</div>
+</div>
+<div class="tile tile-todo">
+<div class="t-lab"><span class="mk mk-todo">·</span>还没开始</div>
+<div class="t-num">27<small>项 · 43%</small></div>
+<div class="t-note">还没排上</div>
+</div>
+</div>
+<div class="stackbar" role="img" aria-label="共 63 项：已经能跑 19 项，做了一半 9 项，正在做 8 项，还没开始 27 项">
+<i class="s-done" style="flex:19 1 0"></i>
+<i class="s-half" style="flex:9 1 0"></i>
+<i class="s-doing" style="flex:8 1 0"></i>
+<i class="s-todo" style="flex:27 1 0"></i>
+</div>
+<div class="bar-legend">
+<span><i class="s-done"></i>已经能跑 19</span>
+<span><i class="s-half"></i>做了一半 9</span>
+<span><i class="s-doing"></i>正在做 8</span>
+<span><i class="s-todo"></i>还没开始 27</span>
+</div>
+<p class="dash-note">进度条按四个状态的项数占比堆叠（等宽刻度），刻意<strong>不给状态加权</strong>——「做了一半」值多少分是判断题，不是本页能替你定的；所以这里只报事实：每档各有几项。等宽字体显示数字，与正文形成双字面反差。</p>
+</section>
+<div class="notice"><p class="n-h">数据一致性</p><p>源文件里没有找到「状态 / 项数 / 是哪些」自查表，本页数字全部由功能表格行现场统计。</p></div>
+<div class="toolbar">
+<div class="grp"><span>状态</span>
+<button class="btn on" type="button" data-f="all" aria-pressed="true">全部<span class="c">63</span></button>
+<button class="btn" type="button" data-f="done" aria-pressed="false">已经能跑<span class="c">19</span></button>
+<button class="btn" type="button" data-f="half" aria-pressed="false">做了一半<span class="c">9</span></button>
+<button class="btn" type="button" data-f="doing" aria-pressed="false">正在做<span class="c">8</span></button>
+<button class="btn" type="button" data-f="todo" aria-pressed="false">还没开始<span class="c">27</span></button>
+</div>
+<div class="grp"><span>分组</span>
+<button class="btn on" type="button" data-g="all" aria-pressed="true">全部</button>
+<button class="btn" type="button" data-g="g0" aria-pressed="false">教室内容本身<span class="c">8</span></button>
+<button class="btn" type="button" data-g="g1" aria-pressed="false">后台：把一堂课真的跑起来<span class="c">16</span></button>
+<button class="btn" type="button" data-g="g2" aria-pressed="false">看得见的东西<span class="c">9</span></button>
+<button class="btn" type="button" data-g="g3" aria-pressed="false">记忆与长期陪伴<span class="c">5</span></button>
+<button class="btn" type="button" data-g="g4" aria-pressed="false">教材<span class="c">3</span></button>
+<button class="btn" type="button" data-g="g5" aria-pressed="false">打包与分发<span class="c">6</span></button>
+<button class="btn" type="button" data-g="g6" aria-pressed="false">产出与证明<span class="c">5</span></button>
+<button class="btn" type="button" data-g="g7" aria-pressed="false">社区<span class="c">3</span></button>
+<button class="btn" type="button" data-g="g8" aria-pressed="false">护城河那一层<span class="c">8</span></button>
+</div>
+<input type="search" id="q" placeholder="搜编号 / 名称 / 说明 / 状态备注" aria-label="搜索">
+<div class="count" id="count">显示 <b>63</b> / 63 项</div>
+</div>
+<main>
+<section class="gsec" id="g0" data-group="g0">
+<h2 data-eyebrow="分组 〇 · 8 项">〇、教室内容本身（一门课要有的东西）</h2>
+
+<div class="cards">
+<article class="sc" id="item-1" data-status="done" data-group="g0" data-search="1课程表这门课分14讲，每讲讲什么、对应哪章原书cs-os已有已经能跑自研〇、教室内容本身（一门课要有的东西）"><div class="sc-h"><span class="sc-num">1</span><h4>课程表</h4><span class="sc-chips"><span class="chip chip-done" title="已经能跑"><span class="mk mk-done">v</span>已经能跑</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">这门课分 14 讲，每讲讲什么、对应哪章原书</p><div class="sc-note"><span class="k">状态备注</span>cs-os 已有</div></article>
+<article class="sc" id="item-2" data-status="done" data-group="g0" data-search="2知识点与掌握判据每讲要覆盖哪些知识点，以及&quot;怎么算学会了&quot;58条已有已经能跑自研〇、教室内容本身（一门课要有的东西）"><div class="sc-h"><span class="sc-num">2</span><h4>知识点与掌握判据</h4><span class="sc-chips"><span class="chip chip-done" title="已经能跑"><span class="mk mk-done">v</span>已经能跑</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">每讲要覆盖哪些知识点，以及"怎么算学会了"</p><div class="sc-note"><span class="k">状态备注</span>58 条已有</div></article>
+<article class="sc" id="item-3" data-status="done" data-group="g0" data-search="3故事节点每讲在剧情里发生什么（必发生的、可选发生的、会犯错的）14章骨架已有已经能跑自研〇、教室内容本身（一门课要有的东西）"><div class="sc-h"><span class="sc-num">3</span><h4>故事节点</h4><span class="sc-chips"><span class="chip chip-done" title="已经能跑"><span class="mk mk-done">v</span>已经能跑</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">每讲在剧情里发生什么（必发生的、可选发生的、会犯错的）</p><div class="sc-note"><span class="k">状态备注</span>14 章骨架已有</div></article>
+<article class="sc" id="item-4" data-status="half" data-group="g0" data-search="4每讲的教材正文学生真正读到的讲解内容只有第1讲，缺13讲做了一半自研〇、教室内容本身（一门课要有的东西）"><div class="sc-h"><span class="sc-num">4</span><h4><strong>每讲的教材正文</strong></h4><span class="sc-chips"><span class="chip chip-half" title="做了一半"><span class="mk mk-half">~</span>做了一半</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">学生真正读到的讲解内容</p><div class="sc-note"><span class="k">状态备注</span><strong>只有第 1 讲，缺 13 讲</strong></div></article>
+<article class="sc" id="item-5" data-status="done" data-group="g0" data-search="5老师人格与说话方式这个老师是谁、怎么说话、什么时候会卡壳小鞠已有已经能跑自研〇、教室内容本身（一门课要有的东西）"><div class="sc-h"><span class="sc-num">5</span><h4>老师人格与说话方式</h4><span class="sc-chips"><span class="chip chip-done" title="已经能跑"><span class="mk mk-done">v</span>已经能跑</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">这个老师是谁、怎么说话、什么时候会卡壳</p><div class="sc-note"><span class="k">状态备注</span>小鞠已有</div></article>
+<article class="sc" id="item-6" data-status="done" data-group="g0" data-search="6知识点→场景隐喻把&quot;进程/内存&quot;这类概念映射成编辑部里看得见的东西cs-os已有（单个教室）已经能跑自研〇、教室内容本身（一门课要有的东西）"><div class="sc-h"><span class="sc-num">6</span><h4>知识点 → 场景隐喻</h4><span class="sc-chips"><span class="chip chip-done" title="已经能跑"><span class="mk mk-done">v</span>已经能跑</span><span class="chip chip-who" title="护城河">自研（护城河）</span></span></div><p class="sc-desc">把"进程/内存"这类概念映射成编辑部里看得见的东西</p><div class="sc-note"><span class="k">状态备注</span>cs-os 已有（单个教室）</div></article>
+<article class="sc" id="item-7" data-status="done" data-group="g0" data-search="7课堂纪律便条每堂课都要在场的几条硬规矩（教学取向、本讲不许违反项、声音速查、教学检查）已有已经能跑自研〇、教室内容本身（一门课要有的东西）"><div class="sc-h"><span class="sc-num">7</span><h4>课堂纪律便条</h4><span class="sc-chips"><span class="chip chip-done" title="已经能跑"><span class="mk mk-done">v</span>已经能跑</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">每堂课都要在场的几条硬规矩（教学取向、本讲不许违反项、声音速查、教学检查）</p><div class="sc-note"><span class="k">状态备注</span>已有</div></article>
+<article class="sc" id="item-8" data-status="done" data-group="g0" data-search="8上课记录文件（8个）进度、学生档案、课堂摘要、历史归档、复习队列、错题本、老师日记、群聊记录骨架已有（见第16、33–35条）已经能跑自研〇、教室内容本身（一门课要有的东西）"><div class="sc-h"><span class="sc-num">8</span><h4>上课记录文件（8 个）</h4><span class="sc-chips"><span class="chip chip-done" title="已经能跑"><span class="mk mk-done">v</span>已经能跑</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">进度、学生档案、课堂摘要、历史归档、复习队列、错题本、老师日记、群聊记录</p><div class="sc-note"><span class="k">状态备注</span>骨架已有（见第 16、33–35 条）</div></article>
+</div>
+</section>
+<section class="gsec" id="g1" data-group="g1">
+<h2 data-eyebrow="分组 一 · 16 项">一、后台：把一堂课真的跑起来</h2>
+
+<div class="cards">
+<article class="sc" id="item-9" data-status="done" data-group="g1" data-search="9找到教室并读它的配置打开哪个目录就上哪门课能跑（42项测试）已经能跑自研一、后台：把一堂课真的跑起来"><div class="sc-h"><span class="sc-num">9</span><h4>找到教室并读它的配置</h4><span class="sc-chips"><span class="chip chip-done" title="已经能跑"><span class="mk mk-done">v</span>已经能跑</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">打开哪个目录就上哪门课</p><div class="sc-note"><span class="k">状态备注</span>能跑（42 项测试）</div></article>
+<article class="sc" id="item-10" data-status="done" data-group="g1" data-search="10每回合把该给的材料送到对话里材料不是&quot;堆在最前面&quot;，而是每回合按位置和频率重新给一次能跑已经能跑自研一、后台：把一堂课真的跑起来"><div class="sc-h"><span class="sc-num">10</span><h4>每回合把该给的材料送到对话里</h4><span class="sc-chips"><span class="chip chip-done" title="已经能跑"><span class="mk mk-done">v</span>已经能跑</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">材料不是"堆在最前面"，而是每回合按位置和频率重新给一次</p><div class="sc-note"><span class="k">状态备注</span>能跑</div></article>
+<article class="sc" id="item-11" data-status="done" data-group="g1" data-search="11按上到第几讲决定给哪些材料上第3讲就只给第3讲的故事和教材，不提前剧透全部14讲今天做完（开场材料从82kb降到54kb）已经能跑自研一、后台：把一堂课真的跑起来"><div class="sc-h"><span class="sc-num">11</span><h4><strong>按上到第几讲决定给哪些材料</strong></h4><span class="sc-chips"><span class="chip chip-done" title="已经能跑"><span class="mk mk-done">v</span>已经能跑</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">上第 3 讲就只给第 3 讲的故事和教材，不提前剧透全部 14 讲</p><div class="sc-note"><span class="k">状态备注</span>今天做完（开场材料从 82 KB 降到 54 KB）</div></article>
+<article class="sc" id="item-12" data-status="done" data-group="g1" data-search="12一份文件里只取需要的段落纪律便条太长，拆成四段各按各的频率给，不整份每回合重发今天做完（每回合3.4kb→2.1kb）已经能跑自研一、后台：把一堂课真的跑起来"><div class="sc-h"><span class="sc-num">12</span><h4><strong>一份文件里只取需要的段落</strong></h4><span class="sc-chips"><span class="chip chip-done" title="已经能跑"><span class="mk mk-done">v</span>已经能跑</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">纪律便条太长，拆成四段各按各的频率给，不整份每回合重发</p><div class="sc-note"><span class="k">状态备注</span>今天做完（每回合 3.4 KB → 2.1 KB）</div></article>
+<article class="sc" id="item-13" data-status="done" data-group="g1" data-search="13按课堂环节换材料开场/追问/学生作答/对答案/复习/收尾，六个环节各自该看什么材料；由老师自己宣布进入哪个环节今天做完并真实会话验证：开场8份/26.9kb→追问4份/11.5kb，换会话能接上已经能跑自研一、后台：把一堂课真的跑起来"><div class="sc-h"><span class="sc-num">13</span><h4><strong>按课堂环节换材料</strong></h4><span class="sc-chips"><span class="chip chip-done" title="已经能跑"><span class="mk mk-done">v</span>已经能跑</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">开场/追问/学生作答/对答案/复习/收尾，六个环节各自该看什么材料；<strong>由老师自己宣布进入哪个环节</strong></p><div class="sc-note"><span class="k">状态备注</span>今天做完并真实会话验证：开场 8 份/26.9 KB → 追问 4 份/11.5 KB，换会话能接上</div></article>
+<article class="sc" id="item-14" data-status="done" data-group="g1" data-search="14老师可调用的工具老师能查“现在第几讲、第几回合、哪个环节”能跑已经能跑自研一、后台：把一堂课真的跑起来"><div class="sc-h"><span class="sc-num">14</span><h4>老师可调用的工具</h4><span class="sc-chips"><span class="chip chip-done" title="已经能跑"><span class="mk mk-done">v</span>已经能跑</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">老师能查“现在第几讲、第几回合、哪个环节”</p><div class="sc-note"><span class="k">状态备注</span>能跑</div></article>
+<article class="sc" id="item-15" data-status="done" data-group="g1" data-search="15长对话里不重复送同一份材料免得同一段规矩在20轮里送20遍能跑已经能跑自研一、后台：把一堂课真的跑起来"><div class="sc-h"><span class="sc-num">15</span><h4>长对话里不重复送同一份材料</h4><span class="sc-chips"><span class="chip chip-done" title="已经能跑"><span class="mk mk-done">v</span>已经能跑</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">免得同一段规矩在 20 轮里送 20 遍</p><div class="sc-note"><span class="k">状态备注</span>能跑</div></article>
+<article class="sc" id="item-15b" data-status="done" data-group="g1" data-search="15b课程表不必每回合重发课程表整讲不变，改成每讲发一次今天做完：第2回合材料23.4kb→12.6kb（一讲5回合省42kb）已经能跑自研一、后台：把一堂课真的跑起来"><div class="sc-h"><span class="sc-num">15b</span><h4><strong>课程表不必每回合重发</strong></h4><span class="sc-chips"><span class="chip chip-done" title="已经能跑"><span class="mk mk-done">v</span>已经能跑</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">课程表整讲不变，改成每讲发一次</p><div class="sc-note"><span class="k">状态备注</span>今天做完：第 2 回合材料 23.4 KB → 12.6 KB（一讲 5 回合省 42 KB）</div></article>
+<article class="sc" id="item-16" data-status="half" data-group="g1" data-search="16下课后自动写课堂摘要学生说“今天到这”之后，自动把这次课记进摘要文件摘要能自动写；其余7个记录文件仍靠老师自己改做了一半自研一、后台：把一堂课真的跑起来"><div class="sc-h"><span class="sc-num">16</span><h4>下课后自动写课堂摘要</h4><span class="sc-chips"><span class="chip chip-half" title="做了一半"><span class="mk mk-half">~</span>做了一半</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">学生说“今天到这”之后，自动把这次课记进摘要文件</p><div class="sc-note"><span class="k">状态备注</span>摘要能自动写；其余 7 个记录文件仍靠老师自己改</div></article>
+<article class="sc" id="item-17" data-status="done" data-group="g1" data-search="17教室文件的声明格式每个文件&quot;放在哪、多久给一次、多少字&quot;的写法已有（34条声明）已经能跑自研一、后台：把一堂课真的跑起来"><div class="sc-h"><span class="sc-num">17</span><h4>教室文件的声明格式</h4><span class="sc-chips"><span class="chip chip-done" title="已经能跑"><span class="mk mk-done">v</span>已经能跑</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">每个文件"放在哪、多久给一次、多少字"的写法</p><div class="sc-note"><span class="k">状态备注</span>已有（34 条声明）</div></article>
+<article class="sc" id="item-18" data-status="done" data-group="g1" data-search="18教室仓库（多间教室）目录里放多间教室，自动识别、可指定用哪间能跑已经能跑自研一、后台：把一堂课真的跑起来"><div class="sc-h"><span class="sc-num">18</span><h4>教室仓库（多间教室）</h4><span class="sc-chips"><span class="chip chip-done" title="已经能跑"><span class="mk mk-done">v</span>已经能跑</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">目录里放多间教室，自动识别、可指定用哪间</p><div class="sc-note"><span class="k">状态备注</span>能跑</div></article>
+<article class="sc" id="item-19" data-status="todo" data-group="g1" data-search="19知识点的逐字回查工具老师讲知识点时强制回查教材原文，防止讲错还没开始自研一、后台：把一堂课真的跑起来"><div class="sc-h"><span class="sc-num">19</span><h4>知识点的逐字回查工具</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">老师讲知识点时强制回查教材原文，防止讲错</p></article>
+<article class="sc" id="item-20" data-status="todo" data-group="g1" data-search="20复习调度按遗忘曲线排&quot;什么时候该复习哪个知识点&quot;还没开始复用一、后台：把一堂课真的跑起来"><div class="sc-h"><span class="sc-num">20</span><h4>复习调度</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who reuse" title="Anki 用的那套算法">复用（Anki 用的那套算法）</span></span></div><p class="sc-desc">按遗忘曲线排"什么时候该复习哪个知识点"</p></article>
+<article class="sc" id="item-21" data-status="todo" data-group="g1" data-search="21出题与模拟考根据本讲知识点自动出题还没开始自研一、后台：把一堂课真的跑起来"><div class="sc-h"><span class="sc-num">21</span><h4>出题与模拟考</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">根据本讲知识点自动出题</p></article>
+<article class="sc" id="item-22" data-status="todo" data-group="g1" data-search="22诊断：找出学生缺的底层知识不是&quot;这题错了&quot;，而是&quot;你缺的是更早的那一块&quot;还没开始自研一、后台：把一堂课真的跑起来"><div class="sc-h"><span class="sc-num">22</span><h4>诊断：找出学生缺的底层知识</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">不是"这题错了"，而是"你缺的是更早的那一块"</p></article>
+<article class="sc" id="item-23" data-status="todo" data-group="g1" data-search="23教材修订回路学生上课时发现教材讲错了→记下来回写教材还没开始自研一、后台：把一堂课真的跑起来"><div class="sc-h"><span class="sc-num">23</span><h4>教材修订回路</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">学生上课时发现教材讲错了 → 记下来回写教材</p></article>
+</div>
+</section>
+<section class="gsec" id="g2" data-group="g2">
+<h2 data-eyebrow="分组 二 · 9 项">二、看得见的东西（学生打开界面看到的一切）</h2>
+
+<div class="cards">
+<article class="sc" id="item-24" data-status="doing" data-group="g2" data-search="24界面换皮不再像开发者工具，去掉“工具箱味”通道已取证（主题覆盖＋品牌位都成立），实现未开工正在做自研二、看得见的东西（学生打开界面看到的一切）"><div class="sc-h"><span class="sc-num">24</span><h4>界面换皮</h4><span class="sc-chips"><span class="chip chip-doing" title="正在做"><span class="mk mk-doing">!</span>正在做</span><span class="chip chip-who" title="插件">自研（插件）</span></span></div><p class="sc-desc">不再像开发者工具，去掉“工具箱味”</p><div class="sc-note"><span class="k">状态备注</span>通道已取证（主题覆盖＋品牌位都成立），<strong>实现未开工</strong></div></article>
+<article class="sc" id="item-25" data-status="done" data-group="g2" data-search="25教室界面用课程表/角色/进度取代原来的会话列表已跑起来：右栏多出「教室」面板，显示14讲课程表／当前讲次／老师／进度，数据真读盘、零假数据已经能跑自研二、看得见的东西（学生打开界面看到的一切）"><div class="sc-h"><span class="sc-num">25</span><h4>教室界面</h4><span class="sc-chips"><span class="chip chip-done" title="已经能跑"><span class="mk mk-done">v</span>已经能跑</span><span class="chip chip-who" title="插件">自研（插件）</span></span></div><p class="sc-desc">用课程表/角色/进度取代原来的会话列表</p><div class="sc-note"><span class="k">状态备注</span><strong>已跑起来</strong>：右栏多出「教室」面板，显示 14 讲课程表／当前讲次／老师／进度，<strong>数据真读盘、零假数据</strong></div></article>
+<article class="sc" id="item-26" data-status="doing" data-group="g2" data-search="26全屏舞台立绘+对话框，像galgame那样立绘挂进面板在做（渲染宿主已完成并验证）；对话框／分镜未开工正在做自研二、看得见的东西（学生打开界面看到的一切）"><div class="sc-h"><span class="sc-num">26</span><h4>全屏舞台</h4><span class="sc-chips"><span class="chip chip-doing" title="正在做"><span class="mk mk-doing">!</span>正在做</span><span class="chip chip-who" title="插件">自研（插件）</span></span></div><p class="sc-desc">立绘 + 对话框，像 galgame 那样</p><div class="sc-note"><span class="k">状态备注</span>立绘<strong>挂进面板</strong>在做（渲染宿主已完成并验证）；对话框／分镜未开工</div></article>
+<article class="sc" id="item-27" data-status="doing" data-group="g2" data-search="27对话里的图流程图/时序图这类图直接画在消息里工具侧已完成（老师能调工具画、真解析校验、落盘＋索引，离线渲染9/9成功）；客户端在消息里渲染还没做正在做复用二、看得见的东西（学生打开界面看到的一切）"><div class="sc-h"><span class="sc-num">27</span><h4>对话里的图</h4><span class="sc-chips"><span class="chip chip-doing" title="正在做"><span class="mk mk-doing">!</span>正在做</span><span class="chip chip-who reuse" title="mermaid">复用（mermaid）</span></span></div><p class="sc-desc">流程图/时序图这类图直接画在消息里</p><div class="sc-note"><span class="k">状态备注</span><strong>工具侧已完成</strong>（老师能调工具画、真解析校验、落盘＋索引，离线渲染 9/9 成功）；<strong>客户端在消息里渲染还没做</strong></div></article>
+<article class="sc" id="item-28" data-status="doing" data-group="g2" data-search="28白板可以画、可以改，课后保存，下次课能读回来可行性已实测（不做工具时10/10一次都没画出来；给了格式20/20能画，教学可用率8/10与6/10）；实现未开工正在做复用二、看得见的东西（学生打开界面看到的一切）"><div class="sc-h"><span class="sc-num">28</span><h4>白板</h4><span class="sc-chips"><span class="chip chip-doing" title="正在做"><span class="mk mk-doing">!</span>正在做</span><span class="chip chip-who reuse" title="excalidraw">复用（excalidraw）</span></span></div><p class="sc-desc">可以画、可以改，课后保存，下次课能读回来</p><div class="sc-note"><span class="k">状态备注</span>可行性已实测（不做工具时 10/10 一次都没画出来；给了格式 20/20 能画，教学可用率 8/10 与 6/10）；<strong>实现未开工</strong></div></article>
+<article class="sc" id="item-29" data-status="doing" data-group="g2" data-search="29动画讲过程（两个程序怎么抢cpu）时放一段动画实测完成：安装净增326mb、渲染比实时快约5倍、首轮4/4成功；🔴但「渲染成功不等于能讲课」（12例只有7例可用）；真实难度对照在跑正在做复用二、看得见的东西（学生打开界面看到的一切）"><div class="sc-h"><span class="sc-num">29</span><h4>动画</h4><span class="sc-chips"><span class="chip chip-doing" title="正在做"><span class="mk mk-doing">!</span>正在做</span><span class="chip chip-who reuse" title="ManimCE 0.21.0">复用（ManimCE 0.21.0）</span></span></div><p class="sc-desc">讲过程（两个程序怎么抢 CPU）时放一段动画</p><div class="sc-note"><span class="k">状态备注</span><strong>实测完成</strong>：安装净增 326 MB、渲染比实时快约 5 倍、首轮 4/4 成功；<span class="mk mk-h">!</span> <strong>但「渲染成功不等于能讲课」（12 例只有 7 例可用）</strong>；<strong>真实难度对照在跑</strong></div></article>
+<article class="sc" id="item-30" data-status="doing" data-group="g2" data-search="30立绘：会动会变表情的角色老师站着、眨眼、说话、变表情；🔴还要表达「说话卡、写字流畅」这个特征（教室纪律禁止用括号旁白，立绘是它唯一合规的载体）渲染宿主已完成（8/8官方样本首帧、参数确实驱动嘴、文字节奏嘴型可复现）；挂进面板在做正在做复用二、看得见的东西（学生打开界面看到的一切）"><div class="sc-h"><span class="sc-num">30</span><h4>立绘：会动会变表情的角色</h4><span class="sc-chips"><span class="chip chip-doing" title="正在做"><span class="mk mk-doing">!</span>正在做</span><span class="chip chip-who reuse" title="官方框架）＋自研驱动">复用（官方框架）＋自研驱动）</span></span></div><p class="sc-desc">老师站着、眨眼、说话、变表情；<span class="mk mk-h">!</span> <strong>还要表达「说话卡、写字流畅」这个特征</strong>（教室纪律禁止用括号旁白，立绘是它唯一合规的载体）</p><div class="sc-note"><span class="k">状态备注</span><strong>渲染宿主已完成</strong>（8/8 官方样本首帧、参数确实驱动嘴、文字节奏嘴型可复现）；<strong>挂进面板在做</strong></div></article>
+<article class="sc" id="item-31" data-status="todo" data-group="g2" data-search="31语音朗读台词/语音对话还没开始复用二、看得见的东西（学生打开界面看到的一切）"><div class="sc-h"><span class="sc-num">31</span><h4>语音</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who reuse">复用</span></span></div><p class="sc-desc">朗读台词/语音对话</p></article>
+<article class="sc" id="item-32" data-status="doing" data-group="g2" data-search="32多个角色同台老师＋同学，谁在说话一眼看得出研究已完成并定案（13.9万字符、四条现成实现读源码）；实现未开工（依赖上面那条面板）正在做自研二、看得见的东西（学生打开界面看到的一切）"><div class="sc-h"><span class="sc-num">32</span><h4>多个角色同台</h4><span class="sc-chips"><span class="chip chip-doing" title="正在做"><span class="mk mk-doing">!</span>正在做</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">老师＋同学，谁在说话一眼看得出</p><div class="sc-note"><span class="k">状态备注</span>研究已完成并定案（13.9 万字符、四条现成实现读源码）；<strong>实现未开工</strong>（依赖上面那条面板）</div></article>
+</div>
+</section>
+<section class="gsec" id="g3" data-group="g3">
+<h2 data-eyebrow="分组 三 · 5 项">三、记忆与长期陪伴</h2>
+
+<div class="cards">
+<article class="sc" id="item-33" data-status="half" data-group="g3" data-search="33学生档案（零问卷）靠观察慢慢积累&quot;这个人是什么样&quot;有文件，没有积累机制做了一半自研三、记忆与长期陪伴"><div class="sc-h"><span class="sc-num">33</span><h4>学生档案（零问卷）</h4><span class="sc-chips"><span class="chip chip-half" title="做了一半"><span class="mk mk-half">~</span>做了一半</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">靠观察慢慢积累"这个人是什么样"</p><div class="sc-note"><span class="k">状态备注</span>有文件，没有积累机制</div></article>
+<article class="sc" id="item-34" data-status="half" data-group="g3" data-search="34错题本与卡点记下&quot;错在哪一步&quot;，下次能引用有文件，自动记录未做做了一半自研三、记忆与长期陪伴"><div class="sc-h"><span class="sc-num">34</span><h4>错题本与卡点</h4><span class="sc-chips"><span class="chip chip-half" title="做了一半"><span class="mk mk-half">~</span>做了一半</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">记下"错在哪一步"，下次能引用</p><div class="sc-note"><span class="k">状态备注</span>有文件，自动记录未做</div></article>
+<article class="sc" id="item-35" data-status="half" data-group="g3" data-search="35老师的日记与群聊角色有自己的生活，不是只在课上存在有文件，生成机制未做做了一半自研三、记忆与长期陪伴"><div class="sc-h"><span class="sc-num">35</span><h4>老师的日记与群聊</h4><span class="sc-chips"><span class="chip chip-half" title="做了一半"><span class="mk mk-half">~</span>做了一半</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">角色有自己的生活，不是只在课上存在</p><div class="sc-note"><span class="k">状态备注</span>有文件，生成机制未做</div></article>
+<article class="sc" id="item-36" data-status="todo" data-group="g3" data-search="36画像→教材个性化教材按这个人改写（&quot;属于你的教材&quot;）还没开始自研三、记忆与长期陪伴"><div class="sc-h"><span class="sc-num">36</span><h4>画像 → 教材个性化</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who" title="护城河">自研（护城河）</span></span></div><p class="sc-desc">教材按这个人改写（"属于你的教材"）</p></article>
+<article class="sc" id="item-37" data-status="todo" data-group="g3" data-search="37跨设备同步换电脑也能接着上还没开始复用三、记忆与长期陪伴"><div class="sc-h"><span class="sc-num">37</span><h4>跨设备同步</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who reuse">复用</span></span></div><p class="sc-desc">换电脑也能接着上</p></article>
+</div>
+</section>
+<section class="gsec" id="g4" data-group="g4">
+<h2 data-eyebrow="分组 四 · 3 项">四、教材（从外部拿进来 / 从零写出来）</h2>
+
+<div class="cards">
+<article class="sc" id="item-38" data-status="todo" data-group="g4" data-search="38教材导入把pdf/epub变成能教的内容，全程不做ocr工具候选已定还没开始复用四、教材（从外部拿进来/从零写出来）"><div class="sc-h"><span class="sc-num">38</span><h4>教材导入</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who reuse">复用</span></span></div><p class="sc-desc">把 PDF/EPUB 变成能教的内容，<strong>全程不做 OCR</strong></p><div class="sc-note"><span class="k">状态备注</span>工具候选已定</div></article>
+<article class="sc" id="item-39" data-status="todo" data-group="g4" data-search="39主题→自动写出一门课给个主题，自动产出课程表/知识点/教材/故事还没开始自研四、教材（从外部拿进来/从零写出来）"><div class="sc-h"><span class="sc-num">39</span><h4>主题 → 自动写出一门课</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who" title="护城河">自研（护城河）</span></span></div><p class="sc-desc">给个主题，自动产出课程表/知识点/教材/故事</p></article>
+<article class="sc" id="item-40" data-status="todo" data-group="g4" data-search="40教材质量校验检查覆盖够不够、难度梯度对不对、讲a前是否漏了前置知识还没开始自研四、教材（从外部拿进来/从零写出来）"><div class="sc-h"><span class="sc-num">40</span><h4>教材质量校验</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">检查覆盖够不够、难度梯度对不对、讲 A 前是否漏了前置知识</p></article>
+</div>
+</section>
+<section class="gsec" id="g5" data-group="g5">
+<h2 data-eyebrow="分组 五 · 6 项">五、打包与分发（让别人也能用）</h2>
+
+<div class="cards">
+<article class="sc" id="item-41" data-status="done" data-group="g5" data-search="41打包成安装即用的技能包+自检命令别人装上就能用；缺文件时能报出来已交付：技能包＋四项自检（退出码0/1/2）；实测能被宿主发现并取到全文；⚠️但「放哪里才扫得到」这条正在补自检（放错位置会双重静默）已经能跑自研五、打包与分发（让别人也能用）"><div class="sc-h"><span class="sc-num">41</span><h4><strong>打包成安装即用的技能包 + 自检命令</strong></h4><span class="sc-chips"><span class="chip chip-done" title="已经能跑"><span class="mk mk-done">v</span>已经能跑</span><span class="chip chip-who" title="薄">自研（薄）</span></span></div><p class="sc-desc">别人装上就能用；缺文件时能报出来</p><div class="sc-note"><span class="k">状态备注</span><strong>已交付</strong>：技能包＋四项自检（退出码 0/1/2）；<strong>实测能被宿主发现并取到全文</strong>；<span class="mk mk-w">~</span> 但「放哪里才扫得到」这条正在补自检（放错位置会<strong>双重静默</strong>）</div></article>
+<article class="sc" id="item-42" data-status="doing" data-group="g5" data-search="42命令行工具初始化/开始上课/校验技能包自带自检脚本（等于半个validate）；独立cli未做正在做自研五、打包与分发（让别人也能用）"><div class="sc-h"><span class="sc-num">42</span><h4>命令行工具</h4><span class="sc-chips"><span class="chip chip-doing" title="正在做"><span class="mk mk-doing">!</span>正在做</span><span class="chip chip-who" title="薄">自研（薄）</span></span></div><p class="sc-desc">初始化 / 开始上课 / 校验</p><div class="sc-note"><span class="k">状态备注</span>技能包自带自检脚本（等于半个 validate）；独立 CLI 未做</div></article>
+<article class="sc" id="item-43" data-status="todo" data-group="g5" data-search="43网页版+账号浏览器打开就能用完全体阶段还没开始复用五、打包与分发（让别人也能用）"><div class="sc-h"><span class="sc-num">43</span><h4>网页版 + 账号</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who reuse" title="账号、数据库都现成">复用（账号、数据库都现成）</span></span></div><p class="sc-desc">浏览器打开就能用</p><div class="sc-note"><span class="k">状态备注</span>完全体阶段</div></article>
+<article class="sc" id="item-44" data-status="todo" data-group="g5" data-search="44桌面安装包mac应用（清单明说：30天内做它是纯负担）还没开始复用五、打包与分发（让别人也能用）"><div class="sc-h"><span class="sc-num">44</span><h4>桌面安装包</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who reuse" title="Tauri">复用（Tauri）</span></span></div><p class="sc-desc">Mac 应用</p><div class="sc-note"><span class="k">状态备注</span>（清单明说：30 天内做它是纯负担）</div></article>
+<article class="sc" id="item-45" data-status="todo" data-group="g5" data-search="45换模型零成本换一家模型不用改教室还没开始复用五、打包与分发（让别人也能用）"><div class="sc-h"><span class="sc-num">45</span><h4>换模型零成本</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who reuse">复用</span></span></div><p class="sc-desc">换一家模型不用改教室</p></article>
+<article class="sc" id="item-46" data-status="todo" data-group="g5" data-search="46一键自部署别人自己搭一份还没开始自研五、打包与分发（让别人也能用）"><div class="sc-h"><span class="sc-num">46</span><h4>一键自部署</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who" title="薄">自研（薄）</span></span></div><p class="sc-desc">别人自己搭一份</p></article>
+</div>
+</section>
+<section class="gsec" id="g6" data-group="g6">
+<h2 data-eyebrow="分组 六 · 5 项">六、产出与证明（做完要拿得出东西）</h2>
+
+<div class="cards">
+<article class="sc" id="item-47" data-status="todo" data-group="g6" data-search="47课堂实录（录屏/gif）readme现在0张图，这是最缺的那张图还没开始自研六、产出与证明（做完要拿得出东西）"><div class="sc-h"><span class="sc-num">47</span><h4><strong>课堂实录（录屏/GIF）</strong></h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">README 现在 <strong>0 张图</strong>，这是最缺的那张图</p></article>
+<article class="sc" id="item-48" data-status="todo" data-group="g6" data-search="48课后报告这节课学了什么、卡在哪还没开始自研六、产出与证明（做完要拿得出东西）"><div class="sc-h"><span class="sc-num">48</span><h4>课后报告</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">这节课学了什么、卡在哪</p></article>
+<article class="sc" id="item-49" data-status="half" data-group="g6" data-search="49可分享片段一次课堂能剪成传播素材微信聊天版式可用做了一半自研六、产出与证明（做完要拿得出东西）"><div class="sc-h"><span class="sc-num">49</span><h4>可分享片段</h4><span class="sc-chips"><span class="chip chip-half" title="做了一半"><span class="mk mk-half">~</span>做了一半</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">一次课堂能剪成传播素材</p><div class="sc-note"><span class="k">状态备注</span>微信聊天版式可用</div></article>
+<article class="sc" id="item-50" data-status="todo" data-group="g6" data-search="50学习效果度量&quot;效率×3&quot;要主张就得能测还没开始自研六、产出与证明（做完要拿得出东西）"><div class="sc-h"><span class="sc-num">50</span><h4>学习效果度量</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">"效率 ×3"要主张就得能测</p></article>
+<article class="sc" id="item-51" data-status="todo" data-group="g6" data-search="51一页可上传pdf最终交付物形态还没开始复用六、产出与证明（做完要拿得出东西）"><div class="sc-h"><span class="sc-num">51</span><h4>一页可上传 PDF</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who reuse" title="排版工具">复用（排版工具）</span></span></div><p class="sc-desc">最终交付物形态</p></article>
+</div>
+</section>
+<section class="gsec" id="g7" data-group="g7">
+<h2 data-eyebrow="分组 七 · 3 项">七、社区</h2>
+
+<div class="cards">
+<article class="sc" id="item-52" data-status="todo" data-group="g7" data-search="52教室目录+署名+教室格式规范别人能贡献教室，且能被认出来是谁做的还没开始自研七、社区"><div class="sc-h"><span class="sc-num">52</span><h4>教室目录 + 署名 + 教室格式规范</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">别人能贡献教室，且能被认出来是谁做的</p></article>
+<article class="sc" id="item-53" data-status="todo" data-group="g7" data-search="53贡献入口用github的issue/pr，不自建论坛还没开始复用七、社区"><div class="sc-h"><span class="sc-num">53</span><h4>贡献入口</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who reuse">复用</span></span></div><p class="sc-desc">用 GitHub 的 issue/PR，不自建论坛</p></article>
+<article class="sc" id="item-54" data-status="todo" data-group="g7" data-search="54仓库收尾三件6个仓库收成1个；抢救旧项目五份结论；许可证分层落地还没开始自研七、社区"><div class="sc-h"><span class="sc-num">54</span><h4>仓库收尾三件</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who">自研</span></span></div><p class="sc-desc">6 个仓库收成 1 个；抢救旧项目五份结论；许可证分层落地</p></article>
+</div>
+</section>
+<section class="gsec" id="g8" data-group="g8">
+<h2 data-eyebrow="分组 八 · 8 项">八、护城河那一层（全部自研，别人没有）</h2>
+<p class="g-note">源文件本节表格<strong>没有「谁来做」列</strong>；节标题声明「全部自研，别人没有」→ 本页按 <span class="mono">自研</span> 计（推断，卡片上标 <span class="mono">†</span>）。</p>
+<div class="cards">
+<article class="sc" id="item-55" data-status="todo" data-group="g8" data-search="55教材与故事同源生成教材和剧情一起长出来，不是两套东西还没开始自研八、护城河那一层（全部自研，别人没有）"><div class="sc-h"><span class="sc-num">55</span><h4>教材与故事同源生成</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who" title="本节表格未列「谁来做」；节标题声明「全部自研，别人没有」">自研<sup>†</sup></span></span></div><p class="sc-desc">教材和剧情一起长出来，不是两套东西</p></article>
+<article class="sc" id="item-56" data-status="half" data-group="g8" data-search="56知识点→叙事隐喻映射（做成可复用机制）现在只有一个教室做了（编辑部），没有做成&quot;换个学科也能填&quot;的机制做了一半自研八、护城河那一层（全部自研，别人没有）"><div class="sc-h"><span class="sc-num">56</span><h4>知识点 → 叙事隐喻映射（做成可复用机制）</h4><span class="sc-chips"><span class="chip chip-half" title="做了一半"><span class="mk mk-half">~</span>做了一半</span><span class="chip chip-who" title="本节表格未列「谁来做」；节标题声明「全部自研，别人没有」">自研<sup>†</sup></span></span></div><p class="sc-desc">现在只有一个教室做了（编辑部），没有做成"换个学科也能填"的机制</p></article>
+<article class="sc" id="item-57" data-status="half" data-group="g8" data-search="57教学进度↔故事推进（任意里程碑进入）从中间任何一段都能接着上，不用从头补故事骨架有，机制未做做了一半自研八、护城河那一层（全部自研，别人没有）"><div class="sc-h"><span class="sc-num">57</span><h4>教学进度 ↔ 故事推进（任意里程碑进入）</h4><span class="sc-chips"><span class="chip chip-half" title="做了一半"><span class="mk mk-half">~</span>做了一半</span><span class="chip chip-who" title="本节表格未列「谁来做」；节标题声明「全部自研，别人没有」">自研<sup>†</sup></span></span></div><p class="sc-desc">从中间任何一段都能接着上，不用从头补</p><div class="sc-note"><span class="k">状态备注</span>故事骨架有，机制未做</div></article>
+<article class="sc" id="item-58" data-status="todo" data-group="g8" data-search="58卡点/错题→故事伏笔学生卡住的地方，后面剧情里会还回来还没开始自研八、护城河那一层（全部自研，别人没有）"><div class="sc-h"><span class="sc-num">58</span><h4>卡点/错题 → 故事伏笔</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who" title="本节表格未列「谁来做」；节标题声明「全部自研，别人没有」">自研<sup>†</sup></span></span></div><p class="sc-desc">学生卡住的地方，后面剧情里会还回来</p></article>
+<article class="sc" id="item-59" data-status="todo" data-group="g8" data-search="59复习的叙事化复习不是抽题，是剧情里的一次回访还没开始自研八、护城河那一层（全部自研，别人没有）"><div class="sc-h"><span class="sc-num">59</span><h4>复习的叙事化</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who" title="本节表格未列「谁来做」；节标题声明「全部自研，别人没有」">自研<sup>†</sup></span></span></div><p class="sc-desc">复习不是抽题，是剧情里的一次回访</p></article>
+<article class="sc" id="item-60" data-status="todo" data-group="g8" data-search="60情绪↔学习双向耦合（有红线）情绪影响教学节奏，但不许为了沉浸牺牲正确性还没开始自研八、护城河那一层（全部自研，别人没有）"><div class="sc-h"><span class="sc-num">60</span><h4>情绪 ↔ 学习双向耦合（有红线）</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who" title="本节表格未列「谁来做」；节标题声明「全部自研，别人没有」">自研<sup>†</sup></span></span></div><p class="sc-desc">情绪影响教学节奏，但<strong>不许为了沉浸牺牲正确性</strong></p></article>
+<article class="sc" id="item-61" data-status="todo" data-group="g8" data-search="61教法分工×角色分工为什么是这个人教这一章，要说得通还没开始自研八、护城河那一层（全部自研，别人没有）"><div class="sc-h"><span class="sc-num">61</span><h4>教法分工 × 角色分工</h4><span class="sc-chips"><span class="chip chip-todo" title="还没开始"><span class="mk mk-todo">·</span>还没开始</span><span class="chip chip-who" title="本节表格未列「谁来做」；节标题声明「全部自研，别人没有」">自研<sup>†</sup></span></span></div><p class="sc-desc">为什么是这个人教这一章，要说得通</p></article>
+<article class="sc" id="item-62" data-status="half" data-group="g8" data-search="62长对话管理聊到很长时，规矩和事实不漂、状态不打架后台做了一部分（每回合重给、按需给）做了一半自研八、护城河那一层（全部自研，别人没有）"><div class="sc-h"><span class="sc-num">62</span><h4>长对话管理</h4><span class="sc-chips"><span class="chip chip-half" title="做了一半"><span class="mk mk-half">~</span>做了一半</span><span class="chip chip-who" title="本节表格未列「谁来做」；节标题声明「全部自研，别人没有」">自研<sup>†</sup></span></span></div><p class="sc-desc">聊到很长时，规矩和事实不漂、状态不打架</p><div class="sc-note"><span class="k">状态备注</span>后台做了一部分（每回合重给、按需给）</div></article>
+</div>
+</section>
+</main>
+<div class="empty" id="empty" hidden>没有匹配的条目 —— 换个筛选或清空搜索框。</div>
+</div>
+<footer class="foot"><div class="foot-inner">
+<p class="f-h">这一页是怎么来的</p>
+<p>数据源：<span class="mono">开源线/SocraticNovel_功能总清单_2026-09-24.md</span>（SHA-256 <span class="mono">fdc5cccb63760f5c1c858736f70f9e9678ff17df804d395a97f59ee577c103d3</span>）</p>
+<p>构建命令：<span class="mono">python3 开源线/DSH定制/清单网页/build.py</span>　·　本页构建时间 <span class="mono">2026-09-24 12:13 +0800</span></p>
+<p>本页构建时间<strong>刻意不取当前时钟</strong>，而是取数据源 mtime —— 这样同一份 md 重复构建的产物字节完全一致（幂等），而「这页有多新」由上面的「数据源最后修改」如实回答。</p>
+<p>页面为单文件自包含：无 CDN、无外链、无网络请求，双击即可打开。筛选与搜索是页面内联的纯 JS，不依赖任何库。</p>
+</div></footer>
+<script>
+(function(){
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.sc'));
+  var secs  = Array.prototype.slice.call(document.querySelectorAll('.gsec'));
+  var btns  = Array.prototype.slice.call(document.querySelectorAll('.btn[data-f]'));
+  var gbtns = Array.prototype.slice.call(document.querySelectorAll('.btn[data-g]'));
+  var q     = document.getElementById('q');
+  var out   = document.getElementById('count');
+  var none  = document.getElementById('empty');
+  var total = cards.length;
+  var st = {f:'all', g:'all', q:''};
+
+  function norm(s){ return (s||'').toLowerCase().replace(/\s+/g,''); }
+
+  function apply(){
+    var shown = 0;
+    for (var i=0;i<cards.length;i++){
+      var c = cards[i];
+      var ok = (st.f==='all' || c.getAttribute('data-status')===st.f)
+            && (st.g==='all' || c.getAttribute('data-group')===st.g)
+            && (st.q==='' || c.getAttribute('data-search').indexOf(st.q)>=0);
+      c.hidden = !ok;
+      if (ok) shown++;
+    }
+    for (var j=0;j<secs.length;j++){
+      var s = secs[j];
+      var vis = s.querySelector('.sc:not([hidden])');
+      var gok = (st.g==='all' || s.getAttribute('data-group')===st.g);
+      s.hidden = !(gok && vis);
+    }
+    out.innerHTML = '显示 <b>' + shown + '</b> / ' + total + ' 项';
+    none.hidden = shown !== 0;
+  }
+
+  function pick(list, attr, val, btn){
+    for (var i=0;i<list.length;i++){
+      var on = list[i]===btn;
+      list[i].classList.toggle('on', on);
+      list[i].setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+    if (attr==='f') st.f = val; else st.g = val;
+    apply();
+  }
+
+  btns.forEach(function(b){
+    b.addEventListener('click', function(){ pick(btns,'f',b.getAttribute('data-f'),b); });
+  });
+  gbtns.forEach(function(b){
+    b.addEventListener('click', function(){ pick(gbtns,'g',b.getAttribute('data-g'),b); });
+  });
+  if (q) q.addEventListener('input', function(){ st.q = norm(q.value); apply(); });
+
+  // 键盘：在搜索框里按 Esc 清空
+  if (q) q.addEventListener('keydown', function(e){
+    if (e.key==='Escape'){ q.value=''; st.q=''; apply(); }
+  });
+
+  apply();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+# 归属判定_03：工作树 M 文件的归属（用冻结快照哈希反查）
+
+方法：取真仓库工作树文件的 sha256 前 16 位，在本工作区全部同名文件里反查是否有完全相同的副本。
+命中 acceptance/runs/*/frozen/ 的副本 ⇒ 该内容是我们某次验收冻结时的镜像版本 ⇒ 工作树那一份是**我们**写的。
+
+## classrooms/cs-os/AGENTS.md  工作树 sha256=4029fd12c77c0e98
+  命中: code/acceptance/runs/2026-09-24_101218/work/attempt-1/classroom/cs-os/AGENTS.md
+  命中: code/acceptance/runs/2026-09-24_101218/work/attempt-2/classroom/cs-os/AGENTS.md
+  命中: code/acceptance/runs/2026-09-24_101218/frozen/classrooms/cs-os/AGENTS.md
+  命中: code/acceptance/runs/2026-09-24_100535/work/classroom/cs-os/AGENTS.md
+  命中: code/acceptance/runs/2026-09-24_100535/frozen/classrooms/cs-os/AGENTS.md
+  命中: code/acceptance/runs/2026-09-24_102135/03-session/attempt-1/classroom-after/AGENTS.md
+  命中: code/acceptance/runs/2026-09-24_102135/frozen/classrooms/cs-os/AGENTS.md
+  命中: code/acceptance/runs/2026-09-24_103023/03-session/attempt-1/classroom-after/AGENTS.md
+  命中: code/acceptance/runs/2026-09-24_103023/03-session/attempt-2/classroom-after/AGENTS.md
+  命中: code/acceptance/runs/2026-09-24_103023/frozen/classrooms/cs-os/AGENTS.md
+  → 命中 10 个同名副本
+
+## classrooms/cs-os/system_core.md  工作树 sha256=5ca3e1dd85ce6127
+  命中: code/acceptance/runs/2026-09-24_101218/work/attempt-1/classroom/cs-os/system_core.md
+  命中: code/acceptance/runs/2026-09-24_101218/work/attempt-2/classroom/cs-os/system_core.md
+  命中: code/acceptance/runs/2026-09-24_101218/frozen/classrooms/cs-os/system_core.md
+  命中: code/acceptance/runs/2026-09-24_100535/work/classroom/cs-os/system_core.md
+  命中: code/acceptance/runs/2026-09-24_100535/frozen/classrooms/cs-os/system_core.md
+  命中: code/acceptance/runs/2026-09-24_102135/03-session/attempt-1/classroom-after/system_core.md
+  命中: code/acceptance/runs/2026-09-24_102135/frozen/classrooms/cs-os/system_core.md
+  命中: code/acceptance/runs/2026-09-24_103023/03-session/attempt-1/classroom-after/system_core.md
+  命中: code/acceptance/runs/2026-09-24_103023/03-session/attempt-2/classroom-after/system_core.md
+  命中: code/acceptance/runs/2026-09-24_103023/frozen/classrooms/cs-os/system_core.md
+  命中: code/acceptance/runs/2026-09-24_103619/03-session/attempt-1/classroom-after/system_core.md
+  命中: code/acceptance/runs/2026-09-24_103619/frozen/classrooms/cs-os/system_core.md
+  命中: code/acceptance/runs/2026-09-24_104822/03-session/attempt-1/classroom-after/system_core.md
+  命中: code/acceptance/runs/2026-09-24_104822/frozen/classrooms/cs-os/system_core.md
+  → 命中 14 个同名副本
+
+## classrooms/cs-os/runtime/progress.md  工作树 sha256=4ad94cb6a8c664d5
+  命中: code/acceptance/runs/2026-09-24_101218/frozen/classrooms/cs-os/runtime/progress.md
+  命中: code/acceptance/runs/2026-09-24_100535/frozen/classrooms/cs-os/runtime/progress.md
+  命中: code/acceptance/runs/2026-09-24_102135/frozen/classrooms/cs-os/runtime/progress.md
+  命中: code/acceptance/runs/2026-09-24_103023/frozen/classrooms/cs-os/runtime/progress.md
+  → 命中 4 个同名副本
+
+## story/ch02–14：工作树 = 我们的镜像（含已落盘 2026-09-24标记）
+diff --git a/classrooms/cs-os/story/ch02.md b/classrooms/cs-os/story/ch02.md
+index e4e3458..b548511 100644
+--- a/classrooms/cs-os/story/ch02.md
++++ b/classrooms/cs-os/story/ch02.md
+@@ -1,6 +1,6 @@
+ # 第 2 讲故事节点 · 进程的 API 与生命周期
+ 
+-> 正文：`materials/ch02.md`（待写）｜知识点：KP-2.1～2.4｜OSTEP：ch5 Process API
++> 正文：`materials/ch02.md`（已落盘 2026-09-24）｜知识点：KP-2.1～2.4｜OSTEP：ch5 Process API
+ 
+ ## 本讲位置
+ 承接第 1 讲的"进程"概念，进入**它怎么被创建、怎么结束**。本讲是**第一次出现"复制"这个概念**——也是她第一次露出与"写作"有关的过去。
+
+## _anchor.md：工作树 == HEAD（我们没往真仓库写过这个文件）

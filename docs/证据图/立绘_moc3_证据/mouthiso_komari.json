@@ -1,0 +1,67 @@
+{
+  "model": "komari",
+  "frozen": true,
+  "freeze": {
+    "queueLengthAfterStop": 0,
+    "parameterCount": 31,
+    "lipSyncIds": [
+      {
+        "_id": "ParamMouthOpenY"
+      }
+    ],
+    "pose": "moc 默认值（确定性）"
+  },
+  "files": {
+    "closed": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/clients/live2d-host/evidence/mouthiso_komari_closed.png",
+    "open": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/clients/live2d-host/evidence/mouthiso_komari_open.png",
+    "closedAgain": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/clients/live2d-host/evidence/mouthiso_komari_closed_again.png"
+  },
+  "lipSyncIds": [
+    {
+      "_id": "ParamMouthOpenY"
+    }
+  ],
+  "closedVsOpen": {
+    "comparedPixels": 509796,
+    "changedPixels": 155,
+    "changedRatio": 0.0003,
+    "meanAbsDiffOnChanged": 30.95,
+    "maxAbsDiff": 109,
+    "bbox": {
+      "minX": 370,
+      "minY": 185,
+      "maxX": 391,
+      "maxY": 200,
+      "w": 22,
+      "h": 16
+    },
+    "changedByRowBand": [
+      {
+        "yBand": 180,
+        "changed": 150
+      },
+      {
+        "yBand": 200,
+        "changed": 5
+      }
+    ]
+  },
+  "closedVsClosedAgain": {
+    "comparedPixels": 509796,
+    "changedPixels": 0,
+    "changedRatio": 0,
+    "meanAbsDiffOnChanged": 0,
+    "maxAbsDiff": 0,
+    "bbox": null,
+    "changedByRowBand": []
+  },
+  "invariants": {
+    "valueChangesPixels": true,
+    "localChange": true,
+    "reversible": true
+  },
+  "verdict": {
+    "pass": true
+  },
+  "note": "动画已冻结（只 draw 不 update）＋ 姿态已钉死（stopAllMotions + 参数复位到 moc 默认值），因此 closed↔open 的全部差异只可能来自 LipSync 参数；读数可作断言（连跑多次应完全相同）"
+}

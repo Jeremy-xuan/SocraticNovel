@@ -1,0 +1,438 @@
+diff --git a/README.md b/README.md
+index bae595d..0b83da4 100644
+--- a/README.md
++++ b/README.md
+@@ -33,6 +33,7 @@
+ 
+ ## 📑 目录
+ 
++- [🖼 它长什么样](#-它长什么样)
+ - [🎯 它解决什么问题](#-它解决什么问题)
+ - [✨ 凭什么要这样学？](#-凭什么要这样学)
+ - [💡 两个平行宇宙](#-两个平行宇宙)
+@@ -49,6 +50,40 @@
+ 
+ ---
+ 
++## 🖼 它长什么样
++
++下面这几张不是效果图——是把这套东西装进 **DeepSeek Harness** 之后**真跑一节课**截下来的
++（截图时间 2026-09-24；原图与录屏在 [`demo/`](demo/)，复现脚本与时间轴在工作区 `开源线/DSH定制/demo/`）。
++
++![整窗总览：左边是对话，右边是「教室」面板，老师画的图落在消息流里](demo/images/整窗总览.png)
++
++左边是你在上课的对话；右边是「教室」面板——**课程表 14 讲、本轮要讲哪一讲、当课老师、进度**。
++面板最下面那四条，是它**逐条真读盘**的数据来源（`classroom.yaml`／`runtime/progress.md`／`curriculum.md`／`characters/komari.md`）。
++
++**老师画的图，直接画在消息流里**——不是"调用了某个工具"，是一张真的图：
++
++![老师画的图出现在消息流里：程序 → 进程 → CPU 轮流执行](demo/images/老师画的图出现在消息流里.png)
++
++**一节课长这样**：老师问 → 学生答（说了个错的）→ 老师判"你前半句是对的，'只是换个名字'这个不对" → 再画一张图把这一步讲完：
++
++![一节真课的对话片段](demo/images/一节真课的对话片段.png)
++
++- 34 秒课堂实录（从上面这节课剪出来，带字幕）：[`demo/课堂实录_精华34秒.mp4`](demo/课堂实录_精华34秒.mp4)（[完整版 2 分 33 秒](demo/课堂实录_完整版.mp4)）
++- 其余原图：[教室面板](demo/images/教室面板.png) · [立绘站在面板里](demo/images/立绘站在面板里.png) · [开场白板](demo/images/老师画的图_开场白板.png)
++
++**怎么试**（先把教室装进技能目录，然后新开一个对话说「上课」）：
++
++```sh
++mkdir -p ~/.dsh/skills && cp -R skills/socratic-classroom ~/.dsh/skills/
++```
++
++> 两点说明：① 上面截图里右栏的「教室」面板与消息流里的板书图，来自本仓库的
++> [`clients/classroom-ui`](clients/classroom-ui) 与 [`plugins/socratic-engine`](plugins/socratic-engine) 两个 DSH 插件；
++> **只装技能包也能上课**（教室内容、教学法、课程表都在技能包里），只是没有这两处渲染。
++> ② 截图里的立绘是 Live2D 官方样本模型，属于**占位**，不是这个角色本人的模型。
++
++---
++
+ ## 🎯 它解决什么问题
+ 
+ 你让 AI 教你东西。它三秒甩过来一面推导墙。你看完了，什么都没记住——因为从头到尾，你只是观众。
+diff --git a/README_EN.md b/README_EN.md
+index df4f44e..cf32e41 100644
+--- a/README_EN.md
++++ b/README_EN.md
+@@ -33,6 +33,7 @@
+ 
+ ## 📑 Table of Contents
+ 
++- [🖼 What It Looks Like](#-what-it-looks-like)
+ - [🎯 What Problem Does It Solve](#-what-problem-does-it-solve)
+ - [✨ Why Learn This Way?](#-why-learn-this-way)
+ - [💡 Two Parallel Universes](#-two-parallel-universes)
+@@ -48,6 +49,42 @@
+ 
+ ---
+ 
++## 🖼 What It Looks Like
++
++These are not mockups — they are screenshots of a **real lesson** running inside **DeepSeek Harness**
++(captured 2026-09-24; the files and the clip live in [`demo/`](demo/)).
++
++![Full window: the conversation on the left, the Classroom panel on the right, and the diagram the teacher drew landing in the message stream](demo/images/整窗总览.png)
++
++On the left is the lesson you are sitting in; on the right is the **Classroom panel** — the 14-lesson syllabus,
++which lesson is up next, who the teacher is, and how far you have got. The four lines at the bottom of the panel
++are the files it reads for real, one by one.
++
++**The diagram the teacher draws lands in the message stream** — not the name of a tool, an actual diagram:
++
++![The diagram the teacher drew in the message stream: program → process → CPU taking turns](demo/images/老师画的图出现在消息流里.png)
++
++**A lesson looks like this**: the teacher asks → the student answers (with a misconception) → the teacher rules
++"your first half is right, 'just a different name' is not" → then draws a diagram to finish that step:
++
++![A fragment of a real lesson](demo/images/一节真课的对话片段.png)
++
++- 34-second lesson clip (cut from the lesson above, with subtitles): [`demo/课堂实录_精华34秒.mp4`](demo/课堂实录_精华34秒.mp4) ([full 2m33s version](demo/课堂实录_完整版.mp4))
++- More stills: [Classroom panel](demo/images/教室面板.png) · [Portrait inside the panel](demo/images/立绘站在面板里.png) · [Opening whiteboard](demo/images/老师画的图_开场白板.png)
++
++**Try it** (drop the classroom into your skills directory, then open a new chat and say "start class"):
++
++```sh
++mkdir -p ~/.dsh/skills && cp -R skills/socratic-classroom ~/.dsh/skills/
++```
++
++> Two notes: (1) the Classroom panel and the rendered diagram in the screenshots come from the
++> [`clients/classroom-ui`](clients/classroom-ui) and [`plugins/socratic-engine`](plugins/socratic-engine) DSH plugins in this repo —
++> **the skill package alone is enough to hold class** (content, method and syllabus all ship inside it), you just don't get those two renderings.
++> (2) The portrait is the official Live2D sample model, used as a **placeholder** — not this character's own model.
++
++---
++
+ ## 🎯 What Problem Does It Solve
+ 
+ You ask AI to teach you something. Three seconds later, it dumps a wall of derivations on you. You read the whole thing. You remember nothing — because from start to finish, you were just an audience.
+diff --git a/classrooms/cs-os/AGENTS.md b/classrooms/cs-os/AGENTS.md
+index a2f8298..11f4cec 100644
+--- a/classrooms/cs-os/AGENTS.md
++++ b/classrooms/cs-os/AGENTS.md
+@@ -14,7 +14,7 @@
+ |---|---|---|---|---|
+ | **① 常驻层** | `characters/komari.md`（当课老师的**人格核心**）＋ `runtime/learner_profile.md` | **最前**（系统段） | 每轮 | ≤2KB |
+ | **①′ 启动层** | `system_core.md`（**教学法**）＋ `world/metaphor.md`（**隐喻系统**）＋ `world/setting.md`（场景） | 系统段（启动时读一次） | **每课一次** | — |
+-| **② 纪律层** | 🔴 **`_anchor.md`** | 每轮上课前读一次，提醒教学取向和角色声音 | **每轮** | 保持简短 |
++| **② 纪律层** | 🔴 **`_anchor.md`**（三段各自加载：「教学取向」＋「本课不许违反项」每轮贴尾；「角色声音速查」常驻系统段；「教学检查」每 5 轮） | 每轮上课前读一次，提醒教学取向和角色声音 | **每轮** | 保持简短 |
+ | **③ 情境层** | `curriculum.md`（课程表）／`knowledge_points.md`（当讲知识点）／`story/ch{NN}.md`（当讲故事节点）／`materials/ch{NN}.md`（教材正文） | 中部，**用到时读** | 按需 | 按需 |
+ | **④ 状态层** | `runtime/progress.md`（课次/排班）／`runtime/mistake_log.md`／`runtime/review_queue.md` | 课前读，课后写 | 每课 | — |
+ | **⑤ 知识锚** | `materials/ch{NN}.md` 的核心事实与边界 | 当前问题涉及相应机制时核对 | **按需** | — |
+@@ -38,7 +38,7 @@
+ 8. 读 `knowledge_points.md` 的**当讲条目** —— 这一讲要覆盖的知识点清单（`[ ]` = 未掌握）。
+ 9. 读 `story/ch{NN}.md` —— 本讲的故事节点（必然／机会／犯错节点）。
+    - 🔴 **第 1 讲之前先读一次 `story/overview.md`**（人物弧三段 + 暗线种子总表）。**它规定了她"什么时候可以流畅、什么时候不能"**——不读就会把弧线提前用完。
+-10. 读 `materials/ch{NN}.md` —— **本讲的自写学科内容底稿**（概念、事实边界和例子；OSTEP 原文**只链不搬**）。
++10. 读 `materials/ch{NN}.md` —— **本讲的教材正文**（自写的问答版；OSTEP 原文**只链不搬**）。
+ 
+ ### 第三步 · 延迟加载（用到时才读）
+ - `runtime/session_log.md` —— 回顾历史时
+@@ -56,6 +56,13 @@
+ 
+ **必须更新的文件**（一个都不能漏，顺序固定）：
+ 1. `runtime/progress.md` —— 课次 +1、下次谁教、本讲状态
++   - 🔴 **同时改文件顶部的机器可读行 `current_lesson: <整数>`**（改成**下一讲**编号）。
++     它**不是**给人看的备注：引擎（`classroom.yaml` 的 `runtime_store.lesson_key`）按行读它，
++     用来裁决「哪些块属于本轮要讲的讲次」——`story/ch{NN}.md` 的故事节点、
++     `materials/ch{NN}.md` 的追问脚本、`curriculum.md` 的课程表都挂在这条门上。
++     语义写死：`current_lesson` ＝ **本轮要讲的讲次**（不是"已完成的讲次"）。
++     忘了改的后果：下一节课仍然按**上一讲**注入故事节点与教材（且不报错）。
++     格式必须是 `current_lesson: <整数>`；写成中文数字或换键名 → 引擎报错（不会静默）。
+ 2. `runtime/session_log.md` —— 本课摘要（含压缩规则，见文件头部）
+ 3. `knowledge_points.md` —— 本讲条目的 `[ ]` → `[x]`／`[~]`（部分掌握）
+ 4. `runtime/review_queue.md` —— 写入本次要复习的知识点与日期
+@@ -66,11 +73,41 @@
+ 
+ ---
+ 
++## 🔴 教学相位：**你负责宣布**（工具 `classroom_set_phase`）
++
++引擎按**相位**决定「这一回合注入哪些材料」。相位由**你在课堂上判断并宣布**——引擎只记录，
++并按新相位换材料，**不替你判断、也不按规则自动推进**（`phase.advance_on` 已裁定不做，写了会报错）。
++
++六个相位（`classroom.yaml` 顶层声明）：`open` 开场 ｜ `probe` 追问 ｜ `answer` 学生作答 ｜
++`check` 对答案 ｜ `review` 复习 ｜ `close` 收尾。
++
++**换相位会换掉你手里的材料**，这是它唯一的用处：
++
++| 相位 | 你会额外拿到 | 你不想要它的时候 |
++|---|---|---|
++| `open` | 本讲故事节点 `story/ch{NN}.md` | 讲完开场就该离开——节点是"节点说明，不是可念的正文" |
++| `probe` / `check` | 本讲追问脚本 `materials/ch{NN}.md` | 开场注入它 = 提前把追问序列倒出来 |
++| `check` / `close` | 当讲知识点清单 `knowledge_points.md` | 开场注入它 = 对着清单念 |
++
++**宣布时机（看课堂，不看回合数）**：
++- **一讲开始先宣布 `open`**。这是唯一可以"无脑"宣布的一次（你还没问任何问题）。
++  🔴 不宣布的后果：上一讲停在 `close`，**开场材料（故事节点）整讲都不会进来**——引擎不报错，是静默不给。
++- 准备抛出第一个问题 → `probe`；学生开始说自己的答案 → `answer`；要判对错／给答案 → `check`；
++  回看旧知识点 → `review`；要收尾 → `close`。
++- **不必按顺序走完六个**，可以来回（`check` → `probe` 退回追问是常态）。一讲只走两三个相位完全正常。
++- 相位切换**下一回合生效**（本回合材料在你说这句话前已注入）。要立刻看某份材料就直接读文件。
++- **不需要向学生播报**"现在进入追问相位"——那是引擎语言，不是课堂语言。
++
++**落盘**：当前相位写在 `runtime/progress.md` 的机器可读行 `current_phase: <id>`（引擎自动维护，
++换会话会接上）。**你不用手改这一行**；手改坏了（写了不在枚举里的 id）→ 引擎启动时报错。
++
++---
++
+ ## 教材路径规则（🔴 与 AP 物理教室不同，务必注意）
+ 
+ - **OSTEP 原文：只链不搬。** 官网明文 *"INSTRUCTORS: please just link to them directly (instead of making a copy locally)"*。
+   → 课程表里挂**官方章节链接**，学习者在线读；**本教室 `materials/` 里放的是我们自己写的教学材料**，不是原文副本。
+-- **`materials/ch{NN}.md`**：本讲学科内容底稿，**自写**。保留概念因果链、准确的事实与模型边界、可用实例和易混点；不在这里预写角色台词或“学生说 X 后教师做 Y”的回合脚本。教学动作遵循 `system_core.md`，人物与场景遵循故事和角色文件。
++- **`materials/ch{NN}.md`**：本讲正文，**自写**。采用教学地图：核心疑问、值得推导的关口、关口后要讲清的知识主线、容易混淆的地方及检验例子。学生已抓住关键点就顺势讲解，不把每个细节拆成追问，也不要求他说出预设结论。
+ - 若某讲需要 OSTEP 原文的图表：**链接 + 用自己的话重述**，不复制原文段落。
+ - **不做 OCR**：若需引用别的教材 PDF，先看有无文本层；无文本层的**不 OCR**，改为按需引用页码。
+ 
+diff --git a/classrooms/cs-os/runtime/progress.md b/classrooms/cs-os/runtime/progress.md
+index f7c9bfa..1c67f72 100644
+--- a/classrooms/cs-os/runtime/progress.md
++++ b/classrooms/cs-os/runtime/progress.md
+@@ -1,5 +1,15 @@
+ # 学习进度
+ 
++current_lesson: 1
++
++<!--
++🔴 上面这一行是**机器可读行**，引擎（classroom.yaml 的 runtime_store.lesson_key）按行找它。
++   语义写死：`current_lesson` = **本轮要讲的讲次**（不是"已完成的讲次"）。
++   初始 1（第一节课讲第 1 讲）；**课后更新时改成下一讲编号**（讲完第 1 讲 → 改成 2）。
++   格式必须是 `current_lesson: <整数>`；写成中文数字或别的键名 → 引擎报错（不静默失效）。
++   下面的表格给人看，不受影响；两处口径要一致。
++-->
++
+ > **本文件每课更新。** 格式固定，不要改字段名（`AGENTS.md` 的课后容错依赖它）。
+ 
+ | 项 | 值 |
+@@ -18,4 +28,4 @@
+ 
+ ## 待办
+ 
+-- [ ] 第 1 讲：从两份稿子的轮流处理进入操作系统；弄懂程序如何轮流用核心、切换时怎样保存状态，以及操作系统如何保持控制。
++- [ ] 第 1 讲：一个程序怎么跑起来（核心疑问：两个程序同时跑，为什么不互相捣乱？）
+diff --git a/classrooms/cs-os/story/ch02.md b/classrooms/cs-os/story/ch02.md
+index e4e3458..b548511 100644
+--- a/classrooms/cs-os/story/ch02.md
++++ b/classrooms/cs-os/story/ch02.md
+@@ -1,6 +1,6 @@
+ # 第 2 讲故事节点 · 进程的 API 与生命周期
+ 
+-> 正文：`materials/ch02.md`（待写）｜知识点：KP-2.1～2.4｜OSTEP：ch5 Process API
++> 正文：`materials/ch02.md`（已落盘 2026-09-24）｜知识点：KP-2.1～2.4｜OSTEP：ch5 Process API
+ 
+ ## 本讲位置
+ 承接第 1 讲的"进程"概念，进入**它怎么被创建、怎么结束**。本讲是**第一次出现"复制"这个概念**——也是她第一次露出与"写作"有关的过去。
+diff --git a/classrooms/cs-os/story/ch03.md b/classrooms/cs-os/story/ch03.md
+index 148e3b1..a4d791f 100644
+--- a/classrooms/cs-os/story/ch03.md
++++ b/classrooms/cs-os/story/ch03.md
+@@ -1,6 +1,6 @@
+ # 第 3 讲故事节点 · 调度：谁来决定下一个跑谁
+ 
+-> 正文：`materials/ch03.md`（待写）｜知识点：KP-3.1～3.5｜OSTEP：ch7 CPU Scheduling / ch8 MLFQ
++> 正文：`materials/ch03.md`（已落盘 2026-09-24）｜知识点：KP-3.1～3.5｜OSTEP：ch7 CPU Scheduling / ch8 MLFQ
+ 
+ ## 本讲位置
+ 🔴 **回收种子①**：ch01 开场与机会节点里那张"**白板上被划掉的旧计划**"。本讲把它揭开——**那是一次失败的排期**。
+diff --git a/classrooms/cs-os/story/ch04.md b/classrooms/cs-os/story/ch04.md
+index 6199c87..8238d26 100644
+--- a/classrooms/cs-os/story/ch04.md
++++ b/classrooms/cs-os/story/ch04.md
+@@ -1,6 +1,6 @@
+ # 第 4 讲故事节点 · 更公平的调度与多核
+ 
+-> 正文：`materials/ch04.md`（待写）｜知识点：KP-4.1～4.4｜OSTEP：ch9 Lottery / ch10 Multi-CPU
++> 正文：`materials/ch04.md`（已落盘 2026-09-24）｜知识点：KP-4.1～4.4｜OSTEP：ch9 Lottery / ch10 Multi-CPU
+ 
+ ## 本讲位置
+ 第一块的收尾。**她第一次承认"我排期是凭感觉的"**——这是她与"系统"关系的第一次松动。
+diff --git a/classrooms/cs-os/story/ch05.md b/classrooms/cs-os/story/ch05.md
+index a1fc166..2fc6738 100644
+--- a/classrooms/cs-os/story/ch05.md
++++ b/classrooms/cs-os/story/ch05.md
+@@ -1,6 +1,6 @@
+ # 第 5 讲故事节点 · 内存：每个程序都有自己的世界
+ 
+-> 正文：`materials/ch05.md`（待写）｜知识点：KP-5.1～5.4｜OSTEP：ch13 Address Spaces / ch14 Memory API
++> 正文：`materials/ch05.md`（已落盘 2026-09-24）｜知识点：KP-5.1～5.4｜OSTEP：ch13 Address Spaces / ch14 Memory API
+ 
+ ## 本讲位置
+ **Ⅱ 段的开始**：她从"讲台边上"走到桌子前——不再只写，开始**动手摆东西**。
+diff --git a/classrooms/cs-os/story/ch06.md b/classrooms/cs-os/story/ch06.md
+index 3322441..526d3dc 100644
+--- a/classrooms/cs-os/story/ch06.md
++++ b/classrooms/cs-os/story/ch06.md
+@@ -1,6 +1,6 @@
+ # 第 6 讲故事节点 · 地址翻译：硬件怎么帮我们作弊
+ 
+-> 正文：`materials/ch06.md`（待写）｜知识点：KP-6.1～6.4｜OSTEP：ch15 Address Translation / ch16 Segmentation
++> 正文：`materials/ch06.md`（已落盘 2026-09-24）｜知识点：KP-6.1～6.4｜OSTEP：ch15 Address Translation / ch16 Segmentation
+ 
+ ## 本讲位置
+ 🔴 **回收种子③**：ch01 余韵里"**抽屉卡了一下**"。本讲把抽屉**真的拉出来**。
+diff --git a/classrooms/cs-os/story/ch07.md b/classrooms/cs-os/story/ch07.md
+index 0a35449..6a06dd5 100644
+--- a/classrooms/cs-os/story/ch07.md
++++ b/classrooms/cs-os/story/ch07.md
+@@ -1,6 +1,6 @@
+ # 第 7 讲故事节点 · 分页与 TLB
+ 
+-> 正文：`materials/ch07.md`（待写）｜知识点：KP-7.1～7.4｜OSTEP：ch18 Paging / ch19 TLB
++> 正文：`materials/ch07.md`（已落盘 2026-09-24）｜知识点：KP-7.1～7.4｜OSTEP：ch18 Paging / ch19 TLB
+ 
+ ## 本讲位置
+ **动作先于解释的一讲**：她**先做**，再让学生解释她为什么这么做。
+diff --git a/classrooms/cs-os/story/ch08.md b/classrooms/cs-os/story/ch08.md
+index 6cd68cd..0e921d8 100644
+--- a/classrooms/cs-os/story/ch08.md
++++ b/classrooms/cs-os/story/ch08.md
+@@ -1,6 +1,6 @@
+ # 第 8 讲故事节点 · 换页：内存不够用的时候
+ 
+-> 正文：`materials/ch08.md`（待写）｜知识点：KP-8.1～8.4｜OSTEP：ch21 Swapping Mechanisms / ch22 Policies
++> 正文：`materials/ch08.md`（已落盘 2026-09-24）｜知识点：KP-8.1～8.4｜OSTEP：ch21 Swapping Mechanisms / ch22 Policies
+ 
+ ## 本讲位置
+ 第二块收尾（第 8 讲后有单元测验）。本讲她**第一次提到"扔掉"**——情绪线开始转。
+diff --git a/classrooms/cs-os/story/ch09.md b/classrooms/cs-os/story/ch09.md
+index 935a675..87c4486 100644
+--- a/classrooms/cs-os/story/ch09.md
++++ b/classrooms/cs-os/story/ch09.md
+@@ -1,6 +1,6 @@
+ # 第 9 讲故事节点 · 并发：两个线程同时改一个数
+ 
+-> 正文：`materials/ch09.md`（待写）｜知识点：KP-9.1～9.4｜OSTEP：ch26 Concurrency and Threads
++> 正文：`materials/ch09.md`（已落盘 2026-09-24）｜知识点：KP-9.1～9.4｜OSTEP：ch26 Concurrency and Threads
+ 
+ ## 本讲位置
+ 🔴🔴 **Ⅱ 段的高潮 + 种子①回收**：她**第一次主动**讲起那份被覆盖的稿子。
+diff --git a/classrooms/cs-os/story/ch10.md b/classrooms/cs-os/story/ch10.md
+index 12ce480..75f33a1 100644
+--- a/classrooms/cs-os/story/ch10.md
++++ b/classrooms/cs-os/story/ch10.md
+@@ -1,6 +1,6 @@
+ # 第 10 讲故事节点 · 锁：把混乱关进笼子
+ 
+-> 正文：`materials/ch10.md`（待写）｜知识点：KP-10.1～10.4｜OSTEP：ch28 Locks / ch29 Locked Data Structures
++> 正文：`materials/ch10.md`（已落盘 2026-09-24）｜知识点：KP-10.1～10.4｜OSTEP：ch28 Locks / ch29 Locked Data Structures
+ 
+ ## 本讲位置
+ Ⅱ 段收尾。**她开始主动拿笔**——不再等被问。这是人物弧 Ⅱ → Ⅲ 的过渡。
+diff --git a/classrooms/cs-os/story/ch11.md b/classrooms/cs-os/story/ch11.md
+index d4807ab..24e4f0d 100644
+--- a/classrooms/cs-os/story/ch11.md
++++ b/classrooms/cs-os/story/ch11.md
+@@ -1,6 +1,6 @@
+ # 第 11 讲故事节点 · 条件变量与信号量
+ 
+-> 正文：`materials/ch11.md`（待写）｜知识点：KP-11.1～11.4｜OSTEP：ch30 CV / ch31 Semaphores
++> 正文：`materials/ch11.md`（已落盘 2026-09-24）｜知识点：KP-11.1～11.4｜OSTEP：ch30 CV / ch31 Semaphores
+ 
+ ## 本讲位置
+ Ⅲ 段中段。技术密度高、情绪线安静——**故意的**（为第 12、14 讲留出落差）。
+diff --git a/classrooms/cs-os/story/ch12.md b/classrooms/cs-os/story/ch12.md
+index e05592d..bf8fe4d 100644
+--- a/classrooms/cs-os/story/ch12.md
++++ b/classrooms/cs-os/story/ch12.md
+@@ -1,6 +1,6 @@
+ # 第 12 讲故事节点 · 并发 bug 与事件驱动
+ 
+-> 正文：`materials/ch12.md`（待写）｜知识点：KP-12.1～12.4｜OSTEP：ch32 Concurrency Bugs / ch33 Event-based
++> 正文：`materials/ch12.md`（已落盘 2026-09-24）｜知识点：KP-12.1～12.4｜OSTEP：ch32 Concurrency Bugs / ch33 Event-based
+ 
+ ## 本讲位置
+ 第三块收尾（第 12 讲后有单元测验）。**她讲"互相等"时语速变慢**——情绪线的第二次下沉。
+diff --git a/classrooms/cs-os/story/ch13.md b/classrooms/cs-os/story/ch13.md
+index 9cc3233..b588b2a 100644
+--- a/classrooms/cs-os/story/ch13.md
++++ b/classrooms/cs-os/story/ch13.md
+@@ -1,6 +1,6 @@
+ # 第 13 讲故事节点 · 文件与目录
+ 
+-> 正文：`materials/ch13.md`（待写）｜知识点：KP-13.1～13.4｜OSTEP：ch39 Files and Directories / ch40 FS Implementation
++> 正文：`materials/ch13.md`（已落盘 2026-09-24）｜知识点：KP-13.1～13.4｜OSTEP：ch39 Files and Directories / ch40 FS Implementation
+ 
+ ## 本讲位置
+ Ⅳ 段开始。技术线转向"东西存在哪"，情绪线为第 14 讲蓄力。
+diff --git a/classrooms/cs-os/story/ch14.md b/classrooms/cs-os/story/ch14.md
+index d763b0f..47de68d 100644
+--- a/classrooms/cs-os/story/ch14.md
++++ b/classrooms/cs-os/story/ch14.md
+@@ -1,6 +1,6 @@
+ # 第 14 讲故事节点 · 崩溃之后：日志与一致性
+ 
+-> 正文：`materials/ch14.md`（待写）｜知识点：KP-14.1～14.4｜OSTEP：ch42 FSCK and Journaling / ch41 FFS
++> 正文：`materials/ch14.md`（已落盘 2026-09-24）｜知识点：KP-14.1～14.4｜OSTEP：ch42 FSCK and Journaling / ch41 FFS
+ 
+ ## 本讲位置
+ 🔴🔴🔴 **全书收束**。三条线在这里合：
+diff --git a/classrooms/cs-os/system_core.md b/classrooms/cs-os/system_core.md
+index 89742ad..9a496fd 100644
+--- a/classrooms/cs-os/system_core.md
++++ b/classrooms/cs-os/system_core.md
+@@ -19,8 +19,6 @@
+ 
+ **掌控节奏**：关键关系已经弄懂，就沿着它讲清当前最紧密相连的一段因果链。教师可以连续说明几个互相关联的细节，不把每个细节拆成问句；其余分支留待课堂自然推进，不为了赶进度一口气讲完整课。遇到下一个真正需要学生推理的关口、容易混淆之处或学生实际提出的疑问，再停下来讨论。讲解后可以自然停顿；不为保持问答节奏而追加问题，尤其不把刚讲过的事实改写成检查题。
+ 
+-**讲解段之间要接得上**：若这一讲还有关键内容，停顿前让学生看见下一步。下一步若是必要事实，就继续讲或明确点出将讲什么；若是可推导的新关口，就问一个对象清楚的问题。不要只说“就是这样”把推进责任交给学生，也不要因为学生答对“轮流”就当整讲结束。
+-
+ ### 提问适用的地方
+ 
+ 学生已经听懂题目，且可以从已有事实推理时，提出明确、具体的问题：预测运行结果，比较两种机制，找出反例，或解释刚观察到的现象。问题应有清楚的对象、条件和判断目标。没有值得问的问题，就不要硬问。
+@@ -59,13 +57,13 @@
+ 7. 读 `materials/ch{NN}.md` —— 本讲正文
+ 
+ ### 过渡场景
+-以一段环境／角色状态描写开场（200–500 字），**不写"今天的课开始了"**。日常场景与教学场景的情感密度相当。日常问题适合建立直觉时可以先问；学生答出关系后，在同一轮明确映射，并开始解释与之直接相连的学科机制。不要只写下一串学科问题让学生自行决定从哪里继续，也不让学生猜道具是什么。
++以一段环境／角色状态描写开场（200–500 字），**不写"今天的课开始了"**。日常场景与教学场景的情感密度相当。
+ 
+ ### 课中
+ - 对话随学生的理解推进；需要时提问、讲解或演示，叙述穿插其中（叙述是盐：缺了没味，多了齁）
+ - 只有当前知识确实依赖某个前置知识时，才检查它是否具备
+ - 学生只猜对结果、无法解释也无法应用到新情境时记为 `[~]`；能解释或正确应用再记为 `[x]`
+-- 学生没有表示结束时，保持课堂开放；讲完一段要有可见的下一方向，不能只有“就是这样”和无指向的沉默。不自行写“下课”“第 N 讲完”或提前收束故事。教师讲过的细节不能算作学生已证明掌握。
++- 学生没有表示结束时，保持课堂开放；可以停在角色动作、一个完整的解释或新的相关关口，不自行写“下课”“第 N 讲完”或提前收束故事。教师讲过的细节不能算作学生已证明掌握。
+ - 角色动作、对白和白板内容构成面向学生的正文；不要另加戏外括注、HTML 小字提示、课程状态标签或回答指南来填补沉默。
+ 
+ ### 课后更新（学习者说"今天到这"时自动执行）
+@@ -73,6 +71,39 @@
+ 
+ ---
+ 
++## 教学相位（🔴 你负责推进，工具：`classroom_set_phase`）
++
++引擎按**相位**决定「这一回合给你哪些材料」。相位不是时间表，是**课堂走到哪一步了**。
++你判断该进哪个相位了，就调一次 `classroom_set_phase` 宣布它——**引擎只记录并按新相位换材料，不替你判断**。
++
++本教室的六个相位（`classroom.yaml` 顶层声明，顺序即常见推进顺序）：
++
++| 相位 | 这一刻的课堂在做什么 | 你会拿到什么额外材料 |
++|---|---|---|
++| `open` | 开场、把本讲的核心疑问摆出来 | 本讲故事节点（`story/ch{NN}.md`，开场场景方向） |
++| `probe` | 你在追问、一次只问一个问题 | 本讲教材追问脚本（`materials/ch{NN}.md`） |
++| `answer` | 学生正在作答（哪怕答得不完整） | 无（靠你自己接） |
++| `check` | 对答案、判 `[ ]`/`[~]`/`[x]` | 教材追问脚本 ＋ 当讲知识点清单 |
++| `review` | 复习、回看已到期的旧知识点 | 无 |
++| `close` | 收尾、写日记与群聊 | 当讲知识点清单（写回用） |
++
++### 什么时候换（**看课堂，不看回合数**）
++- **一讲开始**：先宣布 `open`。这是一讲里唯一可以"无脑"宣布的一次——你还没问任何问题，本来就该在开场。
++  🔴 不宣布的后果：上一讲结束时停在 `close`，**开场材料（故事节点）整讲都不会进来**（引擎不报错，是静默不给）。
++- **你准备抛出第一个问题** → `probe`。**学生开始说自己的答案** → `answer`。
++- **你要判对错了／要给答案了** → `check`。**回到旧知识点** → `review`。**要收尾了** → `close`。
++- **不必严格按顺序走，也不要求每讲都走完六个**。学生答不上来就往回退（`check` → `probe`），
++  一句话就能结束的关口不必强行走 `answer`。
++- **相位切换是下一回合生效**：本回合的材料在你说这句话之前就已经注入了。要立刻看某份材料，
++  直接用文件工具读（`materials/ch{NN}.md`、`knowledge_points.md` 都在教室里）。
++
++### 怎么宣布
++- 调 `classroom_set_phase`，参数传相位 id（只能传上表里的六个之一；传错会被拒并告诉你合法 id）。
++- **不需要向学生播报**"现在进入追问相位"——那是引擎语言，不是课堂语言。换相位是你自己的节奏动作。
++- 每回合必给的材料（`runtime/progress.md`、纪律层、学习者档案）**不受相位影响**，不必为了它们换相位。
++
++---
++
+ ## 复习系统规则（写死，严格执行）
+ 
+ ### 间隔复习时间表

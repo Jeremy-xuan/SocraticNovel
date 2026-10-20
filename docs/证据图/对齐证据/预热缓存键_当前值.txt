@@ -1,0 +1,23 @@
+# 备课（prep）缓存键：按现盘教材内容重算
+
+取数时间：2026-09-24 14:55:31
+缓存键构成（lib/prep.mjs 的 prepCacheKey）：PREP_CACHE_KEY_VERSION | lesson | template@version | material=<教材 sha256> | params=<规范化>
+→ 教材正文一变，键必变；materials/ch01.md 在 e961ef1 里被整篇改写（117 行），故第 1 讲那条预热键一定失效。
+
+## 现盘教材 sha256（全 64 位）
+materials/ch01.md  813b45ce55014a6b77ee65e14aa6620433aac4e9606ff14f70a317dd3cf3cee9
+materials/ch02.md  2c775eadd4dec832d4fb12183855bd4d620416673af8061191510089a05bc9e4
+materials/ch03.md  8a823c3aec6af74fbf129b01b74ea9062c8b8a181669ae534d298b4ce485d2c3
+materials/ch09.md  60da9ccb3626043d5b5123b554f588a9598a9a161867eb206d68e10c2c051232
+
+## 五条备课声明的**当前**缓存键（照这个值判命中/失效）
+ctx-switch  lesson=1  tpl=timeline@1  material=813b45ce55014a6b  cacheKey=03d78c86e6511c0b2be2094daa13938fc031b37542b5c61305e13ab4d74bf957
+proc-lifecycle  lesson=2  tpl=state_machine@1  material=2c775eadd4dec832  cacheKey=4588270b6c939d276225331e51b63300662bff8f492348208480b7f423ffd971
+fifo-vs-sjf  lesson=3  tpl=timeline@1  material=8a823c3aec6af74f  cacheKey=0b4acb3cf9c2d646796bfec842819efe832539995ba1c1168999e10356a41e2e
+avg-turnaround  lesson=3  tpl=bar_compare@1  material=8a823c3aec6af74f  cacheKey=d6b55c779a20d4cdb624aa8d3b03e9094528ea0723571564b8c6331d86c62821
+race-interleaving  lesson=9  tpl=timeline@1  material=60da9ccb3626043d  cacheKey=04740ec6fd789bd34285e7c4a8a90ad67b5f413877cab61063e2e7858e1e9740
+
+## 证据目录里记录过的历史 cacheKey（tools/anim-prep/evidence/*.json）
+"cacheKey": "ac8c77ec425c926a977d41f15c940610ddfbf3593c208a5af841164df75d66f7"
+"cacheKey": "d6de725e5b9406844ed44c833f9b89fc4f20db4b834bd75c3f54fd2867ba1071"
+（那两个键来自 /tmp 副本上的 L3 实验，与上面 5 条当前键无一相同 → 说明历史缓存对本轮无效）

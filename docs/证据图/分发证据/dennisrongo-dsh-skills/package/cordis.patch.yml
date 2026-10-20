@@ -1,0 +1,13 @@
+# dsh bundle patch. Deliberately carries no config: the plugin resolves the
+# skills library itself (skillsRoot, then DSH_SKILLS_ROOT, then its own
+# @dennisrongo/skills dependency, then a probe).
+#
+# To pin it at a working clone, add an id-targeted override in the PROFILE's
+# cordis.patch.yml — a bare `id:` CONFIGURES an existing row:
+#
+#   - id: skills
+#     config:
+#       skillsRoot: /absolute/path/to/claude-skills
+- insert:
+    - id: skills
+      name: '@dennisrongo/dsh-skills'

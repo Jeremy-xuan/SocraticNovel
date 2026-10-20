@@ -1,0 +1,44 @@
+# 取证：dsh CLI 子命令清单（0.1.5-rc.2，安装版）
+
+命令：/opt/homebrew/bin/node "$DSH_BIN" --help
+
+Usage: dsh [options] [command] [args...]
+
+dsh: boot a DeepSeek Harness profile — an ordered stack of plugin-bundle patch
+layers under your own overrides.
+
+Arguments:
+  args                           arguments for the booted profile's app (see:
+                                 dsh --profile <name> --help)
+
+Options:
+  -V, --version                  output the version number
+  --profile <name>               the profile under $DSH_HOME/profiles to boot
+  --from-default-profile <name>  initialize a new custom profile from a shipped
+                                 profile template
+  --patch <path>                 extra patch-list overlay applied after the
+                                 profile layer (repeatable)
+  --dump-config                  print the composed profile tree and exit
+  --dump-default-config          print the profile tree without its user layer
+                                 or --patch overlays and exit
+
+Commands:
+  web [options] [args...]        boot the web profile (alias of --profile web);
+                                 the web app's own flags follow
+  plugin [options] [args...]     manage a profile's plugins by forwarding the
+                                 remaining arguments to pnpm in the profile
+                                 directory
+
+Examples:
+  dsh --profile web                          boot the web profile (same as: dsh web)
+  dsh --profile rescue --from-default-profile web
+                                             create rescue from the shipped web template, then boot it
+  dsh --profile headless "run the tests"     answer one task, print the result, and exit
+  dsh --profile tui --patch ./extra.yml      boot a custom profile with one extra overlay
+  dsh --profile tui --resume <session>       arguments after the launcher flags reach the app
+  dsh --profile web --help                   the web app's own flags and help
+  dsh plugin --profile tui add <package>     install a plugin into the tui profile
+
+
+--- plugin --help（需 --profile）---
+error: required option '--profile <name>' not specified

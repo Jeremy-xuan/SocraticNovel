@@ -1,0 +1,713 @@
+#!/usr/bin/env node
+'use strict'
+
+/**
+ * socratic-classroom 自检（validate）
+ *
+ * 用法：
+ *   node validate                # 检查本技能包自带的教室副本（./classroom）
+ *   node validate <教室目录>      # 检查指定教室目录
+ *   node validate --project-root <目录>   # 显式指定"项目根"（只影响 ⑤ 的扫描根判定与建议路径）
+ *
+ * 检查五件事（任一项有问题 → 退出码非零，绝不静默）：
+ *   ① 教室缺哪些必需文件（入口/教学法/纪律便条/课程表/知识点/世界观/角色/运行记录）
+ *   ② classroom.yaml 里声明的每份材料，磁盘上是否真的存在
+ *   ③ 声明里提到的讲次序号有没有超出教室声明的讲数；声明讲数与实际故事节点数是否一致
+ *   ④ 教材正文（materials/ch{NN}.md）还缺哪几讲
+ *   ⑤ 🔴 发现链路自检（2026-09-24 新增）：**本技能包自己现在在不在某个扫描根下？**
+ *      —— 这一项回答的是"宿主能不能发现我"，而不是"我的内容全不全"。
+ *      为什么必须有它：技能加载失败**全部只是 `logger.warn` 后跳过**（宿主
+ *      `dsh-skill-filesystem` 的校验四条：缺 frontmatter / name 非法 / 缺 name|description /
+ *      YAML 解析失败），**模型侧拿不到任何诊断**；而"放在 `code/skills/` 下"这种位置
+ *      更是**双重静默**——候选 0 条、告警 0 条，既不出现也不报错。
+ *      本项做三件事：① 逐个判"在不在扫描根下"；② 不在就打印**可复制的目标路径**；
+ *      ③ 校验 SKILL.md 的 frontmatter（`name` 是否匹配 `^[a-z0-9]+(?:-[a-z0-9]+)*$`、
+ *      `description` 是否非空）。任何一项查不出来都打印原因并非零退出。
+ *
+ * 退出码：0 = 全部通过；1 = 查出问题；2 = 用法/目标错误（连检查都做不了）。
+ *
+ * 依赖：只用 Node 内置模块，外加一个 YAML 解析器（见 node_modules/yaml，随包附带，
+ *       来源与理由写在同目录 README.md「依赖来源」一节）。
+ *       注：⑤ 发现链路自检**只用内置模块**（不 require 任何东西），所以即使依赖缺失，
+ *       "我能不能被发现"这一项仍然判得出来。
+ */
+
+const fs = require('node:fs')
+const os = require('node:os')
+const path = require('node:path')
+
+const MANIFEST_FORMAT = 'socratic-classroom/0'
+
+/** 宿主 `dsh-skill/lib/index.js:17` 的 name 正则（逐字）。 */
+const SKILL_NAME_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+/** 宿主 `dsh-skill-filesystem` 的默认 agentsHome：`DSH_AGENTS_HOME` 优先，否则 `~/.agents`。 */
+function resolveAgentsHome() {
+  const fromEnv = process.env.DSH_AGENTS_HOME
+  if (typeof fromEnv === 'string' && fromEnv !== '') return path.resolve(fromEnv)
+  return path.join(os.homedir(), '.agents')
+}
+
+/** 宿主的 DSH_HOME：`DSH_HOME` 优先，否则桌面版 harness 目录。 */
+function resolveDshHome() {
+  const fromEnv = process.env.DSH_HOME
+  if (typeof fromEnv === 'string' && fromEnv !== '') return path.resolve(fromEnv)
+  return path.join(os.homedir(), 'Library', 'Application Support', 'dsh-desktop', 'harness')
+}
+
+/**
+ * 复刻宿主的 `findProjectRoot`（`dsh-skill-filesystem/lib/index.js:799-807`）：
+ * **只认 `.git`**；一路找不到就回落到起点（＝cwd）。
+ */
+function findProjectRoot(startDir) {
+  let current = path.resolve(startDir)
+  for (;;) {
+    if (fs.existsSync(path.join(current, '.git'))) return current
+    const parent = path.dirname(current)
+    if (parent === current) return path.resolve(startDir)
+    current = parent
+  }
+}
+
+/**
+ * 同 `findProjectRoot`，但额外告诉调用方"这个项目根是**真的找到了 `.git`**，
+ * 还是**没找到、回落成了起点**"。
+ *
+ * 🔴 为什么必须区分：本仓库（`大学申请/`）**没有 `.git`**（已实测：工作区根、
+ *    `开源线/DSH定制/`、`code/`、`code/skills/` 四处都没有）。于是回落值＝本包的父目录
+ *    `code/skills/`，打印出来的建议路径会变成 `code/skills/.dsh/skills/socratic-classroom`
+ *    ——**那是一句听着像答案、其实没人会照做的话**。回落必须被**明说**出来，
+ *    并让调用方能用 `--project-root` 覆盖成用户真正想要的项目根。
+ */
+function findProjectRootDetailed(startDir) {
+  let current = path.resolve(startDir)
+  for (;;) {
+    if (fs.existsSync(path.join(current, '.git'))) return { root: current, inferred: false }
+    const parent = path.dirname(current)
+    if (parent === current) return { root: path.resolve(startDir), inferred: true }
+    current = parent
+  }
+}
+
+/** 目录是否存在（供参数校验用；`isDir` 定义在后面，故此处单列一个） */
+function isDirLoose(p) {
+  try {
+    return fs.statSync(p).isDirectory()
+  } catch {
+    return false
+  }
+}
+
+/**
+ * `path.resolve` ＋ 能成功就再 `realpath`。
+ *
+ * 🔴 为什么必须做这一步（实测踩到）：macOS 上 `/tmp` 是指向 `/private/tmp` 的软链接。
+ *   `__dirname` 拿到的是**已解析**的 `/private/tmp/...`，而用户从命令行传进来的
+ *   `--project-root /tmp/...` 是**未解析**的 `/tmp/...`。两者 `path.resolve` 后仍然不等，
+ *   于是"本包明明就在 `<项目根>/.dsh/skills/` 下"却被判成"不在任何扫描根下"——**假红**。
+ *   判路径相等必须两边都归一到真实路径；realpath 失败（路径还不存在）就退回 resolve。
+ */
+function canonicalize(p) {
+  const resolved = path.resolve(p)
+  try {
+    return fs.realpathSync(resolved)
+  } catch {
+    return resolved
+  }
+}
+
+// ── 参数 ────────────────────────────────────────────────────────────────────
+
+const here = __dirname
+const argv = process.argv.slice(2)
+
+// 🔴 `--project-root <目录>`：显式指定项目根，**只影响 ⑤ 的扫描根判定与建议路径**
+//    （①②③④ 查的是教室内容，与项目根无关）。存在的理由见 `findProjectRootDetailed` 的注释。
+let explicitProjectRoot = null
+const positional = []
+for (let i = 0; i < argv.length; i++) {
+  if (argv[i] === '--project-root') {
+    const value = argv[i + 1]
+    if (value === undefined || value === '' || value.startsWith('--')) {
+      console.error('用法错误：--project-root 后面要跟一个目录路径')
+      process.exit(2)
+    }
+    explicitProjectRoot = canonicalize(value)
+    i++
+  } else {
+    positional.push(argv[i])
+  }
+}
+if (explicitProjectRoot !== null && !isDirLoose(explicitProjectRoot)) {
+  console.error(`用法错误：--project-root 指向的目录不存在：${explicitProjectRoot}`)
+  process.exit(2)
+}
+
+const arg = positional[0]
+const target = arg ? path.resolve(arg) : path.join(here, 'classroom')
+
+if (argv.includes('-h') || argv.includes('--help')) {
+  const header = fs.readFileSync(__filename, 'utf8').split('*/')[0]
+  console.log(header.replace(/^\/\*\*?/, '').split(/\r?\n/).map((line) => line.replace(/^\s*\*\s?/, '')).join('\n').trim())
+  process.exit(0)
+}
+
+const problems = [] // 每条：{ section, text }
+const notes = [] // 说明性文字（非问题）
+const add = (section, text) => problems.push({ section, text })
+
+function rel(p) {
+  return path.relative(target, p) || '.'
+}
+
+function exists(p) {
+  return fs.existsSync(p)
+}
+
+function isFile(p) {
+  try {
+    return fs.statSync(p).isFile()
+  } catch {
+    return false
+  }
+}
+
+function isDir(p) {
+  try {
+    return fs.statSync(p).isDirectory()
+  } catch {
+    return false
+  }
+}
+
+/** 讲次文件名统一用两位数字（与教室 manifest 格式的 {NN} 约定一致）。 */
+function lessonFileName(prefix, n, ext = '.md') {
+  return `${prefix}${String(n).padStart(2, '0')}${ext}`
+}
+
+// ── 目标目录 ────────────────────────────────────────────────────────────────
+
+console.log('socratic-classroom 自检')
+console.log('='.repeat(64))
+console.log(`教室目录：${target}`)
+
+if (!isDir(target)) {
+  console.error(`\n错误：教室目录不存在或不是目录：${target}`)
+  console.error('（用法：node validate [教室目录]；不给参数时检查本技能包自带的 ./classroom）')
+  process.exit(2)
+}
+
+// ── 读 classroom.yaml ───────────────────────────────────────────────────────
+
+const manifestPath = path.join(target, 'classroom.yaml')
+let manifest = null
+let manifestError = null
+
+if (!isFile(manifestPath)) {
+  manifestError = '文件不存在'
+} else {
+  let YAML
+  try {
+    YAML = require('yaml')
+  } catch (error) {
+    console.error(`\n错误：找不到 YAML 解析器（require('yaml') 失败）：${error.message}`)
+    console.error(`查找位置：${path.join(here, 'node_modules', 'yaml')}`)
+    console.error('本技能包应自带该依赖（见 README.md「依赖来源」）。缺了它就无法检查 classroom.yaml，故直接失败，不跳过检查。')
+    process.exit(2)
+  }
+  try {
+    manifest = YAML.parse(fs.readFileSync(manifestPath, 'utf8'))
+  } catch (error) {
+    manifestError = `YAML 解析失败：${error.message}`
+  }
+}
+
+let lessons = null
+let classroomId = '(未读出)'
+let classroomTitle = ''
+
+if (manifest && manifestError === null) {
+  if (typeof manifest !== 'object' || manifest === null || Array.isArray(manifest)) {
+    manifestError = '根节点不是映射'
+    manifest = null
+  } else if (manifest.format !== MANIFEST_FORMAT) {
+    manifestError = `format 必须是 ${MANIFEST_FORMAT}（得到 ${JSON.stringify(manifest.format)}）`
+  } else {
+    const classroom = manifest.classroom
+    if (typeof classroom !== 'object' || classroom === null) {
+      manifestError = '顶层缺 classroom 映射'
+    } else {
+      if (typeof classroom.id === 'string' && classroom.id) classroomId = classroom.id
+      if (typeof classroom.title === 'string') classroomTitle = classroom.title
+      const declared = classroom.lessons
+      if (declared === undefined || declared === null) {
+        notes.push('classroom.lessons 未声明 → 无法做讲数相关检查（③④ 跳过）')
+      } else if (!Number.isInteger(declared) || declared < 1) {
+        manifestError = `classroom.lessons 必须是 >=1 的整数（得到 ${JSON.stringify(declared)}）`
+      } else {
+        lessons = declared
+      }
+    }
+  }
+}
+
+if (manifestError !== null) {
+  add('② classroom.yaml', `${rel(manifestPath)}：${manifestError}`)
+} else {
+  console.log(`教室标识：${classroomId}${classroomTitle ? ' · ' + classroomTitle : ''}`)
+  console.log(`声明讲数：${lessons === null ? '(未声明)' : lessons + ' 讲'}`)
+}
+
+// ── ① 必需文件 ──────────────────────────────────────────────────────────────
+
+const REQUIRED = [
+  ['教室入口', 'AGENTS.md'],
+  ['教学法', 'system_core.md'],
+  ['纪律便条', '_anchor.md'],
+  ['课程表', 'curriculum.md'],
+  ['知识点', 'knowledge_points.md'],
+  ['世界观·场景', 'world/setting.md'],
+  ['世界观·隐喻', 'world/metaphor.md'],
+  ['教室清单', 'classroom.yaml'],
+  ['故事·总览', 'story/overview.md'],
+  ['运行记录', 'runtime/progress.md'],
+  ['运行记录', 'runtime/learner_profile.md'],
+  ['运行记录', 'runtime/session_log.md'],
+  ['运行记录', 'runtime/session_archive.md'],
+  ['运行记录', 'runtime/review_queue.md'],
+  ['运行记录', 'runtime/mistake_log.md'],
+  ['运行记录', 'runtime/diary.md'],
+  ['运行记录', 'runtime/wechat_group.md'],
+]
+
+console.log('\n[①] 必需文件')
+let missingRequired = 0
+for (const [label, relPath] of REQUIRED) {
+  if (!isFile(path.join(target, relPath))) {
+    add('① 必需文件', `${label} 缺失：${relPath}`)
+    missingRequired++
+  }
+}
+
+// 角色：characters/ 下至少一个人格文件
+const charactersDir = path.join(target, 'characters')
+let characterFiles = []
+if (!isDir(charactersDir)) {
+  add('① 必需文件', '角色目录缺失：characters/')
+  missingRequired++
+} else {
+  characterFiles = fs.readdirSync(charactersDir).filter((name) => name.endsWith('.md'))
+  if (characterFiles.length === 0) {
+    add('① 必需文件', '角色目录里没有任何 .md 人格文件：characters/')
+    missingRequired++
+  }
+}
+
+// 故事/教材目录本身
+for (const [label, relPath] of [['故事目录', 'story'], ['教材目录', 'materials']]) {
+  if (!isDir(path.join(target, relPath))) {
+    add('① 必需文件', `${label}缺失：${relPath}/`)
+    missingRequired++
+  }
+}
+
+if (missingRequired === 0) {
+  console.log(`  ✓ ${REQUIRED.length} 个必需文件齐全，角色 ${characterFiles.length} 份，story/ 与 materials/ 目录存在`)
+} else {
+  console.log(`  ✗ 缺 ${missingRequired} 项（逐条见下方问题清单）`)
+}
+
+// ── ② classroom.yaml 声明的材料是否真的存在 ─────────────────────────────────
+
+console.log('\n[②] classroom.yaml 声明的材料')
+
+if (manifestError !== null) {
+  console.log('  ✗ 跳过：classroom.yaml 读不出来（见上方问题清单）')
+} else {
+  const declaredPaths = []
+
+  const blocks = manifest.blocks
+  if (!Array.isArray(blocks)) {
+    add('② 声明材料', 'blocks 必须是数组')
+  } else {
+    const seenIds = new Set()
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i]
+      const at = `blocks[${i}]`
+      if (typeof block !== 'object' || block === null) {
+        add('② 声明材料', `${at} 不是映射`)
+        continue
+      }
+      const id = typeof block.id === 'string' && block.id ? block.id : null
+      if (id === null) add('② 声明材料', `${at} 缺 id（非空字符串）`)
+      else if (seenIds.has(id)) add('② 声明材料', `块 id 重复：${id}`)
+      else seenIds.add(id)
+      const where = id === null ? at : `${at}(${id})`
+
+      if (typeof block.path !== 'string' || !block.path) {
+        add('② 声明材料', `${where} 缺 path（非空字符串）`)
+        continue
+      }
+      declaredPaths.push({ where, relPath: block.path })
+
+      const absolute = path.isAbsolute(block.path) ? block.path : path.join(target, block.path)
+      if (!isFile(absolute)) {
+        add('② 声明材料', `${where} 声明的文件不存在：${block.path}`)
+      } else if (typeof block.section === 'string' && block.section) {
+        // 与引擎同款规则：声明的段标题必须在文件里存在，否则该块静默失效
+        const want = block.section.replace(/^#+\s*/, '').trim()
+        const headings = fs
+          .readFileSync(absolute, 'utf8')
+          .split(/\r?\n/)
+          .map((line) => line.match(/^(#{1,6})\s+(.*?)\s*$/))
+          .filter((m) => m !== null)
+          .map((m) => m[2])
+        if (!headings.includes(want)) {
+          add('② 声明材料', `${where} 的 section ${JSON.stringify(block.section)} 在 ${block.path} 里不存在（该文件实际标题：${headings.join(' / ') || '（无标题）'}）`)
+        }
+      }
+    }
+  }
+
+  // runtime_store 声明的 progress 文件
+  const store = manifest.runtime_store
+  if (store !== undefined && store !== null) {
+    if (typeof store !== 'object' || Array.isArray(store)) {
+      add('② 声明材料', 'runtime_store 必须是映射')
+    } else if (typeof store.progress === 'string' && store.progress) {
+      declaredPaths.push({ where: 'runtime_store', relPath: store.progress })
+      const absolute = path.isAbsolute(store.progress) ? store.progress : path.join(target, store.progress)
+      if (!isFile(absolute)) {
+        add('② 声明材料', `runtime_store.progress 声明的文件不存在：${store.progress}`)
+      }
+    } else {
+      add('② 声明材料', 'runtime_store.progress 必填（非空字符串）')
+    }
+  }
+
+  const bad = problems.filter((p) => p.section === '② 声明材料').length
+  if (bad === 0) {
+    console.log(`  ✓ ${declaredPaths.length} 条声明路径全部存在于磁盘`)
+  } else {
+    console.log(`  ✗ ${bad} 条声明有问题（逐条见下方问题清单）`)
+  }
+}
+
+// ── ③ 讲次序号上界与讲数一致性 ──────────────────────────────────────────────
+
+console.log('\n[③] 讲次序号与讲数')
+
+if (manifestError !== null || lessons === null) {
+  console.log(`  ✗ 跳过：${manifestError !== null ? 'classroom.yaml 读不出来' : 'classroom.lessons 未声明'}`)
+} else {
+  let issues = 0
+
+  // 声明讲数 vs 实际故事节点数
+  const storyDir = path.join(target, 'story')
+  const storyCount = isDir(storyDir)
+    ? fs.readdirSync(storyDir).filter((name) => /^ch\d+\.md$/.test(name)).length
+    : 0
+  if (storyCount !== lessons) {
+    add('③ 讲次', `声明 ${lessons} 讲，但 story/ 里只有 ${storyCount} 个故事节点文件（ch{NN}.md）——两者必须一致`)
+    issues++
+  }
+
+  // 每个讲次门的上界
+  const blocks = Array.isArray(manifest.blocks) ? manifest.blocks : []
+  let gated = 0
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i]
+    if (typeof block !== 'object' || block === null) continue
+    const id = typeof block.id === 'string' && block.id ? block.id : `blocks[${i}]`
+    const gate = block.lesson
+    if (gate === undefined || gate === null) continue
+    gated++
+    if (typeof gate !== 'object' || Array.isArray(gate)) {
+      add('③ 讲次', `块 ${id} 的 lesson 必须是映射：{current:true, of:N} / {list:[..]} / {range:[a,b]}`)
+      issues++
+      continue
+    }
+    if (gate.current === true) {
+      if (gate.of === undefined) continue
+      if (!Number.isInteger(gate.of) || gate.of < 1) {
+        add('③ 讲次', `块 ${id} 的 lesson.of 必须是 >=1 的整数（得到 ${JSON.stringify(gate.of)}）`)
+        issues++
+        continue
+      }
+      if (gate.of > lessons) {
+        add('③ 讲次', `块 ${id} 声明第 ${gate.of} 讲，但教室声明的讲数只有 ${lessons} —— 这个门永远不会命中，块会静默不注入`)
+        issues++
+      }
+    } else if (Array.isArray(gate.list)) {
+      if (gate.list.length === 0) {
+        add('③ 讲次', `块 ${id} 的 lesson.list 不能是空数组`)
+        issues++
+        continue
+      }
+      const bad = gate.list.filter((n) => !Number.isInteger(n) || n < 1)
+      if (bad.length > 0) {
+        add('③ 讲次', `块 ${id} 的 lesson.list 里有非 >=1 整数：${JSON.stringify(bad)}`)
+        issues++
+        continue
+      }
+      const over = gate.list.filter((n) => n > lessons)
+      if (over.length > 0) {
+        add('③ 讲次', `块 ${id} 的 lesson.list 引用第 ${over.join('、')} 讲，超出教室声明的 ${lessons} 讲`)
+        issues++
+      }
+    } else if (Array.isArray(gate.range)) {
+      if (gate.range.length !== 2) {
+        add('③ 讲次', `块 ${id} 的 lesson.range 必须是 [起, 止] 两个元素`)
+        issues++
+        continue
+      }
+      const [from, to] = gate.range
+      if (!Number.isInteger(from) || !Number.isInteger(to) || from < 1 || to < 1) {
+        add('③ 讲次', `块 ${id} 的 lesson.range 必须都是 >=1 的整数（得到 ${JSON.stringify(gate.range)}）`)
+        issues++
+        continue
+      }
+      if (from > to) {
+        add('③ 讲次', `块 ${id} 的 lesson.range 起点大于终点：${JSON.stringify(gate.range)}`)
+        issues++
+        continue
+      }
+      if (to > lessons) {
+        add('③ 讲次', `块 ${id} 的 lesson.range 上界第 ${to} 讲，超出教室声明的 ${lessons} 讲`)
+        issues++
+      }
+    } else {
+      add('③ 讲次', `块 ${id} 的 lesson 无法识别（可用键：current/list/range/of）：${JSON.stringify(gate)}`)
+      issues++
+    }
+  }
+
+  if (issues === 0) {
+    console.log(`  ✓ 声明 ${lessons} 讲 ＝ story/ 实际 ${storyCount} 个节点；${gated} 个讲次门全部落在 1–${lessons} 内`)
+  } else {
+    console.log(`  ✗ ${issues} 处讲次问题（逐条见下方问题清单）`)
+  }
+}
+
+// ── ④ 教材正文缺口 ──────────────────────────────────────────────────────────
+
+console.log('\n[④] 教材正文（materials/ch{NN}.md）')
+
+if (lessons === null) {
+  console.log(`  ✗ 跳过：${manifestError !== null ? 'classroom.yaml 读不出来' : 'classroom.lessons 未声明'} → 无法知道该有哪几讲`)
+} else {
+  const missing = []
+  const present = []
+  for (let n = 1; n <= lessons; n++) {
+    const name = lessonFileName('ch', n)
+    if (isFile(path.join(target, 'materials', name))) present.push(n)
+    else missing.push(n)
+  }
+  if (missing.length === 0) {
+    console.log(`  ✓ 第 1–${lessons} 讲正文齐全（${present.length} 份）`)
+  } else {
+    console.log(`  ✗ 缺 ${missing.length} 讲正文：第 ${missing.join('、')} 讲`)
+    add('④ 教材正文', `缺 ${missing.length} 讲正文（共声明 ${lessons} 讲，已有 ${present.length} 讲）：第 ${missing.join('、')} 讲 —— 期望文件 materials/${lessonFileName('ch', missing[0])}`)
+  }
+}
+
+// ── ⑤ 发现链路自检（本技能包自己能不能被宿主发现）────────────────────────────
+//
+// 🔴 为什么单列这一项：①②③④ 查的都是"教室内容全不全"，没有一项查"我自己在不在扫描根里"。
+//    技能被发现的条件（宿主源码逐字）：
+//      · 扫描根共 6 个（`dsh-skill-filesystem/lib/index.js:150-188`）：
+//        项目级 `<项目根>/.dsh/skills`（rank 100）、`<项目根>/.agents/skills`（200）、
+//        自定义 `customSkillDirs`（300）、用户级 `$DSH_HOME/skills`（400）、
+//        `~/.agents/skills`（500）、打包内置 `bundledSkillDir`；
+//      · **只扫根的直接子项**（`:581-593`）——技能＝根的直接子目录（取其 `SKILL.md`），
+//        或根下的散装 `.md`；**不再向下递归**；
+//      · "项目根"只认 `.git`（`:799-807`），找不到就回落成 cwd。
+//    → 把包放在 `<仓库>/code/skills/` 这种"看起来很像技能目录"的地方，
+//      结果是**候选 0 条、告警 0 条**的双重静默（取证实测场景 D）。本项就是来把这件事喊出来的。
+
+console.log('\n[⑤] 发现链路（本技能包在不在扫描根下）')
+
+const packageRoot = canonicalize(here)
+const skillFile = path.join(packageRoot, 'SKILL.md')
+const packageName = path.basename(packageRoot)
+
+if (!isFile(skillFile)) {
+  console.log(`  ✗ 跳过：本包根目录下没有 SKILL.md（${skillFile}）→ 连"能不能被发现"都无从谈起`)
+  add('⑤ 发现链路', `本包根目录下没有 SKILL.md：${skillFile}（技能＝目录里的 SKILL.md，没有它就不是技能）`)
+} else {
+  const dshHome = resolveDshHome()
+  const agentsHome = resolveAgentsHome()
+  // 🔴 项目根怎么定：
+  //    · 用户给了 `--project-root` → 用它（**唯一能让"该放到哪"这句话变准的办法**）；
+  //    · 否则复刻宿主 `findProjectRoot`：从**本包的父目录**起向上找 `.git`，找不到就回落成起点。
+  //    · 起算点取**本包的父目录**，不取本包自己：
+  //      宿主用会话 cwd 找项目根，而本自检要回答的是"把本包放到某个扫描根下之后，它算不算在根下"。
+  //      取父目录有两个好处：① 本包已经装好时（父目录＝扫描根），项目根就是那个扫描根的父级 → 判定为"在"；
+  //      ② 本包没装好时，回落值＝**包现在待的地方**，于是打印出来的"目标路径"是包外的一个合理位置
+  //      （取本包自己会让目标路径变成"包里面的 .dsh/skills/包名"，那是废话）。
+  const detected = findProjectRootDetailed(path.dirname(packageRoot))
+  const projectRoot = explicitProjectRoot ?? detected.root
+
+  console.log(`  本包位置：${packageRoot}`)
+  if (explicitProjectRoot !== null) {
+    console.log(`  项目根（--project-root 显式指定）：${projectRoot}`)
+  } else if (detected.inferred) {
+    console.log(`  项目根（只认 .git）：${projectRoot}`)
+    console.log(`    ⚠️ 向上没找到 .git → 项目根**回落成了本包的父目录**（${projectRoot}）`)
+    console.log('       宿主在真实会话里用的是**会话 cwd** 去找 .git，找不到同样回落成 cwd。')
+    console.log('       所以下面"该放到哪"的建议是**按这个回落值推的**；若与你的会话 cwd 不符，')
+    console.log('       请用 --project-root <你的项目根> 重跑，例如：')
+    console.log(`         ${process.execPath} ${__filename} --project-root "<你的项目根>"`)
+    notes.push(
+      `项目根是**推断**的：从 ${path.dirname(packageRoot)} 向上没有 .git，回落成 ${projectRoot}。` +
+        `宿主真实会话用会话 cwd 找 .git，故建议路径请用 --project-root 校准。`,
+    )
+  } else {
+    console.log(`  项目根（只认 .git）：${projectRoot}`)
+  }
+
+  const scanRoots = [
+    { label: '项目级 · .dsh/skills', root: path.join(projectRoot, '.dsh', 'skills'), source: 'project-dsh', rank: 100 },
+    { label: '项目级 · .agents/skills', root: path.join(projectRoot, '.agents', 'skills'), source: 'project-agents', rank: 200 },
+    { label: '用户级 · $DSH_HOME/skills', root: path.join(dshHome, 'skills'), source: 'user-dsh', rank: 400 },
+    { label: '用户级 · ~/.agents/skills', root: path.join(agentsHome, 'skills'), source: 'user-agents', rank: 500 },
+  ]
+
+  console.log('  三类扫描根逐个判：')
+  const hit = []
+  for (const entry of scanRoots) {
+    const parentMatches = canonicalize(path.dirname(packageRoot)) === canonicalize(entry.root)
+    const exists = isDir(entry.root)
+    if (parentMatches) hit.push(entry)
+    console.log(
+      `    ${parentMatches ? '✓ 在' : '✗ 不在'}  ${entry.label}  [${entry.source} rank=${entry.rank}]` +
+        `  →  ${entry.root}${exists ? '' : '（该根当前不存在）'}`,
+    )
+  }
+  console.log('    （宿主内置的 bundledSkillDir 是打包目录，本机无法从工作区判定，故不列出——它也不是本包的落点）')
+
+  if (hit.length === 0) {
+    console.log('  ✗ 本包**不在任何扫描根的直接子目录下** → 宿主扫不到它：候选 0 条、告警 0 条（双重静默）')
+    console.log('    请把本包放到下面任一个位置（直接复制整包，路径可直接复制）：')
+    console.log(`      cp -a "${packageRoot}" "${path.join(projectRoot, '.dsh', 'skills', packageName)}"`)
+    console.log(`      # 或用户级（跨 profile 生效）：cp -a "${packageRoot}" "${path.join(dshHome, 'skills', packageName)}"`)
+    console.log(`      # 或：cp -a "${packageRoot}" "${path.join(agentsHome, 'skills', packageName)}"`)
+    add(
+      '⑤ 发现链路',
+      `本包不在任何扫描根的直接子目录下（当前位置 ${packageRoot}；项目根 ${projectRoot}）→ ` +
+        `宿主扫不到它，且**不会有任何告警**（双重静默）。` +
+        `目标路径示例：${path.join(projectRoot, '.dsh', 'skills', packageName)}`,
+    )
+  } else {
+    console.log(`  ✓ 在扫描根下：${hit.map((h) => `${h.label}[${h.source} rank=${h.rank}]`).join('、')}`)
+  }
+
+  // ── frontmatter 合法性（name 正则 / description 非空）───────────────────────
+  const raw = fs.readFileSync(skillFile, 'utf8').replace(/^\uFEFF/, '')
+  const lines = raw.split(/\r?\n/)
+  if (lines[0] !== '---') {
+    console.log(`  ✗ frontmatter：第 1 行不是 ---（宿主会报 "missing YAML frontmatter" 并**静默跳过**整个技能）`)
+    add('⑤ 发现链路', `SKILL.md 第 1 行不是 ---（首行实际是 ${JSON.stringify(lines[0] ?? '')}）→ 宿主报 missing YAML frontmatter 并静默跳过`)
+  } else {
+    const closeAt = lines.indexOf('---', 1)
+    if (closeAt === -1) {
+      console.log('  ✗ frontmatter：找不到收尾的 --- 行（frontmatter 没闭合）')
+      add('⑤ 发现链路', 'SKILL.md 的 frontmatter 没有收尾的 --- 行')
+    } else {
+      // 只取**顶层**键值对：形如 `key: value`；缩进行／列表项一律不当顶层键。
+      // 这样做是为了对齐宿主用的 YAML 解析语义：`description: 文本: 还有冒号`
+      // 这种"值里带裸冒号"会被 YAML 判成嵌套映射（取证 #11 laravel-verification 就是这样坏的）。
+      const fields = {}
+      const fieldLines = {}
+      const badLines = []
+      for (let i = 1; i < closeAt; i++) {
+        const line = lines[i]
+        if (line.trim() === '') continue
+        if (/^\s/.test(line)) continue // 缩进行＝上一项的内容，不是顶层键
+        const m = line.match(/^([A-Za-z0-9_.-]+):(.*)$/)
+        if (m === null) {
+          badLines.push({ line: i + 1, text: line })
+          continue
+        }
+        let value = m[2].trim()
+        if ((value.startsWith('"') && value.endsWith('"') && value.length > 1) || (value.startsWith("'") && value.endsWith("'") && value.length > 1)) {
+          value = value.slice(1, -1)
+        }
+        if (value.includes(': ')) {
+          badLines.push({ line: i + 1, text: line })
+          continue
+        }
+        fields[m[1]] = value
+        fieldLines[m[1]] = i + 1
+      }
+
+      for (const b of badLines) {
+        console.log(`  ✗ frontmatter 第 ${b.line} 行：${JSON.stringify(b.text)}（值里有裸冒号 "…: …" 或不是 key: value 形状）`)
+        add(
+          '⑤ 发现链路',
+          `frontmatter 第 ${b.line} 行像"值里带裸冒号"（${JSON.stringify(b.text.slice(0, 80))}）→ YAML 会报 ` +
+            `"Nested mappings are not allowed in compact mappings" 并静默跳过整个技能（取证 §2.1 第 11 行就是这种坏法）`,
+        )
+      }
+
+      const nameValue = fields.name
+      if (nameValue === undefined) {
+        console.log('  ✗ frontmatter 缺 name')
+        add('⑤ 发现链路', 'SKILL.md frontmatter 缺 name（宿主报 "frontmatter requires name and description" 并静默跳过）')
+      } else if (!SKILL_NAME_RE.test(nameValue)) {
+        console.log(`  ✗ frontmatter name 非法：${JSON.stringify(nameValue)}（第 ${fieldLines.name} 行）`)
+        add(
+          '⑤ 发现链路',
+          `frontmatter 的 name=${JSON.stringify(nameValue)} 不匹配 ^[a-z0-9]+(?:-[a-z0-9]+)*$（只允许小写字母数字与连字符，` +
+            `不得首尾/连续连字符）→ 宿主报 invalid skill name 并静默跳过`,
+        )
+      } else {
+        console.log(`  ✓ frontmatter name 合法：${nameValue}（第 ${fieldLines.name} 行）`)
+      }
+
+      const descriptionValue = fields.description
+      if (descriptionValue === undefined) {
+        console.log('  ✗ frontmatter 缺 description')
+        add('⑤ 发现链路', 'SKILL.md frontmatter 缺 description（宿主报 "frontmatter requires name and description" 并静默跳过）')
+      } else if (descriptionValue.trim() === '') {
+        console.log('  ✗ frontmatter description 为空（宿主只把 name＋description 拼成目录行，空 description ＝ 模型看不到它干什么）')
+        add('⑤ 发现链路', 'frontmatter 的 description 为空 → 目录行里没有"它干什么"，等于装上了也不会被触发')
+      } else {
+        console.log(`  ✓ frontmatter description 非空：${descriptionValue.length} 字符（第 ${fieldLines.description} 行）`)
+        if (descriptionValue.length > 500) {
+          console.log(`    提示：宿主只取前 500 字符拼目录行，本包 description 有 ${descriptionValue.length} 字符（超出部分不会被看到）`)
+          notes.push(`SKILL.md 的 description 有 ${descriptionValue.length} 字符，超过宿主目录行的 500 字符截断（不判失败）`)
+        }
+      }
+    }
+  }
+}
+
+// ── 问题清单 ────────────────────────────────────────────────────────────────
+
+console.log('\n' + '='.repeat(64))
+
+if (notes.length > 0) {
+  console.log('说明：')
+  for (const note of notes) console.log(`  · ${note}`)
+}
+
+if (problems.length === 0) {
+  console.log('结论：全部通过（退出码 0）')
+  process.exit(0)
+}
+
+console.log(`结论：发现 ${problems.length} 个问题（退出码 1）`)
+console.log('')
+let index = 0
+for (const section of ['① 必需文件', '② 声明材料', '③ 讲次', '④ 教材正文', '⑤ 发现链路']) {
+  const group = problems.filter((p) => p.section === section)
+  if (group.length === 0) continue
+  console.log(`${section}（${group.length}）`)
+  for (const problem of group) {
+    index++
+    console.log(`  ${String(index).padStart(2, ' ')}. ${problem.text}`)
+  }
+  console.log('')
+}
+process.exit(1)

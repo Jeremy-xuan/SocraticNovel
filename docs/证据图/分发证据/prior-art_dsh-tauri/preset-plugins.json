@@ -1,0 +1,44 @@
+[
+
+  {
+    "id": "dshmarket",
+    "spec": "dshmarket",
+    "version": "1.58.0",
+    "name": "DSH Market",
+    "description": "Visual plugin market inside DeepSeek Harness — browse, search, and one-click install community plugins.",
+    "repoUrl": "https://github.com/dsh-market/dsh-market",
+    "recommended": true,
+    "dshSupportedVersion": "0.1.7"
+  },
+  {
+    "id": "dsh-better-sidebar",
+    "spec": "dsh-better-sidebar",
+    "version": "0.19.1",
+    "name": "DSH Better Sidebar",
+    "description": "A VSCode-like right sidebar (explorer / editor / terminal / git / browser), isolated per conversation session. Exposes a service for other plugins to register sidebar tabs and file viewers.",
+    "repoUrl": "https://github.com/omdsh-dev/DSH-better-sidebar",
+    "recommended": true,
+    "dshSupportedVersion": "0.1.5-rc.2"
+  },
+  {
+    "id": "dsh-rewind-plugin",
+    "spec": "dsh-rewind-plugin",
+    "version": "0.12.2",
+    "name": "DSH Rewind",
+    "description": "In-window conversation rewind that never forks a new session, with a lightweight workspace backup that restores files together with the rewind.",
+    "repoUrl": "https://github.com/SiriLee/dsh-rewind",
+    "recommended": true,
+    "dshSupportedVersion": "0.1.5-rc.2"
+  },
+  {
+    "id": "@xmanrui/dsh-im",
+    "spec": "@xmanrui/dsh-im",
+    "version": "4.25.0",
+    "name": "DSH IM",
+    "description": "Connect IM channels (WeChat, Feishu, DingTalk, WeCom, QQ, Slack, Telegram, Discord, WhatsApp, iMessage and more) plus a public AI Office to a local DeepSeek Harness, with bot management in the desktop sidebar.",
+    "repoUrl": "https://github.com/xmanrui/dsh-im",
+    "recommended": true,
+    "defaultUnchecked": true,
+    "dshSupportedVersion": "0.1.5-rc.2"
+  }
+]

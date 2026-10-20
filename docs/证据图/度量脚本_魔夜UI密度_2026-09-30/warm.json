@@ -1,0 +1,1148 @@
+{
+  "screens": {
+    "warm_avalon_s1.png": {
+      "file": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/度量脚本_魔夜UI密度_2026-09-30/render/warm_avalon_s1.png",
+      "src_mode": "RGB",
+      "size": [
+        1920,
+        1080
+      ],
+      "W": 1920,
+      "H": 1080,
+      "pixels_total": 2073600,
+      "pixels_visible_gt0": 2073600,
+      "alpha_ratio_gt0": 1.0,
+      "pixels_solid_ge128": 2073600,
+      "alpha_ge128_ratio": 1.0,
+      "alpha_max": 255,
+      "alpha_p95_of_visible": 255,
+      "outline_pixels": 5996,
+      "outline_ratio_visible": 0.002892,
+      "outline_ratio_full": 0.002892,
+      "stroke_pixels_inner": 28221,
+      "stroke_ratio_visible": 0.01361,
+      "stroke_ratio_inner": 0.013649,
+      "stroke_ratio_cellarea": 0.01361,
+      "stroke_ratio_cellarea_t003": 0.033209,
+      "grad_p50": 0.00102,
+      "grad_p90": 0.01037,
+      "grad_p99": 0.10588,
+      "grad_max": 0.28885,
+      "sat_median": 0.5263,
+      "val_median": 0.1059,
+      "rgb_mean_visible": [
+        18,
+        23,
+        32
+      ],
+      "hue_eligible_pixels": 1106104,
+      "hue_eligible_ratio": 0.533422,
+      "hue_circ_median_deg": 220.0,
+      "hue_bin_top3": [
+        {
+          "bin_deg": "220-230",
+          "center": 225,
+          "share": 0.4903
+        },
+        {
+          "bin_deg": "210-220",
+          "center": 215,
+          "share": 0.3678
+        },
+        {
+          "bin_deg": "200-210",
+          "center": 205,
+          "share": 0.0542
+        }
+      ],
+      "hue_arc_30_share": 0.9494,
+      "mode": "RGB",
+      "alpha_note": "不透明整屏渲染：alpha 恒为 255 → alpha_ratio 恒 1.0，与真实 PNG 不可比"
+    },
+    "warm_avalon_s2.png": {
+      "file": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/度量脚本_魔夜UI密度_2026-09-30/render/warm_avalon_s2.png",
+      "src_mode": "RGB",
+      "size": [
+        1920,
+        1080
+      ],
+      "W": 1920,
+      "H": 1080,
+      "pixels_total": 2073600,
+      "pixels_visible_gt0": 2073600,
+      "alpha_ratio_gt0": 1.0,
+      "pixels_solid_ge128": 2073600,
+      "alpha_ge128_ratio": 1.0,
+      "alpha_max": 255,
+      "alpha_p95_of_visible": 255,
+      "outline_pixels": 5996,
+      "outline_ratio_visible": 0.002892,
+      "outline_ratio_full": 0.002892,
+      "stroke_pixels_inner": 73534,
+      "stroke_ratio_visible": 0.035462,
+      "stroke_ratio_inner": 0.035565,
+      "stroke_ratio_cellarea": 0.035462,
+      "stroke_ratio_cellarea_t003": 0.099655,
+      "grad_p50": 0.0027,
+      "grad_p90": 0.02989,
+      "grad_p99": 0.14918,
+      "grad_max": 0.25459,
+      "sat_median": 0.1463,
+      "val_median": 0.8549,
+      "rgb_mean_visible": [
+        177,
+        159,
+        140
+      ],
+      "hue_eligible_pixels": 1030735,
+      "hue_eligible_ratio": 0.497075,
+      "hue_circ_median_deg": 24.71,
+      "hue_bin_top3": [
+        {
+          "bin_deg": "20-30",
+          "center": 25,
+          "share": 0.5719
+        },
+        {
+          "bin_deg": "30-40",
+          "center": 35,
+          "share": 0.1564
+        },
+        {
+          "bin_deg": "10-20",
+          "center": 15,
+          "share": 0.1199
+        }
+      ],
+      "hue_arc_30_share": 0.9425,
+      "mode": "RGB",
+      "alpha_note": "不透明整屏渲染：alpha 恒为 255 → alpha_ratio 恒 1.0，与真实 PNG 不可比"
+    },
+    "warm_avalon_s3.png": {
+      "file": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/度量脚本_魔夜UI密度_2026-09-30/render/warm_avalon_s3.png",
+      "src_mode": "RGB",
+      "size": [
+        1920,
+        1080
+      ],
+      "W": 1920,
+      "H": 1080,
+      "pixels_total": 2073600,
+      "pixels_visible_gt0": 2073600,
+      "alpha_ratio_gt0": 1.0,
+      "pixels_solid_ge128": 2073600,
+      "alpha_ge128_ratio": 1.0,
+      "alpha_max": 255,
+      "alpha_p95_of_visible": 255,
+      "outline_pixels": 5996,
+      "outline_ratio_visible": 0.002892,
+      "outline_ratio_full": 0.002892,
+      "stroke_pixels_inner": 11279,
+      "stroke_ratio_visible": 0.005439,
+      "stroke_ratio_inner": 0.005455,
+      "stroke_ratio_cellarea": 0.005439,
+      "stroke_ratio_cellarea_t003": 0.012936,
+      "grad_p50": 0.00093,
+      "grad_p90": 0.00834,
+      "grad_p99": 0.04568,
+      "grad_max": 0.25545,
+      "sat_median": 0.375,
+      "val_median": 0.1725,
+      "rgb_mean_visible": [
+        49,
+        42,
+        37
+      ],
+      "hue_eligible_pixels": 1935949,
+      "hue_eligible_ratio": 0.933617,
+      "hue_circ_median_deg": 20.69,
+      "hue_bin_top3": [
+        {
+          "bin_deg": "20-30",
+          "center": 25,
+          "share": 0.3837
+        },
+        {
+          "bin_deg": "210-220",
+          "center": 215,
+          "share": 0.3217
+        },
+        {
+          "bin_deg": "10-20",
+          "center": 15,
+          "share": 0.1106
+        }
+      ],
+      "hue_arc_30_share": 0.6452,
+      "mode": "RGB",
+      "alpha_note": "不透明整屏渲染：alpha 恒为 255 → alpha_ratio 恒 1.0，与真实 PNG 不可比"
+    },
+    "warm_reading_v2_default.png": {
+      "file": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/度量脚本_魔夜UI密度_2026-09-30/render/warm_reading_v2_default.png",
+      "src_mode": "RGB",
+      "size": [
+        1920,
+        1080
+      ],
+      "W": 1920,
+      "H": 1080,
+      "pixels_total": 2073600,
+      "pixels_visible_gt0": 2073600,
+      "alpha_ratio_gt0": 1.0,
+      "pixels_solid_ge128": 2073600,
+      "alpha_ge128_ratio": 1.0,
+      "alpha_max": 255,
+      "alpha_p95_of_visible": 255,
+      "outline_pixels": 5996,
+      "outline_ratio_visible": 0.002892,
+      "outline_ratio_full": 0.002892,
+      "stroke_pixels_inner": 58715,
+      "stroke_ratio_visible": 0.028315,
+      "stroke_ratio_inner": 0.028398,
+      "stroke_ratio_cellarea": 0.028315,
+      "stroke_ratio_cellarea_t003": 0.082514,
+      "grad_p50": 0.00172,
+      "grad_p90": 0.02405,
+      "grad_p99": 0.12039,
+      "grad_max": 0.31639,
+      "sat_median": 0.4405,
+      "val_median": 0.149,
+      "rgb_mean_visible": [
+        32,
+        34,
+        43
+      ],
+      "hue_eligible_pixels": 1322560,
+      "hue_eligible_ratio": 0.637809,
+      "hue_circ_median_deg": 222.86,
+      "hue_bin_top3": [
+        {
+          "bin_deg": "220-230",
+          "center": 225,
+          "share": 0.5007
+        },
+        {
+          "bin_deg": "210-220",
+          "center": 215,
+          "share": 0.2042
+        },
+        {
+          "bin_deg": "20-30",
+          "center": 25,
+          "share": 0.0633
+        }
+      ],
+      "hue_arc_30_share": 0.8301,
+      "mode": "RGB",
+      "alpha_note": "不透明整屏渲染：alpha 恒为 255 → alpha_ratio 恒 1.0，与真实 PNG 不可比"
+    },
+    "warm_reading_v2_ao.png": {
+      "file": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/度量脚本_魔夜UI密度_2026-09-30/render/warm_reading_v2_ao.png",
+      "src_mode": "RGB",
+      "size": [
+        1920,
+        1080
+      ],
+      "W": 1920,
+      "H": 1080,
+      "pixels_total": 2073600,
+      "pixels_visible_gt0": 2073600,
+      "alpha_ratio_gt0": 1.0,
+      "pixels_solid_ge128": 2073600,
+      "alpha_ge128_ratio": 1.0,
+      "alpha_max": 255,
+      "alpha_p95_of_visible": 255,
+      "outline_pixels": 5996,
+      "outline_ratio_visible": 0.002892,
+      "outline_ratio_full": 0.002892,
+      "stroke_pixels_inner": 41311,
+      "stroke_ratio_visible": 0.019922,
+      "stroke_ratio_inner": 0.01998,
+      "stroke_ratio_cellarea": 0.019922,
+      "stroke_ratio_cellarea_t003": 0.046278,
+      "grad_p50": 0.00059,
+      "grad_p90": 0.01313,
+      "grad_p99": 0.12371,
+      "grad_max": 0.31642,
+      "sat_median": 0.2353,
+      "val_median": 0.2431,
+      "rgb_mean_visible": [
+        107,
+        105,
+        107
+      ],
+      "hue_eligible_pixels": 853810,
+      "hue_eligible_ratio": 0.411753,
+      "hue_circ_median_deg": 223.33,
+      "hue_bin_top3": [
+        {
+          "bin_deg": "220-230",
+          "center": 225,
+          "share": 0.5539
+        },
+        {
+          "bin_deg": "210-220",
+          "center": 215,
+          "share": 0.2455
+        },
+        {
+          "bin_deg": "230-240",
+          "center": 235,
+          "share": 0.0635
+        }
+      ],
+      "hue_arc_30_share": 0.9017,
+      "mode": "RGB",
+      "alpha_note": "不透明整屏渲染：alpha 恒为 255 → alpha_ratio 恒 1.0，与真实 PNG 不可比"
+    },
+    "warm_avalon_s4.png": {
+      "file": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/度量脚本_魔夜UI密度_2026-09-30/render/warm_avalon_s4.png",
+      "src_mode": "RGB",
+      "size": [
+        1920,
+        1080
+      ],
+      "W": 1920,
+      "H": 1080,
+      "pixels_total": 2073600,
+      "pixels_visible_gt0": 2073600,
+      "alpha_ratio_gt0": 1.0,
+      "pixels_solid_ge128": 2073600,
+      "alpha_ge128_ratio": 1.0,
+      "alpha_max": 255,
+      "alpha_p95_of_visible": 255,
+      "outline_pixels": 5996,
+      "outline_ratio_visible": 0.002892,
+      "outline_ratio_full": 0.002892,
+      "stroke_pixels_inner": 32258,
+      "stroke_ratio_visible": 0.015557,
+      "stroke_ratio_inner": 0.015602,
+      "stroke_ratio_cellarea": 0.015557,
+      "stroke_ratio_cellarea_t003": 0.034745,
+      "grad_p50": 0.00166,
+      "grad_p90": 0.00545,
+      "grad_p99": 0.12937,
+      "grad_max": 0.2827,
+      "sat_median": 0.1042,
+      "val_median": 0.9412,
+      "rgb_mean_visible": [
+        156,
+        151,
+        144
+      ],
+      "hue_eligible_pixels": 241538,
+      "hue_eligible_ratio": 0.116482,
+      "hue_circ_median_deg": 220.0,
+      "hue_bin_top3": [
+        {
+          "bin_deg": "210-220",
+          "center": 215,
+          "share": 0.4538
+        },
+        {
+          "bin_deg": "220-230",
+          "center": 225,
+          "share": 0.3274
+        },
+        {
+          "bin_deg": "20-30",
+          "center": 25,
+          "share": 0.1179
+        }
+      ],
+      "hue_arc_30_share": 0.7908,
+      "mode": "RGB",
+      "alpha_note": "不透明整屏渲染：alpha 恒为 255 → alpha_ratio 恒 1.0，与真实 PNG 不可比"
+    }
+  },
+  "crops": {
+    "avalon_s2_band": {
+      "file": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/度量脚本_魔夜UI密度_2026-09-30/crop_avalon_s2_band.png",
+      "src_mode": "RGBA",
+      "size": [
+        1920,
+        520
+      ],
+      "W": 1920,
+      "H": 520,
+      "pixels_total": 998400,
+      "pixels_visible_gt0": 998400,
+      "alpha_ratio_gt0": 1.0,
+      "pixels_solid_ge128": 998400,
+      "alpha_ge128_ratio": 1.0,
+      "alpha_max": 255,
+      "alpha_p95_of_visible": 255,
+      "outline_pixels": 4876,
+      "outline_ratio_visible": 0.004884,
+      "outline_ratio_full": 0.004884,
+      "stroke_pixels_inner": 40859,
+      "stroke_ratio_visible": 0.040924,
+      "stroke_ratio_inner": 0.041125,
+      "stroke_ratio_cellarea": 0.040924,
+      "stroke_ratio_cellarea_t003": 0.069553,
+      "grad_p50": 0.00264,
+      "grad_p90": 0.00582,
+      "grad_p99": 0.17525,
+      "grad_max": 0.25456,
+      "sat_median": 0.1029,
+      "val_median": 0.9529,
+      "rgb_mean_visible": [
+        237,
+        227,
+        212
+      ],
+      "hue_eligible_pixels": 26402,
+      "hue_eligible_ratio": 0.026444,
+      "hue_circ_median_deg": 28.42,
+      "hue_bin_top3": [
+        {
+          "bin_deg": "20-30",
+          "center": 25,
+          "share": 0.515
+        },
+        {
+          "bin_deg": "30-40",
+          "center": 35,
+          "share": 0.4739
+        },
+        {
+          "bin_deg": "10-20",
+          "center": 15,
+          "share": 0.0111
+        }
+      ],
+      "hue_arc_30_share": 1.0,
+      "source_screen": "warm_avalon_s2.png",
+      "selector": ".band",
+      "rect": {
+        "x": 0,
+        "y": 560,
+        "w": 1920,
+        "h": 520,
+        "visible": true,
+        "bg": "rgb(243, 233, 218)",
+        "borderB": "0px rgb(0, 0, 0)",
+        "borderT": "1px rgba(42, 33, 26, 0.14)",
+        "color": "rgb(0, 0, 0)",
+        "fs": "16px",
+        "radius": "0px"
+      },
+      "note": "不透明裁件：alpha 恒 255"
+    },
+    "avalon_s2_bandcore": {
+      "file": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/度量脚本_魔夜UI密度_2026-09-30/crop_avalon_s2_bandcore.png",
+      "src_mode": "RGBA",
+      "size": [
+        1920,
+        416
+      ],
+      "W": 1920,
+      "H": 416,
+      "pixels_total": 798720,
+      "pixels_visible_gt0": 798720,
+      "alpha_ratio_gt0": 1.0,
+      "pixels_solid_ge128": 798720,
+      "alpha_ge128_ratio": 1.0,
+      "alpha_max": 255,
+      "alpha_p95_of_visible": 255,
+      "outline_pixels": 4668,
+      "outline_ratio_visible": 0.005844,
+      "outline_ratio_full": 0.005844,
+      "stroke_pixels_inner": 39563,
+      "stroke_ratio_visible": 0.049533,
+      "stroke_ratio_inner": 0.049824,
+      "stroke_ratio_cellarea": 0.049533,
+      "stroke_ratio_cellarea_t003": 0.078711,
+      "grad_p50": 0.00264,
+      "grad_p90": 0.00814,
+      "grad_p99": 0.18315,
+      "grad_max": 0.24821,
+      "sat_median": 0.1029,
+      "val_median": 0.9529,
+      "rgb_mean_visible": [
+        237,
+        227,
+        212
+      ],
+      "hue_eligible_pixels": 21394,
+      "hue_eligible_ratio": 0.026785,
+      "hue_circ_median_deg": 30.0,
+      "hue_bin_top3": [
+        {
+          "bin_deg": "30-40",
+          "center": 35,
+          "share": 0.5106
+        },
+        {
+          "bin_deg": "20-30",
+          "center": 25,
+          "share": 0.4757
+        },
+        {
+          "bin_deg": "10-20",
+          "center": 15,
+          "share": 0.0137
+        }
+      ],
+      "hue_arc_30_share": 1.0,
+      "source_screen": "warm_avalon_s2.png",
+      "selector": ".band-core",
+      "rect": {
+        "x": 0,
+        "y": 561,
+        "w": 1920,
+        "h": 416,
+        "visible": true,
+        "bg": "rgba(0, 0, 0, 0)",
+        "borderB": "0px rgb(0, 0, 0)",
+        "borderT": "0px rgb(0, 0, 0)",
+        "color": "rgb(0, 0, 0)",
+        "fs": "16px",
+        "radius": "0px"
+      },
+      "note": "不透明裁件：alpha 恒 255"
+    },
+    "avalon_s2_topbar": {
+      "file": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/度量脚本_魔夜UI密度_2026-09-30/crop_avalon_s2_topbar.png",
+      "src_mode": "RGBA",
+      "size": [
+        1920,
+        104
+      ],
+      "W": 1920,
+      "H": 104,
+      "pixels_total": 199680,
+      "pixels_visible_gt0": 199680,
+      "alpha_ratio_gt0": 1.0,
+      "pixels_solid_ge128": 199680,
+      "alpha_ge128_ratio": 1.0,
+      "alpha_max": 255,
+      "alpha_p95_of_visible": 255,
+      "outline_pixels": 4044,
+      "outline_ratio_visible": 0.020252,
+      "outline_ratio_full": 0.020252,
+      "stroke_pixels_inner": 2552,
+      "stroke_ratio_visible": 0.01278,
+      "stroke_ratio_inner": 0.013045,
+      "stroke_ratio_cellarea": 0.01278,
+      "stroke_ratio_cellarea_t003": 0.070883,
+      "grad_p50": 0.00204,
+      "grad_p90": 0.02267,
+      "grad_p99": 0.08682,
+      "grad_max": 0.19904,
+      "sat_median": 0.3962,
+      "val_median": 0.3647,
+      "rgb_mean_visible": [
+        101,
+        79,
+        65
+      ],
+      "hue_eligible_pixels": 172291,
+      "hue_eligible_ratio": 0.862836,
+      "hue_circ_median_deg": 23.08,
+      "hue_bin_top3": [
+        {
+          "bin_deg": "20-30",
+          "center": 25,
+          "share": 0.8046
+        },
+        {
+          "bin_deg": "10-20",
+          "center": 15,
+          "share": 0.1477
+        },
+        {
+          "bin_deg": "30-40",
+          "center": 35,
+          "share": 0.0266
+        }
+      ],
+      "hue_arc_30_share": 1.0,
+      "source_screen": "warm_avalon_s2.png",
+      "selector": ".topbar",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 104,
+        "visible": true,
+        "bg": "rgba(0, 0, 0, 0)",
+        "borderB": "0px rgb(0, 0, 0)",
+        "borderT": "0px rgb(0, 0, 0)",
+        "color": "rgb(0, 0, 0)",
+        "fs": "16px",
+        "radius": "0px"
+      },
+      "note": "不透明裁件：alpha 恒 255"
+    },
+    "avalon_s1_titem_on": {
+      "file": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/度量脚本_魔夜UI密度_2026-09-30/crop_avalon_s1_titem_on.png",
+      "src_mode": "RGBA",
+      "size": [
+        306,
+        69
+      ],
+      "W": 306,
+      "H": 69,
+      "pixels_total": 21114,
+      "pixels_visible_gt0": 21114,
+      "alpha_ratio_gt0": 1.0,
+      "pixels_solid_ge128": 21114,
+      "alpha_ge128_ratio": 1.0,
+      "alpha_max": 255,
+      "alpha_p95_of_visible": 255,
+      "outline_pixels": 746,
+      "outline_ratio_visible": 0.035332,
+      "outline_ratio_full": 0.035332,
+      "stroke_pixels_inner": 2923,
+      "stroke_ratio_visible": 0.138439,
+      "stroke_ratio_inner": 0.143509,
+      "stroke_ratio_cellarea": 0.138439,
+      "stroke_ratio_cellarea_t003": 0.18959,
+      "grad_p50": 0.00076,
+      "grad_p90": 0.11598,
+      "grad_p99": 0.23219,
+      "grad_max": 0.26301,
+      "sat_median": 0.5294,
+      "val_median": 0.0627,
+      "rgb_mean_visible": [
+        20,
+        23,
+        28
+      ],
+      "hue_eligible_pixels": 801,
+      "hue_eligible_ratio": 0.037937,
+      "hue_circ_median_deg": 220.0,
+      "hue_bin_top3": [
+        {
+          "bin_deg": "210-220",
+          "center": 215,
+          "share": 0.4931
+        },
+        {
+          "bin_deg": "220-230",
+          "center": 225,
+          "share": 0.4632
+        },
+        {
+          "bin_deg": "30-40",
+          "center": 35,
+          "share": 0.0325
+        }
+      ],
+      "hue_arc_30_share": 0.9675,
+      "source_screen": "warm_avalon_s1.png",
+      "selector": ".titem.on",
+      "rect": {
+        "x": 132,
+        "y": 552,
+        "w": 306,
+        "h": 69,
+        "visible": true,
+        "bg": "rgba(0, 0, 0, 0)",
+        "borderB": "0px rgb(0, 0, 0)",
+        "borderT": "0px rgb(0, 0, 0)",
+        "color": "rgb(0, 0, 0)",
+        "fs": "16px",
+        "radius": "0px"
+      },
+      "note": "不透明裁件：alpha 恒 255"
+    },
+    "avalon_s1_frame": {
+      "file": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/度量脚本_魔夜UI密度_2026-09-30/crop_avalon_s1_frame.png",
+      "src_mode": "RGBA",
+      "size": [
+        1808,
+        968
+      ],
+      "W": 1808,
+      "H": 968,
+      "pixels_total": 1750144,
+      "pixels_visible_gt0": 1750144,
+      "alpha_ratio_gt0": 1.0,
+      "pixels_solid_ge128": 1750144,
+      "alpha_ge128_ratio": 1.0,
+      "alpha_max": 255,
+      "alpha_p95_of_visible": 255,
+      "outline_pixels": 5548,
+      "outline_ratio_visible": 0.00317,
+      "outline_ratio_full": 0.00317,
+      "stroke_pixels_inner": 28128,
+      "stroke_ratio_visible": 0.016072,
+      "stroke_ratio_inner": 0.016123,
+      "stroke_ratio_cellarea": 0.016072,
+      "stroke_ratio_cellarea_t003": 0.036948,
+      "grad_p50": 0.00112,
+      "grad_p90": 0.01122,
+      "grad_p99": 0.12258,
+      "grad_max": 0.28885,
+      "sat_median": 0.5294,
+      "val_median": 0.1098,
+      "rgb_mean_visible": [
+        18,
+        23,
+        33
+      ],
+      "hue_eligible_pixels": 941152,
+      "hue_eligible_ratio": 0.537757,
+      "hue_circ_median_deg": 220.0,
+      "hue_bin_top3": [
+        {
+          "bin_deg": "220-230",
+          "center": 225,
+          "share": 0.4823
+        },
+        {
+          "bin_deg": "210-220",
+          "center": 215,
+          "share": 0.3712
+        },
+        {
+          "bin_deg": "200-210",
+          "center": 205,
+          "share": 0.063
+        }
+      ],
+      "hue_arc_30_share": 0.9509,
+      "source_screen": "warm_avalon_s1.png",
+      "selector": ".frame",
+      "rect": {
+        "x": 56,
+        "y": 56,
+        "w": 1808,
+        "h": 968,
+        "visible": true,
+        "bg": "rgba(0, 0, 0, 0)",
+        "borderB": "1px rgba(243, 233, 218, 0.08)",
+        "borderT": "1px rgba(243, 233, 218, 0.08)",
+        "color": "rgb(0, 0, 0)",
+        "fs": "16px",
+        "radius": "0px"
+      },
+      "note": "不透明裁件：alpha 恒 255"
+    },
+    "avalon_s3_panel": {
+      "file": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/度量脚本_魔夜UI密度_2026-09-30/crop_avalon_s3_panel.png",
+      "src_mode": "RGBA",
+      "size": [
+        640,
+        1080
+      ],
+      "W": 640,
+      "H": 1080,
+      "pixels_total": 691200,
+      "pixels_visible_gt0": 691200,
+      "alpha_ratio_gt0": 1.0,
+      "pixels_solid_ge128": 691200,
+      "alpha_ge128_ratio": 1.0,
+      "alpha_max": 255,
+      "alpha_p95_of_visible": 255,
+      "outline_pixels": 3436,
+      "outline_ratio_visible": 0.004971,
+      "outline_ratio_full": 0.004971,
+      "stroke_pixels_inner": 11279,
+      "stroke_ratio_visible": 0.016318,
+      "stroke_ratio_inner": 0.0164,
+      "stroke_ratio_cellarea": 0.016318,
+      "stroke_ratio_cellarea_t003": 0.038364,
+      "grad_p50": 0.00013,
+      "grad_p90": 0.00153,
+      "grad_p99": 0.11434,
+      "grad_max": 0.25545,
+      "sat_median": 0.375,
+      "val_median": 0.1255,
+      "rgb_mean_visible": [
+        22,
+        28,
+        34
+      ],
+      "hue_eligible_pixels": 680352,
+      "hue_eligible_ratio": 0.984306,
+      "hue_circ_median_deg": 210.0,
+      "hue_bin_top3": [
+        {
+          "bin_deg": "210-220",
+          "center": 215,
+          "share": 0.9153
+        },
+        {
+          "bin_deg": "200-210",
+          "center": 205,
+          "share": 0.0816
+        },
+        {
+          "bin_deg": "30-40",
+          "center": 35,
+          "share": 0.002
+        }
+      ],
+      "hue_arc_30_share": 0.9969,
+      "source_screen": "warm_avalon_s3.png",
+      "selector": ".panel",
+      "rect": {
+        "x": 1280,
+        "y": 0,
+        "w": 640,
+        "h": 1080,
+        "visible": true,
+        "bg": "rgb(20, 26, 32)",
+        "borderB": "0px rgb(0, 0, 0)",
+        "borderT": "0px rgb(0, 0, 0)",
+        "color": "rgb(0, 0, 0)",
+        "fs": "16px",
+        "radius": "0px"
+      },
+      "note": "不透明裁件：alpha 恒 255"
+    },
+    "reading_v2ao_opt": {
+      "file": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/度量脚本_魔夜UI密度_2026-09-30/crop_reading_v2ao_opt.png",
+      "src_mode": "RGBA",
+      "size": [
+        1084,
+        59
+      ],
+      "W": 1084,
+      "H": 59,
+      "pixels_total": 63956,
+      "pixels_visible_gt0": 63956,
+      "alpha_ratio_gt0": 1.0,
+      "pixels_solid_ge128": 63956,
+      "alpha_ge128_ratio": 1.0,
+      "alpha_max": 255,
+      "alpha_p95_of_visible": 255,
+      "outline_pixels": 2282,
+      "outline_ratio_visible": 0.035681,
+      "outline_ratio_full": 0.035681,
+      "stroke_pixels_inner": 1900,
+      "stroke_ratio_visible": 0.029708,
+      "stroke_ratio_inner": 0.030807,
+      "stroke_ratio_cellarea": 0.029708,
+      "stroke_ratio_cellarea_t003": 0.051442,
+      "grad_p50": 0.0,
+      "grad_p90": 0.00851,
+      "grad_p99": 0.13631,
+      "grad_max": 0.22731,
+      "sat_median": 0.1029,
+      "val_median": 0.9529,
+      "rgb_mean_visible": [
+        240,
+        230,
+        215
+      ],
+      "hue_eligible_pixels": 849,
+      "hue_eligible_ratio": 0.013275,
+      "hue_circ_median_deg": 28.42,
+      "hue_bin_top3": [
+        {
+          "bin_deg": "20-30",
+          "center": 25,
+          "share": 0.5336
+        },
+        {
+          "bin_deg": "30-40",
+          "center": 35,
+          "share": 0.4664
+        }
+      ],
+      "hue_arc_30_share": 1.0,
+      "source_screen": "warm_reading_v2_ao.png",
+      "selector": ".opt",
+      "rect": {
+        "x": 418,
+        "y": 474,
+        "w": 1084,
+        "h": 59,
+        "visible": true,
+        "bg": "rgba(0, 0, 0, 0)",
+        "borderB": "1px rgba(42, 33, 26, 0.07)",
+        "borderT": "0px rgb(0, 0, 0)",
+        "color": "rgb(0, 0, 0)",
+        "fs": "16px",
+        "radius": "0px"
+      },
+      "note": "不透明裁件：alpha 恒 255"
+    },
+    "reading_v2ao_dock": {
+      "file": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/度量脚本_魔夜UI密度_2026-09-30/crop_reading_v2ao_dock.png",
+      "src_mode": "RGBA",
+      "size": [
+        1180,
+        661
+      ],
+      "W": 1180,
+      "H": 661,
+      "pixels_total": 779980,
+      "pixels_visible_gt0": 779980,
+      "alpha_ratio_gt0": 1.0,
+      "pixels_solid_ge128": 779980,
+      "alpha_ge128_ratio": 1.0,
+      "alpha_max": 255,
+      "alpha_p95_of_visible": 255,
+      "outline_pixels": 3678,
+      "outline_ratio_visible": 0.004716,
+      "outline_ratio_full": 0.004716,
+      "stroke_pixels_inner": 14734,
+      "stroke_ratio_visible": 0.01889,
+      "stroke_ratio_inner": 0.01898,
+      "stroke_ratio_cellarea": 0.01889,
+      "stroke_ratio_cellarea_t003": 0.044693,
+      "grad_p50": 0.0,
+      "grad_p90": 0.00693,
+      "grad_p99": 0.11298,
+      "grad_max": 0.2919,
+      "sat_median": 0.1029,
+      "val_median": 0.9529,
+      "rgb_mean_visible": [
+        241,
+        230,
+        216
+      ],
+      "hue_eligible_pixels": 10868,
+      "hue_eligible_ratio": 0.013934,
+      "hue_circ_median_deg": 31.43,
+      "hue_bin_top3": [
+        {
+          "bin_deg": "30-40",
+          "center": 35,
+          "share": 0.6147
+        },
+        {
+          "bin_deg": "20-30",
+          "center": 25,
+          "share": 0.3634
+        },
+        {
+          "bin_deg": "10-20",
+          "center": 15,
+          "share": 0.0125
+        }
+      ],
+      "hue_arc_30_share": 0.9906,
+      "source_screen": "warm_reading_v2_ao.png",
+      "selector": ".dock",
+      "rect": {
+        "x": 370,
+        "y": 299,
+        "w": 1180,
+        "h": 661,
+        "visible": true,
+        "bg": "rgb(243, 233, 218)",
+        "borderB": "0px rgb(0, 0, 0)",
+        "borderT": "0px rgb(0, 0, 0)",
+        "color": "rgb(0, 0, 0)",
+        "fs": "16px",
+        "radius": "16px"
+      },
+      "note": "不透明裁件：alpha 恒 255"
+    },
+    "reading_v2ao_sect": {
+      "file": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/度量脚本_魔夜UI密度_2026-09-30/crop_reading_v2ao_sect.png",
+      "src_mode": "RGBA",
+      "size": [
+        1084,
+        16
+      ],
+      "W": 1084,
+      "H": 16,
+      "pixels_total": 17344,
+      "pixels_visible_gt0": 17344,
+      "alpha_ratio_gt0": 1.0,
+      "pixels_solid_ge128": 17344,
+      "alpha_ge128_ratio": 1.0,
+      "alpha_max": 255,
+      "alpha_p95_of_visible": 255,
+      "outline_pixels": 2196,
+      "outline_ratio_visible": 0.126614,
+      "outline_ratio_full": 0.126614,
+      "stroke_pixels_inner": 28,
+      "stroke_ratio_visible": 0.001614,
+      "stroke_ratio_inner": 0.001848,
+      "stroke_ratio_cellarea": 0.001614,
+      "stroke_ratio_cellarea_t003": 0.012166,
+      "grad_p50": 0.00024,
+      "grad_p90": 0.01906,
+      "grad_p99": 0.03497,
+      "grad_max": 0.11158,
+      "sat_median": 0.1029,
+      "val_median": 0.9529,
+      "rgb_mean_visible": [
+        241,
+        231,
+        216
+      ],
+      "hue_eligible_pixels": 115,
+      "hue_eligible_ratio": 0.006631,
+      "hue_circ_median_deg": 33.75,
+      "hue_bin_top3": [
+        {
+          "bin_deg": "30-40",
+          "center": 35,
+          "share": 1.0
+        }
+      ],
+      "hue_arc_30_share": 1.0,
+      "source_screen": "warm_reading_v2_ao.png",
+      "selector": ".sect",
+      "rect": {
+        "x": 418,
+        "y": 444,
+        "w": 1084,
+        "h": 16,
+        "visible": true,
+        "bg": "rgba(0, 0, 0, 0)",
+        "borderB": "0px rgb(0, 0, 0)",
+        "borderT": "0px rgb(0, 0, 0)",
+        "color": "rgb(0, 0, 0)",
+        "fs": "16px",
+        "radius": "0px"
+      },
+      "note": "不透明裁件：alpha 恒 255"
+    },
+    "reading_v2n_dock": {
+      "file": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/度量脚本_魔夜UI密度_2026-09-30/crop_reading_v2n_dock.png",
+      "src_mode": "RGBA",
+      "size": [
+        1212,
+        679
+      ],
+      "W": 1212,
+      "H": 679,
+      "pixels_total": 822948,
+      "pixels_visible_gt0": 822948,
+      "alpha_ratio_gt0": 1.0,
+      "pixels_solid_ge128": 822948,
+      "alpha_ge128_ratio": 1.0,
+      "alpha_max": 255,
+      "alpha_p95_of_visible": 255,
+      "outline_pixels": 3778,
+      "outline_ratio_visible": 0.004591,
+      "outline_ratio_full": 0.004591,
+      "stroke_pixels_inner": 35943,
+      "stroke_ratio_visible": 0.043676,
+      "stroke_ratio_inner": 0.043877,
+      "stroke_ratio_cellarea": 0.043676,
+      "stroke_ratio_cellarea_t003": 0.119769,
+      "grad_p50": 0.00172,
+      "grad_p90": 0.03969,
+      "grad_p99": 0.12667,
+      "grad_max": 0.28668,
+      "sat_median": 0.4,
+      "val_median": 0.1216,
+      "rgb_mean_visible": [
+        23,
+        27,
+        35
+      ],
+      "hue_eligible_pixels": 405379,
+      "hue_eligible_ratio": 0.492594,
+      "hue_circ_median_deg": 222.35,
+      "hue_bin_top3": [
+        {
+          "bin_deg": "220-230",
+          "center": 225,
+          "share": 0.5936
+        },
+        {
+          "bin_deg": "210-220",
+          "center": 215,
+          "share": 0.1706
+        },
+        {
+          "bin_deg": "200-210",
+          "center": 205,
+          "share": 0.0834
+        }
+      ],
+      "hue_arc_30_share": 0.9653,
+      "source_screen": "warm_reading_v2_default.png",
+      "selector": ".dock",
+      "rect": {
+        "x": 88,
+        "y": 361,
+        "w": 1212,
+        "h": 679,
+        "visible": true,
+        "bg": "rgba(0, 0, 0, 0)",
+        "borderB": "0px rgb(0, 0, 0)",
+        "borderT": "0px rgb(0, 0, 0)",
+        "color": "rgb(0, 0, 0)",
+        "fs": "16px",
+        "radius": "0px"
+      },
+      "note": "不透明裁件：alpha 恒 255"
+    },
+    "reading_v2n_composer": {
+      "file": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/度量脚本_魔夜UI密度_2026-09-30/crop_reading_v2n_composer.png",
+      "src_mode": "RGBA",
+      "size": [
+        1002,
+        99
+      ],
+      "W": 1002,
+      "H": 99,
+      "pixels_total": 99198,
+      "pixels_visible_gt0": 99198,
+      "alpha_ratio_gt0": 1.0,
+      "pixels_solid_ge128": 99198,
+      "alpha_ge128_ratio": 1.0,
+      "alpha_max": 255,
+      "alpha_p95_of_visible": 255,
+      "outline_pixels": 2198,
+      "outline_ratio_visible": 0.022158,
+      "outline_ratio_full": 0.022158,
+      "stroke_pixels_inner": 1067,
+      "stroke_ratio_visible": 0.010756,
+      "stroke_ratio_inner": 0.011,
+      "stroke_ratio_cellarea": 0.010756,
+      "stroke_ratio_cellarea_t003": 0.075284,
+      "grad_p50": 0.00072,
+      "grad_p90": 0.02594,
+      "grad_p99": 0.09874,
+      "grad_max": 0.28668,
+      "sat_median": 0.1111,
+      "val_median": 0.1569,
+      "rgb_mean_visible": [
+        45,
+        45,
+        48
+      ],
+      "hue_eligible_pixels": 29422,
+      "hue_eligible_ratio": 0.296599,
+      "hue_circ_median_deg": 221.25,
+      "hue_bin_top3": [
+        {
+          "bin_deg": "220-230",
+          "center": 225,
+          "share": 0.6441
+        },
+        {
+          "bin_deg": "210-220",
+          "center": 215,
+          "share": 0.2428
+        },
+        {
+          "bin_deg": "10-20",
+          "center": 15,
+          "share": 0.0627
+        }
+      ],
+      "hue_arc_30_share": 0.8932,
+      "source_screen": "warm_reading_v2_default.png",
+      "selector": ".composer",
+      "rect": {
+        "x": 88,
+        "y": 941,
+        "w": 1002,
+        "h": 99,
+        "visible": true,
+        "bg": "rgba(243, 233, 218, 0.1)",
+        "borderB": "1px rgba(243, 233, 218, 0.22)",
+        "borderT": "1px rgba(243, 233, 218, 0.22)",
+        "color": "rgb(0, 0, 0)",
+        "fs": "16px",
+        "radius": "12px"
+      },
+      "note": "不透明裁件：alpha 恒 255"
+    }
+  }
+}

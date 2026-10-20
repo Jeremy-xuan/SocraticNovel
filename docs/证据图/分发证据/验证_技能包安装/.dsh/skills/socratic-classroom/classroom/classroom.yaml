@@ -1,0 +1,664 @@
+# ============================================================================
+# cs-os 教室包 · 注入元数据（classroom.yaml）
+# 格式权威：开源线/DSH定制/教室manifest格式_草案_v0.md（M1，2026-09-23）
+# format 标识：socratic-classroom/0
+# 产出：S4 数据/格式子代理，2026-09-23。本文件是**新增**产物，未改动任何既有 .md。
+#
+# ── 两条落地口径（写在文件头，避免后来者误读）─────────────────────────────
+# ① 🔴 AGENTS.md 与 CLAUDE.md **不在本文件中声明为注入块**。
+#    依据：宿主 agent-instructions 包已把 AGENTS.md 以 user/message 注入
+#    （侦察_L1_拼装权.md §1.5：createUserMessage({source:{kind:'agent-instructions'}}，
+#     index.ts:338-339；文件候选 DEFAULT_INSTRUCTION_FILE_CANDIDATES = ['AGENTS.md',
+#     'CLAUDE.md']）→ 再声明一次 = 同一份内容进两次
+#    （实测报告_双重注入与回合语义_2026-09-23）。CLAUDE.md 实测 419B，正文只有一句
+#    "完整指令在 AGENTS.md"（别名文件）→ 同样交给宿主，manifest 不重复注入。
+#
+# ② 本文件只写 **lib/manifest.mjs 实际消费的字段**（v0 子集）＋ 草案 §2.0/§3 的顶层声明。
+#    草案提到而校验器不支持的字段（position.after / position.section_name /
+#    render.vars / render.missing / wrap.header / wrap.role /
+#    frequency.every=session / layer 值 resident|startup / source /
+#    name / purpose / notes / tags / source_sha256）**一律不写入本文件**，
+#    逐条列在《对账表_cs-os_manifest_2026-09-23.md》的「待确认清单」。
+#    ⚠️ M3-STATE 变更两条：① `frequency.anchor` **已支持**（`lesson_start` / `session_start`，
+#       只与 `every: once` 连用）→ 从上面这张"不支持"清单里移出；
+#       ② `phase.advance_on` **已裁定不做**（相位推进改由教师在课堂上用 `classroom_set_phase`
+#       工具宣布）→ 写了会**报错**，不再是"静默忽略"。
+#
+# ③ 块与文件的粒度：
+#    · **段级切片已支持**（M2-SCHEMA v0.2，2026-09-24，修 P1-1）：块可写
+#      `section: <二级标题文本>`，引擎只注入该标题的正文（到下一个同级或更高级标题为止）。
+#      → 草案 §4.1 的 `_anchor.md` 三拆（此处落成**四块**）现已可表达。
+#    · **讲次门已支持**（同批，修 P0-4）：块可写 `lesson: {current:true, of:N}` /
+#      `{current:true}`（无 of＝只要有讲次在讲即放行）/ `{list:[..]}` / `{range:[a,b]}`，
+#      值取自 runtime_store 声明的 progress 文件里的
+#      `current_lesson: <整数>`（🔴 语义＝**本轮要讲的讲次**，初始 1，课后更新改成下一讲）。
+#      🔴 `of: N` ＝ **本块所属讲次**（本块只在讲次 N 注入）；**必须显式写**，
+#      不靠块 id 或 path 猜（猜＝隐式耦合，会静默失效——正是 P0-4 的教训）。
+#      → `story.node.NN` / `material.current.NN` 等按讲变化的块据此只在当讲注入。
+#    · 仍未支持：`path` 的 `{NN}` 通配展开 → story/material 仍须**逐讲展开成字面量块**。
+# ============================================================================
+
+format: socratic-classroom/0
+
+# ── 教室标识（校验器只强校验 id 为非空字符串；其余字段为草案 §2.0 声明，引擎不消费）──
+classroom:
+  id: cs-os
+  title: 计算机系教室 · 操作系统
+  subject: 操作系统
+  lessons: 14                      # 依据：curriculum.md「讲数：14 讲」；story/ch01–ch14 实测 14 个文件
+  classroom_version: 0.1.0
+  license: CC-BY-NC-SA-4.0         # 依据：characters/komari.md「按项目契约（内容 CC BY-NC-SA）发布」
+
+# ── runtime 目录（草案 §2.0 声明位）──────────────────────────────────────────
+# 🔴 M2-SCHEMA v0.2 起 `runtime_store` **不只是声明位**：`lesson_key` 是讲次门的唯一取值来源。
+#    引擎按行在 progress 文件里找 `<lesson_key>: <整数>`。
+#    语义（写死）：`current_lesson` = **本轮要讲的讲次**（不是"已完成的讲次"）；初始 1。
+#    找不到该行 / 值不是整数 → **引擎报错**（不静默失效）。
+runtime_store:
+  dir: runtime/
+  progress: runtime/progress.md
+  lesson_key: current_lesson
+
+# ── 教学相位枚举（草案 §2.0；顺序即推进顺序）──────────────────────────────
+# ✅ P0-1 已修（2026-09-23）：相位值域由本声明驱动，引擎不再硬编码。
+#    块里出现的相位 id 不在本列表内 → 引擎**报错**（不静默不注入）。
+# ✅ M3-STATE 已修（2026-09-24）：**相位推进已落地，但不由引擎按规则推进**——
+#    教师（模型）在课堂上判断"该进哪个相位了"，调 `classroom_set_phase` 工具宣布；
+#    引擎只做两件事：① 记录（取值必须落在本列表内，否则报错并列出合法 id）；
+#    ② 按新相位重新裁决所有带相位门的块（**下一回合**生效）。
+#    🔴 `phase.advance_on` **已裁定不做**：写了会报错（不静默）。换相位的时机是**教学现场判断**，
+#    不是脚本——什么时候进 probe / check / close 的判据写在 `system_core.md` 与 `AGENTS.md`。
+#    📌 相位状态落盘在 `runtime/progress.md` 的机器可读行 `current_phase: <id>`
+#    （草案 §2.0：`runtime_store` 是「模板变量与相位状态的来源」）；换会话会接上上次的相位。
+phases:
+  - { id: open,   name: 开场 }
+  - { id: probe,  name: 追问 }
+  - { id: answer, name: 学生作答 }
+  - { id: check,  name: 对答案 }
+  - { id: review, name: 复习 }
+  - { id: close,  name: 收尾 }
+
+blocks:
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # A · 系统段（target: system）—— 4 块，各 once；由 index.mjs 走
+  #     systemPrompt.section({name, order, text}) 一次性注册。
+  #     🔴 草案 §4 想要 position.after（相对锚点，"跟在某人后面"），校验器不支持 →
+  #     这里用裸 order 表达同一位置意图（草案 §3 的锚点对应的宿主常量见注释）。
+  # ══════════════════════════════════════════════════════════════════════════
+
+  # characters/komari.md（6662B）· 草案 §4.2 `persona.komari` ① 常驻层
+  # 位置意图：draft `after: deployment:persona-prefix`；对应宿主常量 DEPLOYMENT_PERSONA_PREFIX
+  #   order=0（侦察_L1_拼装权.md §1.4 段序表）。取 10200 使其落在
+  #   DEPLOYMENT_PERSONA_SUFFIX(10200) 之后、不与之撞号（section name 由引擎加前缀，
+  #   index.mjs 用 `socratic-engine:${block.id}`）。
+  - id: persona.komari
+    path: characters/komari.md
+    layer: persona
+    position: { target: system, order: 10200 }
+    frequency: { every: once }
+    render: { enabled: false }
+
+  # system_core.md（7596B，126 行）· 草案 §4.1 `teach.system_core` ② 启动层
+  # 教学法唯一真源（"怎么教"），必须常驻系统段。
+  - id: teach.system_core
+    path: system_core.md
+    layer: context
+    position: { target: system, order: 10300 }
+    frequency: { every: once }
+    render: { enabled: false }
+
+  # world/setting.md（4067B）· 草案 §4.2 `world.setting` ② 启动层
+  # AGENTS.md 第二步 6："读 world/setting.md ＋ world/metaphor.md——场景与隐喻系统"
+  - id: world.setting
+    path: world/setting.md
+    layer: context
+    position: { target: system, order: 10400 }
+    frequency: { every: once }
+    render: { enabled: false }
+
+  # world/metaphor.md（9640B）· 草案 §4.2 `world.metaphor` ② 启动层
+  # 🔴 文件自带红线："隐喻只用于建立直觉。正式术语与机制一律以 materials/ch{NN}.md 与
+  #    OSTEP 原文为准。"（草案 §4.2 建议在纪律块里复述一行 → 未复述，避免跨块内容重复，
+  #    见对账表待确认）
+  - id: world.metaphor
+    path: world/metaphor.md
+    layer: context
+    position: { target: system, order: 10500 }
+    frequency: { every: once }
+    render: { enabled: false }
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # B · 纪律层（target: chat, depth 0 = 贴本轮对话之后）—— 本格式最重要的用法
+  # ══════════════════════════════════════════════════════════════════════════
+
+  # _anchor.md（3405B）· 草案 §4.1 三拆 → **M2-SCHEMA v0.2 落成四块**（段级切片，P1-1 修复）
+  # 🔴 逐块依据（标题名逐字取自 _anchor.md，改标题必须同步改这里，否则引擎报错并列出标题清单）：
+  #   ① anchor.rules       「教学取向」              freq=turn（每轮）   chat/depth 0
+  #   ② anchor.lesson_ban  「本课不许违反项（每讲更新）」freq=turn（每轮）   chat/depth 0
+  #   ③ anchor.voice       「角色声音速查（生成任何台词前看一眼）」freq=once  **system**（① 常驻层）
+  #   ④ anchor.check       「教学检查（需要校准时使用）」freq=n_turns n=5  chat/depth 0
+  # 依据：文件自述"把最硬的纪律放到**贴近本轮对话**的位置。每轮上课前读一次"（→ ①②每轮）；
+  #   ②段自带"（每讲更新）"→ 每轮注入才跟得上换讲；
+  #   ③段整门课不变（草案 §4.5 冲突 1：它占了 ③ 纪律层体量的一半，且承担"非当课老师轻量人格"）
+  #     → 提到 ① 常驻层走系统段；
+  #   ④段原文"第 5、10、15… 轮"（文件内自述）→ n_turns n=5，与 state.learner 同频。
+  # ⚠️ 讲次门**不加**在这四块上：它们是**跨讲常驻的纪律**，不随讲次变化
+  #   （"每讲更新"指的是人更新内容，不是引擎按讲切换——内容更新由课后流程改文件）。
+
+  # ① 教学取向 —— 每轮贴尾（本教室最硬的一条纪律）
+  - id: anchor.rules
+    path: _anchor.md
+    section: 教学取向
+    layer: discipline
+    position: { target: chat, depth: 0 }
+    frequency: { every: turn }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  # ② 本课不许违反项（每讲更新）—— 每轮贴尾
+  - id: anchor.lesson_ban
+    path: _anchor.md
+    section: 本课不许违反项（每讲更新）
+    layer: discipline
+    position: { target: chat, depth: 0 }
+    frequency: { every: turn }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  # ③ 角色声音速查 —— ① 常驻层（系统段，order 取 10200 与 persona 系同区间）
+  # ⚠️ 已知语义缺口（待确认清单）：草案 §2.2 的 `frequency.anchor: lesson_start` 未实现，
+  #    系统段的 once 在引擎里＝**整个会话生命周期注册一次**（注册后常驻 system prompt，
+  #    每讲都可见）——效果上覆盖"生成任何台词前看一眼"，但不是"每讲重读一次盘"。
+  - id: anchor.voice
+    path: _anchor.md
+    section: 角色声音速查（生成任何台词前看一眼）
+    layer: persona
+    position: { target: system, order: 10250 }
+    frequency: { every: once }
+    render: { enabled: false }
+
+  # ④ 教学检查（需要校准时使用）—— 每 5 回合
+  - id: anchor.check
+    path: _anchor.md
+    section: 教学检查（需要校准时使用）
+    layer: anchor
+    position: { target: chat, depth: 0 }
+    frequency: { every: n_turns, n: 5 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # C · 情境层（target: chat）—— 相位门驱动
+  # ══════════════════════════════════════════════════════════════════════════
+
+  # story/overview.md（3504B）· 草案 §4.2 `story.arc_gate`
+  # 🔴 它不是背景资料，是"不许提前完成"的约束（"这条弧不能提前完成。第 5 讲之前不许
+  #    她流畅地讲完整段"）；AGENTS.md 第二步 9 注："第 1 讲之前先读一次 story/overview.md"。
+  # 草案给 frequency=session；🔴 校验器值域无 session（FREQUENCY_MODES =
+  #   once|turn|n_turns|phase|on_demand）→ 取语义最近的 once（每个引擎生命周期/会话起点
+  #   注入一次，对应草案 §2.2 的 anchor: session_start）。标「推断/待确认」。
+  # 🔴 M2-SCHEMA v0.2 加**讲次门** `lesson: {list: [1]}`：逐字落实 AGENTS.md 的
+  #   "**第 1 讲之前**先读一次"——只在第 1 讲注入；第 2 讲起不再占位（弧线约束已进历史，
+  #   且第 5 讲的"可以流畅"由 story/ch05.md 自己承载）。标「推断/待确认」。
+  - id: story.arc_gate
+    path: story/overview.md
+    layer: context
+    position: { target: chat, depth: 0 }
+    frequency: { every: once }
+    lesson: { list: [1] }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  # curriculum.md（10727B，139 行）· 草案 §4.1 `curriculum.map`（B3 混合频率）
+  # 口径：`frequency: {every: phase}` + `phase.phases: [open]` = **每讲开场注入一次**。
+  #   理由：① frequency 是单值字段，"ondemand ＋ 条件强制"这种复合规则在本 schema 下
+  #   不可表达；② 取"每讲必读"这一半，因为"按需"那一半靠 on_demand，而引擎骨架的
+  #   on_demand = **永不注入**（injector.mjs: `inject = false // TODO: M3 工具接入`）
+  #   → 标 on_demand 会让课程表在课上根本不出现；③ 代价：10727B 若每轮注入不可接受
+  #   （草案 §4.5 冲突 5 的退路是 n_turns n=1，明确说"浪费"），故不用每轮。
+  # 标「推断/待确认」：草案倾向"保留混合"，本条是它在校验器值域内的最近表达。
+  # 🔴 M3-STATE（2026-09-24）改为**每讲一次**：`frequency: { every: once, anchor: lesson_start }`。
+  #   语义＝**讲次（`current_lesson`）变化时重新注入一次**（同一讲内只注入一次）。
+  #   为什么换掉 M2 的写法：M2 用的是 `frequency: {every: phase}` ＋ `phase: {phases: [open]}`
+  #   ＋ `lesson: {current: true}`（无 `of`）。`{current:true}` 无 `of` ＝「只要有讲次在讲就放行」
+  #   → **等于没加门**（只声明意图）；而相位恒为 open 时 `every: phase` **每回合都成立**
+  #   → 实际是每回合注入 10,763 B，不是设计意图的"每讲一次"。
+  #   🔴 同时**去掉了相位门 `phase: {phases: [open]}`**：本块是**讲次级**背景（本讲在整门课里的
+  #   位置 ＋ 对应 OSTEP 链接），不是相位级材料。留着相位门会造出一个静默失效口子——
+  #   若教师在新一讲开场时相位还停在上一讲的 `close`，本块就**整讲都不会注入且不报错**。
+  #   去掉后语义干净：**每讲一次，无条件**。
+  #   ⚠️ 为什么不带讲次门 `of`：本块**不隶属于某一讲**（14 讲共用同一张课程表），带 `of` 会让它
+  #     只在某一讲注入。`anchor: lesson_start` 正好表达"每讲换一次"而无需 `of`。
+  - id: curriculum.map
+    path: curriculum.md
+    layer: context
+    position: { target: chat, depth: 4 }        # depth:4 = 草案 §4.1 的 d4 与 §3 示例一致
+    frequency: { every: once, anchor: lesson_start }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  # knowledge_points.md（8995B）· 草案 §4.1 `kp.current`「知识 :: 当讲知识点清单」
+  # 它既是判据源（判 [ ]/[~]/[x]）也是写回目标 → 只在「对答案」（判档）与「收尾」（更新）
+  #   相位有意义；开场注入 = 模型会提前对着清单念（草案 §4.1 依据列）。
+  - id: kp.current
+    path: knowledge_points.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [check, close] }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  # story/ch01–ch14.md（实测 14 个文件）· 草案 §4.3 `story.node`（一条通配规则）
+  # 🔴 校验器没有 {NN} 路径展开（path 必须是存在的字面量文件）→ **展开为 14 条块**。
+  # 文件头纪律："本文件是节点说明，不是可直接输出的叙述。不得把节点描述直接当正文念出来"
+  #   → 只在开场相位用（开场场景方向 200–500 字）。
+  - id: story.node.01
+    path: story/ch01.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [open] }
+    lesson: { current: true, of: 1 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+  - id: story.node.02
+    path: story/ch02.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [open] }
+    lesson: { current: true, of: 2 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+  - id: story.node.03
+    path: story/ch03.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [open] }
+    lesson: { current: true, of: 3 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+  - id: story.node.04
+    path: story/ch04.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [open] }
+    lesson: { current: true, of: 4 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+  - id: story.node.05
+    path: story/ch05.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [open] }
+    lesson: { current: true, of: 5 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+  - id: story.node.06
+    path: story/ch06.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [open] }
+    lesson: { current: true, of: 6 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+  - id: story.node.07
+    path: story/ch07.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [open] }
+    lesson: { current: true, of: 7 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+  - id: story.node.08
+    path: story/ch08.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [open] }
+    lesson: { current: true, of: 8 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+  - id: story.node.09
+    path: story/ch09.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [open] }
+    lesson: { current: true, of: 9 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+  - id: story.node.10
+    path: story/ch10.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [open] }
+    lesson: { current: true, of: 10 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+  - id: story.node.11
+    path: story/ch11.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [open] }
+    lesson: { current: true, of: 11 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+  - id: story.node.12
+    path: story/ch12.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [open] }
+    lesson: { current: true, of: 12 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+  - id: story.node.13
+    path: story/ch13.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [open] }
+    lesson: { current: true, of: 13 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+  - id: story.node.14
+    path: story/ch14.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [open] }
+    lesson: { current: true, of: 14 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  # materials/ch01–ch14.md · 草案 §4.3 `material.current`
+  # 🔴 事实更新（2026-09-24 · T6 教材接线）：**14 讲正文已全部落盘**
+  #    （`wc -c` 实测合计 163455 B：ch01 7975／ch02 8181／ch03 10053／ch04 9690／ch05 9168／
+  #     ch06 10539／ch07 11311／ch08 12249／ch09 11535／ch10 12275／ch11 14371／ch12 15481／
+  #     ch13 14177／ch14 16450）→ 本文件按同一模板**逐讲声明 14 条**：
+  #    `material.current.01`–`material.current.14`，`lesson.of` 与讲次一一对应。
+  #    📌 本段原注释曾写"ch02–ch14 磁盘上不存在……故**只能声明已存在的 ch01**"——**该结论已过期**，
+  #    但不是笔误：当时磁盘上确实只有 ch01.md。**现在事实变了，注释跟着改成事实。**
+  # 🔴 仍**逐条字面量声明、不写通配**——这条机制没有变，别因为"都齐了"就以为可以写一条通配：
+  #    引擎（`lib/manifest.mjs`）**不支持 `path` 的 `{NN}` 通配展开**（草案 §4.3 的通配规则未实现）
+  #    → 每一讲都必须是一条独立的字面量块，14 讲 ＝ 14 条块。
+  # 🔴 为什么必须逐条列全、不能"声明一条意思一下"：`normalizeBlock` 对 `path` 走
+  #    `readFileSync(resolve(baseDir, path))`，**文件不存在即抛 `ManifestError`**（不静默跳过）。
+  #    同一条机制既是当时"只能声明 ch01"的原因，也是现在"14 条都能装载成功"的保障。
+  # 相位与频率的依据（对全部 14 讲同样成立）：文件头"本文件是教师侧的追问脚本，不是给学生念的
+  #    课文" → 只在追问/对答案相位有意义；开场注入 = 诱导模型提前把追问序列倒出来（草案 §4.1 依据列）。
+  - id: material.current.01
+    path: materials/ch01.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [probe, check] }
+    lesson: { current: true, of: 1 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  # ── materials/ch02–ch07（2026-09-24 落盘）· 照 material.current.01 模板逐条展开 ──
+  # 字段形态与 .01 逐字对齐，只有 id／path／lesson.of 三处随讲次变化；
+  # 相位 [probe, check] 与频率 phase 沿用 ch01 的依据（教材正文是教师侧知识地图）。
+
+  # materials/ch02.md · 进程的 API 与生命周期（KP-2.1～2.4）
+  - id: material.current.02
+    path: materials/ch02.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [probe, check] }
+    lesson: { current: true, of: 2 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  # materials/ch03.md · 调度：谁来决定下一个跑谁（KP-3.1～3.5）
+  - id: material.current.03
+    path: materials/ch03.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [probe, check] }
+    lesson: { current: true, of: 3 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  # materials/ch04.md · 更公平的调度与多核（KP-4.1～4.4）
+  - id: material.current.04
+    path: materials/ch04.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [probe, check] }
+    lesson: { current: true, of: 4 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  # materials/ch05.md · 内存：每个程序都有自己的世界（KP-5.1～5.4）
+  - id: material.current.05
+    path: materials/ch05.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [probe, check] }
+    lesson: { current: true, of: 5 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  # materials/ch06.md · 地址翻译：硬件怎么帮我们作弊（KP-6.1～6.4）
+  - id: material.current.06
+    path: materials/ch06.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [probe, check] }
+    lesson: { current: true, of: 6 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  # materials/ch07.md · 分页与 TLB（KP-7.1～7.4）
+  - id: material.current.07
+    path: materials/ch07.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [probe, check] }
+    lesson: { current: true, of: 7 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  # ── materials/ch08–ch14（2026-09-24 落盘）· 同 material.current.01 模板 ──
+  # 频率与相位沿用 ch01 的依据（草案 §4.1／§4.3）：教材正文是**教师侧的知识地图**
+  #   → 只在 probe（追问）与 check（对答案）相位注入；open 相位注入它会诱导模型
+  #     提前把追问序列倒出来。七条判据完全相同，故共用本条注释（与 .01–.07 的逐条注释并存，
+  #     两种写法都在本文件里出现过——.02–.07 那批由各自说明文件带注释，此处按 ch08–14 说明的写法）。
+
+  - id: material.current.08
+    path: materials/ch08.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [probe, check] }
+    lesson: { current: true, of: 8 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  - id: material.current.09
+    path: materials/ch09.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [probe, check] }
+    lesson: { current: true, of: 9 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  - id: material.current.10
+    path: materials/ch10.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [probe, check] }
+    lesson: { current: true, of: 10 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  - id: material.current.11
+    path: materials/ch11.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [probe, check] }
+    lesson: { current: true, of: 11 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  - id: material.current.12
+    path: materials/ch12.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [probe, check] }
+    lesson: { current: true, of: 12 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  - id: material.current.13
+    path: materials/ch13.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [probe, check] }
+    lesson: { current: true, of: 13 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  - id: material.current.14
+    path: materials/ch14.md
+    layer: context
+    position: { target: chat, depth: 2 }
+    frequency: { every: phase }
+    phase: { phases: [probe, check] }
+    lesson: { current: true, of: 14 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # D · 状态层（runtime/ 8 文件）—— 逐块，频率各不相同（草案 §4.4：不能合并）
+  # 🔴 runtime/ 文件的角色是**双重的**：既是注入源，也是**课后更新的写入目标**
+  #    （progress/learner_profile/mistake_log/review_queue/knowledge_points 都被
+  #    system_core.md §课后更新 指定为 AI 的写回目标）。本 schema **没有"写目标"字段**
+  #    （草案亦无）→ 此处只能表达"读/注入"侧；写回侧由 P1 的课后更新路径（index.mjs TODO
+  #    里的 turn-stopping 课后更新）承担。标「推断/待确认」。
+  # ══════════════════════════════════════════════════════════════════════════
+
+  # runtime/progress.md（653B）· 草案 §4.4 `state.progress` · turn
+  # AGENTS.md 第一步 2："读 runtime/progress.md——上到哪了、这节课是第几讲"（每轮课前）；
+  #   它是相位判定输入（决定 lesson_no）→ 必须每轮。
+  - id: state.progress
+    path: runtime/progress.md
+    layer: state
+    position: { target: chat, depth: 0 }
+    frequency: { every: turn }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  # runtime/learner_profile.md（1050B）· 草案 §4.4 `state.learner` · n5
+  # 草案 §4.5 冲突 2：五层表把它标"① 常驻｜每轮"，但它是**观察累积**型文件
+  #   （"每次课后由 AI 依据课堂表现更新"）→ 每轮注入纯属浪费，改 n_turns=5
+  #   （与 _anchor.md 的"第 5、10、15… 轮"自检同频）。
+  - id: state.learner
+    path: runtime/learner_profile.md
+    layer: state
+    position: { target: chat, depth: 0 }
+    frequency: { every: n_turns, n: 5 }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  # runtime/mistake_log.md（387B）· 草案 §4.4 `state.mistakes` · phase{open,check}
+  # 两处用：open 相位（复习方式"不重讲，直接问：上次那条，你还能推一遍吗？"）＋
+  #   check 相位（对答案需靶子）。它是草案 §3 里 {{last_blocker}} 的来源。
+  - id: state.mistakes
+    path: runtime/mistake_log.md
+    layer: state
+    position: { target: chat, depth: 0 }
+    frequency: { every: phase }
+    phase: { phases: [open, check] }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  # runtime/review_queue.md（658B）· 草案 §4.4 `state.review` · phase{open}
+  # 文件头："**课前必查**：今天日期是否 ≥ 任意一行的'下次复习日期'。是 → 本节课开头先做
+  #   复习" → open 相位注入（决定今天是否进 review 相位）。
+  - id: state.review
+    path: runtime/review_queue.md
+    layer: state
+    position: { target: chat, depth: 0 }
+    frequency: { every: phase }
+    phase: { phases: [open] }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  # runtime/session_log.md（509B）· 草案 §4.4 `state.session_log` · on_demand
+  # AGENTS.md 第一步第 5 项："读 runtime/session_log.md 的「最后一条」记录（只需最后一条，不必通读）"
+  #   ＋ 第三步（仅"整份通读或回顾更早历史"时）。FIX-8 起"最后一条"属**每轮课前必读**（判"上次课后更新有没有写完"的唯一依据）。
+  # on_demand = 引擎不主动注入；此处仍声明 position（草案 §3 同款做法："声明'若要注入则贴尾'"）。
+  - id: state.session_log
+    path: runtime/session_log.md
+    layer: state
+    position: { target: chat, depth: 0 }
+    frequency: { every: on_demand }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  # runtime/session_archive.md（112B）· 草案 §4.4 `state.archive` · on_demand
+  # AGENTS.md 第三步："runtime/session_archive.md——查更早的历史时"。
+  - id: state.archive
+    path: runtime/session_archive.md
+    layer: state
+    position: { target: chat, depth: 0 }
+    frequency: { every: on_demand }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  # runtime/diary.md（463B）· 草案 §4.4 `state.diary` · on_demand（草案标注相位 close）
+  # AGENTS.md 第三步："runtime/diary.md——写日记时"；文件头"每课一条，不超过 120 字"
+  #   → 收尾时**写**，不必每轮读。写侧归属见本节开头说明。
+  - id: state.diary
+    path: runtime/diary.md
+    layer: state
+    position: { target: chat, depth: 0 }
+    frequency: { every: on_demand }
+    phase: { phases: [close] }        # 草案 §4.4 的 ph=close：若引擎将来接入按需路径，只允许 close 相位
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  # runtime/wechat_group.md（703B）· 草案 §4.4 `state.wechat` · on_demand
+  # 文件头："群聊不承载知识点。它是关系与状态的载体" → 只在生成群聊消息时需要。
+  # （文件内提到渲染模板 templates/wechat-chat.html；该目录不在本教室 33 文件内，属 P2 客户端侧。）
+  # （口径说明：33 是 2026-09-23 建教室时的文件数；2026-09-24 教材 1–14 讲落盘后实测为 49 个文件。二者不是同一口径，勿直接比较。）
+  - id: state.wechat
+    path: runtime/wechat_group.md
+    layer: state
+    position: { target: chat, depth: 0 }
+    frequency: { every: on_demand }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # 未声明为注入块的文件（2/33）—— 口径见文件头 ①
+  #   AGENTS.md  : 宿主 agent-instructions 包注入（source kind=agent-instructions）
+  #   CLAUDE.md  : 别名文件，419B，正文只有一句"完整指令在 AGENTS.md"
+  # 另一个未出块的草案意图：_anchor.md 的「角色声音速查」段（草案 §4.1 建议提到 ① 常驻层，
+  #   系统段 once）——整文件粒度下不可分离，见对账表待确认 P1。
+  # ══════════════════════════════════════════════════════════════════════════

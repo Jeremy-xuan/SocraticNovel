@@ -1,0 +1,27 @@
+### 镜像关键文件 sha256（前16）
+classrooms/cs-os/_anchor.md                486df518fb08b3f8
+classrooms/cs-os/system_core.md            f818e8375fe4b557
+classrooms/cs-os/AGENTS.md                 7952e1b45858b4e0
+classrooms/cs-os/runtime/progress.md       ff9b1154619d90ae
+classrooms/cs-os/curriculum.md             b2bee54277cffddf
+classrooms/cs-os/knowledge_points.md       07446a3c9548422c
+classrooms/cs-os/materials/ch01.md         813b45ce55014a6b
+classrooms/cs-os/story/ch01.md             4f95668e136440ef
+classrooms/cs-os/story/ch02.md             66d168c67aa7a6fe
+classrooms/cs-os/classroom.yaml            65132c949012ecab
+
+### 技能包副本
+classroom/_anchor.md                       bc4e89f3405a5e49
+classroom/system_core.md                   1eab54e0bb7ad486
+classroom/AGENTS.md                        8331950307ad566c
+classroom/runtime/progress.md              ff9b1154619d90ae
+
+### 引擎关键文件
+plugins/socratic-engine/lib/manifest.mjs             fce113df38f84eb5
+plugins/socratic-engine/lib/injector.mjs             4d8260a852094afc
+plugins/socratic-engine/index.mjs                    1b490ff846f48605
+plugins/socratic-engine/lib/prep.mjs                 4e142ad8661dec08
+plugins/socratic-engine/test/injector.test.mjs       52987c5a87dfc6aa
+plugins/socratic-engine/test/fixtures/minimal-classroom/_anchor.md 7c9958594e957808
+clients/classroom-ui/lib/client.js                   65a3edefb07c2e68
+acceptance/lib/asserts.mjs                           c6527fa14ffaf8e1

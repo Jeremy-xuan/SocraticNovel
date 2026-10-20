@@ -1,0 +1,42 @@
+# 镜像 vs 真仓库 HEAD（e961ef1）逐文件字节比对
+
+取数时间：2026-09-24 14:55:05
+方法：git show e961ef1:<path> > tmp; cmp -s tmp <镜像路径>
+（sha256 逐文件比对曾出现假阳性，故改用 cmp 逐字节）
+
+文件（classrooms/cs-os/ 下） 结果
+AGENTS.md                    DIFF
+_anchor.md                   DIFF
+characters/komari.md         SAME
+curriculum.md                SAME
+knowledge_points.md          SAME
+materials/ch01.md            SAME
+runtime/progress.md          DIFF
+story/ch01.md                SAME
+story/ch02.md                DIFF
+story/ch03.md                DIFF
+story/ch04.md                DIFF
+story/ch05.md                DIFF
+story/ch06.md                DIFF
+story/ch07.md                DIFF
+story/ch08.md                DIFF
+story/ch09.md                DIFF
+story/ch10.md                DIFF
+story/ch11.md                DIFF
+story/ch12.md                DIFF
+story/ch13.md                DIFF
+story/ch14.md                DIFF
+story/overview.md            SAME
+system_core.md               DIFF
+world/metaphor.md            SAME
+world/setting.md             SAME
+
+## 真仓库工作树 vs 镜像 vs HEAD 三方（classrooms/cs-os 关键文件）
+AGENTS.md                HEAD=751d74c74cd15edf 工作树=4029fd12c77c0e98(≠HEAD,≠镜像) 镜像=7952e1b45858b4e0
+system_core.md           HEAD=8d25693f4cb7a51c 工作树=5ca3e1dd85ce6127(≠HEAD,≠镜像) 镜像=f818e8375fe4b557
+_anchor.md               HEAD=a5faad738ecda4be 工作树=a5faad738ecda4be(=HEAD,≠镜像) 镜像=486df518fb08b3f8
+runtime/progress.md      HEAD=417e5bee3def01d6 工作树=4ad94cb6a8c664d5(≠HEAD,≠镜像) 镜像=ff9b1154619d90ae
+story/ch02.md            HEAD=a48354a07491b07d 工作树=66d168c67aa7a6fe(≠HEAD,=镜像) 镜像=66d168c67aa7a6fe
+curriculum.md            HEAD=b2bee54277cffddf 工作树=b2bee54277cffddf(=HEAD,=镜像) 镜像=b2bee54277cffddf
+knowledge_points.md      HEAD=07446a3c9548422c 工作树=07446a3c9548422c(=HEAD,=镜像) 镜像=07446a3c9548422c
+characters/komari.md     HEAD=a726ab8108d00997 工作树=a726ab8108d00997(=HEAD,=镜像) 镜像=a726ab8108d00997

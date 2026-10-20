@@ -1,0 +1,72 @@
+[
+  {
+    "id": "dsh-tauri",
+    "spec": "dsh-tauri",
+    "name": "DSH Tauri",
+    "description": "Message bridge for the DeepSeek Harness desktop shell. Also carries the desktop authentication adaptation: the embedded sandboxed WebView is cross-origin, so it cannot complete the SameSite=Strict browser-session cookie exchange.",
+    "repoUrl": "https://github.com/dsh-tauri-desk/dsh-tauri-plugins/tree/main/packages/dsh-tauri"
+  },
+  {
+    "id": "dsh-tauri-running-changes",
+    "spec": "dsh-tauri-running-changes",
+    "name": "DSH Running Changes",
+    "description": "Turn-level change tracking for the desktop shell: a private Git snapshot per agent turn and an input-dock chip reporting the changed files and +N -M of the turn that is currently running. Restoring files is handled by the recommended dsh-rewind plugin.",
+    "repoUrl": "https://github.com/dsh-tauri-desk/deepseek-harness-desktop/tree/main/packages/dsh-tauri-running-changes"
+  },
+  {
+    "id": "dsh-tauri-ui",
+    "spec": "dsh-tauri-ui",
+    "name": "DSH Tauri UI",
+    "description": "Customized Tauri UI plugin for the DeepSeek Harness desktop shell: provides the settings sidebar, settings sections, and shared UI integration points",
+    "repoUrl": "https://github.com/dsh-tauri-desk/dsh-tauri-plugins/tree/main/packages/dsh-tauri-ui"
+  },
+  {
+    "id": "dsh-tauri-worktree",
+    "spec": "dsh-tauri-worktree",
+    "name": "DSH Tauri Worktree",
+    "description": "Per-session isolated Git Worktree for the desktop shell: switch a conversation to its own isolated worktree, then check changes back into a local dsh/ branch or discard them.",
+    "repoUrl": "https://github.com/dsh-tauri-desk/dsh-tauri-plugins/tree/main/packages/dsh-tauri-worktree"
+  },
+  {
+    "id": "dsh-tauri-panel-extension",
+    "spec": "dsh-tauri-panel-extension",
+    "name": "DSH Tauri Panel Extension",
+    "description": "Skills, MCP, and the plugin market in the DeepSeek Harness desktop extension panel.",
+    "repoUrl": "https://github.com/dsh-tauri-desk/dsh-tauri-plugins/tree/main/packages/dsh-tauri-panel-extension"
+  },
+  {
+    "id": "dsh-tauri-panel-scheduler",
+    "spec": "dsh-tauri-panel-scheduler",
+    "name": "DSH Tauri Panel Scheduler",
+    "description": "Scheduled tasks for the DeepSeek Harness desktop panel: create daily/interval/workday/weekly automations, run them in fresh sessions on schedule, and review run history.",
+    "repoUrl": "https://github.com/dsh-tauri-desk/deepseek-harness-desktop/tree/main/packages/dsh-tauri-panel-scheduler"
+  },
+  {
+    "id": "dsh-tauri-session",
+    "spec": "dsh-tauri-session",
+    "name": "DSH Tauri Session",
+    "description": "Session archive for the desktop: rewrites the workspace browser's 'delete workspace' action into 'archive workspace', and adds an 'Archived chats' settings page with search, sort, grouping, project filter and unarchive.",
+    "repoUrl": "https://github.com/dsh-tauri-desk/dsh-tauri-plugins/tree/main/packages/dsh-tauri-session"
+  },
+  {
+    "id": "dsh-tauri-pet",
+    "spec": "dsh-tauri-pet",
+    "name": "DSH Tauri Pet",
+    "description": "Persistent animated desktop pets with conversation activity states, bubbles, and Chat/Codex pet libraries.",
+    "repoUrl": "https://github.com/dsh-tauri-desk/deepseek-harness-desktop/tree/main/packages/dsh-tauri-pet"
+  },
+  {
+    "id": "dsh-tauri-rightclick",
+    "spec": "dsh-tauri-rightclick",
+    "name": "DSH Tauri Rightclick Menu",
+    "description": "Native-style right-click context menu for the desktop shell: quick actions for sessions, workspaces, conversation text, links, and inputs — in-house successor to the deprecated dsh-session-context-menu.",
+    "repoUrl": "https://github.com/dsh-tauri-desk/dsh-tauri-plugins/tree/main/packages/dsh-tauri-rightclick"
+  },
+  {
+    "id": "dsh-tauri-model-config",
+    "spec": "dsh-tauri-model-config",
+    "name": "DSH Tauri Model Config",
+    "description": "Model selection and parameter configuration for the DeepSeek Harness desktop shell",
+    "repoUrl": "https://github.com/dsh-tauri-desk/dsh-tauri-plugins/tree/main/packages/dsh-tauri-model-config"
+  }
+]

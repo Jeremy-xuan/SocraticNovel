@@ -1,0 +1,24 @@
+# 格式禁令扫描（新版禁：括号旁白 / <sub> / 章节状态标签 / 「你可以怎么回答」/ 界面说明）
+
+取数时间：2026-09-24 14:55:52
+扫描范围：code/**（排除 node_modules、acceptance/runs/**、dist/**、tools/**/tmp/**），只扫能影响面向学生输出的文件：教室内容、引擎注入文本、客户端、技能包。
+
+## A. 精确串命中（<sub> / 你可以怎么回答 / 第 N 讲完）
+code/classrooms/cs-os/_anchor.md:26:- 学生回答了关键点，不等于已经展示整讲所有知识的掌握。不要自行宣告下课、收起场景或输出“第 N 讲完”；等学生表示结束，再写余韵和更新进度。
+code/classrooms/cs-os/_anchor.md:27:- 面向学生的正文始终留在场景里。动作和心情用自然叙述，不用括号旁白、`<sub>`、章节状态标签或“你可以怎么回答”的界面说明。已建立的物件细节保持一致：白板用白板笔，没有粉笔灰。角色可以自然等待学生说话。
+code/classrooms/cs-os/system_core.md:68:- 学生没有表示结束时，保持课堂开放；讲完一段要有可见的下一方向，不能只有“就是这样”和无指向的沉默。不自行写“下课”“第 N 讲完”或提前收束故事。教师讲过的细节不能算作学生已证明掌握。
+code/skills/socratic-classroom/classroom/_anchor.md:19:- 学生回答了关键点，不等于已经展示整讲所有知识的掌握。不要自行宣告下课、收起场景或输出“第 N 讲完”；等学生表示结束，再写余韵和更新进度。
+code/skills/socratic-classroom/classroom/_anchor.md:20:- 面向学生的正文始终留在场景里。动作和心情用自然叙述，不用括号旁白、`<sub>`、章节状态标签或“你可以怎么回答”的界面说明。已建立的物件细节保持一致：白板用白板笔，没有粉笔灰。角色可以自然等待学生说话。
+code/skills/socratic-classroom/classroom/system_core.md:66:- 学生没有表示结束时，保持课堂开放；可以停在角色动作、一个完整的解释或新的相关关口，不自行写“下课”“第 N 讲完”或提前收束故事。教师讲过的细节不能算作学生已证明掌握。
+（以上命中全部是**禁令本身**（引用被禁串），不是产出这种文本的指令——见报告 §2.2）
+
+## B. 舞台提示式括号旁白（小声/心想/旁白/停顿/内心/笑）
+（零命中 ⇒ 我们的内容与注入文本里没有这种写法）
+
+## C. 引擎注入文本里会不会出现"界面说明/状态标签"式措辞（注入块本身、不是给学生看的正文）
+code/plugins/socratic-engine/index.mjs:687:          source: { kind: 'socratic-engine', form: 'prep-list', block: `prep-list:L${currentLesson}`, lesson: currentLesson },
+code/plugins/socratic-engine/index.mjs:697:        source: { kind: 'socratic-engine', form: 'classroom-block', block: d.id },
+
+## D. 客户端是否会渲染注入块（system-reminder）到消息流
+clients/classroom-ui/lib/client.js 里 'system-reminder' 出现次数：0
+0 ⇒ 注入块不进消息流，学生看不到引擎语言（面板是另一处 UI，不在面向学生的正文范围内）
