@@ -1,0 +1,72 @@
+
+=== Haru ===
+  lipSync.status   : ok
+  lipSync.source   : L1-模型自声明(Groups.LipSync)
+  lipSync.parameter: ParamMouthOpenY
+  detail           : Groups 里声明了 1 个 LipSync 参数，且全部在参数全集中存在
+  表情数/名        : 8 ["F01","F02","F03","F04","F05","F06","F07","F08"]
+  动作组           : ["Idle","TapBody"]
+  cdi3语义分组     : true ["顔","目","眉毛","口","胴体","腕","髪揺れ"]
+
+=== Mao ===
+  lipSync.status   : ok
+  lipSync.source   : L1-模型自声明(Groups.LipSync)
+  lipSync.parameter: ParamA
+  detail           : Groups 里声明了 1 个 LipSync 参数，且全部在参数全集中存在
+  表情数/名        : 8 ["exp_01","exp_02","exp_03","exp_04","exp_05","exp_06","exp_07","exp_08"]
+  动作组           : ["Idle","TapBody"]
+  cdi3语义分组     : true ["顔","目","目玉","眉","口","体","左腕A","右腕A","左腕B","右腕B","全体","揺れ","ハート","インク","爆発","うさぎ","オーラ","光","全体エフェクト","乗算色・スクリーン色サンプル"]
+
+=== Wanko ===
+  lipSync.status   : ok
+  lipSync.source   : L1-模型自声明(Groups.LipSync)
+  lipSync.parameter: PARAM_MOUTH_OPEN_Y
+  detail           : Groups 里声明了 1 个 LipSync 参数，且全部在参数全集中存在
+  表情数/名        : 0 []
+  动作组           : ["Idle","TapBody"]
+  cdi3语义分组     : false []
+
+=== Mark ===
+  lipSync.status   : fallback
+  lipSync.source   : L2-命名风格匹配(参数全集内)
+  lipSync.parameter: ParamMouthOpenY
+  detail           : Groups.LipSync 是空数组（声明了但不给 ID）；在 cdi3 参数全集里按命名风格命中 ParamMouthOpenY
+  表情数/名        : 0 []
+  动作组           : ["Idle"]
+  cdi3语义分组     : false []
+
+=== Rice ===
+  lipSync.status   : unsupported
+  lipSync.source   : L3-不支持(明确报错)
+  lipSync.parameter: null
+  detail           : Groups.LipSync 是空数组，且 cdi3 参数全集里没有任何已知嘴参数命名风格 → 这张模型不支持嘴型驱动
+  表情数/名        : 0 []
+  动作组           : ["Idle","TapBody"]
+  cdi3语义分组     : true ["顔","目","体","腕","炎","エフェクトA","エフェクトB","揺れもの","前髪","右横髪","左横髪","後髪A","後髪B","後髪C"]
+
+=== Hiyori ===
+  lipSync.status   : ok
+  lipSync.source   : L1-模型自声明(Groups.LipSync)
+  lipSync.parameter: ParamMouthOpenY
+  detail           : Groups 里声明了 1 个 LipSync 参数，且全部在参数全集中存在
+  表情数/名        : 0 []
+  动作组           : ["Idle","TapBody"]
+  cdi3语义分组     : true ["顔","目","目玉","眉","口","体","腕","揺れ","揺れ　サイドアップ左","揺れ　サイドアップ右","揺れ　前髪左","揺れ　前髪右"]
+
+=== Natori ===
+  lipSync.status   : ok
+  lipSync.source   : L1-模型自声明(Groups.LipSync)
+  lipSync.parameter: ParamMouthOpenY
+  detail           : Groups 里声明了 1 个 LipSync 参数，且全部在参数全集中存在
+  表情数/名        : 11 ["Angry","Blushing","Normal","Sad","Smile","Surprised","exp_01","exp_02"]
+  动作组           : ["Idle","TapBody"]
+  cdi3语义分组     : true ["表情","体","全体移動","揺れ","懐中時計A","懐中時計B","左腕A","右腕A","右腕B","左腕C","左腕D","右腕E"]
+
+=== Ren ===
+  lipSync.status   : ok
+  lipSync.source   : L1-模型自声明(Groups.LipSync)
+  lipSync.parameter: ParamMouthOpenY
+  detail           : Groups 里声明了 1 个 LipSync 参数，且全部在参数全集中存在
+  表情数/名        : 5 ["exp_01","exp_02","exp_03","exp_04","exp_05"]
+  动作组           : ["Idle","TapBody"]
+  cdi3语义分组     : true ["顔","目","目玉","眉","口","体","体 物理演算","左腕","右腕","揺れ","エフェクト"]

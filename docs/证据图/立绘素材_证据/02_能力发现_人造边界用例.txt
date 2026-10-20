@@ -1,0 +1,28 @@
+
+=== 甲｜自声明非标准名 + cdi3 里存在 ===
+  status   : ok
+  source   : L1-模型自声明(Groups.LipSync)
+  parameter: ParamMouthOpenY2
+  candidates: ["ParamMouthOpenY2"]
+  detail   : Groups 里声明了 1 个 LipSync 参数，且全部在参数全集中存在
+
+=== 乙｜自声明非标准名 + cdi3 里没有它 ===
+  status   : ok-degraded
+  source   : L1-模型自声明(Groups.LipSync)
+  parameter: MyMouth
+  candidates: ["MyMouth"]
+  detail   : Groups 里声明了 LipSync，但其中 MyMouth 在 cdi3 参数全集里找不到（声明与登记不一致，仍按声明使用）
+
+=== 丙｜无 cdi3、LipSync 是空数组 ===
+  status   : unsupported-unverified
+  source   : L2b-命名风格匹配(无参数全集，未验证存在性)
+  parameter: null
+  candidates: ["ParamMouthOpenY","PARAM_MOUTH_OPEN_Y","ParamA","ParamMouthOpen","PARAM_MOUTH_OPEN","MouthOpenY","MouthOpen","ParamMouseOpenY"]
+  detail   : Groups.LipSync 是空数组，且无 cdi3 参数全集 → 无法确认这张模型是否支持嘴型驱动（列出的候选未验证存在性）
+
+=== 丁｜连 Groups 字段都没有 + 无 cdi3 ===
+  status   : unsupported-unverified
+  source   : L2b-命名风格匹配(无参数全集，未验证存在性)
+  parameter: null
+  candidates: ["ParamMouthOpenY","PARAM_MOUTH_OPEN_Y","ParamA","ParamMouthOpen","PARAM_MOUTH_OPEN","MouthOpenY","MouthOpen","ParamMouseOpenY"]
+  detail   : Groups 里没有 LipSync，且无 cdi3 参数全集 → 无法确认这张模型是否支持嘴型驱动（列出的候选未验证存在性）

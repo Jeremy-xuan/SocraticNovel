@@ -1,0 +1,5 @@
+repo: https://github.com/SillyTavern/SillyTavern
+commit: 06bde939fb1e9c4c8d8641d810f0a916b5bce127
+commit_date: Mon Sep 14 21:01:34 2026 +0200
+clone: git clone --depth 1 --filter=blob:none --sparse <repo> st && git sparse-checkout set public/scripts src
+clone_time: 2026-09-24T01:57:18Z

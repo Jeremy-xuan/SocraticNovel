@@ -1,0 +1,164 @@
+[
+  {
+    "file": "L01-T01-20260924-102139-flowchart.mmd",
+    "source": "批次1（共用副本：A#1–5 / B#1–4）",
+    "chars": 166,
+    "parseOk": true,
+    "renderOk": true,
+    "error": null,
+    "svgLen": 17518,
+    "bbox": {
+      "w": 930,
+      "h": 252
+    },
+    "nodes": 5,
+    "labels": 8,
+    "edges": 0,
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/t3a_画图工具取证/png/L01-T01-20260924-102139-flowchart.png",
+    "verdict": "RENDER-OK"
+  },
+  {
+    "file": "L01-T01-20260924-102632-flowchart.mmd",
+    "source": "批次1（共用副本：A#1–5 / B#1–4）",
+    "chars": 148,
+    "parseOk": true,
+    "renderOk": true,
+    "error": null,
+    "svgLen": 18374,
+    "bbox": {
+      "w": 546,
+      "h": 310
+    },
+    "nodes": 5,
+    "labels": 9,
+    "edges": 0,
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/t3a_画图工具取证/png/L01-T01-20260924-102632-flowchart.png",
+    "verdict": "RENDER-OK"
+  },
+  {
+    "file": "L01-T01-20260924-103001-flowchart.mmd",
+    "source": "批次1（共用副本：A#1–5 / B#1–4）",
+    "chars": 304,
+    "parseOk": true,
+    "renderOk": true,
+    "error": null,
+    "svgLen": 19969,
+    "bbox": {
+      "w": 546,
+      "h": 606
+    },
+    "nodes": 6,
+    "labels": 11,
+    "edges": 0,
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/t3a_画图工具取证/png/L01-T01-20260924-103001-flowchart.png",
+    "verdict": "RENDER-OK"
+  },
+  {
+    "file": "L01-T01-20260924-103110-flowchart.mmd",
+    "source": "批次1（共用副本：A#1–5 / B#1–4）",
+    "chars": 147,
+    "parseOk": true,
+    "renderOk": true,
+    "error": null,
+    "svgLen": 18354,
+    "bbox": {
+      "w": 314,
+      "h": 438
+    },
+    "nodes": 5,
+    "labels": 9,
+    "edges": 0,
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/t3a_画图工具取证/png/L01-T01-20260924-103110-flowchart.png",
+    "verdict": "RENDER-OK"
+  },
+  {
+    "file": "L01-T01-20260924-100829-flowchart.mmd",
+    "source": "smoke",
+    "chars": 33,
+    "parseOk": true,
+    "renderOk": true,
+    "error": null,
+    "svgLen": 14055,
+    "bbox": {
+      "w": 101,
+      "h": 158
+    },
+    "nodes": 2,
+    "labels": 3,
+    "edges": 0,
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/t3a_画图工具取证/png/L01-T01-20260924-100829-flowchart.png",
+    "verdict": "RENDER-OK"
+  },
+  {
+    "file": "L01-T01-20260924-102042-flowchart.mmd",
+    "source": "smoke",
+    "chars": 33,
+    "parseOk": true,
+    "renderOk": true,
+    "error": null,
+    "svgLen": 14055,
+    "bbox": {
+      "w": 101,
+      "h": 158
+    },
+    "nodes": 2,
+    "labels": 3,
+    "edges": 0,
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/t3a_画图工具取证/png/L01-T01-20260924-102042-flowchart.png",
+    "verdict": "RENDER-OK"
+  },
+  {
+    "file": "L01-T01-20260924-104249-flowchart.mmd",
+    "source": "批次2·t3a-fresh-A-8",
+    "chars": 249,
+    "parseOk": true,
+    "renderOk": true,
+    "error": null,
+    "svgLen": 24399,
+    "bbox": {
+      "w": 534,
+      "h": 750
+    },
+    "nodes": 9,
+    "labels": 17,
+    "edges": 0,
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/t3a_画图工具取证/png/L01-T01-20260924-104249-flowchart.png",
+    "verdict": "RENDER-OK"
+  },
+  {
+    "file": "L01-T01-20260924-104318-flowchart.mmd",
+    "source": "批次2·t3a-fresh-A-9",
+    "chars": 278,
+    "parseOk": true,
+    "renderOk": true,
+    "error": null,
+    "svgLen": 24383,
+    "bbox": {
+      "w": 352,
+      "h": 1150
+    },
+    "nodes": 8,
+    "labels": 16,
+    "edges": 0,
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/t3a_画图工具取证/png/L01-T01-20260924-104318-flowchart.png",
+    "verdict": "RENDER-OK"
+  },
+  {
+    "file": "L01-T01-20260924-103806-flowchart.mmd",
+    "source": "批次2·t3a-fresh-B-8",
+    "chars": 151,
+    "parseOk": true,
+    "renderOk": true,
+    "error": null,
+    "svgLen": 18514,
+    "bbox": {
+      "w": 570,
+      "h": 662
+    },
+    "nodes": 5,
+    "labels": 9,
+    "edges": 0,
+    "png": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/t3a_画图工具取证/png/L01-T01-20260924-103806-flowchart.png",
+    "verdict": "RENDER-OK"
+  }
+]

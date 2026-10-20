@@ -1,0 +1,92 @@
+[
+  {
+    "id": "kp11-A-r1",
+    "chars": 651,
+    "rejected": true,
+    "problems": [
+      "图类型关键字对不上：kind=flowchart 要求首行以 \"flowchart\" 或 \"graph\" 开头，实际首行是 \"时间轴（一个 CPU）─────────────────────────────────────►\"",
+      "source 里出现字符拼示意图用的制表符边框字符 \"─\"：这不是 mermaid 源码。请用 mermaid 语法把图重画一遍（节点写 A[文字]、连线写 A --> B）"
+    ]
+  },
+  {
+    "id": "kp11-A-r2",
+    "chars": 878,
+    "rejected": true,
+    "problems": [
+      "图类型关键字对不上：kind=flowchart 要求首行以 \"flowchart\" 或 \"graph\" 开头，实际首行是 \"磁盘 / 静态                          内存 / 正在跑\"",
+      "source 里出现字符拼示意图用的制表符边框字符 \"┌\"：这不是 mermaid 源码。请用 mermaid 语法把图重画一遍（节点写 A[文字]、连线写 A --> B）"
+    ]
+  },
+  {
+    "id": "kp12-A-r1",
+    "chars": 391,
+    "rejected": true,
+    "problems": [
+      "图类型关键字对不上：kind=flowchart 要求首行以 \"flowchart\" 或 \"graph\" 开头，实际首行是 \"CPU  │ A A A A │ B B B │ A A A │ B B B B │ A A ...   ← 实际：来回切\"",
+      "source 里出现字符拼示意图用的制表符边框字符 \"│\"：这不是 mermaid 源码。请用 mermaid 语法把图重画一遍（节点写 A[文字]、连线写 A --> B）"
+    ]
+  },
+  {
+    "id": "kp12-A-r2",
+    "chars": 263,
+    "rejected": true,
+    "problems": [
+      "图类型关键字对不上：kind=flowchart 要求首行以 \"flowchart\" 或 \"graph\" 开头，实际首行是 \"时间 ──────────────────────────────────────────────▶\"",
+      "source 里出现字符拼示意图用的制表符边框字符 \"─\"：这不是 mermaid 源码。请用 mermaid 语法把图重画一遍（节点写 A[文字]、连线写 A --> B）"
+    ]
+  },
+  {
+    "id": "kp13-A-r1",
+    "chars": 165,
+    "rejected": true,
+    "problems": [
+      "图类型关键字对不上：kind=flowchart 要求首行以 \"flowchart\" 或 \"graph\" 开头，实际首行是 \"一支笔（CPU）\"",
+      "source 里出现字符拼示意图用的制表符边框字符 \"│\"：这不是 mermaid 源码。请用 mermaid 语法把图重画一遍（节点写 A[文字]、连线写 A --> B）"
+    ]
+  },
+  {
+    "id": "kp13-A-r2",
+    "chars": 862,
+    "rejected": true,
+    "problems": [
+      "图类型关键字对不上：kind=flowchart 要求首行以 \"flowchart\" 或 \"graph\" 开头，实际首行是 \"┌─ 白板：两个程序同时跑 ────────────────────────────┐\"",
+      "source 里出现字符拼示意图用的制表符边框字符 \"┌\"：这不是 mermaid 源码。请用 mermaid 语法把图重画一遍（节点写 A[文字]、连线写 A --> B）"
+    ]
+  },
+  {
+    "id": "kp14-A-r1",
+    "chars": 780,
+    "rejected": true,
+    "problems": [
+      "图类型关键字对不上：kind=flowchart 要求首行以 \"flowchart\" 或 \"graph\" 开头，实际首行是 \"一个 CPU，两种身份\"",
+      "source 里出现字符拼示意图用的制表符边框字符 \"┌\"：这不是 mermaid 源码。请用 mermaid 语法把图重画一遍（节点写 A[文字]、连线写 A --> B）"
+    ]
+  },
+  {
+    "id": "kp14-A-r2",
+    "chars": 647,
+    "rejected": true,
+    "problems": [
+      "图类型关键字对不上：kind=flowchart 要求首行以 \"flowchart\" 或 \"graph\" 开头，实际首行是 \"用户态 (user mode)              内核态 (kernel mode)\"",
+      "source 里出现字符拼示意图用的制表符边框字符 \"─\"：这不是 mermaid 源码。请用 mermaid 语法把图重画一遍（节点写 A[文字]、连线写 A --> B）"
+    ]
+  },
+  {
+    "id": "kp15-A-r1",
+    "chars": 155,
+    "rejected": true,
+    "problems": [
+      "图类型关键字对不上：kind=flowchart 要求首行以 \"flowchart\" 或 \"graph\" 开头，实际首行是 \"CPU: [ A ][ A ][内核][ B ][ B ][内核][ A ][ B ][内核] ...\"",
+      "source 里出现字符拼示意图用的制表符边框字符 \"└\"：这不是 mermaid 源码。请用 mermaid 语法把图重画一遍（节点写 A[文字]、连线写 A --> B）"
+    ]
+  },
+  {
+    "id": "kp15-A-r2",
+    "chars": 387,
+    "rejected": true,
+    "problems": [
+      "图类型关键字对不上：kind=flowchart 要求首行以 \"flowchart\" 或 \"graph\" 开头，实际首行是 \"时间 ──────────────────────────────────────────────────────►\"",
+      "source 里出现字符拼示意图用的制表符边框字符 \"─\"：这不是 mermaid 源码。请用 mermaid 语法把图重画一遍（节点写 A[文字]、连线写 A --> B）"
+    ]
+  }
+]

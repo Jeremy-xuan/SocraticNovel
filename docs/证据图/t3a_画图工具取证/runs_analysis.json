@@ -1,0 +1,707 @@
+[
+  {
+    "group": "smoke",
+    "run": 1,
+    "sessionId": "session-84144574-fb15-4ff7-8025-26460386f7b6",
+    "steps": 2,
+    "turnEnd": {
+      "kind": "completed"
+    },
+    "infraError": false,
+    "toolCalls": 1,
+    "toolNames": [
+      "classroom_draw"
+    ],
+    "drawCalls": 1,
+    "drawArgs": [
+      "{\"kind\":\"flowchart\",\"source\":\"flowchart TD\\n  A[进程A] --> B[进程B]\\n\",\"title\":\"烟测\"}"
+    ],
+    "drawResults": [
+      {
+        "isError": false,
+        "head": ""
+      }
+    ],
+    "newDiagrams": [
+      "L01-T01-20260924-102042-flowchart.mmd"
+    ],
+    "assistantChars": 177,
+    "lastAssistantChars": 177,
+    "asciiSketchInText": false,
+    "mentionsWhiteboard": false,
+    "lastAssistantHead": "工具返回原文如下：\n\n```\n板书图已落盘：diagrams/L01-T01-20260924-102042-flowchart.mmd（flowchart → flowchart-v2｜3 行 / 41 B）｜第 1 讲 · 第 1 回合 · 2026-09-24 10:20｜索引 diagrams/index.md 现共 2 行｜标题：烟测\n```",
+    "hasFinalAnswer": true
+  },
+  {
+    "group": "A",
+    "run": 1,
+    "sessionId": "session-e973f354-f9b9-47f4-9ec8-795a1ea8fdd0",
+    "steps": 7,
+    "turnEnd": {
+      "kind": "completed"
+    },
+    "infraError": false,
+    "toolCalls": 14,
+    "toolNames": [
+      "bash",
+      "read",
+      "read",
+      "classroom_list",
+      "bash",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "classroom_set_phase",
+      "classroom_draw"
+    ],
+    "drawCalls": 1,
+    "drawArgs": [
+      "{\"kind\":\"flowchart\",\"title\":\"一颗核心、一个执行位置、两个都在等的程序\",\"caption\":\"把问题的对象钉死：本讲只谈\\\"CPU 当前在执行谁\\\"。浏览器和音乐播放器都在等同一个执行位置；旧排期的痕迹留在板角不擦。\",\"source\":\"flowchart LR\\n  subgraph P[\\\"两个程序都想做事\\\"]\\n    A[\\\"浏览器：要执行自己的指令\\\"]\\n    B[\\\"音乐播放器：要执行自己的指令\\\"]\\n  end\\n  A --> S\\n  B --> S\\n  S[\\\"一颗核心 · 同一时刻只有一个执行位置\\\"]\\n  S --> Q[\\\"今天要回答：两边怎样都拿到机会\\\"]\"}"
+    ],
+    "drawResults": [
+      {
+        "isError": false,
+        "head": ""
+      }
+    ],
+    "newDiagrams": [
+      "L01-T01-20260924-102139-flowchart.mmd"
+    ],
+    "assistantChars": 607,
+    "lastAssistantChars": 607,
+    "asciiSketchInText": false,
+    "mentionsWhiteboard": true,
+    "lastAssistantHead": "傍晚的光从窗子斜进来，落在长桌边缘。装订机停在墙角，不是坏了——是今天该装的都装完了，它的咔哒声一停，屋里就只剩下抽屉偶尔自己滑半格的声音。\n\n桌上摊着两份稿子。左边那份压着几张批注，右边那份只写了一半，停在半句上。台灯是开着的，一圈黄光罩着桌面，白板在光的边上，没被照到多少。\n\n白板上还留着上个月的排期。有人擦过，没擦干净——一格一格的日期框，几行被划掉的稿名，都在。她没去动它。\n\n她坐在桌边，听完你这句话，手指在笔杆上停了停。\n\n然后她站起来，拿笔，写。\n\n> **一颗核心，同一时刻只让一个程序执行。**\n> **浏览器和音乐播放器都要执行时，两边怎样都拿到机会？**\n>\n> *（简化模型：先不看核心内部怎样并行处理指令。）*\n\n字比她说得快。写完之后她侧身让开半步，垂着眼看了两秒那行字，才开口。\n\n\"你问的……是'为什么不互相捣乱'，对吧。\"\n\n\"这个问题里面，其实有两件事。一件是——它们**看起来**同时在跑；另一件是——一个程序**碰不到**另一个程序的稿子。第二件今天先不碰，那是地址空间，第五讲开始讲，我不会现在给你一个半截的答案。\"\n\n她把笔帽扣上，又打开。\n\n\"今天先钉第一件。……我刚才可能说得绕了。我就问一句——\"\n\n她指了指白板右下角。\n\n\"**这颗核心，同一时刻只执行一个程序。那你说，浏览器和音乐播放器，凭什么都能往前走？**\"\n\n问完她没再补第二句，笔尖停在",
+    "hasFinalAnswer": true
+  },
+  {
+    "group": "A",
+    "run": 2,
+    "sessionId": "session-4f055ee7-2589-438f-9dcf-12b7c9614ee0",
+    "steps": 4,
+    "turnEnd": {
+      "kind": "error",
+      "error": {
+        "message": "unexpected EOF",
+        "code": "PI_AI_ERROR"
+      }
+    },
+    "infraError": true,
+    "toolCalls": 8,
+    "toolNames": [
+      "bash",
+      "read",
+      "read",
+      "classroom_list",
+      "bash",
+      "read",
+      "read",
+      "read"
+    ],
+    "drawCalls": 0,
+    "drawArgs": [],
+    "drawResults": [],
+    "newDiagrams": [],
+    "assistantChars": 0,
+    "lastAssistantChars": 0,
+    "asciiSketchInText": false,
+    "mentionsWhiteboard": false,
+    "lastAssistantHead": "",
+    "hasFinalAnswer": false
+  },
+  {
+    "group": "A",
+    "run": 3,
+    "sessionId": "session-3b7c4418-2b5e-42ae-880d-a07cec89ee46",
+    "steps": 7,
+    "turnEnd": {
+      "kind": "completed"
+    },
+    "infraError": false,
+    "toolCalls": 10,
+    "toolNames": [
+      "bash",
+      "classroom_status",
+      "read",
+      "classroom_list",
+      "bash",
+      "read",
+      "read",
+      "read",
+      "bash",
+      "classroom_set_phase"
+    ],
+    "drawCalls": 0,
+    "drawArgs": [],
+    "drawResults": [],
+    "newDiagrams": [],
+    "assistantChars": 681,
+    "lastAssistantChars": 681,
+    "asciiSketchInText": false,
+    "mentionsWhiteboard": true,
+    "lastAssistantHead": "傍晚的编辑部。装订机停在窗边，不是坏了——今天要装的东西已经装完了，皮带松下来，安静得有点空。长桌上摊着两份稿子：一份边角压着蓝色批注，另一份只写到一半，纸边卷了起来。台灯只开了一盏，光落在半份稿子上。靠墙那排档案柜立着，抽屉上的编号标签贴得整整齐齐。白板上还留着上个月的排期，几行日期被划掉了，又用新的一行顶在下面，擦痕没擦干净，灰白的一道横在角落。\n\n小鞠知花坐在长桌这一头。她没有先开口。她抽出一支白板笔，拧开笔帽，在旧排期旁边写下一行字，笔尖压得有点重：\n\n**一颗核心，同一时刻只有一个执行位置。**\n**浏览器和音乐播放器都有事要做——**\n**怎样让两边都拿到机会？**\n\n写完，她侧过身，让开半边，把白板留给你。手机放在她手边，屏幕朝下。\n\n\"你问的是……'同时跑，为什么不互相捣乱'。\"\n\n她顿了一下，声音不大。\n\n\"这个问法里，藏着一个要拆开的地方。我先说清楚，再说你问的那件事。\"\n\n她走回白板，笔尖点在那行字上。\n\n\"一个核心，同一时刻只有一个执行位置。所以——'同时跑'，不是真的同时。操作系统让它们轮流拿到这个位置，轮得快，看起来才像同时。\"\n\n\"至于'不捣乱'……\"她停了一下，\"也分成两件事。一件是：它们争的是同一个执行位置，只要不真的撞在一起，就不会把对方正在做的事踩掉。另一件是：一个程序不能去动另一个程序的数据——那靠的是另外一套机制，今天先不碰它。\"\n\n她把笔",
+    "hasFinalAnswer": true
+  },
+  {
+    "group": "A",
+    "run": 4,
+    "sessionId": "session-3a99d740-83ea-4e92-8b7d-7315b0841257",
+    "steps": 9,
+    "turnEnd": {
+      "kind": "completed"
+    },
+    "infraError": false,
+    "toolCalls": 20,
+    "toolNames": [
+      "bash",
+      "read",
+      "read",
+      "classroom_list",
+      "bash",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "classroom_status",
+      "bash",
+      "classroom_draw"
+    ],
+    "drawCalls": 1,
+    "drawArgs": [
+      "{\"kind\":\"flowchart\",\"title\":\"把\\\"不互相捣乱\\\"拆成两层\",\"source\":\"flowchart TD\\n  Q[\\\"两个程序一起跑，不会互相捣乱吗\\\"]\\n  Q --> L1[\\\"第一层：执行机会怎么分\\\"]\\n  Q --> L2[\\\"第二层：各自做到一半的状态，凭什么不会被人动\\\"]\\n  L1 --> T1[\\\"今天只拆这一层\\\"]\\n  L2 --> T2[\\\"先记着，后面的课再拆\\\"]\",\"caption\":\"把学生的疑问当场拆成两层，明确今天只处理\\\"执行机会怎么分\\\"这一层，另一层留在板上等后面的课。避免第一讲就塞进地址空间和内存隔离。\"}"
+    ],
+    "drawResults": [
+      {
+        "isError": false,
+        "head": ""
+      }
+    ],
+    "newDiagrams": [
+      "L01-T01-20260924-102632-flowchart.mmd"
+    ],
+    "assistantChars": 666,
+    "lastAssistantChars": 666,
+    "asciiSketchInText": false,
+    "mentionsWhiteboard": true,
+    "lastAssistantHead": "傍晚的编辑部，装订机停在窗边。不是坏了——今天要装的东西都装完了。长桌上摊着两份稿子，一份边角压着红笔批注，一份只写到一半，页脚还是空的。\n\n台灯只亮着一盏。公告板上钉着上个月的排期，白板没擦净，旧字迹上压着一道划得很重的横线。靠墙那排档案柜很安静，只有抽屉滑轨偶尔轻轻响一声，像谁碰过又松了手。\n\n她正低头把散开的稿纸拢齐。听见他的问题，手指停了一下，没有马上抬头。\n\n白板上先前的两行字还压在旧排期上面：\n\n> 一颗核心，同一时刻只有一个程序在执行位置。\n> 浏览器先占着，音乐播放器后来怎么拿到它？\n\n她拔开笔帽，在那两行下面又画了几笔，把这句话拆成两半，然后退开半步，让板子自己站在两个人中间。\n\n\"'同时跑'……\"她的声音很轻，得靠近一点才听得清，\"我想先把这个说法说准。在这块板子的模型里，同一瞬间，只有一个程序待在那个执行位置上。不是两个一起动。\"\n\n她停了一下，抬眼看了看他，又很快移回白板。\n\n\"所以'同时'，是站在旁边看的感觉，不是这一刻的实情。\"\n\n她拿笔尖点了点板子下半边。\n\n\"你问的'不互相捣乱'，不止一层。一层是执行机会怎么分——谁先、谁后、各拿多久。另一层是：各自做到一半的东西，凭什么不会被人动。这两层不能一次讲完。今天先只拆第一层，第二层我写在板子上，记着。\"\n\n她把笔放回笔槽，侧过身，把白板前的位置空出来。\n\n\"浏览器现在占着那个执行位置。它不一定自己让开。那",
+    "hasFinalAnswer": true
+  },
+  {
+    "group": "A",
+    "run": 5,
+    "sessionId": "session-65bfae0e-9d74-455a-8a4e-e7e29411125f",
+    "steps": 9,
+    "turnEnd": {
+      "kind": "completed"
+    },
+    "infraError": false,
+    "toolCalls": 16,
+    "toolNames": [
+      "classroom_status",
+      "read",
+      "bash",
+      "glob",
+      "bash",
+      "classroom_list",
+      "bash",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "classroom_set_phase",
+      "read"
+    ],
+    "drawCalls": 0,
+    "drawArgs": [],
+    "drawResults": [],
+    "newDiagrams": [],
+    "assistantChars": 531,
+    "lastAssistantChars": 531,
+    "asciiSketchInText": false,
+    "mentionsWhiteboard": true,
+    "lastAssistantHead": "傍晚的编辑部只剩一盏台灯亮着。靠窗那一排档案柜的影子拉得很长，装订机停在桌角，不是坏了——今天该装订的都装订完了。长桌上摊着两份稿子，一份压着批注，另一份只写了一半，笔搁在中间，像谁临时走开。\n\n小鞠知花没有先开口。她抽出白板笔，站在那面写着上个月排期的白板前，看了几秒，然后用指腹把一块旧痕迹擦松——没擦干净，排期表被划掉的第三行还留着。她把笔尖落在那片旧痕迹下面。\n\n她写得很慢，一行字拉开，写完了才退开半步，让台灯的光正落在上面。\n\n> **一颗核心，一次只给一个程序执行机会。**\n> **音乐播放器和浏览器都有事要做时，怎样让两边都有机会继续？**\n\n她低头把笔帽扣上，又扣了一次，才对上你的方向——视线只停了一瞬就滑到白板边角。\n\n\"你、你刚才问的是……两个程序为什么不互相捣乱。\"她的声音很轻，句子却完整，\"这个我先拆成两半。一半是它们都要用同一颗核心，怎么轮得到；另一半是它们能不能动到对方的东西。\"\n\n她停了一下，手指在第二行字下面画了一道。\n\n\"今天先算第一半。\"\n\n\"这里我先假设……嗯，同一时刻，只有一个程序占着核心在跑。另一个只能在旁边等。\"她终于抬眼看你，很快又递回白板那边，\"那——浏览器正占着的时候，播放器后来是怎么拿到机会的？\"",
+    "hasFinalAnswer": true
+  },
+  {
+    "group": "B",
+    "run": 1,
+    "sessionId": "session-080d48d9-439d-4679-a7d7-cce63921337b",
+    "steps": 8,
+    "turnEnd": {
+      "kind": "completed"
+    },
+    "infraError": false,
+    "toolCalls": 14,
+    "toolNames": [
+      "bash",
+      "read",
+      "bash",
+      "classroom_status",
+      "bash",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "classroom_draw"
+    ],
+    "drawCalls": 1,
+    "drawArgs": [
+      "{\"kind\":\"flowchart\",\"title\":\"把\\\"同时跑、不互相捣乱\\\"拆成两层问题\",\"source\":\"flowchart TD\\n    Q[\\\"学生的问题：<br/>两个程序同时跑，为什么不互相捣乱？\\\"] --> L1[\\\"第一层：看起来同时<br/>一颗核心，两个程序都有事要做<br/>谁先执行？另一个怎么办？\\\"]\\n    Q --> L2[\\\"第二层：互不破坏<br/>一个程序的动作<br/>会不会踩坏另一个的进度\\\"]\\n    L1 --> A1[\\\"本讲要回答：<br/>执行机会怎么轮换<br/>切走时状态怎么保住\\\"]\\n    L2 --> A2[\\\"后面几讲要回答：<br/>地址空间与硬件内存保护\\\"]\\n    A1 --> M[\\\"操作系统要同时做到两件事：<br/>公平地给机会 + 切换时不丢进度\\\"]\",\"caption\":\"学生把两个问题混在了一句话里：一层是\\\"同时\\\"怎么来的，一层是\\\"不捣乱\\\"指什么。这张图只做澄清，不提供答案——下面那个问题才是要他去想的。\"}"
+    ],
+    "drawResults": [
+      {
+        "isError": false,
+        "head": ""
+      }
+    ],
+    "newDiagrams": [
+      "L01-T01-20260924-103001-flowchart.mmd"
+    ],
+    "assistantChars": 664,
+    "lastAssistantChars": 664,
+    "asciiSketchInText": false,
+    "mentionsWhiteboard": true,
+    "lastAssistantHead": "傍晚的编辑部，装订机停着——不是坏了，是今天该装订的东西已经装完，电源灯还亮着。长桌上摊着两份稿子：一份压满便签和批注，另一份只写了一半，页边留着几道红笔改痕。台灯只照亮桌面和它背后那面墙，其余的地方暗下去。白板上还留着上个月的排期，蓝笔写了又划掉两遍，没擦净。\n\n她站在白板前，手里捏着一支黑笔。听见学生开口，肩膀先动了一下，像是被叫到名字。\n\n她没有马上回答。笔盖咬开，先写了一个问句：**一颗核心，两个程序都有事要做时，怎样让两边都有机会继续？** 写完侧身让开，笔尖还抵在白板边缘。\n\n然后她才开口——声音不大，句子却完整：\n\n\"你、这个问题……里面其实是两个问题挤在一起。我想先分开。\"\n\n她回到白板，在两行字之间画了一条竖线，左边写「看起来同时」，右边写「不互相捣乱」。笔走得很稳，比说话快。\n\n\"看起来同时——是一个核心怎么把执行机会轮给两个程序。不互相捣乱——是一个程序的动作，会不会踩坏另一个程序的东西。\"她停了一下，\"第二个我在后面几讲才讲得清，它要地址空间和硬件保护。今天……今天先答第一个。\"\n\n她把笔帽扣上，又打开，在第一行下面画了一道横线。回头的时候视线只到学生的肩膀就停住了。\n\n\"不过你问的'不捣乱'，我猜有一半也是第一个问题。\"她顿了顿，\"因为如果两个程序根本轮不上，那也说不上互相打扰，对不对。\"\n\n她把笔尖点在横线下面那处空白。\n\n\"所以先从这个问：**一颗核心",
+    "hasFinalAnswer": true
+  },
+  {
+    "group": "B",
+    "run": 2,
+    "sessionId": "session-f9cf1e86-a0ed-4586-a696-d5c7a1713c13",
+    "steps": 9,
+    "turnEnd": {
+      "kind": "completed"
+    },
+    "infraError": false,
+    "toolCalls": 16,
+    "toolNames": [
+      "read",
+      "read",
+      "bash",
+      "read",
+      "classroom_list",
+      "bash",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "classroom_set_phase",
+      "classroom_draw"
+    ],
+    "drawCalls": 1,
+    "drawArgs": [
+      "{\"kind\":\"flowchart\",\"title\":\"一颗核心，一个执行位置，两个都想跑的程序\",\"caption\":\"把开场用的简化模型摆出来：同一时刻，一颗核心只把一个执行位置给一个程序。图停在\\\"另一个怎么拿到它\\\"上，不给出答案——这正是本讲要学生自己推开的第一道门。\",\"source\":\"flowchart TD\\n  A[\\\"音乐播放器<br/>有事要做\\\"] --> C[\\\"一颗核心的执行位置<br/>同一时刻只容纳一个程序\\\"]\\n  B[\\\"浏览器<br/>有事要做\\\"] --> C\\n  C --> D[\\\"此刻在执行的：只有其中一个\\\"]\\n  D -.-> Q[\\\"另一个怎么拿到它？\\\"]\"}"
+    ],
+    "drawResults": [
+      {
+        "isError": false,
+        "head": ""
+      }
+    ],
+    "newDiagrams": [
+      "L01-T01-20260924-103110-flowchart.mmd"
+    ],
+    "assistantChars": 422,
+    "lastAssistantChars": 422,
+    "asciiSketchInText": false,
+    "mentionsWhiteboard": true,
+    "lastAssistantHead": "傍晚，编辑部只剩台灯亮着。装订机停在桌子另一头——不是坏了，是今天的活做完了。桌角摊着两份稿子，一份压着批注，一份只写到一半。白板上还留着上个月的排期，边框被擦花过，旧字迹没擦干净。\n\n小鞠知花听见这句话时，笔尖在纸上停了一下。她没有马上开口，站起来走到白板前，把袖子往上推了推。\n\n白板笔在旧排期旁边落下三行字：\n\n> 同一时刻，一颗核心只执行一个程序的指令。\n> 那另一个，怎么拿到这个机会？\n> 它们会不会改到对方的东西？\n\n她侧身让开半步，声音很小：\"你、你问的……其实是两件事。一个是——两个都有机会跑；另一个是——跑的时候不弄坏对方。\"她停了一下，像在把两句话重新排序，\"我先把它们分开写。写出来，才是分开的。\"\n\n\"还有'同时'这个词……等一下要拆开看。\"\n\n她把笔尖点在第二行下面：\"先看前一件。这里只用最简的模型：一颗核心，某一时刻只把一个执行位置给一个程序。\"\n\n\"浏览器先占着这个位置——音乐播放器，后来是怎么拿到它的？\"",
+    "hasFinalAnswer": true
+  },
+  {
+    "group": "B",
+    "run": 3,
+    "sessionId": "session-eff7e7be-0bed-4cc1-974a-06290ee70ba1",
+    "steps": 5,
+    "turnEnd": {
+      "kind": "error",
+      "error": {
+        "message": "unexpected EOF",
+        "code": "PI_AI_ERROR"
+      }
+    },
+    "infraError": true,
+    "toolCalls": 13,
+    "toolNames": [
+      "bash",
+      "glob",
+      "bash",
+      "bash",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read"
+    ],
+    "drawCalls": 0,
+    "drawArgs": [],
+    "drawResults": [],
+    "newDiagrams": [],
+    "assistantChars": 0,
+    "lastAssistantChars": 0,
+    "asciiSketchInText": false,
+    "mentionsWhiteboard": false,
+    "lastAssistantHead": "",
+    "hasFinalAnswer": false
+  },
+  {
+    "group": "B",
+    "run": 4,
+    "sessionId": "session-5f740953-62ef-4418-956d-8602a4b79a17",
+    "steps": 7,
+    "turnEnd": {
+      "kind": "completed"
+    },
+    "infraError": false,
+    "toolCalls": 13,
+    "toolNames": [
+      "bash",
+      "read",
+      "read",
+      "classroom_list",
+      "classroom_status",
+      "bash",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "classroom_set_phase"
+    ],
+    "drawCalls": 0,
+    "drawArgs": [],
+    "drawResults": [],
+    "newDiagrams": [],
+    "assistantChars": 585,
+    "lastAssistantChars": 585,
+    "asciiSketchInText": false,
+    "mentionsWhiteboard": true,
+    "lastAssistantHead": "傍晚六点过一点。装订机停在窗边，不是坏了——今天要出的那几期都已经做完了。编辑部里只剩长桌上那盏台灯还亮着，光落在两份摊开的稿子上：左边那份压着几张批注，右边那份写到一半，笔帽还搁在旁边。\n\n小鞠知花从档案柜那边搬来一把椅子，放下之前先伸手按了按最下面那个抽屉。滑轨响了一声，关上了。她没出声，把椅子推到桌边，走到白板前面。\n\n白板上还留着上个月的排期，几行字被划掉又没擦干净，底下那层淡淡的痕迹就那么压着。\n\n她拔开白板笔，背对着你写。写得不快，但没停。\n\n> **两个程序同时跑，为什么不互相捣乱？**\n\n写完她退开半步看了一眼，又走回去，在下面补了一行小一点的字：\n\n> **先假设：一颗核心，一次只给一个程序执行的机会。**\n\n她把笔搁下，转过身来一半。声音很小，中间停了一次。\n\n\"……你问的这个，我想先拆一下。\"\n\n她又拿起笔，在\"同时\"和\"不互相捣乱\"底下各画了一道线。\n\n\"不互相捣乱——这个，有一半就是今天要讲的。另一半，比如说它怎么改不到别人内存里的东西，是后面几讲才拆。今天先讲前面那一半。\"\n\n她顿了一下，笔尖在白板上点了一下。\n\n\"还有，'同时'这两个字。按刚才那个假设的话……它其实做不到让浏览器和播放器在同一个瞬间都占着核心。一次只有一个。\"\n\n她侧身让开白板，笔尖还朝着那两行字。\n\n\"那浏览器先占着的时候，播放器后来是怎么拿到机会的？\"",
+    "hasFinalAnswer": true
+  },
+  {
+    "group": "B",
+    "run": 5,
+    "sessionId": "session-c972bd7f-a33b-4f2a-8198-64622ebb0216",
+    "steps": 1,
+    "turnEnd": {
+      "kind": "error",
+      "error": {
+        "message": "unexpected EOF",
+        "code": "PI_AI_ERROR"
+      }
+    },
+    "infraError": true,
+    "toolCalls": 2,
+    "toolNames": [
+      "bash",
+      "read"
+    ],
+    "drawCalls": 0,
+    "drawArgs": [],
+    "drawResults": [],
+    "newDiagrams": [],
+    "assistantChars": 0,
+    "lastAssistantChars": 0,
+    "asciiSketchInText": false,
+    "mentionsWhiteboard": false,
+    "lastAssistantHead": "",
+    "hasFinalAnswer": false
+  },
+  {
+    "group": "B",
+    "run": 6,
+    "sessionId": "session-23d27f38-a0db-40d0-b182-395de49d7ea2",
+    "steps": 8,
+    "turnEnd": {
+      "kind": "completed"
+    },
+    "infraError": false,
+    "toolCalls": 12,
+    "toolNames": [
+      "bash",
+      "classroom_status",
+      "read",
+      "classroom_list",
+      "bash",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "classroom_set_phase"
+    ],
+    "drawCalls": 0,
+    "drawArgs": [],
+    "drawResults": [],
+    "newDiagrams": [],
+    "assistantChars": 619,
+    "lastAssistantChars": 619,
+    "asciiSketchInText": false,
+    "mentionsWhiteboard": true,
+    "lastAssistantHead": "傍晚六点过。墙边那台装订机停着，不是坏了，是今天的活做完了。长桌上摊着两份稿子，一份压着几条批注，另一份只写了一半，纸角翘着。靠窗那侧已经暗下去，她只开了台灯——一圈黄光落在桌面，刚够照到最上面那份稿的编号。白板上还留着上个月的排期，几条线被划掉，横七竖八，没人擦。\n\n抽屉的滑轨响了一声。她把手里的红笔搁下。\n\n她没先开口。她拿起白板笔，拔帽，在自己面前写下一行字——不是她原先想问的，是他刚说的那句。\n\n> **两个程序同时跑，为什么不互相捣乱？**\n\n写完她退开半步，歪着头看了一会儿，又在下面画了一道竖线，把这句话切成两半：\n\n> **① 只有一个核心，它们怎么都能跑到？**\n> **② 一个程序怎么碰不到另一个的东西？**\n\n她这才转过来，声音不大：\n\n\"你问的……嗯，其实是两件事。\"笔尖点了点第一行，\"这个，今天。\"\"第二个——\"她停了一下，\"第二个要等讲到档案柜和编号，得往后几讲。它不是没有答案，只是那个答案不在今天这堆活里。\"\n\n她把笔放回槽里，手在板边蹭了一下。\n\n\"先立个假设。\"她顿住，像是怕这句被听漏，\"一颗核心，某一刻，只给……一个程序执行。\"\n\n\"意思是 CPU 正在执行它的指令。\"她补上，\"程序打开着、放在内存里，跟它此刻占着 CPU，不是一回事。\"\n\n\"现在，浏览器和音乐播放器都想往下走，可这个执行的位置只有一个。\"她看着他，语速慢下来，\"那——浏览器先占上",
+    "hasFinalAnswer": true
+  },
+  {
+    "group": "B",
+    "run": 7,
+    "sessionId": "session-017f7b1d-4f5c-4f94-90f4-f83d678dfb61",
+    "steps": 7,
+    "turnEnd": {
+      "kind": "error",
+      "error": {
+        "message": "unexpected EOF",
+        "code": "PI_AI_ERROR"
+      }
+    },
+    "infraError": true,
+    "toolCalls": 13,
+    "toolNames": [
+      "read",
+      "read",
+      "bash",
+      "bash",
+      "bash",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "classroom_status"
+    ],
+    "drawCalls": 0,
+    "drawArgs": [],
+    "drawResults": [],
+    "newDiagrams": [],
+    "assistantChars": 0,
+    "lastAssistantChars": 0,
+    "asciiSketchInText": false,
+    "mentionsWhiteboard": false,
+    "lastAssistantHead": "",
+    "hasFinalAnswer": false
+  },
+  {
+    "group": "B",
+    "run": 8,
+    "sessionId": "session-9997a3e3-c6ed-49af-a10d-bf1f82704490",
+    "steps": 5,
+    "turnEnd": {
+      "kind": "completed"
+    },
+    "infraError": false,
+    "toolCalls": 9,
+    "toolNames": [
+      "bash",
+      "classroom_set_phase",
+      "bash",
+      "read",
+      "read",
+      "read",
+      "read",
+      "classroom_set_phase",
+      "classroom_draw"
+    ],
+    "drawCalls": 1,
+    "drawArgs": [
+      "{\"kind\":\"flowchart\",\"title\":\"一个执行位置，两个程序都想要\",\"source\":\"flowchart TD\\n    A[\\\"音乐播放器：还有很多指令要执行\\\"] --> C{\\\"这一个执行位置，此刻给谁？\\\"}\\n    B[\\\"浏览器：还有很多指令要执行\\\"] --> C\\n    C --> D[\\\"先给播放器：它在 CPU 上执行\\\"]\\n    D --> E[\\\"它一直不还，浏览器怎么办？\\\"]\",\"caption\":\"本讲要算的是「分执行机会」，不是「动不到对方的内存」——后者属于地址翻译与硬件保护，留到第 6 讲。图上只摆出问题：一个执行位置，两个程序都想要；它一直不还怎么办，留给学生先推。\"}"
+    ],
+    "drawResults": [
+      {
+        "isError": false,
+        "head": ""
+      }
+    ],
+    "newDiagrams": [
+      "L01-T01-20260924-103806-flowchart.mmd"
+    ],
+    "assistantChars": 583,
+    "lastAssistantChars": 583,
+    "asciiSketchInText": false,
+    "mentionsWhiteboard": true,
+    "lastAssistantHead": "傍晚的编辑部，只剩靠窗那一盏台灯亮着。装订机停在桌角，手柄上还搭着半截没理完的校样——不是坏了，是今天该做的事做完了。长桌上摊着两份稿子：一份边角压着密密的批注，另一份写到第三页就空了，后面的纸还是平的。\n\n白板立在长桌尽头。上个月排期表的字迹没擦干净，灰蒙蒙地压在板面上，谁也没去动它。\n\n小鞠知花拔笔帽的时候用力了一点，笔帽弹到地上。她弯腰捡起来，走到白板前，没有先开口——她先在旧字迹空着的地方写下一行：\n\n**一颗核心，同一瞬间只让一个程序执行。播放器和浏览器，怎样都拿到执行机会？**\n\n写完，她退开半步，笔尖还悬在板边。\n\n\"嗯……你问的是'同时跑'。\"声音很小，\"我先把范围收一下。真实的 CPU 比我这句话复杂，但这里只假设**一个执行位置**，一次给一个程序。这样问题才落得下来。\"\n\n她低头看了一眼自己的鞋尖，又转回板上，在问题下面画了两个方框，各写上一个程序名，两个箭头都指向中间那个问号。\n\n\"还有'互相捣乱'——我把它拆成两条线。一条是它们怎么分到执行机会，这是这一讲要算的；另一条是它们为什么动不到对方的内存，那要靠后面的地址翻译和硬件保护。\"她把笔放下又拿起来，\"这一讲只管前一条。两条混在一起，会算不清。\"\n\n然后她指着那两个方框，把问题写完整了才开口：\n\n\"播放器先占到了这个执行位置。**如果它一直不放手，浏览器凭什么拿到？**\"",
+    "hasFinalAnswer": true
+  },
+  {
+    "group": "A",
+    "run": 6,
+    "sessionId": "session-475fed31-f2a1-4542-a5ea-f62680724efb",
+    "steps": 7,
+    "turnEnd": {
+      "kind": "completed"
+    },
+    "infraError": false,
+    "toolCalls": 10,
+    "toolNames": [
+      "bash",
+      "read",
+      "read",
+      "classroom_status",
+      "bash",
+      "read",
+      "read",
+      "read",
+      "bash",
+      "classroom_set_phase"
+    ],
+    "drawCalls": 0,
+    "drawArgs": [],
+    "drawResults": [],
+    "newDiagrams": [],
+    "assistantChars": 464,
+    "lastAssistantChars": 464,
+    "asciiSketchInText": false,
+    "mentionsWhiteboard": true,
+    "lastAssistantHead": "傍晚的编辑部，安静得能听见装订机停下来之后的余响。今天该装的东西都装完了，机器凉着。长桌上摊着两份稿子：一份压着上周的批注，页角卷了起来；另一份只写了一半，停在第三页中间。一盏台灯亮着，光刚好圈住这两份稿子。\n\n小鞠知花没有先开口。她把椅子往后推了半寸，从白板槽里抽出一支黑笔，拔掉笔帽。\n\n白板上还留着上个月的排期，划掉的行一道压着一道。她没去擦。\n\n她在空白的地方写：\n\n> **一个核心，同一瞬间只执行一个程序。**\n> **音乐播放器和浏览器都想继续——各自凭什么拿到机会？**\n\n写完，她换了只手拿笔，侧身让开半步，让那两行字全露出来。\n\n\"你说的'捣乱'……\"她的声音很轻，\"我、我想先把它拆成两件事。\"\n\n她拿起笔，在两行字下面又添了一小段：\n\n> ① 谁在什么时候用到 CPU\n> ② 谁碰得到谁的内存\n\n\"第一件，这一讲讲。\"笔尖在①上点了一下。\"第二件，往后放。\"\n\n她转回来，眼睛看着桌面而不是看着人，把问题说完整：\n\n\"浏览器先拿到这个执行位置。要是它一直没停下来，音乐播放器——后来是怎么拿到机会的？\"",
+    "hasFinalAnswer": true
+  },
+  {
+    "group": "A",
+    "run": 7,
+    "sessionId": "session-0384baa7-4d04-4e9b-b782-331f170f0642",
+    "steps": 6,
+    "turnEnd": {
+      "kind": "completed"
+    },
+    "infraError": false,
+    "toolCalls": 9,
+    "toolNames": [
+      "bash",
+      "classroom_status",
+      "classroom_list",
+      "bash",
+      "bash",
+      "read",
+      "read",
+      "read",
+      "read"
+    ],
+    "drawCalls": 0,
+    "drawArgs": [],
+    "drawResults": [],
+    "newDiagrams": [],
+    "assistantChars": 540,
+    "lastAssistantChars": 540,
+    "asciiSketchInText": false,
+    "mentionsWhiteboard": true,
+    "lastAssistantHead": "傍晚六点刚过，编辑部里只剩装订机还留着余温。它今天该订的都订完了，现在安安静静地蹲在墙角，没有响。靠窗的日光早退干净了，台灯亮着，光圈罩住桌面一角。\n\n桌上摊着两份稿子。一份压着批注，边角被翻得起了毛；另一份只写到一半，最后一行停在句子中间。白板上还留着上个月排期的旧痕迹，横七竖八的，有几行被划掉，划得用力，压出很深的墨。\n\n小鞠知花坐在桌边，没有立刻开口。她听见了学生那句话，手指在袖口上捻了一下，像是在把一句话拆成几段、再重新排好。\n\n她伸手够到白板笔，站起来，走到板前。她写字比说话稳得多——笔尖压下去，横平竖直，没有犹豫。\n\n她写下：\n\n> 一个核心，同一时刻只给一个程序执行机会。\n> 音乐播放器和浏览器都有事要做——怎样让两边都能继续？\n\n写完，她把笔搁回笔槽，侧身让开一步，把整块板留给学生看。\n\n然后她才小声补了一句，声音不大，但每个字都落得清楚：\n\n\"你问的这个……前半段，是它们怎么'都拿到机会'。后半段——'不互相捣乱'——怎么隔开内存，那是第五、六讲的事，今天先记着，我不糊弄过去。\"\n\n她顿了一下，金色瞳孔很快地往白板上扫了一眼，又躲开。\n\n\"所以，就按这个简化模型来：一颗核心，一次只放一个程序进去执行。播放器先占着这个位置，浏览器后来怎样也轮到？\"",
+    "hasFinalAnswer": true
+  },
+  {
+    "group": "A",
+    "run": 8,
+    "sessionId": "session-fc199835-8afb-4e3a-a8ca-017fdd192749",
+    "steps": 9,
+    "turnEnd": {
+      "kind": "completed"
+    },
+    "infraError": false,
+    "toolCalls": 15,
+    "toolNames": [
+      "bash",
+      "read",
+      "read",
+      "classroom_list",
+      "bash",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "read",
+      "classroom_status",
+      "classroom_draw"
+    ],
+    "drawCalls": 1,
+    "drawArgs": [
+      "{\"kind\":\"flowchart\",\"title\":\"把“捣乱”拆成两件事：今天只回答“谁占用 CPU”\",\"source\":\"flowchart TD\\n  Q[\\\"两个程序同时跑，为什么不互相捣乱？\\\"] --> S[\\\"先把‘捣乱’拆成两件事\\\"]\\n  S --> A[\\\"① 这一刻谁在 CPU 上执行\\\"]\\n  S --> B[\\\"② 各自的数据放在哪里\\\"]\\n  A --> T[\\\"今天只回答第一件\\\"]\\n  B --> L[\\\"后面几讲：内存各归各的\\\"]\\n  T --> M[\\\"简化模型：一颗核心，同一时刻只执行一个程序\\\"]\\n  M --> N[\\\"浏览器先占用这个执行位置\\\"]\\n  N --> P[\\\"音乐播放器后来怎样得到机会？\\\"]\",\"caption\":\"学生问的“不互相捣乱”混着两件事：CPU 执行机会的分配，和内存的归属。白板先把它们分开，声明今天只处理第一件，并把模型压到“一颗核心、同一时刻一个程序”。最下面那句是留给学生的第一个问题——在这里不先给出“轮流”这个词。\"}"
+    ],
+    "drawResults": [
+      {
+        "isError": false,
+        "head": ""
+      }
+    ],
+    "newDiagrams": [
+      "L01-T01-20260924-104249-flowchart.mmd"
+    ],
+    "assistantChars": 498,
+    "lastAssistantChars": 498,
+    "asciiSketchInText": false,
+    "mentionsWhiteboard": true,
+    "lastAssistantHead": "傍晚六点半，编辑部只剩长桌尽头那盏台灯还亮着。装订机的指示灯暗下去——不是坏了，是今天的散页都装完了。桌角摊着两份稿子，左边那份压着三张批注便签，右边那份停在半页上，笔还搁在纸边。\n\n白板立在她身后。板面上留着上个月的排期表，几行划掉的旧编号没擦干净，被台灯一照，泛着灰。她把椅子转过来，视线在学生脸上停了不到一秒就移开了，伸手从笔槽里抽出白板笔。\n\n笔帽拔开时轻轻响了一声。她写完，退开半步，把白板整个让给学生。\n\n\"你……你问的'捣乱'。\"她的声音不大，句子开头停了一下，\"我想过了。它其实是两件不一样的事。\"\n\n\"一件是，两个程序都想在这一刻占用 CPU。另一件是……它们各自的数据，会不会放到别人的地方去。\"\n\n\"第二件，要到后面几讲才讲得到。今天先把第一件说清楚。\"\n\n她侧过身，用笔尖点了点白板最下面那行。这一点比刚才快，也比刚才稳。\n\n\"模型我先压到最小：一颗核心，同一时刻只执行一个程序的指令。真实的 CPU 内部比这复杂，这里先不管——先把这个小模型里的问题解决掉。\"\n\n\"浏览器先占住这个位置。那音乐播放器是后来……怎么得到机会的？\"\n\n她把笔放回笔槽，两只手拢进袖口，等着。",
+    "hasFinalAnswer": true
+  },
+  {
+    "group": "A",
+    "run": 9,
+    "sessionId": "session-3ced19b8-9fea-41b3-a20b-ff55cfc98023",
+    "steps": 6,
+    "turnEnd": {
+      "kind": "completed"
+    },
+    "infraError": false,
+    "toolCalls": 8,
+    "toolNames": [
+      "read",
+      "read",
+      "bash",
+      "read",
+      "classroom_status",
+      "classroom_set_phase",
+      "classroom_draw",
+      "classroom_set_phase"
+    ],
+    "drawCalls": 1,
+    "drawArgs": [
+      "{\"kind\":\"flowchart\",\"source\":\"flowchart TD\\n  A[\\\"两颗心：播放器 P1、浏览器 P2<br/>都想要同一颗核心\\\"] --> B{\\\"核心此刻能执行几个程序的指令？\\\"}\\n  B -->|\\\"简化模型：一次只执行一个\\\"| C[\\\"必须轮流：先给 P1 一段，再给 P2 一段\\\"]\\n  C --> D[\\\"P1 被换下时，它执行到哪了？\\\"]\\n  D --> E[\\\"保存 P1 的现场（执行状态）\\\"]\\n  E --> F[\\\"换 P2 上来执行\\\"]\\n  F --> G[\\\"P2 被换下时，同样保存现场\\\"]\\n  G --> H[\\\"再换回 P1，按保存的现场接着执行\\\"]\\n  H --> C\",\"title\":\"一颗核心，两个程序为什么都要有机会执行\",\"caption\":\"先摆出本讲的核心疑问：核心一次只执行一个程序的指令时，P1 和 P2 只能轮流；换下去必须留下\\\"接到哪了\\\"的记录，回来才能接着走。这张图暂时只画到\\\"轮流 + 保存现场\\\"，定时器与特权限制留到后面。\"}"
+    ],
+    "drawResults": [
+      {
+        "isError": false,
+        "head": ""
+      }
+    ],
+    "newDiagrams": [
+      "L01-T01-20260924-104318-flowchart.mmd"
+    ],
+    "assistantChars": 635,
+    "lastAssistantChars": 90,
+    "asciiSketchInText": false,
+    "mentionsWhiteboard": true,
+    "lastAssistantHead": "白板上，她刚才写的那两行下面还空着。她没急着填，先把（上个月排期留下的）旧字迹旁边那页写了一半的稿子往自己这边挪了挪，腾出一块干净地方——像是在给下一个回答留位置。\n\n她没有催你。",
+    "hasFinalAnswer": true
+  }
+]

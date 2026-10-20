@@ -1,0 +1,15 @@
+{
+  "src": "/Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/plugins/socratic-engine",
+  "dst": "/tmp/t3a-b-plugin",
+  "aDescriptionSha": "e9ec550ae4cc55931c6e8672e33f93577add94a1ccb3a238990755ecc1a54ff1",
+  "bDescriptionSha": "c40965392024a6170200d0cd483474a4dc1bc2802094b2d3249bb9f7eeb5ca18",
+  "outsideRegionShaA": "591e0d54e6e930b01e1ee70154cf9b18fec9a7b92bde201033248010bc2d91e7",
+  "outsideRegionShaB": "591e0d54e6e930b01e1ee70154cf9b18fec9a7b92bde201033248010bc2d91e7",
+  "outsideRegionIdentical": true,
+  "fileListIdentical": true,
+  "changedFilesBesidesIndex": [],
+  "aDescriptionChars": 1060,
+  "bDescriptionChars": 1109,
+  "aDescription": "export const DRAW_TOOL_DESCRIPTION =\n  'Draw the whiteboard picture for the current teaching turn and save it into the classroom. ' +\n  'Call it every time the lesson needs a mechanism on the board — a flow of steps, a state machine, ' +\n  'a sequence of interactions between a process and the kernel, a comparison of two cases — ' +\n  'and pass the mermaid diagram type in `kind` plus the complete mermaid source in `source`. ' +\n  'Do not describe the picture in prose and do not sketch it with ASCII characters: draw it here. ' +\n  'The engine parses the source with the real mermaid parser before writing anything, saves the source ' +\n  'under runtime/diagrams/ and appends one row to the diagram index, so the picture survives the session ' +\n  'and can be read back after class. A source the parser rejects is refused with the parser error and ' +\n  'nothing is written; a markdown fence or an ASCII sketch is refused too — pass the raw mermaid source, ' +\n  'first line = the diagram type keyword (flowchart / sequenceDiagram / stateDiagram-v2 / ...).'",
+  "bDescription": "export const DRAW_TOOL_DESCRIPTION =\n  'You can draw the whiteboard picture for the current teaching turn and save it into the classroom ' +\n  'if you need to. If a lesson would benefit from a picture — a flow of steps, a state machine, ' +\n  'a sequence of interactions between a process and the kernel, a comparison of two cases — you may ' +\n  'call it with the mermaid diagram type in `kind` and the mermaid source in `source`. ' +\n  'It might be helpful to draw rather than describe the picture in prose, and an ASCII sketch would ' +\n  'probably not be as good. The engine can parse the source with the mermaid parser before writing ' +\n  'anything, save the source under runtime/diagrams/ and append one row to the diagram index, so the ' +\n  'picture survives the session and can be read back after class. If you pass a source the parser ' +\n  'rejects, it will be refused with the parser error and nothing will be written; a markdown fence ' +\n  'would also be refused — pass the raw mermaid source, ' +\n  'first line = the diagram type keyword (flowchart / sequenceDiagram / stateDiagram-v2 / ...).'"
+}

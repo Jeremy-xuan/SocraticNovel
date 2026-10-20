@@ -1,0 +1,112 @@
+[
+  {
+    "id": "kp11-B1-r1",
+    "extracted": true,
+    "kind": "state",
+    "chars": 171,
+    "structural": true,
+    "problems": [],
+    "parse": "stateDiagram",
+    "parseError": null,
+    "verdict": "ACCEPT"
+  },
+  {
+    "id": "kp11-B1-r2",
+    "extracted": true,
+    "kind": "flowchart",
+    "chars": 520,
+    "structural": true,
+    "problems": [],
+    "parse": "flowchart-v2",
+    "parseError": null,
+    "verdict": "ACCEPT"
+  },
+  {
+    "id": "kp12-B1-r1",
+    "extracted": true,
+    "kind": "flowchart",
+    "chars": 453,
+    "structural": true,
+    "problems": [],
+    "parse": "flowchart-v2",
+    "parseError": null,
+    "verdict": "ACCEPT"
+  },
+  {
+    "id": "kp12-B1-r2",
+    "extracted": true,
+    "kind": "sequence",
+    "chars": 429,
+    "structural": true,
+    "problems": [],
+    "parse": "sequence",
+    "parseError": null,
+    "verdict": "ACCEPT"
+  },
+  {
+    "id": "kp13-B1-r1",
+    "extracted": true,
+    "kind": "sequence",
+    "chars": 508,
+    "structural": true,
+    "problems": [],
+    "parse": "sequence",
+    "parseError": null,
+    "verdict": "ACCEPT"
+  },
+  {
+    "id": "kp13-B1-r2",
+    "extracted": true,
+    "kind": "state",
+    "chars": 599,
+    "structural": true,
+    "problems": [],
+    "parse": "stateDiagram",
+    "parseError": null,
+    "verdict": "ACCEPT"
+  },
+  {
+    "id": "kp14-B1-r1",
+    "extracted": true,
+    "kind": "sequence",
+    "chars": 425,
+    "structural": true,
+    "problems": [],
+    "parse": "sequence",
+    "parseError": null,
+    "verdict": "ACCEPT"
+  },
+  {
+    "id": "kp14-B1-r2",
+    "extracted": true,
+    "kind": "sequence",
+    "chars": 319,
+    "structural": true,
+    "problems": [],
+    "parse": "sequence",
+    "parseError": null,
+    "verdict": "ACCEPT"
+  },
+  {
+    "id": "kp15-B1-r1",
+    "extracted": true,
+    "kind": "sequence",
+    "chars": 397,
+    "structural": true,
+    "problems": [],
+    "parse": "sequence",
+    "parseError": null,
+    "verdict": "ACCEPT"
+  },
+  {
+    "id": "kp15-B1-r2",
+    "extracted": true,
+    "kind": "sequence",
+    "chars": 457,
+    "structural": true,
+    "problems": [],
+    "parse": "sequence",
+    "parseError": null,
+    "verdict": "ACCEPT"
+  }
+]
