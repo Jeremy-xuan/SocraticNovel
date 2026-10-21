@@ -118,7 +118,15 @@ test('锁：临界区串行（后一个写者看得见前一个的提交）', as
     await Promise.all([writer('a'), writer('b')])
     const text = await readFile(file, 'utf8')
     assert.equal(text.trim().split('\n').length, 2, '两次追加都落盘了')
-    assert.deepEqual(order, ['enter:a', 'leave:a', 'enter:b', 'leave:b'], '不许交错')
+    // 🔴 只断言「不交错」，不断言「谁先」：互斥只保证临界区不重叠，**不保证 FIFO**。
+    //    原来写死了 a 先 b 后，实测会翻（2026-10-21 在本机两次运行结果相反）——那是测试的
+    //    假设比实现更强，不是实现错。这里的真性质是：任一 writer 的 enter/leave 必须相邻。
+    assert.equal(order.length, 4, '两个 writer 各进出一次')
+    assert.equal(order[0].startsWith('enter:'), true)
+    assert.equal(order[1], order[0].replace('enter:', 'leave:'), '同一个 writer 的 enter/leave 必须相邻（不交错）')
+    assert.equal(order[2].startsWith('enter:'), true)
+    assert.equal(order[3], order[2].replace('enter:', 'leave:'), '同一个 writer 的 enter/leave 必须相邻（不交错）')
+    assert.notEqual(order[0], order[2], '两个 writer 都跑了')
     assert.deepEqual(await leftovers(dir), [])
   })
 })

@@ -28,7 +28,9 @@
 
 | # | 能力 | 代码在哪 | 状态 | 证据（2026-10-20 实测） | 差什么才能升级 |
 |---|---|---|---|---|---|
-| 1 | 教学引擎（相位、注入、工具、课后更新、动态块、任意讲次、叙事接线） | `plugins/socratic-engine/` | 🟡 L1 | `node check.mjs` 第 ⑧ 步：**553/553** 通过 | 一次完整 `acceptance/run.sh`（L3），卡在验收流水线的「铁律③ vs 0.2.1」冲突（见 §二之二） |
+| 1 | 教学引擎（相位、注入、工具、课后更新、动态块、任意讲次、叙事接线） | `plugins/socratic-engine/` | 🟡 L1 | `node check.mjs` 第 ⑧ 步：**591/591** 通过；`acceptance/run.sh --skip-session` **退出码 0**（含冻结清单 135 文件、装载逐文件哈希、零接触写足迹守卫） | 一次完整 `acceptance/run.sh`（L3 真会话）从没跑过 |
+| 1b | 验收流水线（`acceptance/`） | 同上 | 🟢 **L1 已通** | `--skip-session` 退出码 0：`✔ 完整性守卫：全通过`、89 次写盘白名单外 0、三套「零接触」归因 0 | 阶段 3/4（真会话＋六条断言）未跑 |
+| 1c | 插件不依赖宿主包（铁律③ 在 0.2.1 上成立） | 两个 `package.json` 已无 `@deepseek-ai/*` | 🟢 | `defineTool` duck-type 与真 0.2.1-rc.2 **逐字节相同**（6 组编译全等 + 21 组校验/错误文案逐字一致）；`createUserMessage` 键集合/深冻结/克隆隔离全等；原子写 6 处 import 收敛成本地 `lib/atomic-write.mjs`（12 项单测） | 漂移探针是固定语料；Windows 重试路径未实测 |
 | 2 | 教室包（操作系统 14 讲） | `classrooms/cs-os/` | 🟡 L1 | `check.mjs` 第 ① 步：17 个必需文件齐全、声明路径全在盘、14 讲正文齐全；第 ② 步与技能镜像 **54 文件 sha256 全一致** | 已在 stage 实例上做成 0.2.1 的插件行形态预设且真浏览器可选（`docs/证据图/迁移0.2.1/stage-preset-picker-0.2.1.json`），L2 装配过 |
 | 3 | 技能包（装上就能用的分发形态） | `skills/socratic-classroom/` | 🟡 L1 | `check.mjs` ①②：`validate` 退出码 0；与教室真源 sha256 全一致 | L2 安装＋被发现（09-24 做过，迁移后未复验） |
 | 4 | 整屏舞台（暖色教室界面） | `clients/classroom-stage-warm/` | 🟡 L2 | `./check.sh` **36/36**（原 20 项）；`--live` 33/33；真浏览器（swiftshader）里 canvas `399x546`、**立绘画出来了**、`pageerror` 0、K0 挂载点 11 键齐全 | 无崩溃交互回归；完整课堂对话属 M4-T |
@@ -56,11 +58,12 @@
 
 **§二之二 · 本轮查明的两个「卡点不是 bug，是前提过期」**
 
-1. **验收流水线 vs 0.2.1**：第 02 步的「铁律③」禁止把 `@deepseek-ai/*` 装进 profile/插件
-   `node_modules`，理由是「会造成双实例与 Symbol 失配」，而它的前提注释写着「宿主包由**安装版回退目录**提供」
-   ——**0.2.1 把这个回退删掉了**（`@deepseek-ai/dsh/lib/bin.js` 里 `NODE_PATH`/`registerHooks`/`modulePaths`
-   全部 0 命中）。所以「插件 import 宿主包」与「铁律③」在 0.2.1 上不可兼得。三条出路（含我倾向的那条）写在
-   `docs/历史报告/实现报告_B_迁移0.2.1_2026-10-20.md` §5.1，**需要人来定**，我没有擅自放宽检查。
+1. ~~**验收流水线 vs 0.2.1**~~ → **已解决（2026-10-21）**：那个冲突的本质是「铁律③ 假定宿主包由安装版回退目录提供，
+   而 0.2.1 删了那个回退」（`dsh/lib/bin.js` 里 `NODE_PATH`/`registerHooks`/`modulePaths` 全 0 命中）。
+   用户选路线 **B：插件不再 import 宿主包**，已落地：`defineTool` / `createUserMessage` 用 duck-type
+   （与真 0.2.1-rc.2 逐字节相同并逐条对照）、原子写 6 处 import 收敛成本地实现、面板白板 Remote 下线（无消费者）。
+   现在 `acceptance/run.sh --skip-session` **退出码 0**，而且**没有放宽任何一条判据**。
+   报告：`docs/历史报告/实现报告_B2_去宿主包依赖_2026-10-21.md`。
 2. **`STATUS.md` 旧说法「渲染环境随旧工作区删除」不准**：Manim 0.20.1 就在本机
    `/Library/Frameworks/Python.framework/Versions/3.13/bin/`，`tools/animation-gate/animation_gate.py` 也在盘。
 
