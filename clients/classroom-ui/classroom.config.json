@@ -1,5 +1,6 @@
 {
   "classroomRoot": "classrooms/cs-os",
-  "portraitModel": "Haru",
-  "note": "本工作区这套教室部署的**同一份**声明：教室面板（classroom-ui）与教学引擎（socratic-engine）都读它。classroomRoot＝教室包在工作区里的相对路径（面板按它读文件，引擎按它核对'我写的目录'与'面板读的目录'是不是同一个）；portraitModel＝立绘模型名（＝live2d-host/out/models/<名>/，面板按它装载，引擎按它去能力发现产物里挑清单）。改这里＝两侧同时生效；两侧任何一处被 --patch／注入改成别的路径时，那两侧都会**出声**报不一致。注意：本仓库的 live2d-host/out（Cubism 样本与构建产物）未随仓库分发——见 test/panel.test.mjs 的「当前未部署资产」分类，立绘在缺 out 时面板显示明确未部署状态而非白屏。"
+  "portraitModel": "deepseek",
+  "portraitAssets": "clients/classroom-stage-warm/assets",
+  "note": "本工作区这套教室部署的**同一份**声明：教室面板（classroom-ui）与教学引擎（socratic-engine）都读它。classroomRoot＝教室包在工作区里的相对路径（面板按它读文件，引擎按它核对'我写的目录'与'面板读的目录'是不是同一个）；portraitModel＝立绘模型名（面板按它装载，引擎按它挑清单）——2026-10-20 起是 deepseek，与舞台实际在用的那份模型（clients/classroom-stage-warm/assets/models/deepseek/）一致；改前写的是本仓库根本不存在的 Haru，两侧不一致。portraitAssets＝立绘资产的第二来源根（工作区相对路径，可选）：面板按它在里面找 models/<名>/ 与 l2d/live2dcubismcore.min.js，只读复用、不复制；不给则由代码默认指到舞台包目录。改这里＝两侧同时生效；两侧任何一处被 --patch／注入改成别的路径时，两侧都会**出声**报不一致。注意：clients/live2d-host/out（本插件自带渲染宿主的构建产物）不随仓库分发，所以面板立绘的**渲染**优先走舞台那条 /stage-static（PIXI ＋ pixi-live2d-display，模型与库都是舞台已经有的那份）；舞台没装时才退回本插件自带渲染宿主，两者都不可用则显示静态立绘图 —— 见开发文档 D1–D4。"
 }

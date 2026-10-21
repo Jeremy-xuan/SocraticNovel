@@ -115,8 +115,88 @@ window.__ModuleLoader__.load({
 		 */
 		const DEFAULT_LIVE2D_ROOT = "clients/live2d-host/out";
 
-		/** 默认模型：官方样本 Haru（`Groups.LipSync` 自声明 `ParamMouthOpenY`、8 个表情）。 */
-		const DEFAULT_MODEL = "Haru";
+		/**
+		 * 立绘模型的**兜底名字**（声明与注入都读不到时才用它）。
+		 *
+		 * 🔴 2026-10-20（D4）：改前是官方样本 `Haru` —— 而本仓库里**一张 Haru 都没有**
+		 *    （`live2d-host/out` 不随仓库分发），舞台上真正在用的模型是
+		 *    `clients/classroom-stage-warm/assets/models/deepseek/`。声明写 Haru、
+		 *    舞台放 deepseek ＝ 两侧不一致（`checkDeployment` 会为此出声）。
+		 *    现在代码默认、部署声明、舞台资产三处**都是 deepseek**，不再有第二个名字。
+		 */
+		const DEFAULT_MODEL = "deepseek";
+
+		/**
+		 * 立绘的**第二来源根**（工作区相对路径）：舞台包自己的资产目录。
+		 *
+		 * 🔴 D3「舞台没装时退回显示静态立绘图」的落地依据：`clients/classroom-stage-warm/assets/`
+		 *    下同时有 `models/deepseek/`（模型）与 `l2d/live2dcubismcore.min.js`（Core），
+		 *    而 `live2d-host/out` 一个文件都没有 —— 也就是说，本机唯一**真实存在**的立绘资产在这里。
+		 *    仍然只读：本插件按工作区相对路径读字节，不复制、不改写它（与 mermaid vendor 同一手法）。
+		 */
+		const DEFAULT_PORTRAIT_ASSETS = "clients/classroom-stage-warm/assets";
+
+		/**
+		 * 立绘的**静态图**（Live2D 不可用时顶上去的那张）。
+		 * 取舞台的教师立绘（`assets/stage/teacher_gen.png`）——「老师站在讲台前」这件事不变，
+		 * 只是从"会呼吸的立绘"降级为"一张画"。读不到就**不显示**（由 §7 的失败态那一行说明）。
+		 */
+		const DEFAULT_STATIC_PORTRAIT = "clients/classroom-stage-warm/assets/stage/teacher_gen.png";
+
+		/**
+		 * 舞台宿主半边的静态路由前缀（与 `clients/classroom-stage-warm/lib/index.js` 的
+		 * `ROUTE_BASE` **逐字一致**；那边改了这里必须同改）。
+		 *
+		 * 🔴 D3：「模型和库复用舞台已有的 `/stage-static` 路由（舞台装了就用舞台的）」。
+		 *    这条路由是 **loopback-only 的同源 HTTP 路径**，浏览器直接 `fetch` 即可，
+		 *    **不需要任何 token**（舞台自己的浏览器半边就是这么取的，见它的 `fetchJson(ROUTE + ...)`）。
+		 *    面板只在**确实是浏览器且同源是 http(s)** 时才走这条路（见 `stageRouteAvailable`）。
+		 */
+		const STAGE_ROUTE = "/stage-static";
+
+		/**
+		 * 舞台那个「整屏接管」容器的 id（`clients/classroom-stage-warm/lib/client.js` 的 `ROOT_ID`）。
+		 *
+		 * 🔴 D2「舞台打开时暂停」的**唯一可用判据**：舞台是自建容器挂 `document.body`（不经过插槽），
+		 *    关闭态（Ctrl+Shift+M）时它仍然在，只是内部换成一条「舞台已关闭」横幅
+		 *    （`data-killed="on"`）。所以判据＝**容器里有一层真舞台、且不是关闭态**。
+		 *    这里只读 DOM，不改、不碰舞台的任何状态。
+		 */
+		const STAGE_OVERLAY_ID = "stage-warm-root";
+		/** 真舞台那一层的类名（关闭态那层带 `data-killed="on"`）。 */
+		const STAGE_OVERLAY_CLASS = "stage-warm-root";
+
+		/**
+		 * D1：面板立绘的渲染帧率（**约 15fps**）。
+		 *
+		 * 🔴 为什么是"节流 tick"而不是"删掉 rAF"：`tick` 里除了 `host.step(dt)` 还有嘴型读数，
+		 *    而 `dt` 是**真实流逝时间**（`(timestamp - last) / 1000`）——按 15fps 走，
+		 *    Cubism 的呼吸/眨眼/物理仍然按真实时间推进，只是**每秒只画 15 张**。
+		 *    删 rAF 就什么都不会动了。
+		 */
+		const PORTRAIT_FPS = 15;
+		/** 两帧之间的最小间隔（ms）。 */
+		const PORTRAIT_FRAME_MS = 1000 / PORTRAIT_FPS;
+
+		/**
+		 * D1：面板立绘**只播待机动作**（不做实时驱动）。
+		 *
+		 * 用户已定的设计（开发文档 §四 D）：「面板里的立绘不做实时驱动，循环播放待机动作，
+		 * 在效果和资源之间折中」。落地点有两处：
+		 *   · 相位切换**不再换表情**（`applyPhase` 只把待机动作起起来）；
+		 *   · 引擎写的 `runtime/expression.md` **不上脸**（解析与计划照旧保留，只是不应用）。
+		 * 实时驱动力度全在舞台（S 车道）。改回实时驱动＝把这两个常量/分支拿掉，
+		 * 解析与读数代码一行都没删（`readout().expressionApplied` 仍会如实说"没应用"）。
+		 */
+		const PORTRAIT_IDLE_ONLY = true;
+
+		/**
+		 * 板书历史（W-p）的索引文件（**教室目录相对**）。
+		 * 写法与引擎的 `lib/diagram.mjs` 逐字对齐：`runtime/diagrams/index.md`（一行一张图）。
+		 */
+		const DIAGRAMS_INDEX = "runtime/diagrams/index.md";
+		/** `.mmd` 源文件所在子目录（教室目录相对）。 */
+		const DIAGRAMS_SUBDIR = "runtime/diagrams";
 
 		/**
 		 * 🔴 EXPR-5：**部署声明**在工作区里的相对路径——本插件自己包里的那份文件。
@@ -509,6 +589,48 @@ window.__ModuleLoader__.load({
 			return classroomRoot() + "/" + FILE[name];
 		}
 
+		/**
+		 * 板书图索引的工作区相对路径（`<教室>/runtime/diagrams/index.md`）。
+		 * 与 `classroomPath` 同一手法，只是这个文件**不在 `FILE` 表里**：
+		 * `FILE` 是"面板进门就要读的五个文件"，而索引是**板书 tab 打开时才读**的（见 `loadDiagramHistory`）。
+		 * 🔴 不并进 `FILE` 的理由：并进去＝每次 `loadClassroom` 都多一次读盘 + 多一行「数据来源」，
+		 *    而那张表是"教室的状态文件"清单，板书图是**产物**（引擎侧的 `diagramstore.mjs` 头注释同一口径）。
+		 * @returns 工作区相对路径
+		 */
+		function diagramsIndexPath() {
+			return classroomRoot() + "/" + DIAGRAMS_INDEX;
+		}
+
+		/**
+		 * 一张 `.mmd` 的工作区相对路径。
+		 * @param file - 索引表里「源文件」那一列的取值（`L03-T05-….mmd`，可能带反引号）
+		 * @returns 工作区相对路径；`file` 不合法时 null（**词法拒绝，不猜**）
+		 */
+		function diagramPath(file) {
+			const name = String(file === null || file === undefined ? "" : file).replace(/`/g, "").trim();
+			// 只认"本目录里的一个文件名"：索引是引擎写的，但**读到的东西不等于可信**
+			// （它哪天被手改、或被写进 `../` 就该当场拒绝，而不是拿它去拼路径）。
+			if (name === "" || name.includes("/") || name.includes("\\") || name.includes("..")) return null;
+			return classroomRoot() + "/" + DIAGRAMS_SUBDIR + "/" + name;
+		}
+
+		/** @returns 立绘静态图的工作区相对路径（`__DSH_CLASSROOM_UI_CONFIG__.staticPortrait` 可覆盖）。 */
+		function staticPortraitPath() {
+			const configured = uiConfig().staticPortrait;
+			return typeof configured === "string" && configured.length > 0 ? configured : DEFAULT_STATIC_PORTRAIT;
+		}
+
+		/** @returns 立绘第二资产根（工作区相对，去尾斜杠；`__DSH_CLASSROOM_UI_CONFIG__.portraitAssets` 可覆盖）。 */
+		function portraitAssetsRoot() {
+			const configured = uiConfig().portraitAssets;
+			const declared = declarationSync();
+			const fallback = declared !== null && declared.ok === true && typeof declared.portraitAssets === "string"
+				? declared.portraitAssets
+				: DEFAULT_PORTRAIT_ASSETS;
+			const value = typeof configured === "string" && configured.length > 0 ? configured : fallback;
+			return value.endsWith("/") ? value.slice(0, -1) : value;
+		}
+
 		// ════════════════════════════════════════════════════════════════════
 		// 3 · 解析（纯函数：只吃文本，不碰 IO，可被 node 侧测试直接驱动）
 		//
@@ -712,16 +834,22 @@ window.__ModuleLoader__.load({
 		/** 三条手段的优先级——与引擎侧 `EXPRESSION_PATH_TIEBREAK` 逐字一致。 */
 		const EXPRESSION_PATH_ORDER = ["named-expression", "face-parameters", "motion"];
 
+		/** 声明读取失败时的统一形状（`portraitAssets` 也一并给，免得调用方多一种 undefined）。 */
+		function declarationFailure(reason) {
+			return { ok: false, reason: reason, classroomRoot: null, portraitModel: null, portraitAssets: null };
+		}
+
 		/**
 		 * 解析**部署声明**（EXPR-5；纯函数，测试直接喂字符串）。
 		 *
 		 * 与 `parseProgress` 同一纪律：**读不到就 ok:false ＋ 原因**，绝不填默认值——
 		 * 静默的默认值会让"声明写坏了"表现成"一切正常"，而这正是本轮要消灭的失效模式。
 		 * @param text - `classroom.config.json` 全文
-		 * @returns {{ok:boolean, reason:string|null, classroomRoot:string|null, portraitModel:string|null}}
+		 * @returns {{ok:boolean, reason:string|null, classroomRoot:string|null, portraitModel:string|null,
+		 *            portraitAssets:string|null}}
 		 */
 		function parseDeclaration(text) {
-			const fail = (reason) => ({ ok: false, reason: reason, classroomRoot: null, portraitModel: null });
+			const fail = declarationFailure;
 			let raw;
 			try {
 				raw = JSON.parse(text);
@@ -737,13 +865,30 @@ window.__ModuleLoader__.load({
 				return fail("`classroomRoot` 必须是工作区相对路径（得到绝对路径 " + JSON.stringify(raw.classroomRoot) + "）");
 			}
 			if (typeof raw.portraitModel !== "string" || raw.portraitModel.trim() === "") {
-				return fail("缺 `portraitModel`（字符串：立绘模型名，如 Haru）");
+				return fail("缺 `portraitModel`（字符串：立绘模型名，如 deepseek）");
+			}
+			/**
+			 * 🔴 `portraitAssets`（D3 新增，**可选**）：立绘资产的第二来源根。
+			 *    · 不给 → 用代码默认（`DEFAULT_PORTRAIT_ASSETS`，即舞台包的 assets/）；
+			 *    · 给了但不是字符串／是绝对路径 → **整份声明判失败**（与 classroomRoot 同一条纪律：
+			 *      写错了必须当场响，不许悄悄退回默认值——那正是"改了配置没生效"的来源）。
+			 */
+			let portraitAssets = null;
+			if (raw.portraitAssets !== undefined && raw.portraitAssets !== null) {
+				if (typeof raw.portraitAssets !== "string" || raw.portraitAssets.trim() === "") {
+					return fail("`portraitAssets` 必须是字符串（立绘资产的第二来源根，工作区相对路径）");
+				}
+				if (raw.portraitAssets.startsWith("/")) {
+					return fail("`portraitAssets` 必须是工作区相对路径（得到绝对路径 " + JSON.stringify(raw.portraitAssets) + "）");
+				}
+				portraitAssets = normalizeRelativePath(raw.portraitAssets);
 			}
 			return {
 				ok: true,
 				reason: null,
 				classroomRoot: normalizeRelativePath(raw.classroomRoot),
 				portraitModel: raw.portraitModel.trim(),
+				portraitAssets: portraitAssets,
 			};
 		}
 
@@ -855,7 +1000,7 @@ window.__ModuleLoader__.load({
 				} catch (error) {
 					settled = {
 						path: path,
-						declaration: { ok: false, reason: "读不到文件（" + messageOf(error) + "）", classroomRoot: null, portraitModel: null },
+						declaration: declarationFailure("读不到文件（" + messageOf(error) + "）"),
 					};
 				}
 				declarationResolved = settled;
@@ -971,7 +1116,13 @@ window.__ModuleLoader__.load({
 			let offset = 1;
 			for (;;) {
 				const result = await remote.workspaceFiles.read(sessionId, path, { offset }, signal);
-				if (!result.ok) throw new Error(result.error.message);
+				if (!result.ok) {
+					// 🔴 把宿主的 error.code 带出来：下游要判「文件不存在」（正常态）还是「读坏了」（故障），
+					//    靠**结构化字段**判，不靠对文案做正则（文案会随版本变，code 不会）。
+					const failure = new Error(result.error.message);
+					if (result.error.code !== undefined && result.error.code !== null) failure.code = String(result.error.code);
+					throw failure;
+				}
 				if (result.value.lines === 0) {
 					if (result.value.eof) break;
 					throw new Error("分页无进展：第 " + String(offset) + " 行起返回 0 行却未到末行（" + path + "）");
@@ -1539,6 +1690,11 @@ window.__ModuleLoader__.load({
 				//    （`live2d-host/src/host.js:220,440` 逐字只用 `this.canvas.width`）→
 				//    这里只改**呈现尺寸**：`object-fit:contain` 把 640×640 的画布缩进舞台，不裁不拉伸。
 				canvas: { display: "block", width: "100%", height: "100%", objectFit: "contain" },
+				/**
+				 * 🔴 D3 的静态立绘图：**同一块舞台框里的一张画**（`object-fit:contain`，不裁不拉伸）。
+				 * 它与画布叠在同一个框里——Live2D 起来时这张图根本不渲染（`showStatic` 为假）。
+				 */
+				staticPortrait: { display: "block", width: "100%", height: "100%", objectFit: "contain" },
 				chipRow: { display: "flex", flexWrap: "wrap", gap: space.xs, marginBottom: space.xs },
 				chip: Object.assign({ background: "transparent", border: line.hair, borderRadius: radius.pill, color: ink[2], cursor: "pointer", padding: space.xxs + " " + space.md }, t.meta),
 				chipActive: { background: fill.plate, color: ink[1] },
@@ -1561,6 +1717,49 @@ window.__ModuleLoader__.load({
 				drawSource: Object.assign({ color: ink[2], background: fill.code, borderRadius: radius.inner, margin: 0, padding: space.md + " " + space.lg, overflowX: "auto", whiteSpace: "pre-wrap", overflowWrap: "anywhere" }, t.code),
 				drawDetails: Object.assign({ color: ink[4] }, t.label),
 				drawSummary: Object.assign({ color: ink[4], cursor: "pointer" }, t.label),
+
+				// ── 面板内 tab 栏（W-p：「教室」／「板书」）────────────────────────────
+				//    层级只用**字色 ＋ 金褐下划线**表达（项目硬规矩：不许用加粗做层级）。
+				//    tab 栏本身走一条宿主发丝线收口，与「书名页」的分节线同一材质。
+				tabBar: { display: "flex", alignItems: "baseline", gap: space.xl, borderBottom: line.hair },
+				tab: Object.assign({
+					appearance: "none",
+					background: "transparent",
+					border: 0,
+					borderBottom: "2px solid transparent",
+					padding: space.xs + " 0 " + space.sm,
+					margin: 0,
+					cursor: "pointer",
+					color: ink[4],
+				}, t.label),
+				tabActive: { color: ink[1], borderBottom: "2px solid var(--cui-gold)" },
+
+				// ── 板书历史（W-p）：只读列表 ＋ 点开后的那一块 ────────────────────────
+				//    列表是**一行一条**（标题占满、元信息靠右），当前讲那一行底下走金褐发丝线。
+				//    🔴 行是 button 元素：浏览器默认的边框/底色/字体必须显式清掉，否则会跳出一套
+				//       "系统按钮"的样子（与本面板的纸面材质完全不是一回事）。
+				boardList: { display: "flex", flexDirection: "column" },
+				boardRow: Object.assign({
+					appearance: "none",
+					display: "flex",
+					flexWrap: "wrap",
+					alignItems: "baseline",
+					justifyContent: "space-between",
+					gap: space.md,
+					width: "100%",
+					textAlign: "left",
+					background: "transparent",
+					border: 0,
+					borderBottom: line.hair,
+					padding: space.sm + " 0 " + space.sm + " " + space.md,
+					cursor: "pointer",
+					color: ink[2],
+				}, t.body),
+				boardRowCurrent: { borderBottom: line.gold },
+				boardRowTitle: Object.assign({ flex: "1 1 auto", minWidth: 0, overflowWrap: "anywhere", color: ink[2] }, t.head),
+				boardRowMeta: Object.assign({ flex: "0 0 auto", color: ink[4] }, t.meta),
+				/** 点开后的那一块：像一张"翻开的书页"（内页边界 ＋ 画布底），与消息流里那张图同一材质。 */
+				boardViewer: { display: "flex", flexDirection: "column", gap: space.sm, border: line.box, borderRadius: radius.block, padding: space.lg, background: fill.plate },
 			};
 			/** `body` 是 `root` 的别名（两处都指面板根；保留旧键名以免渲染代码与测试两处各改各的）。 */
 			styles.body = styles.root;
@@ -1685,9 +1884,61 @@ window.__ModuleLoader__.load({
 		}
 
 		/**
+		 * 把宿主「读字节」Remote 的返回值解成 `Uint8Array`（**形状不对就响，不猜**）。
+		 *
+		 * 🔴 这是 0.2.1 迁移踩到的一处**真断裂**（两次实测，不是推的）：
+		 *    · 0.1.5 的客户端调的是 `workspaceFiles.readAll(...)`，返回值里字节是 **base64 文本**
+		 *      （`data: Buffer.from(data).toString("base64")`，见 README §4.5.1 的取证）；
+		 *    · **0.2.1 里根本没有 `readAll` 这个方法**（`workspaceFiles` 只注册
+		 *      `read` / `readBytes` / `list` / `stat` / `changes`），调用它当场
+		 *      `TypeError: remote.workspaceFiles.readAll is not a function` → 面板直接进 failed 态，
+		 *      连"读文件"那一步都没走到。这就是「立绘装载失败」的**第一因**（不是缺资产）。
+		 *    · 改调 `readBytes` 之后**还有第二个坑**（2026-10-20 在真浏览器里抓到）：
+		 *      `WorkspaceFileBytes` 的 `bytes` 字段装的是**字节数（number）**，真正的负载在 `data` 里。
+		 *      只按 `bytes` 取 → 读出来是个数字 → 整条立绘链在这里断掉。
+		 *      **所以两个字段都要看，谁装着字节就用谁**（不是"哪个名字更像"）。
+		 * 支持的负载形状（都是真实可能出现的）：
+		 *   ① `Uint8Array`（二进制通道直接给字节）；
+		 *   ② `ArrayBuffer` / 任意 `ArrayBufferView`（Buffer 也是这一族）；
+		 *   ③ 数字数组（JSON 传输退化的形状）；
+		 *   ④ base64 字符串（0.1.5 的形状；同一个面板要能跑在两代宿主上）。
+		 * 两个字段都不是这四种之一 → **抛**，并在文案里把 `bytes` / `data` 各自的类型列出来。
+		 * @param value - `readBytes` 的 `value`
+		 * @param path - 出错文案里点名用
+		 * @returns {Uint8Array}
+		 */
+		function bytesOfWorkspaceFile(value, path) {
+			const kindOf = (candidate) => {
+				if (candidate === null) return "null";
+				if (candidate === undefined) return "undefined";
+				if (Array.isArray(candidate)) return "array";
+				if (typeof ArrayBuffer !== "undefined" && candidate instanceof ArrayBuffer) return "arraybuffer";
+				if (ArrayBuffer.isView(candidate)) return "view";
+				return typeof candidate;
+			};
+			const asBytes = (candidate) => {
+				if (candidate === null || candidate === undefined) return null;
+				if (candidate instanceof Uint8Array) return candidate;
+				if (typeof ArrayBuffer !== "undefined" && candidate instanceof ArrayBuffer) return new Uint8Array(candidate);
+				if (ArrayBuffer.isView(candidate)) return new Uint8Array(candidate.buffer, candidate.byteOffset, candidate.byteLength);
+				if (Array.isArray(candidate)) return Uint8Array.from(candidate);
+				if (typeof candidate === "object" && Array.isArray(candidate.data)) return Uint8Array.from(candidate.data);
+				if (typeof candidate === "string") return base64ToBytes(candidate);
+				return null;
+			};
+			if (value === null || value === undefined) throw new Error("读字节的返回形状认不出（value 为空）：" + path);
+			// 🔴 `bytes` 与 `data` 都试：0.2.1 里 `bytes` 是**字节数**，负载在 `data` 上。
+			for (const candidate of [value.bytes, value.data]) {
+				const bytes = asBytes(candidate);
+				if (bytes !== null) return bytes;
+			}
+			throw new Error("读字节的返回形状认不出（bytes=" + kindOf(value.bytes) + "，data=" + kindOf(value.data) + "）：" + path);
+		}
+
+		/**
 		 * 读一个文件的原生字节（**不经文本解码、不做二进制拒绝**）。
-		 * `readAll` 是宿主的「整流读字节」Remote，上限 `maxFileBytes`（安装版默认 32 MiB，
-		 * `dsh-api-workspace-files/lib/index.js:359`）；本批最大的资源是 3.1 MB 的贴图，够用。
+		 * `readBytes` 是宿主的「整流读字节」Remote，上限 `maxFileBytes`（安装版默认 32 MiB）；
+		 * 本批最大的资源是 3.1 MB 的贴图，够用。
 		 *
 		 * 🔴 **立绘资源一律走这条路，不走分页 `read`** —— 这是一个实测踩到的坑：
 		 *    `read` 是**按行**读的，它返回的 `text` **不含末行终止符**
@@ -1701,9 +1952,9 @@ window.__ModuleLoader__.load({
 		 * @returns {Uint8Array}
 		 */
 		async function readBinary(remote, sessionId, path, signal) {
-			const result = await remote.workspaceFiles.readAll(sessionId, path, signal);
+			const result = await remote.workspaceFiles.readBytes(sessionId, path, signal);
 			if (!result.ok) throw new Error(result.error.message);
-			return base64ToBytes(result.value.data);
+			return bytesOfWorkspaceFile(result.value, path);
 		}
 
 		/**
@@ -1807,21 +2058,201 @@ window.__ModuleLoader__.load({
 		let frameworkModule = null;
 
 		/**
+		 * 立绘资源**实际用到的来源**（D3：三个来源按序解析，用哪个**如实记账**）。
+		 * 面板的「讲台诊断」会把这张表显示出来——"到底从哪儿读的"不许靠猜。
+		 */
+		const portraitSources = { stage: false, core: null, model: null, shaders: null, framework: null, staticImage: null };
+
+		/** 舞台路由是否可用（一次性探测 + 缓存；`false` ＝ 舞台没装，走工作区那条腿）。 */
+		let stageRouteProbe = null;
+
+		/**
+		 * 舞台的 `/stage-static` 路由在不在（D3 的**第一个**来源）。
+		 *
+		 * 判据＝`GET /stage-static/manifest.json` 回 200 且 `routeBase` 就是这条前缀
+		 * （形状取自舞台宿主半边的 `registerRoute('manifest', …)`，逐字核对过）。
+		 * 🔴 只在**真浏览器 ＋ 同源 http(s)** 里探：
+		 *    · node 侧测试没有 `document`/`location` → 直接判"没有舞台"（测试因此走工作区那条腿）；
+		 *    · `file://` 打开时同源是 `file:`，`/stage-static/...` 没有意义 → 也判没有。
+		 * @returns {Promise<boolean>}
+		 */
+		function stageRouteAvailable() {
+			if (stageRouteProbe !== null) return stageRouteProbe;
+			stageRouteProbe = (async () => {
+				const location = globalThis.location;
+				const pageLike = typeof document !== "undefined" && document !== null
+					&& typeof globalThis.fetch === "function"
+					&& location !== undefined && location !== null
+					&& /^https?:$/.test(String(location.protocol));
+				if (!pageLike) return false;
+				try {
+					const response = await globalThis.fetch(STAGE_ROUTE + "/manifest.json", { cache: "no-store" });
+					if (!response.ok) return false;
+					const body = await response.json();
+					const ok = body !== null && typeof body === "object" && String(body.routeBase === undefined ? STAGE_ROUTE : body.routeBase) === STAGE_ROUTE;
+					portraitSources.stage = ok;
+					return ok;
+				} catch (error) {
+					// 舞台没装时这条路由就是 404/网络错——**不是异常态**，记一条诊断即可，面板不报错。
+					recordDiag({ at: "stageRoute", ok: false, message: messageOf(error) });
+					return false;
+				}
+			})();
+			return stageRouteProbe;
+		}
+
+		/** 去重（保序）：来源链里两个根可能是同一个目录（部署把 assets 指到 out 时）。 */
+		function dedupePaths(list) {
+			const seen = new Set();
+			const out = [];
+			for (const value of list) {
+				if (!seen.has(value)) { seen.add(value); out.push(value); }
+			}
+			return out;
+		}
+
+		/** 模型/贴图/表情/动作这些**模型目录内**的资源，按 D3 的顺序算出候选工作区路径。 */
+		function assetCandidates(rel) {
+			return dedupePaths([live2dRoot() + "/" + rel, portraitAssetsRoot() + "/" + rel]);
+		}
+
+		/**
+		 * Core 脚本的候选工作区路径。
+		 * 两个来源的**目录布局不同**（历史原因，两边都不能改）：
+		 *   · `live2d-host/out/live2dcubismcore.min.js`（渲染宿主构建产物的根）；
+		 *   · `classroom-stage-warm/assets/l2d/live2dcubismcore.min.js`（舞台自己的 l2d 目录）。
+		 */
+		function coreCandidates() {
+			return dedupePaths([
+				live2dRoot() + "/live2dcubismcore.min.js",
+				portraitAssetsRoot() + "/l2d/live2dcubismcore.min.js",
+			]);
+		}
+
+		/** 渲染宿主 bundle 只有**一个**来源（它是 `live2d-host` 自己的构建产物，舞台不提供）。 */
+		function frameworkCandidates() {
+			return [live2dRoot() + "/live2d-host.bundle.mjs"];
+		}
+
+		/** 着色器只有 `live2d-host/out` 里有（舞台用 PIXI 那套，不带这 13 个 GLSL）。 */
+		function shaderCandidates(rel) {
+			return [live2dRoot() + "/" + SHADER_DIR + rel];
+		}
+
+		/**
+		 * 按候选表依次试读，**第一个成功的就用**；全失败时把**试过哪些 ＋ 各自的原因**一并交回。
+		 * 🔴 不静默降级：返回的是"用了哪一条"，调用方负责把它记进 `portraitSources` 并显示。
+		 * @returns {{ok:boolean, bytes:Uint8Array|null, path:string|null, failures:string[]}}
+		 */
+		async function readFirstAvailable(remote, sessionId, candidates, signal) {
+			const failures = [];
+			for (const path of candidates) {
+				try {
+					return { ok: true, bytes: await readBinary(remote, sessionId, path, signal), path: path, failures: failures };
+				} catch (error) {
+					failures.push(path + "（" + messageOf(error) + "）");
+				}
+			}
+			return { ok: false, bytes: null, path: null, failures: failures };
+		}
+
+		/**
+		 * 插一个 `<script src>` 并等它执行完。
+		 * @param url - 脚本 URL（objectURL 或舞台路由）
+		 * @param label - 失败时点名用（「Cubism Core」/「mermaid」…）
+		 */
+		function appendScript(url, label) {
+			return new Promise((resolve, reject) => {
+				const script = document.createElement("script");
+				script.src = url;
+				script.addEventListener("load", () => { resolve(); }, { once: true });
+				script.addEventListener("error", () => { reject(new Error(label + "脚本装载失败：" + url)); }, { once: true });
+				document.head.appendChild(script);
+			});
+		}
+
+		/**
+		 * 舞台那四个运行库**各自装好了的标志**（判定用全局，不靠"插过没有"）。
+		 *
+		 * 🔴 为什么按全局判而不是按 `<script>` 元素判：元素在**飞行中**（已插入、还没执行）时
+		 *    "找到元素"不等于"库可用"。而全局只会在脚本**执行完**之后出现——用它当标志，
+		 *    "已经在页上"与"已经可用"是同一件事（EC 要的正是这个语义）。
+		 */
+		const STAGE_LIB_GLOBALS = {
+			"pixi.min.js": () => globalThis.PIXI !== undefined && globalThis.PIXI !== null,
+			"live2d.min.js": () => globalThis.Live2D !== undefined && globalThis.Live2D !== null,
+			"live2dcubismcore.min.js": () => globalThis.Live2DCubismCore !== undefined && globalThis.Live2DCubismCore !== null,
+			"index.min.js": () => globalThis.PIXI !== undefined && globalThis.PIXI !== null
+				&& globalThis.PIXI.live2d !== undefined && globalThis.PIXI.live2d !== null,
+		};
+
+		/** 页面上是否已经有指向这个 URL 的 `<script>`（清单外的文件用它去重）。 */
+		function hasScript(url) {
+			try {
+				const absolute = new URL(url, document.baseURI).href;
+				for (const el of document.querySelectorAll("script")) {
+					if (el.src === absolute || el.getAttribute("src") === url) return true;
+				}
+			} catch (error) {
+				recordDiag({ at: "hasScript", message: messageOf(error) });
+			}
+			return false;
+		}
+
+		/**
+		 * 装一个脚本，**已经可用就跳过**（这是 EC「不能重复执行也不能冲突」的落地）。
+		 * @param url - 脚本 URL
+		 * @param label - 失败文案里点名用
+		 * @param fileName - 清单里的文件名（有标志全局的按全局判，没有的按 `src` 去重）
+		 * @returns {Promise<"preexisting"|"loaded">}
+		 */
+		async function loadScriptOnce(url, label, fileName) {
+			const probe = fileName === undefined ? undefined : STAGE_LIB_GLOBALS[fileName];
+			if (probe !== undefined) {
+				if (probe()) return "preexisting";
+			} else if (hasScript(url)) {
+				return "preexisting";
+			}
+			await appendScript(url, label);
+			return "loaded";
+		}
+
+		/**
 		 * 装载官方 Cubism Core（经典脚本，执行后提供 `Live2DCubismCore` 全局）。
 		 * 与 `live2d-host/demo/demo.html:11` 的 `<script src>` 是同一件事，只是脚本源换成了 objectURL。
+		 *
+		 * 🔴 **EC（D3/D4）· 谁负责谁**：
+		 *   · 舞台（S 车道）在 `ensureL2dLibs()` 里按清单 `<script src="/stage-static/l2d/live2dcubismcore.min.js">`
+		 *     装同一份文件；
+		 *   · 本面板**先看全局在不在**：`Live2DCubismCore` 是**整页唯一**的 Cubism 运行时
+		 *     （重复执行＝在同一个全局名下重建一遍 csm 运行时，两个应用共享谁的内存说不清）。
+		 *     已在 → **直接跳过**（`portraitSources.core === "preexisting"`），一个字节都不重读。
+		 *   · 两边指向的是**同一个文件**（`classroom-stage-warm/assets/l2d/live2dcubismcore.min.js`），
+		 *     所以"谁先装"都不产生版本差；面板不依赖舞台的 PIXI/display 两个库，舞台也不依赖面板的渲染宿主。
 		 */
 		async function loadCore(remote, sessionId, signal) {
 			if (coreReady !== null) return coreReady;
 			coreReady = (async () => {
-				const bytes = await readBinary(remote, sessionId, live2dRoot() + "/live2dcubismcore.min.js", signal);
-				const url = URL.createObjectURL(new Blob([bytes], { type: "text/javascript" }));
-				await new Promise((resolve, reject) => {
-					const script = document.createElement("script");
-					script.src = url;
-					script.addEventListener("load", () => { resolve(); }, { once: true });
-					script.addEventListener("error", () => { reject(new Error("Cubism Core 脚本装载失败")); }, { once: true });
-					document.head.appendChild(script);
-				});
+				if (globalThis.Live2DCubismCore !== undefined && globalThis.Live2DCubismCore !== null) {
+					portraitSources.core = "preexisting";
+					return;
+				}
+				if (await stageRouteAvailable()) {
+					// ① 舞台装了：直接取它已经注册好的那份（同源 HTTP，不需要 token——舞台自己也这么取）。
+					const url = STAGE_ROUTE + "/l2d/live2dcubismcore.min.js";
+					await appendScript(url, "Cubism Core 装载失败（舞台路由 " + STAGE_ROUTE + "）");
+					portraitSources.core = url;
+				} else {
+					// ② 舞台没装：按 D3 的来源链从工作区字节通道读。
+					const read = await readFirstAvailable(remote, sessionId, coreCandidates(), signal);
+					if (!read.ok) {
+						// 🔴 文案里必须点名是哪个文件——「立绘装载失败」那条一行说明靠它定位（测试也认它）。
+						throw new Error("读不到 Cubism Core 脚本（live2dcubismcore.min.js），试过 " + String(read.failures.length) + " 处：" + read.failures.join("；"));
+					}
+					const url = URL.createObjectURL(new Blob([read.bytes], { type: "text/javascript" }));
+					await appendScript(url, "Cubism Core 装载失败（" + read.path + "）");
+					portraitSources.core = read.path;
+				}
 				if (globalThis.Live2DCubismCore === undefined) throw new Error("Core 脚本执行完却没有 Live2DCubismCore 全局");
 			})();
 			coreReady = coreReady.catch((error) => {
@@ -1835,13 +2266,23 @@ window.__ModuleLoader__.load({
 		 * 装载渲染宿主的 ESM bundle（动态 `import(objectURL)`）。
 		 * 插件 bundle 本身是**经典脚本**（宿主按 `<script src>` 装载，见
 		 * `dsh-client-modules/lib/client.js:146-158`），所以这里用动态 import 是合法的。
+		 *
+		 * 🔴 D3 的**边界**（如实说）：舞台的 `/stage-static` **不提供**这个 bundle
+		 *    （舞台用 PIXI ＋ pixi-live2d-display，本插件的 `live2d-host` 是另一套自研渲染器）。
+		 *    所以它只有 `clients/live2d-host/out/` 一个来源；那个目录没构建过 → 立绘不可用 →
+		 *    面板退回**静态立绘图**（§7 的失败态 ＋ `staticPortrait`）。这正是本仓库当前的事实。
 		 * @returns bundle 的命名导出（`Live2DHost` / `parseCapability` / 两个 provider …）
 		 */
 		async function loadFramework(remote, sessionId, signal) {
 			if (frameworkModule !== null) return frameworkModule;
-			const bytes = await readBinary(remote, sessionId, live2dRoot() + "/live2d-host.bundle.mjs", signal);
-			const url = URL.createObjectURL(new Blob([bytes], { type: "text/javascript" }));
+			const read = await readFirstAvailable(remote, sessionId, frameworkCandidates(), signal);
+			if (!read.ok) {
+				throw new Error("读不到渲染宿主 bundle（live2d-host.bundle.mjs）：" + read.failures.join("；")
+					+ " → 该文件是 clients/live2d-host 的构建产物（node scripts/build.mjs，需先装 vendor/），本插件不改它");
+			}
+			const url = URL.createObjectURL(new Blob([read.bytes], { type: "text/javascript" }));
 			frameworkModule = await import(url);
+			portraitSources.framework = read.path;
 			return frameworkModule;
 		}
 
@@ -1888,28 +2329,70 @@ window.__ModuleLoader__.load({
 		 * 读齐一张模型需要的全部资源（模型目录 + 13 个着色器 + model3.json 自身）。
 		 * @returns Map<虚拟路径, objectURL>
 		 */
-		function assetsFor(remote, sessionId, signal) {
-			const key = sessionId + "|" + live2dRoot() + "|" + modelName();
+		/**
+		 * 读齐一张模型需要的全部资源（模型目录 ＋ 13 个着色器 ＋ model3.json 自身）。
+		 *
+		 * 🔴 D3 的来源分派（**每个文件各自解析，用到的来源如实记进 `portraitSources`**）：
+		 *   · 舞台装了（`stage === true`）：模型目录内的文件走 `/stage-static/models/<模型>/…`
+		 *     ——这条路是舞台宿主半边已经注册好的静态根，布局与工作区那份**逐字相同**
+		 *     （`models/<名>/<名>.model3.json`），所以 URL 就是 `STAGE_ROUTE + "/" + 虚拟名`；
+		 *   · 舞台没装：按 `assetCandidates` 的顺序从工作区字节通道读（out → 舞台包 assets）；
+		 *   · **着色器永远只有 `live2d-host/out/shaders/WebGL/` 一份**（舞台那套不带 GLSL），
+		 *     所以它总是走字节通道 + 私有 scheme。
+		 * @returns Map<虚拟路径, 浏览器可加载的 URL（objectURL 或舞台路由）>
+		 */
+		function assetsFor(remote, sessionId, signal, stage) {
+			const key = sessionId + "|" + live2dRoot() + "|" + portraitAssetsRoot() + "|" + modelName() + "|" + (stage === true ? "stage" : "workspace");
 			if (assetCache.has(key)) return assetCache.get(key);
 			const pending = (async () => {
-				const root = live2dRoot();
 				const modelDir = "models/" + modelName() + "/";
 				const modelFile = modelName() + ".model3.json";
-				const model3Bytes = await readBinary(remote, sessionId, root + "/" + modelDir + modelFile, signal);
 				let model3;
+				let model3Bytes = null;
+				let model3Source;
+				if (stage === true) {
+					const response = await globalThis.fetch(STAGE_ROUTE + "/" + modelDir + modelFile, { cache: "no-store" });
+					if (!response.ok) {
+						throw new Error("从舞台路由读不到 " + modelDir + modelFile + "（HTTP " + String(response.status) + "）");
+					}
+					model3Bytes = new Uint8Array(await response.arrayBuffer());
+					model3Source = STAGE_ROUTE + "/" + modelDir + modelFile;
+				} else {
+					const read = await readFirstAvailable(remote, sessionId, assetCandidates(modelDir + modelFile), signal);
+					if (!read.ok) throw new Error("读不到 " + modelDir + modelFile + "：" + read.failures.join("；"));
+					model3Bytes = read.bytes;
+					model3Source = read.path;
+				}
 				try {
 					model3 = JSON.parse(decodeText(model3Bytes));
 				} catch (error) {
 					throw new Error("model3.json 不是合法 JSON：" + messageOf(error));
 				}
-				const entries = [{ name: modelDir + modelFile, path: root + "/" + modelDir + modelFile, bytes: model3Bytes }];
-				for (const ref of modelReferences(model3)) {
-					entries.push({ name: modelDir + ref.rel, path: root + "/" + modelDir + ref.rel });
+				portraitSources.model = model3Source;
+				const urls = new Map();
+				const names = [modelDir + modelFile];
+				for (const ref of modelReferences(model3)) names.push(modelDir + ref.rel);
+				if (stage === true) {
+					// 舞台路由：直接把 URL 交出去（不建 objectURL，不重复读一遍字节）。
+					for (const name of names) urls.set(name, STAGE_ROUTE + "/" + name);
+				} else {
+					const entries = [];
+					for (const name of names) entries.push({ name: name, path: null });
+					// 逐文件找候选根：第一个能读到的就用（`materializeAssets` 只负责建 objectURL）。
+					// 🔴 `path` 必须留在入口上：`materializeAssets` 用 `mimeOf(entry.path)` 定 Blob 的
+					//    MIME（贴图必须是 `image/png` 才能被 `Image` 解出来），给 null 会当场抛。
+					await Promise.all(entries.map(async (entry) => {
+						const read = await readFirstAvailable(remote, sessionId, assetCandidates(entry.name), signal);
+						if (!read.ok) throw new Error("读不到 " + entry.name + "：" + read.failures.join("；"));
+						entry.bytes = read.bytes;
+						entry.path = read.path;
+					}));
+					for (const [name, url] of await materializeAssets(remote, sessionId, entries, signal)) urls.set(name, url);
 				}
-				for (const file of SHADER_FILES) {
-					entries.push({ name: SHADER_DIR + file, path: root + "/" + SHADER_DIR + file });
-				}
-				const urls = await materializeAssets(remote, sessionId, entries, signal);
+				// 着色器：只有 out 一份，走字节通道（逐字节忠实，理由见 `readBinary` 的注释）。
+				const shaderEntries = SHADER_FILES.map((file) => ({ name: SHADER_DIR + file, path: shaderCandidates(file)[0] }));
+				for (const [name, url] of await materializeAssets(remote, sessionId, shaderEntries, signal)) urls.set(name, url);
+				portraitSources.shaders = live2dRoot() + "/" + SHADER_DIR;
 				return { urls: urls, model3: model3, modelDir: modelDir, modelFile: modelFile };
 			})();
 			assetCache.set(key, pending);
@@ -2213,24 +2696,303 @@ window.__ModuleLoader__.load({
 		}
 
 		/**
-		 * 装载一张立绘并起渲染循环。
+		 * 舞台那套运行时的就绪检测 ＋ 装载（D3 的**第一来源**）。
+		 *
+		 * 面板**不引入任何新依赖**：用的就是舞台已经装进页面的四个库
+		 * （`pixi.min.js` / `live2d.min.js` / `live2dcubismcore.min.js` / `index.min.js`，
+		 * 清单来自舞台的 `/stage-static/manifest.json` 的 `l2d` 字段，与舞台自己那份**同一份清单**）。
+		 *
+		 * 🔴 三条纪律（逐条都有理由）：
+		 *   ① **同一份文件不重复执行**：`loadScriptOnce` 先按 `src` 找页面上已有的 `<script>`
+		 *      ——舞台插过的那四个就在页面上了，找不到才插。于是 `Live2DCubismCore` 与 `PIXI`
+		 *      这两个**整页唯一**的全局**不会被执行两遍**（EC：两边对 Core 的加载不能重复也不能冲突）。
+		 *   ② **顺序照清单分两段**：先 `pixi`，再其余三个（`index.min.js` 在加载期就要用 `PIXI`，
+		 *      同段并行会在 pixi 之前跑 —— 舞台的注释里已记过这个坑）。
+		 *   ③ **没有舞台就如实说没有**：`manifest.json` 404/网络错 → `ok:false` ＋ 原因，
+		 *      由调用方走 D3 的退路（静态立绘图），不重试、不猜。
+		 * @returns {Promise<{ok:boolean, PIXI:object|null, reason:string|null, manifest:object|null}>}
+		 */
+		let stageRuntimeProbe = null;
+		function stageRuntime() {
+			if (stageRuntimeProbe !== null) return stageRuntimeProbe;
+			stageRuntimeProbe = (async () => {
+				if (!(await stageRouteAvailable())) {
+					return { ok: false, PIXI: null, reason: "舞台没装（" + STAGE_ROUTE + "/manifest.json 不可达）", manifest: null };
+				}
+				let manifest;
+				try {
+					const response = await globalThis.fetch(STAGE_ROUTE + "/manifest.json", { cache: "no-store" });
+					if (!response.ok) throw new Error("HTTP " + String(response.status));
+					manifest = await response.json();
+				} catch (error) {
+					return { ok: false, PIXI: null, reason: "读不到舞台清单：" + messageOf(error), manifest: null };
+				}
+				const phases = Array.isArray(manifest.l2d) ? manifest.l2d : [];
+				if (phases.length === 0) return { ok: false, PIXI: null, reason: "舞台清单里没有 l2d 库（manifest.l2d 为空）", manifest: manifest };
+				try {
+					for (const phase of phases) {
+						await Promise.all(phase.map((file) => loadScriptOnce(STAGE_ROUTE + "/l2d/" + file, "舞台运行时库", file)));
+					}
+				} catch (error) {
+					return { ok: false, PIXI: null, reason: messageOf(error), manifest: manifest };
+				}
+				const PIXI = globalThis.PIXI;
+				const hasModel = PIXI !== undefined && PIXI !== null
+					&& PIXI.live2d !== undefined && PIXI.live2d !== null
+					&& PIXI.live2d.Live2DModel !== undefined && PIXI.live2d.Live2DModel !== null;
+				if (!hasModel) {
+					return { ok: false, PIXI: null, reason: "舞台的 l2d 库装完了却没有 PIXI.live2d.Live2DModel 全局", manifest: manifest };
+				}
+				if (globalThis.Live2DCubismCore === undefined || globalThis.Live2DCubismCore === null) {
+					return { ok: false, PIXI: null, reason: "舞台的 l2d 库装完了却没有 Live2DCubismCore 全局", manifest: manifest };
+				}
+				portraitSources.stage = true;
+				// 这条腿的 Core 只有**一个**来源：舞台那条路由（舞台自己先装过的话，这里就是"已存在，跳过"）。
+				portraitSources.core = STAGE_ROUTE + "/l2d/live2dcubismcore.min.js";
+				return { ok: true, PIXI: PIXI, reason: null, manifest: manifest };
+			})();
+			return stageRuntimeProbe;
+		}
+
+		/**
+		 * 装载一张立绘并起渲染循环（**入口**）。
+		 *
+		 * D3 的两条腿，顺序就是契约的顺序：
+		 *   ① 舞台装了 → 用**舞台那套**（PIXI 6 ＋ pixi-live2d-display，模型走 `/stage-static/models/…`）；
+		 *   ② 舞台没装 → 走本插件自带的 `live2d-host` 渲染宿主（`clients/live2d-host/out`，
+		 *      那是**另一条工作线**的构建产物；本机没构建过 → 抛 → 面板进失败态并**显示静态立绘图**）。
+		 * 两条腿返回**同一套句柄 API**，`PortraitStage` 不需要知道这次走的是哪条。
 		 * @param options - {remote, sessionId, canvas, signal}
-		 * @returns 引擎句柄：{host, capability, applyPhase, applyExpression, setChannel, startFeed, stopFeed, readout, dispose}
+		 * @returns 引擎句柄：{host, capability, applyPhase, applyExpression, setChannel, startFeed, stopFeed, readout, setPaused, dispose}
 		 */
 		async function mountPortrait(options) {
+			const stage = await stageRuntime();
+			if (stage.ok) return mountPixiPortrait(options, stage);
+			portraitSources.stage = false;
+			try {
+				return await mountCustomPortrait(options);
+			} catch (error) {
+				/**
+				 * 🔴 把**「能力缺席」**与**「装载故障」**分开（两件事，语义不同）：
+				 *   · 自带这条腿的**入口**＝渲染宿主 bundle（`live2d-host.bundle.mjs`）。它读不到
+				 *     ⇒ 这台 profile 上**根本没有可用的 Live2D 源**（舞台没装 ＋ 自带宿主未构建）
+				 *     ⇒ 这是**预期的能力缺席**，面板显示静态图 ＋ 一条中性说明，**不叫"装载失败"**；
+				 *   · 入口读得到、后面某一步坏了（Core 读不到/执行失败、模型 JSON 坏、着色器编译超时…）
+				 *     ⇒ 那是**故障**，原始报错一路抛出去，面板照旧显示「立绘装载失败：…」。
+				 * 判据是"重新读一次入口"（只在失败路径多读一次，正常路径零成本），
+				 * 不是拿报错文案做字符串匹配。
+				 */
+				const entry = await readFirstAvailable(options.remote, options.sessionId, frameworkCandidates(), options.signal);
+				if (entry.ok) throw error;
+				const absent = new Error("本 profile 没有可用的 Live2D 源（舞台没装，且自带渲染宿主 " + live2dRoot() + " 未构建）");
+				absent.code = "portrait/no-source";
+				absent.causes = [messageOf(error)];
+				throw absent;
+			}
+		}
+
+		/**
+		 * 用**舞台那套**画立绘（PIXI ＋ pixi-live2d-display，模型与库都走 `/stage-static`）。
+		 *
+		 * 🔴 D1「只播待机动作」的落地：起来就 `Idle` 那一组，**不接**相位映射、**不接**引擎表情。
+		 *    呼吸与眨眼是框架内部的参数更新（与动作无关），所以即使 `Idle` 动作只播一轮，
+		 *    画面仍然是"在呼吸、在眨眼"的。
+		 * 🔴 D1「约 15fps」的落地：`app.ticker.maxFPS = PORTRAIT_FPS` ＋ 模型手动更新
+		 *    （`autoUpdate:false`，在同一个 ticker 回调里 `model.update(dt)`）——
+		 *    渲染与模型推进**同频**，不是"渲染 15fps、模型还在 60fps 空转"。
+		 * 🔴 D2「暂停」的落地：`app.ticker.stop()`（GPU 与 CPU 都停），恢复 `start()`。
+		 * @returns 与 `mountCustomPortrait` **同形**的句柄
+		 */
+		async function mountPixiPortrait(options, stage) {
+			const canvas = options.canvas;
+			const PIXI = stage.PIXI;
+			const width = canvas.width === 0 ? PORTRAIT_CANVAS_SIZE : canvas.width;
+			const height = canvas.height === 0 ? PORTRAIT_CANVAS_SIZE : canvas.height;
+			const app = new PIXI.Application({
+				view: canvas,
+				width: width,
+				height: height,
+				backgroundAlpha: 0,
+				antialias: true,
+				autoDensity: true,
+				resolution: typeof globalThis.devicePixelRatio === "number" && globalThis.devicePixelRatio > 0 ? globalThis.devicePixelRatio : 1,
+				// 🔴 用自己的 ticker（PIXI 默认就是 false）：15fps 只节流面板这一个应用，
+			//    不碰页面共享 ticker（舞台那一份不受影响）。
+				sharedTicker: false,
+			});
+			try { app.renderer.resize(width, height); } catch (error) { recordDiag({ at: "mountPixiPortrait", resize: messageOf(error) }); }
+
+			const modelUrl = STAGE_ROUTE + "/models/" + modelName() + "/" + modelName() + ".model3.json";
+			let model = null;
+			try {
+				model = await PIXI.live2d.Live2DModel.from(modelUrl, { autoInteract: false, autoUpdate: false });
+			} catch (error) {
+				try { app.destroy(false); } catch (ignored) { /* 销毁失败不掩盖真正的错 */ }
+				throw new Error("从舞台路由装载模型失败（" + modelUrl + "）：" + messageOf(error));
+			}
+			portraitSources.model = modelUrl;
+
+			// 缩放与落位：照舞台那份已经跑通的算法（`model.width/height` 在 pixi-live2d-display 里
+			// **已经是缩放后**的显示尺寸，只能算一次 scale，不能拿它再乘一次）。
+			const rawW = model.width || 300;
+			const rawH = model.height || 400;
+			const scale = Math.min(app.screen.width / rawW, app.screen.height / rawH) * 0.95;
+			model.scale.set(scale);
+			const drawW = model.width || rawW * scale;
+			const drawH = model.height || rawH * scale;
+			model.x = Math.max(0, (app.screen.width - drawW) / 2);
+			model.y = Math.max(0, app.screen.height - drawH);
+			app.stage.addChild(model);
+
+			// 待机动作：模型自己的 model3.json **没有**声明 Idle 运动组（实测：Groups 里只有
+			// EyeBlink 与 LipSync），所以这里把 idle 组名交给运动管理器（给上它，动作播完
+			// 管理器就会自己再接一段 —— 库内 `shouldRequestIdleMotion()` → `startRandomMotion(groups.idle)`）。
+			const motionManager = model.internalModel.motionManager;
+			try { motionManager.groups.idle = "Idle"; } catch (error) { recordDiag({ at: "mountPixiPortrait", idleGroup: messageOf(error) }); }
+			try { model.motion("Idle", 0); } catch (error) { recordDiag({ at: "mountPixiPortrait", idleMotion: messageOf(error) }); }
+
+			let frames = 0;
+			let paused = false;
+			let lastFrameError = null;
+			let frameErrors = 0;
+			const ticker = app.ticker;
+			ticker.maxFPS = PORTRAIT_FPS;
+			const onTick = () => {
+				try {
+					model.update(ticker.deltaMS / 1000);
+				} catch (error) {
+					frameErrors += 1;
+					lastFrameError = messageOf(error);
+				}
+				frames += 1;
+			};
+			ticker.add(onTick);
+			ticker.start();
+
+			const settings = model.internalModel === null || model.internalModel === undefined ? null : model.internalModel.settings;
+			const expressions = settings === null || settings.expressions === null || settings.expressions === undefined ? [] : settings.expressions;
+			const capability = {
+				expressions: Array.isArray(expressions) ? expressions : [],
+				lipSync: null,
+				phaseExpression: null,
+			};
+			/**
+			 * 待机模式下「表情」这一路的**如实回答**：面板不做实时驱动，所以任何引擎指令
+			 * **都没有被应用**——`status` 写 `idle-only`，`note` 把原因说清（不静默、不假装成功）。
+			 */
+			const idleOnly = () => ({
+				path: null, value: null, ok: false, status: "idle-only",
+				note: "面板立绘走待机模式（D1：只播待机动作，不做实时驱动）→ 引擎给的表情指令这里**没有应用**；实时驱动在舞台",
+				origin: null, emotion: null, turn: null, inferred: false,
+				skippedLipSync: [], unknownIds: [], clamped: [], clampRange: null,
+			});
+
+			const disposed = { value: false };
+			return {
+				host: null,
+				capability: capability,
+				assets: { model3: null, modelDir: "models/" + modelName() + "/", modelFile: modelName() + ".model3.json" },
+				/** 待机模式：相位只用来「把待机动作起起来」，不映射表情（D1）。 */
+				applyPhase(state) {
+					if (disposed.value) return;
+					if (state !== null && state !== undefined && state.expressionIndex !== null) return;
+					try { model.motion("Idle", 0); } catch (error) { recordDiag({ at: "applyPhase", idle: messageOf(error) }); }
+				},
+				applyExpression(plan) {
+					return plan === null || plan === undefined ? null : idleOnly();
+				},
+				setChannel() { /* 待机模式没有嘴型通道（不喂文字 → 不动嘴） */ },
+				startFeed() { /* 同上：面板不做实时驱动 */ },
+				stopFeed() {},
+				resetStats() {},
+				readout() {
+					let motionsAlive = 0;
+					try {
+						for (const list of Object.values(motionManager.motionGroups)) {
+							for (const motion of list) if (motion !== null && motion !== undefined) motionsAlive += 1;
+						}
+					} catch (error) { recordDiag({ at: "readout", motions: messageOf(error) }); }
+					return {
+						channel: "idle",
+						parameter: null,
+						lipSyncSource: null,
+						value: null,
+						min: null,
+						max: null,
+						provider: 0,
+						frames: frames,
+						expression: null,
+						expressions: capability.expressions.length,
+						expressionApplied: idleOnly(),
+						faceDriver: null,
+						phaseExpression: null,
+						phaseExpressionReported: false,
+						feeding: false,
+						frameErrors: frameErrors,
+						lastFrameError: lastFrameError,
+						motionsAlive: motionsAlive,
+						motionsDropped: 0,
+						/** 🔴 D1/D2：面板立绘这一档的**实际渲染档位**（验收读它，不靠猜）。 */
+						mode: "pixi-idle",
+						fps: PORTRAIT_FPS,
+						paused: paused,
+						tickerStarted: ticker.started === true,
+					};
+				},
+				/** D2：暂停/恢复渲染（GPU 与 CPU 一起停；恢复时不清画面状态）。 */
+				setPaused(next) {
+					const want = next === true;
+					if (paused === want) return;
+					paused = want;
+					try {
+						if (want) ticker.stop();
+						else ticker.start();
+					} catch (error) { recordDiag({ at: "setPaused", message: messageOf(error) }); }
+				},
+				dispose() {
+					if (disposed.value) return;
+					disposed.value = true;
+					try { ticker.remove(onTick); } catch (error) { recordDiag({ at: "dispose", ticker: messageOf(error) }); }
+					try { ticker.stop(); } catch (error) { recordDiag({ at: "dispose", stop: messageOf(error) }); }
+					try { if (model !== null) model.destroy(); } catch (error) { recordDiag({ at: "dispose", model: messageOf(error) }); }
+					try { app.destroy(false); } catch (error) { recordDiag({ at: "dispose", app: messageOf(error) }); }
+				},
+			};
+		}
+
+		/**
+		 * 装载一张立绘并起渲染循环（**本插件自带的 `live2d-host` 那条腿**）。
+		 * @param options - {remote, sessionId, canvas, signal}
+		 * @returns 引擎句柄：{host, capability, applyPhase, applyExpression, setChannel, startFeed, stopFeed, readout, setPaused, dispose}
+		 */
+		async function mountCustomPortrait(options) {
 			const remote = options.remote;
 			const sessionId = options.sessionId;
 			const signal = options.signal;
+			// 走到这里就意味着 `stageRuntime()` 已经判过"没有舞台"——本条腿一律按工作区字节通道取资源。
+			const stage = false;
 			await loadCore(remote, sessionId, signal);
 			const framework = await loadFramework(remote, sessionId, signal);
-			const assets = await assetsFor(remote, sessionId, signal);
+			const assets = await assetsFor(remote, sessionId, signal, stage);
 
 			// ── cdi3（DisplayInfo）：能力发现的「参数全集」来源；缺了也照常走三级回退，只标注原因 ──
 			const displayName = assets.model3.FileReferences === undefined ? undefined : assets.model3.FileReferences.DisplayInfo;
 			let displayInfo = null;
 			let displayInfoMissingReason = "model3.json 未声明 FileReferences.DisplayInfo";
 			if (typeof displayName === "string" && displayName.length > 0) {
-				const bytes = await readBinary(remote, sessionId, live2dRoot() + "/" + assets.modelDir + displayName, signal);
+				// cdi3 是**文本 JSON**：舞台装了走舞台路由，否则按来源链读（与模型同一条路子）。
+				const rel = assets.modelDir + displayName;
+				const bytes = stage === true
+					? new Uint8Array(await (async () => {
+						const response = await globalThis.fetch(STAGE_ROUTE + "/" + rel, { cache: "no-store" });
+						if (!response.ok) throw new Error("HTTP " + String(response.status));
+						return response.arrayBuffer();
+					})())
+					: await (async () => {
+						const read = await readFirstAvailable(remote, sessionId, assetCandidates(rel), signal);
+						if (!read.ok) throw new Error(read.failures.join("；"));
+						return read.bytes;
+					})();
 				try {
 					displayInfo = JSON.parse(decodeText(bytes));
 					displayInfoMissingReason = null;
@@ -2297,6 +3059,10 @@ window.__ModuleLoader__.load({
 			let feedTimer = null;
 			let raf = null;
 			let lastTimestamp = 0;
+			/** D2：当前是否暂停渲染（暂停时**不排 rAF**，帧计数不再增长）。 */
+			let paused = false;
+			/** D1：被 15fps 节流跳过的 rAF 次数（读数里显示，证明"节流真的在节流"）。 */
+			let skipped = 0;
 
 			const activeProvider = () => (channel === "write" ? writeProvider : speakProvider);
 
@@ -2340,8 +3106,26 @@ window.__ModuleLoader__.load({
 				}
 			}
 
+			/**
+			 * 渲染循环（D1/D2）。
+			 *
+			 * D1 · **约 15fps**：rAF 照旧每帧回调（**不是删掉 rAF**），但只有距上一张画超过
+			 *   `PORTRAIT_FRAME_MS` 才真的 `host.step(dt)`。`dt` 取**真实流逝时间**，
+			 *   所以呼吸/眨眼/物理仍然按真实时间推进，只是每秒画 15 张。
+			 * D2 · **暂停**：`paused` 为真时**不再排下一帧**（`raf = null`），CPU 与 GPU 都停；
+			 *   `setPaused(false)` 重新排起来，并把 `lastTimestamp` 归零，避免恢复瞬间拿到一个巨大的 dt。
+			 */
 			const tick = (timestamp) => {
-				const dt = lastTimestamp === 0 ? 1 / 30 : Math.min((timestamp - lastTimestamp) / 1000, 0.1);
+				if (paused) {
+					raf = null;
+					return;
+				}
+				raf = requestAnimationFrame(tick);
+				if (lastTimestamp !== 0 && timestamp - lastTimestamp < PORTRAIT_FRAME_MS) {
+					skipped += 1;
+					return;
+				}
+				const dt = lastTimestamp === 0 ? 1 / PORTRAIT_FPS : Math.min((timestamp - lastTimestamp) / 1000, 0.1);
 				lastTimestamp = timestamp;
 				try {
 					host.step(dt);
@@ -2359,7 +3143,6 @@ window.__ModuleLoader__.load({
 						mouthMax = mouthMax === null ? value : Math.max(mouthMax, value);
 					}
 				}
-				raf = requestAnimationFrame(tick);
 			};
 			raf = requestAnimationFrame(tick);
 
@@ -2580,7 +3363,31 @@ window.__ModuleLoader__.load({
 						lastFrameError: lastFrameError,
 						motionsAlive: motionsAlive,
 						motionsDropped: motionsDropped,
+						/** 🔴 D1/D2：本条腿的实际渲染档位（与 PIXI 那条腿**同一个键**，验收读它不靠猜）。 */
+						mode: "live2d-host-idle",
+						fps: PORTRAIT_FPS,
+						paused: paused,
+						skipped: skipped,
+						idleOnly: PORTRAIT_IDLE_ONLY,
 					};
+				},
+
+				/**
+				 * D2：暂停/恢复渲染。
+				 * 暂停＝**取消已排的那一帧**并且不再排（`raf = null`）；恢复＝重新排一帧并把时间基准归零
+				 * （不归零会在恢复的那一帧拿到一个从暂停前算起的巨大 dt，`host.step` 一步跳过去 → 画面跳一下）。
+				 */
+				setPaused(next) {
+					const want = next === true;
+					if (paused === want) return;
+					paused = want;
+					if (want) {
+						if (raf !== null) cancelAnimationFrame(raf);
+						raf = null;
+						return;
+					}
+					lastTimestamp = 0;
+					if (raf === null) raf = requestAnimationFrame(tick);
 				},
 
 				dispose() {
@@ -2715,6 +3522,23 @@ window.__ModuleLoader__.load({
 		/** @returns 当前是否深色模式（官方主题层用 `body[data-ds-dark-theme]` 切整套变量）。 */
 		function isDarkTheme() {
 			return typeof document !== "undefined" && document.body !== null && document.body.hasAttribute(DARK_ATTRIBUTE);
+		}
+
+		/**
+		 * 舞台是否正**铺满整屏**（D2 的第三个开关：舞台打开时面板暂停渲染）。
+		 *
+		 * 判据（只读 DOM，不改舞台任何状态）：舞台那个自建容器在，里面有一层真舞台，
+		 * 且**不是关闭态**（关闭态那层带 `data-killed="on"`，此时舞台只是一条横幅，立绘不该因为
+		 * 它而停）。舞台没装 / 已被 Ctrl+Shift+M 关掉 → `false`。
+		 * @returns {boolean}
+		 */
+		function stageOverlayOpen() {
+			if (typeof document === "undefined" || document === null) return false;
+			const holder = document.getElementById === undefined ? null : document.getElementById(STAGE_OVERLAY_ID);
+			if (holder === null || holder === undefined) return false;
+			const live = holder.querySelector === undefined ? null : holder.querySelector("." + STAGE_OVERLAY_CLASS);
+			if (live === null || live === undefined) return false;
+			return live.getAttribute("data-killed") !== "on";
 		}
 
 		/**
@@ -3151,6 +3975,173 @@ window.__ModuleLoader__.load({
 		}
 
 		// ════════════════════════════════════════════════════════════════════
+		// 6.9 · 板书历史（W-p）：右栏「板书」tab 的**只读**数据层
+		//
+		// 真源＝`<教室>/runtime/diagrams/index.md`（**引擎在写**，见 `plugins/socratic-engine/lib/
+		// diagramstore.mjs` 与 `diagram.mjs` 的 `renderIndexHeader/renderIndexRow`）。
+		// 🔴 明确**不**用 `whiteboardStore`：那个服务端服务**没有任何写入者**（本仓库里 `whiteboard`
+		//    在 lib/client.js 里 0 处命中），拿它当数据源只会得到一张永远空着的表。
+		// 🔴 索引只给"有哪些图"；**图的内容**在对应的 `.mmd` 文件里，点开才读（省 IO，也符合
+		//    "点开后渲染"这条验收）。
+		// ════════════════════════════════════════════════════════════════════
+
+		/**
+		 * 把 markdown 表格的一行切成单元格（**认 `\|` 转义**）。
+		 * 🔴 为什么不能 `line.split("|")`：引擎写标题/说明时会把 `|` 转义成 `\|`
+		 *    （`diagram.mjs` 的 `cell()` 逐字 `text.replace(/\|/g, '\\|')`），
+		 *    按裸 `|` 切会把一个标题切成两格、后面每一列都错位一格（静默错位，最难查）。
+		 * @param line - 一行 markdown 表格（首尾都是 `|`）
+		 * @returns 单元格文本数组（已 trim，首尾那两个空段去掉）
+		 */
+		function splitTableRow(line) {
+			const cells = [];
+			let current = "";
+			for (let index = 0; index < line.length; index += 1) {
+				const ch = line[index];
+				if (ch === "\\" && line[index + 1] === "|") { current += "|"; index += 1; continue; }
+				if (ch === "|") { cells.push(current); current = ""; continue; }
+				current += ch;
+			}
+			cells.push(current);
+			// 首尾各有一个空段（行首 `|` 之前、行尾 `|` 之后）
+			return cells.slice(1, cells.length - 1).map((cell) => cell.trim());
+		}
+
+		/**
+		 * 解析 `runtime/diagrams/index.md`（**纯函数**：只吃文本，测试直接喂字符串）。
+		 *
+		 * 🔴 **按表头名取列，不按固定列数/固定下标**（2026-10-20 的变更逼出来的硬要求）：
+		 *    引擎给索引**加过一列**（末尾「会话」），表头从 7 列变 8 列。按列数/下标写死的解析器
+		 *    会在那一刻**把每一行都判成"列数对不上"然后整张表变空** —— 而且不报错。
+		 *    所以：先用「含『源文件』那一行」认出表头、建成 `列名 → 下标` 的表，数据行按名字取。
+		 *    以后再加列，这里一行都不用改。
+		 *
+		 * 已知的列（**只有「源文件」是必需的**，其余缺了降级而不是报错）：
+		 *   `日期 | 讲次 | 回合 | 图类型 | 标题 | 说明 | 源文件 | 会话`
+		 *   · `会话` 是后加的，老索引里没有 → `session: null`（**不等于"不属于本会话"**，见 `BoardHistory` 的标注规则）；
+		 *   · `讲次` 可能是 `—`（引擎在"没有讲次门"时写它）→ `lesson: null`，**不填 0**。
+		 *
+		 * 输出**按时间倒序**（日期 `yyyy-MM-dd HH:mm` 可字典序比较，直接比字符串）；
+		 * 时间相同再按回合倒序；还相同则"后追加的在前"（索引 append-only，越靠后越新）。
+		 * @param text - 索引全文（读不到传 null/空串）
+		 * @returns {{items: Array<object>, skipped: number, columns: string[], legacy: boolean}}
+		 *          `legacy: true` ＝ 没认出表头，按**老版 7 列的位置**解析（降级路径，照样能用）。
+		 */
+		function parseDiagramIndex(text) {
+			const items = [];
+			let skipped = 0;
+			const empty = { items: items, skipped: skipped, columns: [], legacy: false };
+			if (typeof text !== "string" || text.trim() === "") return empty;
+
+			/** 老版 7 列的位置（只有在**认不出表头**时才用；认得出就一律按名字取）。 */
+			const LEGACY_COLUMNS = ["日期", "讲次", "回合", "图类型", "标题", "说明", "源文件"];
+			let header = null;
+			let legacy = false;
+
+			const numberOrNull = (value, pattern) => (pattern.test(String(value).trim()) ? Number.parseInt(String(value).trim(), 10) : null);
+
+			for (const rawLine of text.split("\n")) {
+				const raw = rawLine.trim();
+				if (!raw.startsWith("|") || !raw.endsWith("|")) continue;
+				const cells = splitTableRow(raw);
+				if (cells.length === 0) continue;
+				// 分隔行：每一格都只是破折号（含对齐用的 `:--`）
+				if (cells.every((cell) => /^:?-{2,}:?$/.test(cell.replace(/\s/g, "")))) continue;
+
+				if (header === null && !legacy) {
+					// 认表头：**含「源文件」那一行**。认不出就等到第一行数据时退回老版位置映射。
+					if (cells.includes("源文件")) {
+						header = new Map(cells.map((name, index) => [name, index]));
+						continue;
+					}
+					if (cells.includes("日期")) continue;   // 表头缺「源文件」——不是本文件的表，继续找
+					legacy = true;                          // 没表头：按老版 7 列位置解析（降级）
+				}
+
+				const columns = header === null ? LEGACY_COLUMNS : Array.from(header.keys());
+				if (cells.length !== columns.length) { skipped += 1; continue; }
+				const cellOf = (name) => {
+					if (header === null) {
+						const index = LEGACY_COLUMNS.indexOf(name);
+						return index < 0 ? "" : cells[index];
+					}
+					const index = header.get(name);
+					return index === undefined ? "" : cells[index];
+				};
+
+				const file = cellOf("源文件").replace(/`/g, "").trim();
+				if (file === "") { skipped += 1; continue; }
+				const lessonHit = cellOf("讲次").match(/(\d+)/);
+				items.push({
+					time: cellOf("日期"),
+					lesson: lessonHit === null ? null : Number.parseInt(lessonHit[1], 10),
+					turn: numberOrNull(cellOf("回合"), /^\d+$/),
+					kind: cellOf("图类型"),
+					title: cellOf("标题"),
+					caption: cellOf("说明"),
+					file: file,
+					/** 🔴 后加的列：**没有这一列/留空 → null**（老记录）。不许当成"不属于本会话"。 */
+					session: cellOf("会话") === "" ? null : cellOf("会话"),
+					line: items.length + skipped + 1,
+				});
+			}
+
+			items.sort((left, right) => {
+				if (left.time !== right.time) return left.time < right.time ? 1 : -1;
+				const lt = left.turn === null ? -1 : left.turn;
+				const rt = right.turn === null ? -1 : right.turn;
+				if (lt !== rt) return rt - lt;
+				return right.line - left.line;
+			});
+			return {
+				items: items,
+				skipped: skipped,
+				columns: header === null ? (legacy ? LEGACY_COLUMNS.slice() : []) : Array.from(header.keys()),
+				legacy: legacy,
+			};
+		}
+
+		/**
+		 * 读索引并解析（**每次调用都真读盘** —— 页面刷新后仍能从磁盘重建，不依赖任何内存状态）。
+		 * 索引不存在是**正常态**（这节课还没画过图）→ `items: []`、`error: null`。
+		 * @returns {{items: Array<object>, skipped: number, path: string, error: string|null, exists: boolean}}
+		 */
+		async function loadDiagramHistory(remote, sessionId, signal) {
+			const path = diagramsIndexPath();
+			let text;
+			try {
+				text = await readText(remote, sessionId, path, signal);
+			} catch (error) {
+				// 文件不存在 = 还没画过图（**不是故障**）；其它错（权限/编码…）如实回给界面。
+				// 判据：**先看结构化 error.code**（`workspace-file/not-found`），没有再退到文案
+				// （老宿主/别的实现可能只给一句话）。没有这个区分，第一次开面板就会把"还没画过图"
+				// 说成"读盘失败"——那是最容易被误当成事故的一类假告警。
+				const message = messageOf(error);
+				const byCode = error !== null && typeof error === "object" && typeof error.code === "string"
+					? /not-found/i.test(error.code) : false;
+				const missing = byCode || /not-found|not found|ENOENT|不存在/i.test(message);
+				return { items: [], skipped: 0, path: path, error: missing ? null : message, exists: false };
+			}
+			const parsed = parseDiagramIndex(text);
+			return { items: parsed.items, skipped: parsed.skipped, path: path, error: null, exists: true };
+		}
+
+		/**
+		 * 读一张 `.mmd` 的**全文**（点开时才调用）。
+		 * 路径由 `diagramPath(file)` 算，那里已做过词法拒绝（不许带 `/`、`..`）。
+		 * @returns {{ok: boolean, source: string|null, error: string|null}}
+		 */
+		async function readDiagramSource(remote, sessionId, file, signal) {
+			const path = diagramPath(file);
+			if (path === null) return { ok: false, source: null, error: "索引里的源文件名不合法（只允许本目录里的文件名）：" + String(file) };
+			try {
+				return { ok: true, source: await readText(remote, sessionId, path, signal), error: null };
+			} catch (error) {
+				return { ok: false, source: null, error: messageOf(error) };
+			}
+		}
+
+		// ════════════════════════════════════════════════════════════════════
 		// 7 · 组件
 		// ════════════════════════════════════════════════════════════════════
 
@@ -3220,6 +4211,8 @@ window.__ModuleLoader__.load({
 			const [readout, setReadout] = React.useState(null);
 			const [engineVersion, setEngineVersion] = React.useState(0);
 			const [feedLoop, setFeedLoop] = React.useState(false);
+			/** 🔴 D3 的退路：Live2D 用不了时顶上来的静态立绘图（`{kind:'ok'|'absent', url, message}`）。 */
+			const [staticPortrait, setStaticPortrait] = React.useState({ kind: "idle", url: null, message: null });
 			/**
 			 * 🔴 本回合的表情：`runtime/expression.md` 的**正文**（null ＝ 文件还没被引擎写过）。
 			 * 为什么面板要自己轮询这个文件、而不等 store 刷新：表情是老师在**回合中间**用工具决定的，
@@ -3269,7 +4262,21 @@ window.__ModuleLoader__.load({
 						setEngineVersion((value) => value + 1);
 					})
 					.catch((error) => {
-						if (!disposed) setStatus({ kind: "failed", message: messageOf(error) });
+						if (disposed) return;
+						/**
+						 * 🔴 两种终态，别混（见 `mountPortrait` 里那段判据）：
+						 *   · `absent` —— 本 profile **没有可用的 Live2D 源**（能力缺席，不是故障）；
+						 *   · `failed` —— 有源但装载过程中坏了（这才是故障，照旧报「立绘装载失败：…」）。
+						 */
+						if (error !== null && typeof error === "object" && error.code === "portrait/no-source") {
+							setStatus({
+								kind: "absent",
+								message: messageOf(error),
+								cause: Array.isArray(error.causes) && error.causes.length > 0 ? error.causes[0] : null,
+							});
+							return;
+						}
+						setStatus({ kind: "failed", message: messageOf(error) });
 					});
 				return () => {
 					disposed = true;
@@ -3300,19 +4307,22 @@ window.__ModuleLoader__.load({
 			// 相位 → 表情（＋场景重设）；换相位后把极值统计清零，好让下一段读数只反映新相位。
 			// 🔴 EXPR-3：引擎给了 `expression_path` 时，**表情由引擎定**（旧映射退位）；
 			//    没有文件时才沿用旧的相位映射（明说"沿用旧的相位映射"）。
+			// 🔴 D1：面板**只播待机动作** → 相位一律不换表情（`expressionIndex` 传 null）。
 			React.useEffect(() => {
 				const engine = engineRef.current;
 				if (engine === null) return;
-				if (plan.source === "engine") engine.applyPhase(Object.assign({}, state, { expressionIndex: null }));
+				if (PORTRAIT_IDLE_ONLY || plan.source === "engine") engine.applyPhase(Object.assign({}, state, { expressionIndex: null }));
 				else engine.applyPhase(state);
 				engine.resetStats();
 			}, [engineVersion, phase, state.expressionIndex, plan.source]);
 
 			// 表情：按**稳定键**应用（只有路/取值/回合真的变了才重设，见 `expressionKey`）。
+			// 🔴 D1：面板不做实时驱动 → 引擎的表情指令**不应用**（传 null ＝ 收尾，把脸交还给待机）；
+			//    `readout().expressionApplied` 会如实说"这一档没有应用"（不静默、不假装成功）。
 			React.useEffect(() => {
 				const engine = engineRef.current;
 				if (engine === null) return;
-				engine.applyExpression(plan.source === "engine" ? plan : null);
+				engine.applyExpression(PORTRAIT_IDLE_ONLY ? null : (plan.source === "engine" ? plan : null));
 				engine.resetStats();
 			}, [engineVersion, planKey]);
 
@@ -3333,6 +4343,88 @@ window.__ModuleLoader__.load({
 				}, 250);
 				return () => { clearInterval(timer); };
 			}, [status.kind]);
+
+			/**
+			 * 🔴 D2 · **不可见就暂停渲染**（三个开关，任一命中即停）：
+			 *   ① `document.visibilitychange` —— 页面切到后台/最小化；
+			 *   ② `IntersectionObserver` —— 这块板面滚出视口、或被祖先折起（tab 被折叠时也算）；
+			 *   ③ 舞台铺满整屏（`stageOverlayOpen()`）—— 那时看的是舞台，面板这张立绘没人看。
+			 * 解绑方式照 `dispose()`：三个监听各自在自己的 cleanup 里摘掉，不留尾巴。
+			 * 🔴 不猜环境：没有 `document` / `IntersectionObserver`（node 侧、老环境）时**不暂停**
+			 *    （"观测不到"不等于"不可见"——宁可不省这一份电，也不要让立绘在能被看见时不动）。
+			 */
+			React.useEffect(() => {
+				if (status.kind !== "ready") return undefined;
+				const engine = () => engineRef.current;
+				let hidden = typeof document !== "undefined" && document !== null && document.visibilityState === "hidden";
+				let intersecting = true;
+				const apply = () => {
+					const current = engine();
+					if (current === null || typeof current.setPaused !== "function") return;
+					current.setPaused(hidden || !intersecting || stageOverlayOpen());
+				};
+				const onVisibility = () => {
+					hidden = document.visibilityState === "hidden";
+					apply();
+				};
+				if (typeof document !== "undefined" && document !== null && typeof document.addEventListener === "function") {
+					document.addEventListener("visibilitychange", onVisibility);
+				}
+				let observer = null;
+				if (typeof IntersectionObserver === "function") {
+					const target = canvasRef.current;
+					if (target !== null && target !== undefined) {
+						observer = new IntersectionObserver((entries) => {
+							for (const entry of entries) intersecting = entry.isIntersecting === true;
+							apply();
+						});
+						observer.observe(target);
+					}
+				}
+				// 舞台是随时可开可关的（Ctrl+Shift+M / Ctrl+Shift+U / 地址栏开关），只有轮询能跟上；
+				// 1 s 一次、只读一个布尔，代价可以忽略（且只在立绘就绪后才跑）。
+				const timer = setInterval(apply, 1000);
+				apply();
+				return () => {
+					if (typeof document !== "undefined" && document !== null && typeof document.removeEventListener === "function") {
+						document.removeEventListener("visibilitychange", onVisibility);
+					}
+					if (observer !== null) observer.disconnect();
+					clearInterval(timer);
+				};
+			}, [status.kind, sessionKey]);
+
+			/**
+			 * 🔴 D3 · **Live2D 用不了就显示静态立绘图**（不留白）。
+			 *
+			 * 只在 `status.kind === "failed"` 时去取（Live2D 正常时不额外读一张图、也不叠一张图上去）。
+			 * 来源＝舞台包的教师立绘（工作区字节通道，`readBytes` → `Blob` → objectURL）；
+			 * 读不到就**保持现状**（`staticPortrait.kind === "absent"`）——不新增第二种报错，
+			 * 由既有的「立绘装载失败：…」那一行说明原因（那段文案与判据有测试守着，本批不动）。
+			 */
+			React.useEffect(() => {
+				const face = portraitRef.current;
+				if ((status.kind !== "failed" && status.kind !== "absent") || face === undefined || sessionKey === null) return undefined;
+				let live = true;
+				let url = null;
+				const controller = new AbortController();
+				readBinary(face.ctx.remote, face.sessionId, staticPortraitPath(), controller.signal)
+					.then((bytes) => {
+						url = URL.createObjectURL(new Blob([bytes], { type: mimeOf(staticPortraitPath()) }));
+						portraitSources.staticImage = staticPortraitPath();
+						if (live) setStaticPortrait({ kind: "ok", url: url, message: null });
+						// 组件已卸载/换了会话：这张 objectURL 没人用了，当场释放（否则一直占着内存）
+						else URL.revokeObjectURL(url);
+					})
+					.catch((error) => {
+						if (live) setStaticPortrait({ kind: "absent", url: null, message: messageOf(error) });
+					});
+				return () => {
+					live = false;
+					controller.abort();
+					if (url !== null) URL.revokeObjectURL(url);
+				};
+			}, [status.kind, sessionKey]);
 
 			// 卸载时停掉喂文字
 			React.useEffect(() => () => {
@@ -3358,11 +4450,21 @@ window.__ModuleLoader__.load({
 			//   · 只折 CSS 高、不动元素，故未部署时"失败"照常被看见，只是不再占掉 ~330px 空白纸。
 			//   🔴 `loading`/`ready` 两态的尺寸**与改前逐字相同**——本次没有 Live2D 资产可供验证
 			//      "装载成功"这条路，所以那条路一个像素都不动（只改我能在本机实测的失败态）。
-			const boardRaised = status.kind !== "failed";
+			/**
+			 * 🔴 三种**终态**（D3 ＋ "能力缺席 vs 故障"的区分）：
+			 *   · `ready`/`loading`/`idle` —— 画布占位（原样）；
+			 *   · `absent` —— **本 profile 没有可用的 Live2D 源**（能力缺席，不是故障）→ 静态立绘图 ＋ 中性说明；
+			 *   · `failed` —— **有源但装载坏了**（故障）→ 「立绘装载失败：…」照旧 ＋ 折成 0 高。
+			 * 画布在三种状态下**都留在文档里**（装载效果要拿到它，失败才报得出来）。
+			 */
+			const boardRaised = status.kind !== "failed" && status.kind !== "absent";
+			const showStatic = (status.kind === "absent" || status.kind === "failed")
+				&& staticPortrait.kind === "ok" && staticPortrait.url !== null;
+			const boardState = boardRaised ? "raised" : (showStatic ? "static" : "collapsed");
 			board.push(React.createElement("div", {
-				style: boardRaised ? S.portraitBox : S.portraitBoxCollapsed,
+				style: boardRaised || showStatic ? S.portraitBox : S.portraitBoxCollapsed,
 				key: "box",
-				"data-cui-board": boardRaised ? "raised" : "collapsed",
+				"data-cui-board": boardState,
 			},
 				React.createElement("canvas", {
 					ref: canvasRef,
@@ -3371,6 +4473,15 @@ window.__ModuleLoader__.load({
 					style: S.canvas,
 					"data-classroom-ui-portrait": "canvas",
 				}),
+				showStatic
+					? React.createElement("img", {
+						key: "static",
+						src: staticPortrait.url,
+						style: S.staticPortrait,
+						alt: "",
+						"data-cui-static-portrait": "1",
+					})
+					: null,
 			));
 
 			// —— 状态行：相位来源与通道（**常显**：这是产品文案，不是调试信息）
@@ -3416,6 +4527,8 @@ window.__ModuleLoader__.load({
 				+ (applied !== null && applied.ok ? " · 已应用" : "")));
 
 			// —— 🔴 立绘未就位：**显式**（一行，带原始报错）但**不抢主视觉**（不是一整块灰板）
+			//    这里只出现**故障**（有源但坏了）。「能力缺席」不走这一行（见下面那条中性说明）——
+			//    "这台机器上没有 Live2D 源"是**预期的**，把它说成"装载失败"会让每次开面板都像出了事故。
 			if (status.kind === "failed") {
 				board.push(React.createElement("div", {
 					style: S.boardNotice,
@@ -3424,11 +4537,48 @@ window.__ModuleLoader__.load({
 					"data-classroom-ui-live2d": "failed",
 				}, "立绘装载失败：" + String(status.message)));
 			}
+			// —— 能力缺席（不是故障）：一行**中性**说明 ＋ 静态图顶上（D3 的退路）
+			if (status.kind === "absent") {
+				board.push(React.createElement("div", {
+					style: S.boardNotice,
+					key: "absent",
+					"data-classroom-ui-live2d": "absent",
+					"data-cui-live2d-absent": "1",
+				}, "立绘：静态图（本 profile 没有可用的 Live2D 源：舞台没装，自带渲染宿主未构建）"
+					+ (status.cause === null || status.cause === undefined ? "" : "｜原始原因：" + String(status.cause))));
+			}
 
 			// —— 讲台诊断：工程读数（**默认折起**；一条信息都没删，只是不再默认占版面）
 			const diag = [];
 			diag.push(React.createElement("div", { style: S.note, key: "model" },
 				"模型 " + modelName() + "（官方样本**占位**，不是小鞠知花本人的模型；换模型见 README）· 资源 " + live2dRoot()));
+			/**
+			 * 🔴 D1/D2 的**如实读数**：走的是哪条腿（舞台那套 PIXI / 自带渲染宿主）、跑在几 fps、
+			 *    现在有没有被暂停。验收读这一个 DOM 属性就够，不用去猜配置有没有生效。
+			 */
+			const portraitMode = status.kind === "absent" ? "static-fallback"
+				: status.kind === "failed" ? "failed"
+					: (readout === null || readout.mode === undefined ? "pending" : readout.mode);
+			const portraitPaused = readout !== null && readout.paused === true;
+			const sourceLine = portraitSources.stage
+				? "舞台那套（PIXI ＋ pixi-live2d-display，模型与库走 " + STAGE_ROUTE + "）"
+				: "自带渲染宿主（live2d-host，工作区字节通道）";
+			diag.push(React.createElement("div", {
+				style: S.note,
+				key: "mode",
+				"data-cui-portrait-mode": portraitMode === null ? "pending" : String(portraitMode),
+				"data-cui-portrait-paused": portraitPaused ? "true" : "false",
+			}, "渲染 " + sourceLine
+				+ " · 待机模式（只播待机动作，约 " + String(PORTRAIT_FPS) + " fps）"
+				+ (portraitPaused ? " · **已暂停**（不可见或舞台开着）" : "")
+				+ (PORTRAIT_IDLE_ONLY ? " · 不做实时驱动（表情/嘴型由舞台负责）" : "")));
+			if (showStatic) {
+				diag.push(React.createElement("div", {
+					style: S.note,
+					key: "static",
+					"data-cui-static-portrait-note": "1",
+				}, "Live2D 这一档不可用 → 按 D3 退回**静态立绘图**（" + staticPortraitPath() + "）"));
+			}
 			if (plan.source === "absent") {
 				diag.push(React.createElement("div", {
 					style: S.note,
@@ -3453,13 +4603,15 @@ window.__ModuleLoader__.load({
 			//    判据取自宿主能力发现的 `phaseExpression.status`（原样透传，不自己猜）：
 			//      `unavailable`（表达式个数 = 0）→ 换环节**不会**换表情，必须报出来；
 			//      `partial`（1–5 个）→ **可用但下标回绕**（多个环节共用一张脸），不是失效，另说一句。
-			if (readout !== null && readout.expressions === 0) {
+			// 🔴 D1：面板只播待机动作时，"相位 → 表情"这条路**本来就不走**，那两条提示不该出现
+			//    （否则用户会以为"表情坏了"，其实是待机模式下不接线）。
+			if (!PORTRAIT_IDLE_ONLY && readout !== null && readout.expressions === 0) {
 				diag.push(React.createElement("div", {
 					style: S.note,
 					key: "expression-unavailable",
 					"data-classroom-ui-expression": "unavailable",
 				}, "相位 → 表情不可用：本模型表达式个数 = 0，切环节不会换表情（判据与处置见 live2d-host/README.md §三）。"));
-			} else if (readout !== null && readout.expressions > 0 && readout.expressions < 6) {
+			} else if (!PORTRAIT_IDLE_ONLY && readout !== null && readout.expressions > 0 && readout.expressions < 6) {
 				diag.push(React.createElement("div", {
 					style: S.note,
 					key: "expression-partial",
@@ -3569,6 +4721,9 @@ window.__ModuleLoader__.load({
 				style: S.sectionFor(true),
 				"data-classroom-ui-portrait-stage": "1",
 				"data-classroom-ui-section": "1",
+				// 🔴 立绘这一档现在处于什么状态（验收读这一个属性：pixi-idle / live2d-host-idle /
+				//    static-fallback / failed / pending）——不用去猜配置到底有没有生效。
+				"data-cui-portrait-mode": String(portraitMode),
 			}, children);
 		}
 
@@ -3592,6 +4747,19 @@ window.__ModuleLoader__.load({
 			// 書庫纸面分深浅两套：跟宿主切主题的那个 body 属性（与消息流里的图同一个判据）。
 			const [theme, setTheme] = React.useState(themeMode);
 			React.useEffect(() => watchDarkTheme(() => { setTheme(themeMode()); }), []);
+
+			/**
+			 * 🔴 W-p：面板**内部**的 tab 分流（方案甲：面板内 tab 栏，**不新增侧栏 tab 类型**）。
+			 * 两个页面：
+			 *   · `classroom` —— 原来那条长栏（书名页 ＋ 讲台 ＋ 当前 ＋ 课程表 ＋ 数据来源），**一个区块都没动**；
+			 *   · `board`     —— 「板书」**只读历史**（`BoardHistory`）。
+			 * 为什么不新增侧栏 tab 类型：侧栏 tab 类型的注册是**三段式**（类型／主体／标题），
+			 * 多一个类型就多三段注册与一套地址方案，而这两页共享同一个会话上下文与同一次读盘；
+			 * 用户要的是"面板里多一页"，不是"右栏多一个 tab"。
+			 * 🔴 切到「板书」时 `PortraitStage` **卸载** → 立绘的 rAF/渲染随之停掉（D2 的
+			 *    「tab 没打开就暂停」在这一层是天然的，不需要额外开关）。
+			 */
+			const [tab, setTab] = React.useState("classroom");
 
 			const data = snapshot.data;
 			const children = [];
@@ -3762,13 +4930,36 @@ window.__ModuleLoader__.load({
 				]);
 			}
 
+			// ── tab 栏（面板内部）：教室 ／ 板书 ────────────────────────────────────
+			//    只换"看哪一页"，不动任何数据、不新增侧栏 tab 类型（见上面 `tab` 的说明）。
+			const tabs = [["classroom", "教室"], ["board", "板书"]];
+			const tabBar = React.createElement("div", { style: S.tabBar, key: "tabs", "data-cui-tabs": "1" },
+				tabs.map((entry) => React.createElement("button", {
+					type: "button",
+					key: entry[0],
+					className: "cui-act",
+					style: tab === entry[0] ? Object.assign({}, S.tab, S.tabActive) : S.tab,
+					"data-cui-tab": entry[0],
+					"data-active": tab === entry[0] ? "true" : "false",
+					onClick: () => { setTab(entry[0]); },
+				}, entry[1])));
+			const boardNode = React.createElement(BoardHistory, {
+				key: "board",
+				remote: props.portrait === undefined || props.portrait === null ? undefined : props.portrait.ctx.remote,
+				sessionId: props.portrait === undefined || props.portrait === null ? null : props.portrait.sessionId,
+				currentLesson: data === null ? null : data.currentLesson,
+			});
+			// 课堂那一页保持**原样**（所有区块一个不少）；板书那一页只放板书历史。
+			const shown = tab === "board" ? [boardNode] : children;
+
 			return React.createElement("div", {
 				style: Object.assign({}, S.root, S.vars, S.varsFor(theme)),
 				"data-classroom-ui": "body",
 				"data-classroom-ui-skin": skinId(),
 				"data-cui-frame": "library",
 				"data-cui-theme": theme,
-			}, children);
+				"data-cui-tab": tab,
+			}, [tabBar].concat(shown));
 		}
 
 		/** tab 标题：教室 ＋ 本轮要讲（数据没到位时只显示「教室」）。 */
@@ -3779,6 +4970,217 @@ window.__ModuleLoader__.load({
 			const data = snapshot.data;
 			if (data === null || data.currentLesson === null) return PANEL_TITLE;
 			return PANEL_TITLE + " · 第 " + String(data.currentLesson) + " 讲";
+		}
+
+		// ── 6.9 的视图：右栏「板书」tab（**只读**历史）────────────────────────────
+		//
+		// 这一块只做三件事（每一件都独立可验）：
+		//   ① 读 `runtime/diagrams/index.md` → 按时间倒序列出（标题 ＋ 讲次 ＋ 回合）；
+		//   ② 点开某一行 → 读对应 `.mmd` 全文 → 用现成的 `diagramFor`（vendored mermaid）渲染；
+		//   ③ 渲染失败 → **显示源码与原因**，绝不白屏。
+		// 🔴 没有任何编辑入口：没有输入框、没有删除、没有"重画"。学生不能在白板上写字（用户已定）。
+		// 🔴 列表**每次都真读盘**（挂载时 + 「重新读盘」按钮），所以刷新页面能重建，不依赖内存状态。
+		function BoardHistory(props) {
+			const S = styles();
+			const remote = props.remote;
+			const sessionId = props.sessionId;
+			const currentLesson = props.currentLesson === undefined ? null : props.currentLesson;
+			const [history, setHistory] = React.useState({
+				kind: "loading", items: [], skipped: 0, error: null, path: diagramsIndexPath(), exists: false,
+			});
+			const [reloadSeq, setReloadSeq] = React.useState(0);
+			const [selected, setSelected] = React.useState(null);
+			const [source, setSource] = React.useState({ kind: "idle", text: null, error: null });
+			const [render, setRender] = React.useState({ kind: "idle", svg: null, ms: null, message: null });
+			const [themeName, setThemeName] = React.useState(() => (isDarkTheme() ? "dark" : "light"));
+
+			// 深浅色跟着宿主走（与消息流里那张图同一个判据）
+			React.useEffect(() => watchDarkTheme(() => { setThemeName(isDarkTheme() ? "dark" : "light"); }), []);
+
+			// ① 列表：挂载 ＋ 每次「重新读盘」都真读
+			React.useEffect(() => {
+				if (remote === undefined || remote === null || typeof remote.workspaceFiles === "undefined") {
+					setHistory({ kind: "failed", items: [], skipped: 0, error: "remote 未注入（inject 未生效）", path: diagramsIndexPath(), exists: false });
+					return undefined;
+				}
+				let live = true;
+				setHistory((previous) => Object.assign({}, previous, { kind: "loading" }));
+				loadDiagramHistory(remote, sessionId, undefined).then(
+					(result) => {
+						if (live) setHistory(Object.assign({ kind: "ready" }, result));
+					},
+					(error) => {
+						if (live) setHistory({ kind: "failed", items: [], skipped: 0, error: messageOf(error), path: diagramsIndexPath(), exists: false });
+					},
+				);
+				return () => { live = false; };
+			}, [sessionId, reloadSeq]);
+
+			// ② 点开：读 `.mmd` 全文，再交给 `diagramFor`（缓存键＝主题版本＋主题＋源码）
+			const selectedFile = selected === null ? null : selected.file;
+			React.useEffect(() => {
+				if (selectedFile === null) {
+					setSource({ kind: "idle", text: null, error: null });
+					setRender({ kind: "idle", svg: null, ms: null, message: null });
+					return undefined;
+				}
+				let live = true;
+				setSource({ kind: "loading", text: null, error: null });
+				setRender({ kind: "idle", svg: null, ms: null, message: null });
+				readDiagramSource(remote, sessionId, selectedFile, undefined).then(
+					(result) => {
+						if (!live) return;
+						if (!result.ok) {
+							setSource({ kind: "failed", text: null, error: result.error });
+							return;
+						}
+						setSource({ kind: "ok", text: result.source, error: null });
+						diagramFor({ remote: remote, sessionId: sessionId, source: result.source, themeName: themeName, signal: undefined }).then(
+							(rendered) => { if (live) setRender({ kind: "ok", svg: rendered.svg, ms: rendered.ms, message: null }); },
+							(error) => { if (live) setRender({ kind: "failed", svg: null, ms: null, message: messageOf(error) }); },
+						);
+					},
+					(error) => { if (live) setSource({ kind: "failed", text: null, error: messageOf(error) }); },
+				);
+				return () => { live = false; };
+			}, [selectedFile, themeName, sessionId]);
+
+			/** 本会话画了几张（「会话」列存在且与面板 sessionId 一致才计数；否则为 0，不猜）。 */
+			const sameSessionCount = history.items.filter((item) => item.session !== null && item.session === sessionId).length;
+			const children = [];
+			children.push(React.createElement("div", { style: S.sectionLabel, key: "label" }, "板书 · 只读历史"));
+			children.push(React.createElement("div", { style: S.note, key: "src" },
+				"真数据源：" + history.path + "（引擎写的索引；图的内容在对应的 .mmd 里，点开才读）"));
+			children.push(React.createElement("div", { style: S.note, key: "count" },
+				history.kind === "ready"
+					? "共 " + String(history.items.length) + " 张（时间倒序）"
+						+ (sameSessionCount > 0 ? "，其中本会话 " + String(sameSessionCount) + " 张" : "")
+						+ (history.skipped > 0 ? "；另有 " + String(history.skipped) + " 行列数对不上，已跳过" : "")
+						+ (history.legacy === true ? "；老版索引（没有表头）→ 按 7 列位置解析" : "")
+					: (history.kind === "loading" ? "读取索引…" : "索引没读成")));
+
+			if (history.error !== null) {
+				children.push(React.createElement("div", { style: S.error, key: "err", "data-cui-board-error": "1" },
+					"读 " + history.path + " 失败：" + String(history.error)));
+			}
+
+			if (history.kind === "ready" && history.items.length === 0) {
+				children.push(React.createElement("div", { style: S.note, key: "empty", "data-cui-board-empty": "1" },
+					history.exists
+						? "索引在，但还没有一行数据（这节课还没画过板书）。"
+						: "还没有 runtime/diagrams/index.md（这节课还没画过板书；老师第一次画图后引擎会建它）。"));
+			}
+
+			if (history.items.length > 0) {
+				const rows = history.items.map((item) => {
+					const isCurrent = currentLesson !== null && item.lesson === currentLesson;
+					/**
+					 * 「本会话」的标注（索引的「会话」列，后来才加的）：
+					 *   · `current` —— 会话号与面板的 sessionId 一致；
+					 *   · `other`   —— 是同一台工作区里别的会话画的；
+					 *   · `unknown` —— 老索引没有这一列/留空（**不等于「不属于本会话」**）。
+					 * 🔴 只**标注**、不过滤：过滤会把「引擎写的会话号与面板 sessionId 不是同一个」的图
+					 *    整批藏起来，而这种不一致在客户端没有第二条判据。宁可多显示一行，不可静默丢。
+					 */
+					const sessionMark = item.session === null ? 'unknown'
+						: (sessionId !== null && sessionId !== undefined && item.session === sessionId ? 'current' : 'other');
+					const meta = [
+						item.lesson === null ? "讲次未定" : "第 " + String(item.lesson) + " 讲",
+						item.turn === null ? "回合未知" : "第 " + String(item.turn) + " 回合",
+						item.kind === "" ? null : item.kind,
+					].filter((part) => part !== null).join(" · ");
+					return React.createElement("button", {
+						type: "button",
+						key: item.file,
+						className: "cui-act",
+						style: isCurrent ? Object.assign({}, S.boardRow, S.boardRowCurrent) : S.boardRow,
+						"data-cui-board-item": item.file,
+						"data-cui-board-current": isCurrent ? "true" : "false",
+						"data-cui-board-session": sessionMark,
+						"data-active": selectedFile === item.file ? "true" : "false",
+						onClick: () => { setSelected(item); },
+					}, [
+						React.createElement("span", { style: S.boardRowTitle, key: "t" }, item.title === "" ? "（未给标题）" : item.title),
+						React.createElement("span", { style: S.boardRowMeta, key: "m" }, meta),
+					]);
+				});
+				children.push(React.createElement("div", { style: S.boardList, key: "list", "data-cui-board-list": String(history.items.length) }, rows));
+			}
+
+			// ③ 点开后那一块：图 ＋（折起的）源码
+			if (selected !== null) {
+				const viewer = [];
+				viewer.push(React.createElement("div", { style: S.sectionLabel, key: "label" },
+					selected.title === "" ? selected.file : selected.title));
+				viewer.push(React.createElement("div", { style: S.drawMeta, key: "meta" },
+					[
+						selected.time,
+						selected.lesson === null ? "讲次未定" : "第 " + String(selected.lesson) + " 讲",
+						selected.turn === null ? "回合未知" : "第 " + String(selected.turn) + " 回合",
+						selected.kind,
+						selected.file,
+					].filter((part) => part !== null && part !== "").join(" · ")
+					+ (render.kind === "ok" ? " · 渲染 " + String(render.ms) + " ms" : "")));
+				if (selected.caption !== null && selected.caption !== "" && selected.caption !== "—") {
+					viewer.push(React.createElement("div", { style: S.drawCaption, key: "caption" }, selected.caption));
+				}
+				if (render.kind === "ok" && render.svg !== null) {
+					viewer.push(React.createElement("div", {
+						key: "svg",
+						style: S.drawCanvas,
+						"data-cui-board": "svg",
+						dangerouslySetInnerHTML: { __html: render.svg },
+					}));
+				} else if (render.kind === "failed" || source.kind === "failed") {
+					const why = source.kind === "failed"
+						? "读不到这张图的源码：" + String(source.error)
+						: "这张图在浏览器里没画出来（mermaid 渲染报错）：" + String(render.message);
+					// 🔴 渲染失败不许白屏：原因 ＋ **完整源码**一起摆出来（学生照着也能画，老师一眼看出没画成）
+					viewer.push(React.createElement("div", { style: S.drawFallback, key: "fallback", "data-cui-board": "failed" }, [
+						React.createElement("div", { style: S.drawFallbackWhy, key: "why" }, why),
+						React.createElement("pre", { style: S.drawSource, key: "src", "data-cui-board-source": "1" },
+							source.text === null ? "（这次调用没有可读的源码）" : source.text),
+					]));
+				} else {
+					viewer.push(React.createElement("div", { style: S.note, key: "loading", "data-cui-board": "loading" },
+						"正在读源码并装载 mermaid…"));
+				}
+				// 源码永远可查（默认折起，不占版面）
+				if (source.kind === "ok" && source.text !== null) {
+					viewer.push(React.createElement("details", { style: S.drawDetails, key: "details" }, [
+						React.createElement("summary", { style: S.drawSummary, className: "cui-sum", key: "sum" }, "看源码"),
+						React.createElement("pre", { style: S.drawSource, key: "src", "data-cui-board-source": "1" }, source.text),
+					]));
+				}
+				viewer.push(React.createElement("button", {
+					type: "button",
+					className: "cui-act",
+					key: "close",
+					style: S.button,
+					"data-cui-board-close": "1",
+					onClick: () => { setSelected(null); },
+				}, "收起这张图"));
+				children.push(React.createElement("div", {
+					style: S.boardViewer,
+					key: "viewer",
+					"data-cui-board-viewer": selected.file,
+				}, viewer));
+			}
+
+			children.push(React.createElement("button", {
+				type: "button",
+				className: "cui-act",
+				key: "refresh",
+				style: S.button,
+				"data-cui-board-refresh": "1",
+				onClick: () => { setReloadSeq((value) => value + 1); },
+			}, history.kind === "loading" ? "读取中…" : "重新读盘"));
+
+			return React.createElement("div", {
+				style: S.sectionFor(false),
+				"data-classroom-ui-section": "1",
+				"data-classroom-ui-board": "1",
+			}, children);
 		}
 
 		// ── 6.7 的视图：`classroom_draw` 那一条工具调用 ──────────────────────────
@@ -4073,6 +5475,37 @@ window.__ModuleLoader__.load({
 		exports.base64ToBytes = base64ToBytes;
 		exports.decodeText = decodeText;
 		exports.readBinary = readBinary;
+		exports.bytesOfWorkspaceFile = bytesOfWorkspaceFile;
+		// ── D1–D4（面板待机立绘）：帧率/暂停/来源链，纯函数与常量一并导出供 node 侧测试直接驱动 ──
+		exports.PORTRAIT_FPS = PORTRAIT_FPS;
+		exports.PORTRAIT_FRAME_MS = PORTRAIT_FRAME_MS;
+		exports.PORTRAIT_IDLE_ONLY = PORTRAIT_IDLE_ONLY;
+		exports.PORTRAIT_CANVAS_SIZE = PORTRAIT_CANVAS_SIZE;
+		exports.STAGE_ROUTE = STAGE_ROUTE;
+		exports.STAGE_OVERLAY_ID = STAGE_OVERLAY_ID;
+		exports.DEFAULT_PORTRAIT_ASSETS = DEFAULT_PORTRAIT_ASSETS;
+		exports.DEFAULT_STATIC_PORTRAIT = DEFAULT_STATIC_PORTRAIT;
+		exports.DEFAULT_MODEL = DEFAULT_MODEL;
+		exports.portraitAssetsRoot = portraitAssetsRoot;
+		exports.staticPortraitPath = staticPortraitPath;
+		exports.coreCandidates = coreCandidates;
+		exports.frameworkCandidates = frameworkCandidates;
+		exports.shaderCandidates = shaderCandidates;
+		exports.assetCandidates = assetCandidates;
+		exports.diagramsIndexPath = diagramsIndexPath;
+		exports.diagramPath = diagramPath;
+		exports.stageOverlayOpen = stageOverlayOpen;
+		exports.loadScriptOnce = loadScriptOnce;
+		exports.stageRuntime = stageRuntime;
+		/** **仅供 node 侧测试**：清掉"舞台路由/运行时只探一次"的缓存，好在一个进程里摆多种环境。 */
+		exports.resetStageProbe = () => {
+			stageRouteProbe = null;
+			stageRuntimeProbe = null;
+			coreReady = null;
+			frameworkModule = null;
+		};
+		/** **仅供 node 侧测试**：立绘资源来源账本（面板诊断显示的就是它）。 */
+		exports.portraitSourcesSnapshot = () => Object.assign({}, portraitSources);
 		exports.modelReferences = modelReferences;
 		exports.phaseStateOf = phaseStateOf;
 		exports.PHASE_STATES = PHASE_STATES;
@@ -4131,6 +5564,13 @@ window.__ModuleLoader__.load({
 		exports.diagramFor = diagramFor;
 		exports.recordDiag = recordDiag;
 		exports.recordRenderFailure = recordRenderFailure;
+		// ── 板书历史（W-p §6.9）：纯解析器与读盘器一并导出，供 node 侧测试直接驱动同一份代码 ──
+		exports.DIAGRAMS_INDEX = DIAGRAMS_INDEX;
+		exports.DIAGRAMS_SUBDIR = DIAGRAMS_SUBDIR;
+		exports.splitTableRow = splitTableRow;
+		exports.parseDiagramIndex = parseDiagramIndex;
+		exports.loadDiagramHistory = loadDiagramHistory;
+		exports.readDiagramSource = readDiagramSource;
 		// ── 皮肤（§6）：参数表与解析器一并导出，供 node 侧测试直接驱动同一份代码 ──
 		exports.SKIN_PRESETS = SKIN_PRESETS;
 		exports.DEFAULT_SKIN = DEFAULT_SKIN;
@@ -4150,6 +5590,7 @@ window.__ModuleLoader__.load({
 		exports.installSkinCss = installSkinCss;
 		// ── 面板主体（供 node 侧测试把**真实组件**渲染成一棵可断言的树）──
 		exports.ClassroomBody = ClassroomBody;
+		exports.BoardHistory = BoardHistory;
 		exports.ClassroomTitle = ClassroomTitle;
 		exports.Field = Field;
 		exports.PortraitStage = PortraitStage;

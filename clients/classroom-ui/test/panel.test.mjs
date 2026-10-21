@@ -65,6 +65,30 @@ assert.equal(panel.TYPE_ID, 'classroom-ui')
 assert.equal(panel.TYPE_KIND, 'classroom')
 assert.deepEqual(panel.inject, ['slots', 'sidebarRightTabs', 'remote', 'remote.workspaceFiles'])
 
+// ── 1.5 🔴 回归：「面板永远打不开」的那条真因（2026-10-19 取证）──
+//    侧栏的指南条目读的是 **`entry.kind`**（`openTab(entry.kind)` 与
+//    `data-sidebar-right-guide-entry={entry.kind}` 都取它）。当初只写了 `id`、没写 `kind`，
+//    于是 `openTab(undefined)` → **面板永远打不开**，而且注册本身不报错、日志里也看不出来。
+//    这条断言就是那颗钉子：`id` 与 `kind` 都要在，`kind` 必须等于 tab 类型的 kind。
+{
+  let registered = null
+  const ctx = {
+    effect: (fn) => { fn() },
+    sidebarRightTabs: { register: (spec) => { registered = spec; return () => {} } },
+    slots: { inject: () => () => {}, register: () => () => {} },
+    remote: { workspaceFiles: {} },
+  }
+  panel.apply(ctx)
+  assert.ok(registered !== null, 'apply() 必须注册右栏 tab 类型')
+  assert.equal(registered.id, panel.TYPE_ID, 'tab 类型的 id 必须等于包名（面板主体按 id 派发）')
+  assert.equal(registered.kind, panel.TYPE_KIND, 'tab 类型的 kind 必须是 TYPE_KIND')
+  assert.ok(Array.isArray(registered.guide) && registered.guide.length > 0, '必须给出指南条目（否则右栏「新建 tab」里看不到入口）')
+  assert.ok(registered.guide[0].id !== undefined, '指南条目必须写 id')
+  assert.ok(registered.guide[0].kind !== undefined, '指南条目必须写 kind（读的是这个字段——只写 id 会让面板永远打不开）')
+  assert.equal(registered.guide[0].kind, panel.TYPE_KIND, '指南条目的 kind 必须等于 TYPE_KIND')
+  assert.equal(registered.guide[0].id, 'classroom', '指南条目的 id 保留（兼容按 id 读的版本）')
+}
+
 // ── 2 · 解析：喂真实文件 ────────────────────────────────────────────────────
 const read = (rel) => readFileSync(join(WORKSPACE, CLASSROOM, rel), 'utf8')
 
@@ -304,11 +328,16 @@ restore()
 assert.equal(globalThis.fetch, nativeFetch, '解析器必须还原 fetch')
 assert.equal(globalThis.Image, FakeImage, '解析器必须还原 Image')
 
-// 5.5 materializeAssets：**一律走字节通道**（readAll → base64 → 字节），产出可加载的 objectURL
+// 5.5 materializeAssets：**一律走字节通道**（readBytes → 字节），产出可加载的 objectURL
 //     🔴 为什么立绘资源不走分页 `read`：`read` 的 `text` 契约不含末行终止符，
 //        分页拼接会丢掉文件末尾的换行；官方框架把多份着色器源码直接字符串拼接成一份 GLSL，
 //        少一个换行就让下一段的 `#define` 落到同一行 → 编译报
 //        `ERROR: 0:354: '#' : unexpected token after conditional expression`。
+//     🔴 0.2.1 迁移（P 车道实测）：0.1.5 的 `readAll` 在 0.2.1 里**不存在**
+//        （`workspaceFiles` 只注册 read / readBytes / list / stat / changes）。调用它当场
+//        `TypeError: … readAll is not a function` → 面板直接进 failed 态（连读盘都没走到）。
+//        现在走 `readBytes`，且两种**真实可能出现的**负载形状都解（字节 / base64 字符串），
+//        认不出的形状当场抛（不猜）。
 //    ——本子测试**不读盘**：用合成 bytes 验证「字节通道解出的文本保留末尾换行」这一条核心不变量。
 {
   const syntheticShader = 'precision mediump float;\nvoid main(){\n  gl_FragColor = vec4(1.0);\n}\n'
@@ -316,9 +345,10 @@ assert.equal(globalThis.Image, FakeImage, '解析器必须还原 Image')
   const byteRemote = {
     workspaceFiles: {
       read: async () => { throw new Error('立绘资源不走分页 read') },
-      readAll: async (_sessionId, path) => {
+      readAll: async () => { throw new Error('0.2.1 没有 readAll —— 面板不许再调它') },
+      readBytes: async (_sessionId, path) => {
         seen.push(path)
-        return { ok: true, value: { data: Buffer.from(syntheticShader, 'utf8').toString('base64'), eof: true } }
+        return { ok: true, value: { bytes: new TextEncoder().encode(syntheticShader), eof: true } }
       },
     },
   }
@@ -327,7 +357,7 @@ assert.equal(globalThis.Image, FakeImage, '解析器必须还原 Image')
   ], new AbortController().signal)
   assert.equal(urls.size, 1)
   assert.ok(urls.get('shaders/WebGL/frag.frag').startsWith('blob:'), '资源产出 objectURL')
-  assert.deepEqual([...new Set(seen.map((entry) => entry))], ['clients/live2d-host/out/shaders/WebGL/frag.frag'], '立绘资源一律走 readAll（字节），不走分页 read')
+  assert.deepEqual([...new Set(seen.map((entry) => entry))], ['clients/live2d-host/out/shaders/WebGL/frag.frag'], '立绘资源一律走 readBytes（字节），不走分页 read')
   // 字节通道解出的文本保留末尾换行（就是上面那个编译错误的根因）
   const decoded = panel.base64ToBytes(Buffer.from(syntheticShader, 'utf8').toString('base64'))
   assert.equal(panel.decodeText(decoded).endsWith('\n'), true, '字节通道解出的文本保留末尾换行')
@@ -336,16 +366,90 @@ assert.equal(globalThis.Image, FakeImage, '解析器必须还原 Image')
   assert.equal(pageText.endsWith('\n'), false, '分页 read 的拼接结果会丢掉末尾换行（反例）')
 }
 
+// 5.5b 🔴 `readBytes` 的返回形状：四种真形状都解，其它一律抛（不猜、不静默）
+{
+  const text = '%%{init}%%\nflowchart TD\n'
+  const expected = Array.from(new TextEncoder().encode(text))
+  const base64 = Buffer.from(text, 'utf8').toString('base64')
+  const cases = [
+    ['字节（Uint8Array）', { bytes: new TextEncoder().encode(text) }],
+    ['ArrayBuffer', { bytes: new TextEncoder().encode(text).buffer }],
+    ['0.1.5 的 base64 文本', { data: base64 }],
+    ['Buffer 视图', { bytes: Buffer.from(text, 'utf8') }],
+  ]
+  for (const [label, value] of cases) {
+    assert.deepEqual([...panel.bytesOfWorkspaceFile(value, 'x.mmd')], expected, `readBytes 的 ${label} 形状必须解成同样的字节`)
+  }
+  // 认不出的形状：当场抛，且文案里点名文件
+  for (const [label, value] of [['null', null], ['空对象', {}], ['数字', { bytes: 42 }]]) {
+    assert.throws(() => panel.bytesOfWorkspaceFile(value, 'x.mmd'), /读字节的返回形状认不出|value 为空/,
+      `${label} 这种形状必须抛（把它暴露出来，不许静默产出空字节）`)
+  }
+  assert.throws(() => panel.bytesOfWorkspaceFile(null, 'a/b/frag.frag'), /a\/b\/frag\.frag/, '抛错必须点名是哪个文件')
+}
+
 // 5.6 配置读取（含调试开关默认关）
 delete globalThis.__DSH_CLASSROOM_UI_CONFIG__
 assert.equal(panel.debugEnabled(), false, '调试控件默认关（生产路径不出现）')
 assert.equal(panel.live2dRoot(), 'clients/live2d-host/out')
-assert.equal(panel.modelName(), 'Haru')
+// 🔴 D4：兜底模型名＝deepseek（本仓库只有这一张模型：舞台包的 assets/models/deepseek/）。
+//    改前是 Haru —— 本仓库一张 Haru 都没有，声明与舞台两侧不一致。
+assert.equal(panel.modelName(), 'deepseek')
 globalThis.__DSH_CLASSROOM_UI_CONFIG__ = { debug: true, model: 'Mao', live2dRoot: 'x/y/' }
 assert.equal(panel.debugEnabled(), true)
 assert.equal(panel.modelName(), 'Mao')
 assert.equal(panel.live2dRoot(), 'x/y', '去尾斜杠')
 delete globalThis.__DSH_CLASSROOM_UI_CONFIG__
+
+// 5.7 🔴 D3：立绘的**三来源路径**（舞台路由 → 工作区 out → 舞台包 assets）与静态图路径
+{
+  assert.equal(panel.STAGE_ROUTE, '/stage-static', '舞台那条路由的前缀必须与舞台宿主半边的 ROUTE_BASE 逐字一致')
+  assert.equal(panel.portraitAssetsRoot(), 'clients/classroom-stage-warm/assets', '第二资产根默认指到舞台包（本机唯一真有立绘资产的地方）')
+  assert.equal(panel.staticPortraitPath(), 'clients/classroom-stage-warm/assets/stage/teacher_gen.png', 'D3 退路＝舞台的教师立绘')
+  // Core 有**两个**候选（两边目录布局不同，这是事实，不能统一）
+  assert.deepEqual(panel.coreCandidates(), [
+    'clients/live2d-host/out/live2dcubismcore.min.js',
+    'clients/classroom-stage-warm/assets/l2d/live2dcubismcore.min.js',
+  ], 'Core 的两个候选路径都必须给（out 根 / 舞台包的 l2d 目录）')
+  // 渲染宿主 bundle 只有一个来源（舞台不发它，这是 D3 的边界）
+  assert.deepEqual(panel.frameworkCandidates(), ['clients/live2d-host/out/live2d-host.bundle.mjs'],
+    '渲染宿主 bundle 只有 out 一个来源（舞台的静态根里没有它）')
+  assert.deepEqual(panel.shaderCandidates('vertshadersrc.vert'),
+    ['clients/live2d-host/out/shaders/WebGL/vertshadersrc.vert'], '13 个着色器只有 out 一份')
+  // 模型目录内的资源：out 优先，其次舞台包（两处布局相同：models/<名>/…）
+  assert.deepEqual(panel.assetCandidates('models/deepseek/deepseek.model3.json'), [
+    'clients/live2d-host/out/models/deepseek/deepseek.model3.json',
+    'clients/classroom-stage-warm/assets/models/deepseek/deepseek.model3.json',
+  ])
+  // 配置可覆盖第二资产根（部署换位置时只改一处）
+  globalThis.__DSH_CLASSROOM_UI_CONFIG__ = { portraitAssets: 'x/y/' }
+  assert.equal(panel.portraitAssetsRoot(), 'x/y', '第二资产根可注入且去尾斜杠')
+  delete globalThis.__DSH_CLASSROOM_UI_CONFIG__
+  // D1：帧率常量与待机模式（约 15fps；不是删 rAF）
+  assert.equal(panel.PORTRAIT_FPS, 15)
+  assert.ok(Math.abs(panel.PORTRAIT_FRAME_MS - 1000 / 15) < 1e-9, '两帧最小间隔＝1000/15 ms')
+  assert.equal(panel.PORTRAIT_IDLE_ONLY, true, 'D1：面板立绘只播待机动作（不做实时驱动）')
+}
+
+// 5.8 🔴 D2：舞台「铺满整屏」的判据（只读 DOM；关闭态不算打开）
+{
+  // 没有 document（node 侧）→ 判 false，不抛
+  assert.equal(panel.stageOverlayOpen(), false, '没有 document 时判"舞台没开"，不抛错')
+  const layer = (attrs) => ({ getAttribute: (name) => (attrs[name] === undefined ? null : attrs[name]) })
+  // ① 容器根本不在（舞台没装）
+  globalThis.document = { getElementById: () => null }
+  assert.equal(panel.stageOverlayOpen(), false, '没有舞台容器 → 舞台没开')
+  // ② 容器在、但没有真舞台那层（舞台 enabled=false 时就是这样）
+  globalThis.document = { getElementById: () => ({ querySelector: () => null }) }
+  assert.equal(panel.stageOverlayOpen(), false, '容器在但没有真舞台那层 → 不算打开')
+  // ③ 真舞台那层在、且不是关闭态
+  globalThis.document = { getElementById: () => ({ querySelector: () => layer({}) }) }
+  assert.equal(panel.stageOverlayOpen(), true, '真舞台那层在且不是关闭态 → 舞台开着')
+  // ④ Ctrl+Shift+M 关闭态：那层带 data-killed="on"（只剩一条横幅）
+  globalThis.document = { getElementById: () => ({ querySelector: () => layer({ 'data-killed': 'on' }) }) }
+  assert.equal(panel.stageOverlayOpen(), false, '关闭态（data-killed="on"）不算打开——那时舞台只是一条横幅')
+  delete globalThis.document
+}
 
 // ══════════════════════════════════════════════════════════════════════════
 // B · 立绘资产「读不到」时必须明确报出来（不静默白屏）
@@ -368,13 +472,13 @@ if (live2dDeployed) {
 }
 
 // B.2 model3.json 读不到 → 立绘装载链如实报错（不静默白屏）。
-//    用 readAll 返回 not-found 的假 remote 驱动真实的 materializeAssets/读盘代码：
+//    用 readBytes 返回 not-found 的假 remote 驱动真实的 materializeAssets/读盘代码：
 //    缺 out 时整个资源块读不到 → 抛错，错误文案必须点名是「资源读不到」而非乱码。
 {
   const missingRemote = {
     workspaceFiles: {
       read: async () => { throw new Error('not used for portrait') },
-      readAll: async (_sessionId, _path) => ({ ok: false, error: { code: 'workspace-file/not-found', message: 'no such file' } }),
+      readBytes: async (_sessionId, _path) => ({ ok: false, error: { code: 'workspace-file/not-found', message: 'no such file' } }),
     },
   }
   await assert.rejects(
@@ -391,7 +495,16 @@ if (live2dDeployed) {
   const ok = panel.parseDeclaration(readFileSync(join(WORKSPACE, panel.DEFAULT_DECLARATION_PATH), 'utf8'))
   assert.equal(ok.ok, true, '仓库自带的声明必须可解析')
   assert.equal(ok.classroomRoot, 'classrooms/cs-os')
-  assert.equal(ok.portraitModel, 'Haru')
+  // 🔴 D4：声明里的模型名＝deepseek（与舞台实际在用的那份模型一致）。改前写 Haru，两侧不一致。
+  assert.equal(ok.portraitModel, 'deepseek')
+  // 🔴 D3：`portraitAssets` 是**可选**字段（不给＝用代码默认）；给了就必须是工作区相对路径。
+  assert.equal(ok.portraitAssets, 'clients/classroom-stage-warm/assets', '仓库自带的声明必须给出第二资产根')
+  assert.equal(panel.parseDeclaration('{"classroomRoot":"a","portraitModel":"deepseek"}').portraitAssets, null,
+    '不给 portraitAssets → null（不填默认值，默认在 portraitAssetsRoot 里）')
+  assert.equal(panel.parseDeclaration('{"classroomRoot":"a","portraitModel":"deepseek","portraitAssets":"/abs"}').ok, false,
+    'portraitAssets 写绝对路径 → 整份声明判不可用')
+  assert.equal(panel.parseDeclaration('{"classroomRoot":"a","portraitModel":"deepseek","portraitAssets":42}').ok, false,
+    'portraitAssets 不是字符串 → 整份声明判不可用')
   assert.equal(panel.parseDeclaration('{').ok, false)
   assert.equal(panel.parseDeclaration('[]').ok, false, '顶层必须是对象')
   assert.equal(panel.parseDeclaration('{"portraitModel":"Haru"}').ok, false, '缺 classroomRoot')
@@ -399,6 +512,7 @@ if (live2dDeployed) {
   assert.ok(panel.parseDeclaration('{"classroomRoot":"/abs/x","portraitModel":"Haru"}').reason.includes('工作区相对'),
     '绝对路径必须当场判不可用（面板只能读工作区相对路径）')
   assert.equal(panel.parseDeclaration('{"classroomRoot":"a/b/","portraitModel":"Haru"}').classroomRoot, 'a/b', '尾斜杠归一')
+  assert.equal(panel.parseDeclaration('{').portraitAssets, null, '失败结果里也带 portraitAssets（免得调用方多一种 undefined）')
 }
 
 // B.4 一致性自检：三种结论（ok / mismatch / unreadable）＋ 每种的"怎么改"
@@ -1030,10 +1144,29 @@ function sameDeps(a, b) {
  * （立绘那条路要靠异步失败把状态推到 `failed`，不重渲染就看不到那一行）。
  */
 function makeReact() {
-  const hooks = []
+  /**
+   * 🔴 hook 状态**按组件类型分开存**（不是一个全局 hooks 数组）。
+   *    为什么必须分开：W-p 加了面板内 tab 之后，切 tab 会让组件树变形
+   *    （`PortraitStage` 卸载、`BoardHistory` 挂载），一个共享数组会让新组件的第 0 个 hook
+   *    读到上一个组件留下的状态（实测：BoardHistory 读到了 PortraitStage 的 status 对象，
+   *    一渲染就抛 `reading 'length' of undefined`）。React 本来就是按组件实例存的，
+   *    这里按**类型**存，够用且更接近真实语义。
+   */
+  const slots = new Map()
   const effects = []
-  let cursor = 0
+  let active = null
   let dirty = false
+  const slotFor = (type) => {
+    let slot = slots.get(type)
+    if (slot === undefined) { slot = { hooks: [], cursor: 0 }; slots.set(type, slot) }
+    return slot
+  }
+  const nextIndex = () => {
+    const slot = active === null ? slotFor('__root__') : active
+    const index = slot.cursor
+    slot.cursor += 1
+    return { slot, index }
+  }
   return {
     api: {
       createElement: (type, props, ...kids) => ({
@@ -1043,21 +1176,21 @@ function makeReact() {
           kids.length === 0 ? {} : { children: kids.length === 1 ? kids[0] : kids }),
       }),
       useRef: (init) => {
-        const index = cursor++
-        if (!(index in hooks)) hooks[index] = { current: init }
-        return hooks[index]
+        const { slot, index } = nextIndex()
+        if (!(index in slot.hooks)) slot.hooks[index] = { current: init }
+        return slot.hooks[index]
       },
       useState: (init) => {
-        const index = cursor++
-        if (!(index in hooks)) hooks[index] = typeof init === 'function' ? init() : init
-        return [hooks[index], (next) => {
-          const value = typeof next === 'function' ? next(hooks[index]) : next
-          if (!Object.is(value, hooks[index])) { hooks[index] = value; dirty = true }
+        const { slot, index } = nextIndex()
+        if (!(index in slot.hooks)) slot.hooks[index] = typeof init === 'function' ? init() : init
+        return [slot.hooks[index], (next) => {
+          const value = typeof next === 'function' ? next(slot.hooks[index]) : next
+          if (!Object.is(value, slot.hooks[index])) { slot.hooks[index] = value; dirty = true }
         }]
       },
       useEffect: (fn, deps) => {
-        const index = cursor++
-        if (!(index in hooks) || !sameDeps(hooks[index], deps)) { hooks[index] = deps; effects.push(fn) }
+        const { slot, index } = nextIndex()
+        if (!(index in slot.hooks) || !sameDeps(slot.hooks[index], deps)) { slot.hooks[index] = deps; effects.push(fn) }
       },
       useSyncExternalStore: (_subscribe, getSnapshot) => getSnapshot(),
     },
@@ -1066,7 +1199,19 @@ function makeReact() {
       if (node === null || node === undefined || typeof node !== 'object') return node
       if (Array.isArray(node)) return node.map((kid) => this.build(kid))
       if (node.__element !== true) return node
-      if (typeof node.type === 'function') return this.build(node.type(node.props))
+      if (typeof node.type === 'function') {
+        // 每个组件渲染前把**自己那个 slot** 的 cursor 归零，并登记为"当前活跃组件"
+        // （嵌套组件渲染完要还原，父组件后续的 hook 才落到它自己那一格里）。
+        const previous = active
+        const slot = slotFor(node.type)
+        slot.cursor = 0
+        active = slot
+        try {
+          return this.build(node.type(node.props))
+        } finally {
+          active = previous
+        }
+      }
       const host = { tag: node.type, props: node.props, kids: [] }
       // ref：React 在挂载后写 `ref.current`——立绘的装载效果全靠它拿到 canvas，必须照做。
       const ref = node.props.ref
@@ -1082,7 +1227,8 @@ function makeReact() {
       let tree = null
       let quiet = 0
       for (let pass = 0; pass < 20; pass++) {
-        cursor = 0
+        for (const slot of slots.values()) slot.cursor = 0
+        active = null
         dirty = false
         const pending = effects.splice(0, effects.length)
         tree = this.build(element)
@@ -1121,7 +1267,7 @@ function failingRemote() {
   return {
     workspaceFiles: {
       read: async (_sessionId, path) => missing(path),
-      readAll: async (_sessionId, path) => missing(path),
+      readBytes: async (_sessionId, path) => missing(path),
     },
   }
 }
@@ -1160,6 +1306,35 @@ async function renderPanel(data = loaded.data, sources = loaded.sources, portrai
         ? { ctx: { remote: failingRemote() }, sessionId: 'session-under-test' }
         : portrait,
     }))
+  } finally {
+    globalThis.setInterval = realSetInterval
+    globalThis.clearInterval = realClearInterval
+  }
+}
+
+/**
+ * 用**全新的** React 实例渲染一次面板。
+ * 🔴 为什么另开一个：`renderPanel` 复用一个 `react` 实例（hook 表跨调用保留），
+ *    「换一个 remote 再渲染一次」时立绘那几条 effect 的依赖（status.kind / sessionId）没变，
+ *    于是它们**不会重跑**，断言读到的还是上一条用例的状态。下面的 A+/B 两条用例必须互不影响。
+ */
+async function renderPanelFresh(data, sources, portrait) {
+  const fresh = makeReact()
+  const api = registration.factory((specifier) => {
+    if (specifier === 'react') return fresh.api
+    throw new Error(`未预期的 require("${specifier}")`)
+  })
+  const store = {
+    subscribe: () => () => {},
+    getSnapshot: () => snapshotOf(data, sources),
+    refresh: () => {},
+  }
+  const realSetInterval = globalThis.setInterval
+  const realClearInterval = globalThis.clearInterval
+  globalThis.setInterval = () => 0
+  globalThis.clearInterval = () => {}
+  try {
+    return await fresh.render(fresh.api.createElement(api.ClassroomBody, { classroom: store, portrait: portrait }))
   } finally {
     globalThis.setInterval = realSetInterval
     globalThis.clearInterval = realClearInterval
@@ -1299,26 +1474,91 @@ assert.ok(refresh !== null, '「重新读盘」必须还在')
 assert.equal(refresh.tag, 'button', '重新读盘是一个真按钮')
 assert.equal(refresh.props.style.borderRadius, '999px', '按钮走药丸形（项目交付物样式口径）')
 
-// 10.8 讲台（B 骨架的常驻黑板位）：板面 ＋ 顶端渐隐轨；未部署时**折起且只留一行**
+// 10.8 讲台（B 骨架的常驻黑板位）：板面 ＋ 顶端渐隐轨；没有可用 Live2D 源时**显示静态图 ＋ 中性说明**
+//
+// 🔴 2026-10-20（P 车道）：这里从**一条**断言拆成 **A/B 两条用例**。理由不是"放宽"，
+//    而是「**能力缺席**」与「**装载故障**」本来是两件事，之前被混成同一个 failed 状态：
+//      · A「没有可用来源」（舞台没装 且 live2d-host/out 未构建）＝**预期缺席**，不是故障
+//        → 静态立绘图 ＋ 一行中性说明，DOM 上**不许**出现 [data-cui-live2d-failure]；
+//      · B「有来源但坏了」（入口读得到、后面某一步失败）＝**故障**
+//        → 仍必须出现 [data-cui-live2d-failure] ＋ 文案仍是「立绘装载失败：…」。
+//    两条都比原来更严：原来那条在"缺资产"时把预期缺席说成了事故（每次开面板都像出事）。
 const board = findOne(tree, 'data-cui-board-plate')
 assert.ok(board !== null, '讲台必须是一块常驻板面（B 骨架）')
 const rail = board.kids.find((kid) => kid !== null && typeof kid === 'object' && kid.props !== undefined && kid.props.style === S.boardRail)
 assert.ok(rail !== undefined, '板面顶端那条金褐渐隐轨必须在（B 骨架的语汇）')
-const boardBox = findOne(tree, 'data-cui-board')
-assert.equal(boardBox.props['data-cui-board'], 'collapsed', '立绘装载失败 → 舞台折起（不再占 ~330px 空白纸）')
-assert.equal(boardBox.props.style.height, 0, '折起＝高 0，但**元素仍在文档里**（否则永远发现不了未部署）')
-assert.equal(findAll(boardBox, (node) => node.props['data-classroom-ui-portrait'] === 'canvas').length, 1,
-  '画布必须仍挂在文档里（装载效果要拿到它，失败才报得出来）')
 
-const failure = findOne(tree, 'data-cui-live2d-failure')
-assert.ok(failure !== null, 'Live2D 未部署**必须显式报出来**（不静默）')
-assert.equal(failure.props['data-classroom-ui-live2d'], 'failed')
-assert.ok(textOf(failure).startsWith('立绘装载失败：'), '未部署那行仍带原始报错前缀')
-assert.ok(textOf(failure).includes('live2dcubismcore.min.js'), '原始报错（缺哪个文件）一个字都不删')
-assert.equal(failure.props.style, S.boardNotice, '未部署那行走"一行紧凑说明"的样式')
-assert.notEqual(failure.props.style, S.error, '**不许**再用整块灰板（那正是"抢主视觉"的写法）')
-assert.ok(String(failure.props.style.borderLeft).includes('var(--cui-gold)'), '紧凑说明左边一条金褐竖线')
-assert.ok(String(failure.props.style.fontSize).includes('--dsw-font-xxxs-11-font-size'), '紧凑说明走最小一档字（11px）')
+/** 用例 A 的形状：本机没有可用 Live2D 源（默认 harness 的失败 remote 就是这种）。 */
+const boardBox = findOne(tree, 'data-cui-board')
+assert.equal(boardBox.props['data-cui-board'], 'collapsed',
+  'A：没有可用来源且静态图也读不到 → 舞台折起（不占 ~330px 空白纸）')
+assert.equal(boardBox.props.style.height, 0, 'A：折起＝高 0，但**元素仍在文档里**（否则永远发现不了"没有源"）')
+assert.equal(findAll(boardBox, (node) => node.props['data-classroom-ui-portrait'] === 'canvas').length, 1,
+  'A：画布必须仍挂在文档里（装载效果要拿到它，状态才报得出来）')
+assert.equal(findAll(tree, (node) => Object.prototype.hasOwnProperty.call(node.props, 'data-cui-live2d-failure')).length, 0,
+  'A：**能力缺席不叫装载失败** → DOM 上不许出现失败行')
+const absentLine = findOne(tree, 'data-cui-live2d-absent')
+assert.ok(absentLine !== null, 'A：能力缺席必须有**一行中性说明**（不静默）')
+assert.equal(absentLine.props['data-classroom-ui-live2d'], 'absent', 'A：状态是 absent（不是 failed）')
+assert.ok(textOf(absentLine).includes('静态图'), 'A：中性说明要说清"显示静态图"')
+assert.ok(textOf(absentLine).includes('没有可用的 Live2D 源'), 'A：中性说明要说清原因（本 profile 没有可用源）')
+  assert.deepEqual(absentLine.props.style, S.boardNotice, 'A：中性说明走"一行紧凑说明"的样式（不抢主视觉）')
+const stageRoot = findOne(tree, 'data-classroom-ui-portrait-stage')
+assert.equal(stageRoot.props['data-cui-portrait-mode'], 'static-fallback',
+  'A：状态档位必须是 static-fallback（验收读这一个属性）')
+
+// 用例 A+：静态立绘图**取得到**时要真的显示出来（D3 的退路，不留白）
+{
+  const readOK = (path) => ({ ok: true, value: { bytes: new TextEncoder().encode('PNGDATA'), eof: true } })
+  const missing = (path) => ({ ok: false, error: { code: 'workspace-file/not-found', message: 'no entry at "' + path + '"' } })
+  const staticRemote = {
+    workspaceFiles: {
+      read: async (_sessionId, path) => missing(path),
+      readBytes: async (_sessionId, path) => (String(path).includes('teacher_gen.png') ? readOK(path) : missing(path)),
+    },
+  }
+  const treeStatic = await renderPanelFresh(loaded.data, loaded.sources, { ctx: { remote: staticRemote }, sessionId: 'session-under-test' })
+  const box = findOne(treeStatic, 'data-cui-board')
+  assert.equal(box.props['data-cui-board'], 'static', 'A+：静态图取得到 → 板面走 static（显示图，不留白）')
+  const img = findOne(treeStatic, 'data-cui-static-portrait')
+  assert.ok(img !== null, 'A+：静态立绘图必须真的渲染出来')
+  assert.equal(img.tag, 'img', 'A+：静态图是一个真 <img>')
+  assert.ok(String(img.props.src).startsWith('blob:'), 'A+：走字节通道 → objectURL')
+  assert.deepEqual(img.props.style, S.staticPortrait, 'A+：静态图样式来自皮肤表（object-fit:contain；新实例的样式表是另一份对象，故按值比）')
+  assert.equal(findAll(treeStatic, (node) => Object.prototype.hasOwnProperty.call(node.props, 'data-cui-live2d-failure')).length, 0,
+    'A+：静态图顶上了，仍然没有"装载失败"这一行')
+  assert.equal(findOne(treeStatic, 'data-cui-static-portrait-note') !== null, true, 'A+：诊断里要写清"退回了静态图"')
+}
+
+// 用例 B：**有来源但装载坏了** → 仍然是故障，仍然必须出现「立绘装载失败：…」
+{
+  const missing = (path) => ({ ok: false, error: { code: 'workspace-file/not-found', message: 'no entry at "' + path + '"' } })
+  const brokenRemote = {
+    workspaceFiles: {
+      read: async (_sessionId, path) => missing(path),
+      readBytes: async (_sessionId, path) => {
+        // 渲染宿主 bundle **读得到**（＝这台 profile 上有源），但 Core 读不到 → 装载中途失败
+        if (String(path).includes('live2d-host.bundle.mjs')) return { ok: true, value: { bytes: new TextEncoder().encode('export const nothing = 1;'), eof: true } }
+        return missing(path)
+      },
+    },
+  }
+  const treeBroken = await renderPanelFresh(loaded.data, loaded.sources, { ctx: { remote: brokenRemote }, sessionId: 'session-under-test' })
+  const failure = findOne(treeBroken, 'data-cui-live2d-failure')
+  assert.ok(failure !== null, 'B：有源但装载失败**必须显式报出来**（不静默）')
+  assert.equal(failure.props['data-classroom-ui-live2d'], 'failed', 'B：这一档才是 failed')
+  assert.ok(textOf(failure).startsWith('立绘装载失败：'), 'B：文案仍是「立绘装载失败：…」（一个前缀都不许改）')
+  assert.ok(textOf(failure).includes('live2dcubismcore.min.js'), 'B：原始报错（缺哪个文件）一个字都不删')
+  assert.deepEqual(failure.props.style, S.boardNotice, 'B：走"一行紧凑说明"的样式（新实例样式表按值比）')
+  assert.notDeepEqual(failure.props.style, S.error, 'B：**不许**用整块灰板（那正是"抢主视觉"的写法）')
+  assert.ok(String(failure.props.style.borderLeft).includes('var(--cui-gold)'), 'B：紧凑说明左边一条金褐竖线')
+  assert.ok(String(failure.props.style.fontSize).includes('--dsw-font-xxxs-11-font-size'), 'B：紧凑说明走最小一档字（11px）')
+  const brokenBox = findOne(treeBroken, 'data-cui-board')
+  assert.equal(brokenBox.props['data-cui-board'], 'collapsed', 'B：故障态照旧折起画布（不占空白纸）')
+  assert.equal(findOne(treeBroken, 'data-cui-live2d-absent'), null, 'B：故障**不许**被说成"能力缺席"')
+  assert.equal(findOne(treeBroken, 'data-classroom-ui-portrait-stage').props['data-cui-portrait-mode'], 'failed',
+    'B：档位是 failed')
+}
 
 // 10.9 工程读数收进默认折起的「讲台诊断」：信息一条不删，但默认不占主视觉
 const diag = findOne(tree, 'data-cui-diag')
@@ -1348,4 +1588,216 @@ const items2 = findAll(tree2, (node) => Object.prototype.hasOwnProperty.call(nod
 assert.equal(items2.filter((node) => node.props['data-cui-current'] === 'true')[0].props['data-cui-item'], '6',
   '换讲次后"当前"跟着走')
 assert.ok(textOf(items2[5]).includes('地址翻译：硬件怎么帮我们作弊'), '第 6 讲的讲题必须画出来')
-assert.equal(findAll(tree2, (node) => node.props['data-cui-live2d-failure']).length, 1, '换讲次不影响"未部署"的显式报告')
+assert.equal(findAll(tree2, (node) => Object.prototype.hasOwnProperty.call(node.props, 'data-cui-live2d-absent')).length, 1,
+  '换讲次不影响「能力缺席」的中性说明（它不叫装载失败）')
+assert.equal(findAll(tree2, (node) => Object.prototype.hasOwnProperty.call(node.props, 'data-cui-live2d-failure')).length, 0,
+  '换讲次也不许冒出「装载失败」那一行')
+
+// ══════════════════════════════════════════════════════════════════════════
+// 11 · 板书历史（W-p）：右栏「板书」tab 的**只读**数据层 ＋ 列表
+//
+// 真源＝`runtime/diagrams/index.md`（引擎在写）。这里**不碰** `whiteboardStore`
+// （那个服务端服务没有写入者），也不装任何编辑入口。
+// ══════════════════════════════════════════════════════════════════════════
+
+// 11.1 路径：索引与 `.mmd` 都钉在教室目录内（词法拒绝，不猜）
+{
+  assert.equal(panel.diagramsIndexPath(), 'classrooms/cs-os/runtime/diagrams/index.md')
+  assert.equal(panel.diagramPath('`L03-T05-20261020-231500-flowchart.mmd`'),
+    'classrooms/cs-os/runtime/diagrams/L03-T05-20261020-231500-flowchart.mmd', '索引里的反引号要去掉')
+  for (const bad of ['../x.mmd', 'a/b.mmd', 'a\\b.mmd', '', null]) {
+    assert.equal(panel.diagramPath(bad), null, `非法源文件名必须被词法拒绝：${String(bad)}`)
+  }
+}
+
+// 11.2 解析：真实索引的形状（含转义竖线 / 表头 / 分隔行 / 讲次为 — / 时间倒序）
+{
+  const text = [
+    '# 板书图索引',
+    '',
+    '| 日期 | 讲次 | 回合 | 图类型 | 标题 | 说明 | 源文件 |',
+    '|---|---|---|---|---|---|',
+    '| 2026-10-20 21:00 | 第 1 讲 | 2 | flowchart | 进程状态 | 第一次画 | `L01-T02-20261020-210000-flowchart.mmd` |',
+    '| 2026-10-20 23:15 | 第 3 讲 | 5 | sequence | 系统调用路径 \\| 用户态到内核态 | 说明 | `L03-T05-20261020-231500-sequence.mmd` |',
+    '| 2026-10-20 23:15 | 第 3 讲 | 6 | state | 后画的同分钟那张 | — | `L03-T06-20261020-231500-state.mmd` |',
+    '| 2026-10-20 20:00 | — | 1 | mindmap | 没有讲次门 | — | `Lxx-T01-20261020-200000-mindmap.mmd` |',
+    '| 2026-10-20 20:00 | 第 2 讲 | 3 | flowchart | 列数不对的行 | 只有五格 |',
+    '| 这是普通正文，不是表格行 |',
+  ].join('\n')
+  const parsed = panel.parseDiagramIndex(text)
+  // 两条被跳过：一条只有 6 格的数据行，一条形如 `| 正文 |` 的退化行（两格都算'对不上'，如实记账）
+  assert.equal(parsed.skipped, 2, '列数对不上的行要跳过并记账（不许硬塞）')
+  assert.deepEqual(
+    parsed.items.map((item) => item.file),
+    [
+      'L03-T06-20261020-231500-state.mmd',
+      'L03-T05-20261020-231500-sequence.mmd',
+      'L01-T02-20261020-210000-flowchart.mmd',
+      'Lxx-T01-20261020-200000-mindmap.mmd',
+    ],
+    '时间倒序；同一分钟按回合倒序（后画的在前）',
+  )
+  assert.equal(parsed.items[1].title, '系统调用路径 | 用户态到内核态', '标题里的 `\\|` 要还原成 `|`（不按裸竖线切格）')
+  assert.equal(parsed.items[1].lesson, 3)
+  assert.equal(parsed.items[1].turn, 5)
+  assert.equal(parsed.items[1].kind, 'sequence')
+  assert.equal(parsed.items[3].lesson, null, '讲次为 — → null（不填 0）')
+  assert.equal(parsed.items[3].caption, '—')
+  assert.deepEqual(panel.parseDiagramIndex(''), { items: [], skipped: 0, columns: [], legacy: false }, '空文件 → 空表，不抛')
+  assert.deepEqual(panel.parseDiagramIndex(null), { items: [], skipped: 0, columns: [], legacy: false }, '读不到（null）→ 空表，不抛')
+  assert.deepEqual(parsed.columns, ['日期', '讲次', '回合', '图类型', '标题', '说明', '源文件'], '要把认出来的列名交回（诊断用）')
+  assert.equal(parsed.legacy, false, '认出表头时 legacy=false')
+}
+
+// 11.2b 🔴 表头**多了一列「会话」**（2026-10-20 引擎侧变更）：按名字取列，加列不用改解析器
+//        🔴 这是本次最容易踩的一处：按固定 7 列写的解析器会把 8 列的行**全部**判成"列数对不上"
+//        → 整张表变空、而且不报错。所以这条用例专门钉住"多一列照样解析"。
+{
+  const text = [
+    '| 日期 | 讲次 | 回合 | 图类型 | 标题 | 说明 | 源文件 | 会话 |',
+    '|---|---|---|---|---|---|---|---|',
+    '| 2026-10-20 23:15 | 第 3 讲 | 5 | flowchart | 三级缓存 | 说明 | `L03-T05-a.mmd` | session-aaa |',
+    '| 2026-10-20 22:00 | 第 3 讲 | 9 | state | 老记录没有会话号 | — | `L03-T09-b.mmd` |  |',
+    '| 2026-10-20 21:00 | 第 1 讲 | 2 | sequence | 缺一列的行 | — | `L01-T02-c.mmd` |',
+  ].join('\n')
+  const parsed = panel.parseDiagramIndex(text)
+  assert.deepEqual(parsed.columns, ['日期', '讲次', '回合', '图类型', '标题', '说明', '源文件', '会话'],
+    '认出来的列名要含「会话」')
+  assert.equal(parsed.items.length, 2, '8 列的数据行必须解析出来（按列数写死的实现会在这里变 0 行）')
+  assert.equal(parsed.skipped, 1, '缺一列的行照样记账跳过')
+  assert.equal(parsed.items[0].session, 'session-aaa', '「会话」列要读出来')
+  assert.equal(parsed.items[1].session, null, '「会话」列留空（老记录）→ null，不当成"别的会话"')
+  assert.equal(parsed.items[0].file, 'L03-T05-a.mmd')
+}
+
+// 11.2c 降级：**没有表头**的老索引 → 按老版 7 列位置解析（照样能用，并标 legacy）
+{
+  const text = [
+    '| 2026-10-20 21:00 | 第 1 讲 | 2 | flowchart | 进程状态 | 说明 | `L01-T02-a.mmd` |',
+  ].join('\n')
+  const parsed = panel.parseDiagramIndex(text)
+  assert.equal(parsed.legacy, true, '没认出表头 → legacy=true（界面上会如实写出来）')
+  assert.equal(parsed.items.length, 1)
+  assert.equal(parsed.items[0].title, '进程状态')
+  assert.equal(parsed.items[0].session, null, '老索引没有「会话」列 → session 为 null')
+}
+
+// 11.3 真读盘：索引不存在＝正常态（这节课还没画过图），不许当成故障
+{
+  const missing = (path) => ({ ok: false, error: { code: 'workspace-file/not-found', message: `no entry at "${path}"` } })
+  const emptyRemote = { workspaceFiles: { read: async (_s, path) => missing(path), readBytes: async (_s, path) => missing(path) } }
+  const absentHistory = await panel.loadDiagramHistory(emptyRemote, 'session-under-test', undefined)
+  assert.equal(absentHistory.items.length, 0)
+  assert.equal(absentHistory.error, null, '索引不存在是正常态（不是故障）→ error 为 null')
+  assert.equal(absentHistory.exists, false)
+  assert.equal(absentHistory.path, 'classrooms/cs-os/runtime/diagrams/index.md', '要把真路径说出来')
+
+  const indexText = '| 日期 | 讲次 | 回合 | 图类型 | 标题 | 说明 | 源文件 |\n|---|---|---|---|---|---|\n'
+    + '| 2026-10-20 23:15 | 第 3 讲 | 5 | flowchart | 三级缓存 | 说明 | `L03-T05-20261020-231500-flowchart.mmd` |\n'
+  const seen = []
+  const realRemote = {
+    workspaceFiles: {
+      read: async (_s, path) => { seen.push(path); return { ok: true, value: { text: indexText, lines: indexText.split('\n').length, eof: true } } },
+      readBytes: async (_s, path) => missing(path),
+    },
+  }
+  const history = await panel.loadDiagramHistory(realRemote, 'session-under-test', undefined)
+  assert.equal(history.items.length, 1)
+  assert.equal(history.exists, true)
+  assert.equal(history.items[0].title, '三级缓存')
+  assert.deepEqual([...new Set(seen)], ['classrooms/cs-os/runtime/diagrams/index.md'], '索引走文本通道读，路径是教室自己的 runtime/diagrams/index.md')
+
+  // 点开才读 `.mmd`：读到了就回全文，读不到就回原因（不抛）
+  const source = await panel.readDiagramSource(realRemote, 'session-under-test', 'L03-T05-20261020-231500-flowchart.mmd', undefined)
+  assert.equal(source.ok, true)
+  assert.ok(source.source.includes('| 日期 |'), '回的是文件全文')
+  const badSource = await panel.readDiagramSource(realRemote, 'session-under-test', '../escape.mmd', undefined)
+  assert.equal(badSource.ok, false)
+  assert.ok(badSource.error.includes('不合法'), '非法文件名要当场拒绝并说明')
+}
+
+// 11.4 列表渲染：一行一条（标题 ＋ 讲次 ＋ 回合），**只读**（没有任何编辑入口）
+{
+  const indexText = [
+    '| 日期 | 讲次 | 回合 | 图类型 | 标题 | 说明 | 源文件 |',
+    '|---|---|---|---|---|---|',
+    '| 2026-10-20 21:00 | 第 1 讲 | 2 | flowchart | 进程状态迁移 | 第一次画 | `L01-T02-20261020-210000-flowchart.mmd` |',
+    '| 2026-10-20 23:15 | 第 3 讲 | 5 | sequence | 系统调用路径 | 说明 | `L03-T05-20261020-231500-sequence.mmd` |',
+  ].join('\n')
+  const missing = (path) => ({ ok: false, error: { code: 'workspace-file/not-found', message: `no entry at "${path}"` } })
+  const remote = {
+    workspaceFiles: {
+      read: async (_s, path) => (String(path).endsWith('index.md')
+        ? { ok: true, value: { text: indexText, lines: indexText.split('\n').length, eof: true } }
+        : missing(path)),
+      readBytes: async (_s, path) => missing(path),
+    },
+  }
+  const fresh = makeReact()
+  const api = registration.factory((specifier) => {
+    if (specifier === 'react') return fresh.api
+    throw new Error(`未预期的 require("${specifier}")`)
+  })
+  const element = fresh.api.createElement(api.BoardHistory, { remote, sessionId: 'session-under-test', currentLesson: 3 })
+  const tree = await fresh.render(element)
+  const list = findOne(tree, 'data-cui-board-list')
+  assert.ok(list !== null, '列表必须画出来')
+  assert.equal(list.props['data-cui-board-list'], '2', '两张图都要在')
+  const rows = findAll(tree, (node) => Object.prototype.hasOwnProperty.call(node.props, 'data-cui-board-item'))
+  assert.equal(rows.length, 2)
+  assert.deepEqual(rows.map((node) => node.props['data-cui-board-item']),
+    ['L03-T05-20261020-231500-sequence.mmd', 'L01-T02-20261020-210000-flowchart.mmd'], '列表也是时间倒序')
+  assert.ok(textOf(rows[0]).includes('系统调用路径'), '标题要显示')
+  assert.ok(textOf(rows[0]).includes('第 3 讲'), '讲次要显示')
+  assert.ok(textOf(rows[0]).includes('第 5 回合'), '回合要显示')
+  assert.ok(textOf(rows[0]).includes('sequence'), '图类型要显示')
+  assert.equal(rows[0].props['data-cui-board-current'], 'true', '当前讲那一行要标出来')
+  assert.equal(rows[1].props['data-cui-board-current'], 'false')
+  assert.equal(rows[0].tag, 'button', '一行是一个可点开的按钮（不是输入框）')
+  assert.equal(typeof rows[0].props.onClick, 'function', '点开＝onClick（读 .mmd 再渲染）')
+
+  // 🔴 只读：整棵子树里不许有输入控件、不许有 contenteditable
+  const inputs = findAll(tree, (node) => node.tag === 'input' || node.tag === 'textarea' || node.tag === 'select'
+    || node.props.contentEditable === true || node.props.contentEditable === 'true')
+  assert.equal(inputs.length, 0, '板书历史**只读**：不许出现任何输入控件')
+  const onViews = findAll(tree, (node) => node.props.dangerouslySetInnerHTML !== undefined)
+  assert.equal(onViews.length, 0, '还没点开时不许往 DOM 里塞任何图')
+  assert.ok(findOne(tree, 'data-cui-board-refresh') !== null, '「重新读盘」在（刷新页面后能从磁盘重建，也允许手动再读）')
+
+  // 点开：读不到 `.mmd` 时**显示源码区与原因**，不白屏（这里读不到，所以走失败分支）
+  rows[0].props.onClick()
+  const tree2 = await fresh.render(element)
+  const viewer = findOne(tree2, 'data-cui-board-viewer')
+  assert.ok(viewer !== null, '点开后要出现"这一张"的查看区')
+  assert.equal(viewer.props['data-cui-board-viewer'], 'L03-T05-20261020-231500-sequence.mmd')
+  const failed = findAll(tree2, (node) => node.props['data-cui-board'] === 'failed')
+  assert.equal(failed.length, 1, '渲染/读源码失败 → 走降级块（不白屏）')
+  assert.ok(textOf(failed[0]).includes('读不到这张图的源码'), '降级块要把原因说清')
+  assert.ok(findOne(tree2, 'data-cui-board-close') !== null, '查看区要有「收起这张图」（不是编辑）')
+  // 列表仍在（点开不等于离开列表）
+  assert.equal(findAll(tree2, (node) => Object.prototype.hasOwnProperty.call(node.props, 'data-cui-board-item')).length, 2)
+}
+
+// 11.5 面板内 tab 栏：「教室」／「板书」两个页面，默认在教室；切到板书时不渲染讲台（立绘随卸载停掉）
+{
+  const tree = await renderPanel()
+  const tabBar = findOne(tree, 'data-cui-tabs')
+  assert.ok(tabBar !== null, '面板内部必须有 tab 栏（方案甲：不新增侧栏 tab 类型）')
+  // 只取 tab 按钮：面板根上也有一个 data-cui-tab（表示现在在哪一页）
+  const tabs = findAll(tree, (node) => node.tag === 'button' && Object.prototype.hasOwnProperty.call(node.props, 'data-cui-tab'))
+  assert.deepEqual(tabs.map((node) => node.props['data-cui-tab']), ['classroom', 'board'])
+  assert.deepEqual(tabs.map((node) => textOf(node)), ['教室', '板书'])
+  assert.equal(tabs[0].props['data-active'], 'true', '默认在「教室」')
+  assert.ok(String(tabs[0].props.style.borderBottom).includes('var(--cui-gold)'), '当前 tab 的金褐下划线（tabActive 是叠出来的新对象，按值判）')
+  assert.equal(tabs[1].props.style.borderBottom, '2px solid transparent', '非当前 tab 没有那条下划线')
+  assert.ok(String(S.tabActive.borderBottom).includes('var(--cui-gold)'), '选中的 tab 靠金褐下划线（不许靠加粗）')
+  assert.equal(Object.prototype.hasOwnProperty.call(S.tab, 'fontWeight'), false)
+  assert.equal(findOne(tree, 'data-classroom-ui-portrait-stage') !== null, true, '「教室」页里讲台照旧在')
+  assert.equal(findOne(tree, 'data-classroom-ui-board'), null, '「教室」页里不渲染板书历史（省一次读盘）')
+
+  tabs[1].props.onClick()
+  const boardTree = await renderPanel()
+  assert.equal(findOne(boardTree, 'data-classroom-ui-board') !== null, true, '切到「板书」页后渲染板书历史')
+  assert.equal(findOne(boardTree, 'data-classroom-ui-portrait-stage'), null, '切到「板书」页后讲台卸载（立绘 rAF 随之停掉，D2）')
+  tabs[0].props.onClick()
+}
