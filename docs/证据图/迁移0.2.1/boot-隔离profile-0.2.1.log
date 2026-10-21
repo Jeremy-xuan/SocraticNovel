@@ -1,0 +1,3 @@
+[1020/231350.476197:ERROR:electron/shell/common/mac/codesign_util.cc:79] task_name_for_pid: (os/kern) failure (5)
+dsh web: http://127.0.0.1:3099/?token=qvR_bnyDxEL2N-rNUUX9DkOeE86vQP4oVYb3OiqUV0s
+[llm-deepseek-account] model listing from https://api.deepseek.com/models loaded 2 model(s), skipped 0 row(s)

@@ -1,0 +1,28 @@
+{
+  "url": "http://127.0.0.1:3099/?token=qvR_bnyDxEL2N-rNUUX9DkOeE86vQP4oVYb3OiqUV0s",
+  "dom": {
+    "stageRoot": true,
+    "stageChildren": 1,
+    "stageText": "小 鞠 知 花 · 在场 SocraticNovel-GitHub仓库 待你开口 读 板书 动画 关闭舞台 鲸 （这段会话还没有内容） Enter 送出 · Shift+Enter 换行 送出",
+    "slotErrors": [],
+    "crashPlaceholders": 0,
+    "rightSidebarText": "",
+    "bodyHead": "New Session ⌥ ⌘ N Plugins Automation tasks Workspaces harness kards-offline-workspace 钉钉 TMUA SocraticNovel-GitHub仓库 New Session @docs/计划与排产/开发文档_功 18min 整顿仓库开发进度与功能 16h dsh-class-server 折腾AI (~/折腾AI) 大学申请 (~/Documents/ChatGPT/大学申请) Ungrouped 293*****44@qq.com Into the Unknown Preview SocraticNovel-"
+  },
+  "ourConsoleIssues": [],
+  "allIssueCount": 3,
+  "allIssues": [
+    {
+      "type": "pageerror",
+      "text": "ReferenceError: warnings is not defined"
+    },
+    {
+      "type": "pageerror",
+      "text": "ReferenceError: warnings is not defined"
+    },
+    {
+      "type": "pageerror",
+      "text": "ReferenceError: warnings is not defined"
+    }
+  ]
+}
