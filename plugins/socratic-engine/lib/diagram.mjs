@@ -49,6 +49,58 @@ export const MAX_CAPTION_CHARS = 500
 export const DIAGRAMS_SUBDIR = 'diagrams'
 export const INDEX_FILE = 'index.md'
 
+/**
+ * 舞台读图路由的前缀（契约 K2.1：`boardRoute` 恒为 `"/stage-board/diagrams/" + diagramId`）。
+ * 🔴 这是**跨端契约**的一部分：舞台宿主半边的 `GET /stage-board/diagrams/<id>` 就按它读。
+ */
+export const BOARD_ROUTE_PREFIX = '/stage-board/diagrams/'
+
+/**
+ * 图 id：`.mmd` 文件名去掉扩展名（契约 K2.1 逐字：如 `L03-T05-20261020-231500-flowchart`）。
+ * 接受带目录的路径（`diagrams/x.mmd`）。**纯函数**。
+ * @param {string} file
+ * @returns {string}
+ */
+export function diagramIdOf(file) {
+  const base = String(file ?? '').split(/[\\/]/).pop() ?? ''
+  return base.replace(/\.mmd$/u, '')
+}
+
+/**
+ * 舞台读图路由（契约 K2.1）。**纯函数**。
+ * @param {string} diagramId
+ * @returns {string} `"/stage-board/diagrams/<id>"`
+ */
+export function boardRouteOf(diagramId) {
+  return `${BOARD_ROUTE_PREFIX}${diagramId}`
+}
+
+/**
+ * 板书事件的结构化形状（K2.1 的 `board` 字段 / `presentationMeta` 的内容）。**纯函数**。
+ * 🔴 `lesson` 缺失写 `0`（契约："lesson 缺失时写 lesson=0"）。
+ * @param {{diagramId:string, lesson:number|null|undefined, turn:number, kind:string}} spec
+ * @returns {{id:string, lesson:number, turn:number, kind:string}}
+ */
+export function boardSummary({ diagramId, lesson, turn, kind }) {
+  return {
+    id: String(diagramId),
+    lesson: Number.isInteger(lesson) && lesson > 0 ? lesson : 0,
+    turn: Number.isInteger(turn) ? turn : 0,
+    kind: String(kind),
+  }
+}
+
+/**
+ * `output.render` 文本末尾那行**机器可读行**（契约 K2.1 的兜底路径，也是给模型自己看的）。**纯函数**。
+ * 形状写死：`[board] id=<diagramId> lesson=<N> turn=<T> kind=<kind>`
+ * （舞台侧按行首锚定的正则抓这一行，见契约 K2.3；格式一改，两个消费方都要跟）。
+ * @param {{id:string, lesson:number, turn:number, kind:string}} board
+ * @returns {string}
+ */
+export function renderBoardLine(board) {
+  return `[board] id=${board.id} lesson=${board.lesson} turn=${board.turn} kind=${board.kind}`
+}
+
 /** 字符拼示意图里必然出现、而合法 mermaid 里不会出现的制表符边框字符。 */
 const BOX_DRAWING = /[─│┌┐└┘├┤┬┴┼═║╔╗╚╝╠╣╦╩╬▏▕]/
 
@@ -254,25 +306,34 @@ export function renderIndexHeader() {
     '> **本文件由引擎自动追加**（`classroom_draw` 工具）：每画一张图，就在本目录落一个 `.mmd` 源文件',
     '> （内容＝**逐字**的 mermaid 源码），并在这里追加一行。**只追加，不删。**',
     '> 🔴 本文件是给人看的目录；图的内容看对应源文件。讲次取自 `runtime/progress.md` 的 `current_lesson`，',
-    '> 回合号是本会话内的第几个回合。',
+    '> 回合号是本会话内的第几个回合；**「会话」列是「这节课是哪一次会话」的唯一判据**',
+    '> （回合号在新会话里从 1 重来，所以只靠「讲次+回合」分不清两次会话的板书）。',
     '',
-    '| 日期 | 讲次 | 回合 | 图类型 | 标题 | 说明 | 源文件 |',
-    '|---|---|---|---|---|---|',
+    // 🔴 分隔行按**表头列数**给（8 列 → 8 组 `---`）：原先是 7 列表头配 6 组分隔符，
+    //    多一列的同时把这个老笔误一并纠正。
+    '| 日期 | 讲次 | 回合 | 图类型 | 标题 | 说明 | 源文件 | 会话 |',
+    '|---|---|---|---|---|---|---|---|',
   ].join('\n')
 }
 
 /**
  * 渲染索引的一行。**纯函数**。
  * 🔴 `caption` 必须落进索引：模型给了说明却不落盘＝信息静默消失（本项目红线）。
+ * 🔴 **会话列（W-e，契约 K2.1）**：索引原来只有「日期/讲次/回合/图类型/标题/说明/源文件」七列，
+ *    没有「这节课是哪一次会话」，而**回合号是会话内自增的**（新会话从 1 重来）——
+ *    同一讲跨两次会话时，只靠「讲次+回合」分不清哪些图属于"本节课"。
+ *    故**在末尾追加一列 `会话`**（放末尾是为了让按位置取前 7 格的老读法不受影响）。
+ *    取不到 session id 时写 `—`（不编造）。
  * @param {{timeLabel:string, lesson:number|null, turn:number, kind:string, title:string,
- *          caption?:string, file:string}} row
+ *          caption?:string, file:string, session?:string|null}} row
  */
-export function renderIndexRow({ timeLabel, lesson, turn, kind, title, caption = '', file }) {
+export function renderIndexRow({ timeLabel, lesson, turn, kind, title, caption = '', file, session = null }) {
   const lessonCell = lesson === null || lesson === undefined ? '—' : `第 ${lesson} 讲`
   const cell = (text, empty) => (text === '' ? empty : text.replace(/\|/g, '\\|').replace(/\n+/g, ' '))
+  const sessionCell = typeof session === 'string' && session !== '' ? `\`${session}\`` : '—'
   return (
     `| ${timeLabel} | ${lessonCell} | ${turn} | ${kind} | ${cell(title, '（未给标题）')} | ` +
-    `${cell(caption, '—')} | \`${file}\` |`
+    `${cell(caption, '—')} | \`${file}\` | ${sessionCell} |`
   )
 }
 

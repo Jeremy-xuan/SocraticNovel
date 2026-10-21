@@ -21,12 +21,17 @@ import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 
 import {
+  BOARD_ROUTE_PREFIX,
   DIAGRAM_KIND_IDS,
   MAX_SOURCE_CHARS,
   appendIndexRow,
+  boardRouteOf,
+  boardSummary,
   checkDiagramArgs,
   diagramFileName,
+  diagramIdOf,
   findUnbalancedBracket,
+  renderBoardLine,
   renderIndexHeader,
   renderIndexRow,
   uniqueFileName,
@@ -249,7 +254,8 @@ test('文件名去重：同名已存在时依次加 -2 / -3 后缀', () => {
 test('索引：表头字段固定，行里标题的竖线被转义、空标题有占位', () => {
   const header = renderIndexHeader()
   assert.match(header, /^# 板书图索引/)
-  assert.match(header, /\| 日期 \| 讲次 \| 回合 \| 图类型 \| 标题 \| 说明 \| 源文件 \|/)
+  // 🔴 W-e：末尾多一列「会话」（回合号是会话内自增的，只靠讲次+回合分不清两次会话）
+  assert.match(header, /\| 日期 \| 讲次 \| 回合 \| 图类型 \| 标题 \| 说明 \| 源文件 \| 会话 \|/)
   const row = renderIndexRow({
     timeLabel: '2026-09-24 10:15',
     lesson: 1,
@@ -258,7 +264,7 @@ test('索引：表头字段固定，行里标题的竖线被转义、空标题�
     title: 'A | B',
     file: 'L01-T03-x-flowchart.mmd',
   })
-  assert.equal(row, '| 2026-09-24 10:15 | 第 1 讲 | 3 | flowchart | A \\| B | — | `L01-T03-x-flowchart.mmd` |')
+  assert.equal(row, '| 2026-09-24 10:15 | 第 1 讲 | 3 | flowchart | A \\| B | — | `L01-T03-x-flowchart.mmd` | — |')
   assert.match(
     renderIndexRow({ timeLabel: 't', lesson: null, turn: 1, kind: 'pie', title: '', file: 'f.mmd' }),
     /（未给标题）/,
@@ -309,7 +315,7 @@ test('落盘：源文件内容＝源码原文（只补行尾换行），索引�
   assert.match(index, /^# 板书图索引/)
   assert.match(
     index,
-    /\| 2026-09-24 10:15 \| 第 1 讲 \| 3 \| flowchart \| 两个程序 \| 第 1 讲题眼 \| `L01-T03-20260924-101530-flowchart\.mmd` \|/,
+    /\| 2026-09-24 10:15 \| 第 1 讲 \| 3 \| flowchart \| 两个程序 \| 第 1 讲题眼 \| `L01-T03-20260924-101530-flowchart\.mmd` \| — \|/,
   )
 })
 
@@ -548,4 +554,105 @@ test('端到端：ASCII 拼的示意图走完整链路 → 被拒，目录里一
     /制表符边框字符/,
   )
   assert.deepEqual(await listDir(join(runtimeDir, 'diagrams')), [])
+})
+
+// ---------------------------------------------------------------- ④ W-e：板书事件（契约 K2.1）
+
+test('diagramIdOf：`.mmd` 去扩展名，带目录也认', () => {
+  assert.equal(diagramIdOf('L03-T05-20261020-231500-flowchart.mmd'), 'L03-T05-20261020-231500-flowchart')
+  assert.equal(diagramIdOf('diagrams/L03-T05-20261020-231500-flowchart.mmd'), 'L03-T05-20261020-231500-flowchart')
+  assert.equal(diagramIdOf('x.mmd'), 'x')
+  assert.equal(diagramIdOf(''), '')
+})
+
+test('boardRouteOf：恒为 "/stage-board/diagrams/" + id（契约 K2.1 逐字）', () => {
+  assert.equal(BOARD_ROUTE_PREFIX, '/stage-board/diagrams/')
+  assert.equal(boardRouteOf('L03-T05-x-flowchart'), '/stage-board/diagrams/L03-T05-x-flowchart')
+})
+
+test('boardSummary：lesson 缺失/非法写 0（契约："lesson 缺失时写 lesson=0"）', () => {
+  assert.deepEqual(boardSummary({ diagramId: 'a', lesson: 3, turn: 5, kind: 'flowchart' }), {
+    id: 'a',
+    lesson: 3,
+    turn: 5,
+    kind: 'flowchart',
+  })
+  assert.equal(boardSummary({ diagramId: 'a', lesson: null, turn: 5, kind: 'pie' }).lesson, 0)
+  assert.equal(boardSummary({ diagramId: 'a', lesson: 0, turn: 5, kind: 'pie' }).lesson, 0)
+  assert.equal(boardSummary({ diagramId: 'a', lesson: -1, turn: 5, kind: 'pie' }).lesson, 0)
+})
+
+test('renderBoardLine：形状写死（舞台按这个格式抓，见 K2.3）', () => {
+  assert.equal(
+    renderBoardLine({ id: 'L03-T05-20261020-231500-flowchart', lesson: 3, turn: 5, kind: 'flowchart' }),
+    '[board] id=L03-T05-20261020-231500-flowchart lesson=3 turn=5 kind=flowchart',
+  )
+  // 与契约 K2.3 的运行期正则逐字对得上
+  const line = `\n${renderBoardLine({ id: 'a', lesson: 0, turn: 1, kind: 'pie' })}`
+  const m = /\n\[board\] id=(\S+) lesson=(\d+) turn=(\d+) kind=(\S+)/.exec(line)
+  assert.ok(m, '机器可读行必须能被 K2.3 的正则抓到')
+  assert.deepEqual(m.slice(1), ['a', '0', '1', 'pie'])
+})
+
+test('落盘：返回 diagramId / boardRoute / board 三样（K2.1 第 3 条）', async (t) => {
+  const runtimeDir = await makeRuntimeDir()
+  t.after(() => rm(runtimeDir, { recursive: true, force: true }))
+  const saved = await saveDiagram(
+    { kind: 'flowchart', source: SAMPLES.flowchart, title: '两个程序', caption: '', lesson: 1, turn: 3 },
+    { runtimeDir, io: fakeIo, now: NOW },
+  )
+  assert.equal(saved.diagramId, 'L01-T03-20260924-101530-flowchart')
+  assert.equal(saved.boardRoute, '/stage-board/diagrams/L01-T03-20260924-101530-flowchart')
+  assert.deepEqual(saved.board, { id: 'L01-T03-20260924-101530-flowchart', lesson: 1, turn: 3, kind: 'flowchart' })
+})
+
+test('索引：会话列落盘（同一讲跨两次会话靠它分辨"本节课的板书"）', async (t) => {
+  const runtimeDir = await makeRuntimeDir()
+  t.after(() => rm(runtimeDir, { recursive: true, force: true }))
+  await saveDiagram(
+    { kind: 'flowchart', source: SAMPLES.flowchart, title: '第一次课', caption: '', lesson: 1, turn: 3, session: 'session-aaa' },
+    { runtimeDir, io: fakeIo, now: NOW },
+  )
+  await saveDiagram(
+    { kind: 'state', source: SAMPLES.state, title: '第二次课', caption: '', lesson: 1, turn: 3, session: 'session-bbb' },
+    { runtimeDir, io: fakeIo, now: NOW },
+  )
+  const index = await readFile(join(runtimeDir, 'diagrams', 'index.md'), 'utf8')
+  const rows = index.split('\n').filter((line) => line.startsWith('| 2026-'))
+  assert.equal(rows.length, 2)
+  assert.match(rows[0], /\| `session-aaa` \|$/)
+  assert.match(rows[1], /\| `session-bbb` \|$/)
+  // 取不到 session 时写 —（不编造）
+  const runtimeDir2 = await makeRuntimeDir()
+  t.after(() => rm(runtimeDir2, { recursive: true, force: true }))
+  await saveDiagram(
+    { kind: 'pie', source: SAMPLES.pie, title: '无会话', caption: '', lesson: null, turn: 1 },
+    { runtimeDir: runtimeDir2, io: fakeIo, now: NOW },
+  )
+  const index2 = await readFile(join(runtimeDir2, 'diagrams', 'index.md'), 'utf8')
+  assert.match(index2, /\| — \|\s*$/)
+})
+
+test('编排：drawDiagram 把 session 透传进索引、并回传 board（K2.1）', async (t) => {
+  const runtimeDir = await makeRuntimeDir()
+  t.after(() => rm(runtimeDir, { recursive: true, force: true }))
+  const result = await drawDiagram(
+    { kind: 'flowchart', source: SAMPLES.flowchart, title: '两个程序' },
+    {
+      runtimeDir,
+      lesson: 1,
+      turn: 2,
+      session: 'session-xyz',
+      parser: { parse: async () => ({ diagramType: 'flowchart' }) },
+      io: fakeIo,
+      now: NOW,
+    },
+  )
+  assert.equal(result.board.id, result.diagramId)
+  assert.equal(result.board.lesson, 1)
+  assert.equal(result.board.turn, 2)
+  assert.equal(result.board.kind, 'flowchart')
+  assert.equal(result.boardRoute, `/stage-board/diagrams/${result.diagramId}`)
+  const index = await readFile(join(runtimeDir, 'diagrams', 'index.md'), 'utf8')
+  assert.match(index, /\| `session-xyz` \|/)
 })

@@ -131,6 +131,37 @@ node "$DSH_BIN" plugin --profile <profile> add "file:$HOME/SocraticNovel-wt/plug
 输入只有"本回合已说出口的文字 ＋ 本会话内老师是否指定过 ＋ 渲染侧能力产物"三样。
 表情状态写在教室 `runtime/expression.md`（引擎是唯一写者；格式见同报告 §3）。
 
+## 板书事件（W-e · 契约 K2）
+
+`classroom_draw` 成功时，返回值里多三样东西（K2.1）：
+
+| 字段 | 值 |
+|---|---|
+| `diagramId` | `.mmd` 文件名去扩展名，如 `L03-T05-20261020-231500-flowchart` |
+| `boardRoute` | 恒 `"/stage-board/diagrams/" + diagramId`（舞台宿主半边按它读图） |
+| `board` | `{ id, lesson, turn, kind }`；`lesson` 缺失写 `0` |
+
+还有两处出口：
+
+- **`output.render` 的文本末尾单独一行**（兜底路径，也是给模型看的）：
+  `[board] id=<diagramId> lesson=<N> turn=<T> kind=<kind>`。
+- **`output.presentationMeta` 返回 `{ board: { id, lesson, turn, kind } }`**——这是结构化数据进
+  会话事件的**唯一**出口（0.2.1 的事实：`content` 是 `render` 的产物，结构化 `value` 不进事件）。
+  舞台**优先读 `meta.board`**，拿不到才去正文抓 `[board]` 那行。
+
+### 索引的「会话」列（判断"本节课的板书"）
+
+`runtime/diagrams/index.md` 原来只有「日期/讲次/回合/图类型/标题/说明/源文件」七列，**没有会话**。
+本批**在末尾加了一列 `会话`**（写宿主 session id；取不到写 `—`）。
+
+**理由**：回合号是**会话内**自增的（新会话从 1 重来），所以同一讲跨两次会话时，
+只靠「讲次 + 回合」**分不清**哪些图属于"本节课"——`L01-T03` 会在两次会话里各出现一次。
+加一列 session 之后，"本节课的板书"＝**该 session 的行**，判据确定、不靠猜。
+为什么放在**末尾**：按位置取前 7 格的老读法不受影响（表格列数变了，但前七列顺序没动）。
+
+> ⚠️ 跨车道影响：面板（P 车道）读这张表来列板书历史。**新列在末尾**，按表头名解析不受影响；
+> 按固定列数解析会多一格。这一条写在实现报告里请主代理转达。
+
 ## 教学动画与备课（ANIM-ORCH / ANIM-PREP / ALIGN-EXEC）
 
 - 顶层 `animation:` 段（`enabled` 等）控制动画通道：段**缺席** → 引擎不注册动画工具；启用后

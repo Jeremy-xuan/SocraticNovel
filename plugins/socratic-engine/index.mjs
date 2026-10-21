@@ -41,7 +41,7 @@ import { createPhaseStore, PHASES } from './lib/phasestore.mjs'
 import { registerDiscovery } from './lib/discovery.mjs'
 import { registerDedup, sessionIdOf } from './lib/dedup.mjs'
 import { registerPostClass } from './lib/postclass.mjs'
-import { DIAGRAM_KIND_IDS } from './lib/diagram.mjs'
+import { DIAGRAM_KIND_IDS, renderBoardLine } from './lib/diagram.mjs'
 import { drawDiagram } from './lib/diagramstore.mjs'
 import { createMermaidParser } from './lib/mermaid-parse.mjs'
 import { NOTE_TYPES, assertRuntimeDir, createNoteStore } from './lib/notestore.mjs'
@@ -1028,19 +1028,41 @@ export async function apply(
             bytes: { type: 'integer', required: true },
             rows: { type: 'integer', required: true },
             time: { type: 'string', required: true },
+            // 🔴 W-e（契约 K2.1）：图 id / 舞台读图路由 / 结构化板书事件。
+            //    结构化数据在事件里走 `presentationMeta`（`value` 不进事件），这三样进 schema
+            //    是为了让**模型自己**也能读到 id 与路由（它可能要在正文里提"这张图在哪"）。
+            diagramId: { type: 'string', required: true },
+            boardRoute: { type: 'string', required: true },
+            board: {
+              type: 'object',
+              required: true,
+              additionalProperties: false,
+              properties: {
+                id: { type: 'string', required: true },
+                lesson: { type: 'integer', required: true },
+                turn: { type: 'integer', required: true },
+                kind: { type: 'string', required: true },
+              },
+            },
           },
         },
+        // 🔴 机器可读行的位置是**文本末尾单独一行**（契约 K2.1 第 2 条）：
+        //    它是兜底路径——舞台拿不到 `meta` 时就从这里抓（K2.3 的判据 2）。
         render: (_args, value) => [
           {
             type: 'text',
             text:
               `板书图已落盘：${value.file}（${value.kind} → ${value.diagramType}｜${value.lines} 行 / ${value.bytes} B）｜` +
               `第 ${value.lesson} 讲 · 第 ${value.turn} 回合 · ${value.time}｜` +
-              `索引 ${value.indexFile} 现共 ${value.rows} 行${value.title === '' ? '' : `｜标题：${value.title}`}`,
+              `索引 ${value.indexFile} 现共 ${value.rows} 行${value.title === '' ? '' : `｜标题：${value.title}`}` +
+              `\n${renderBoardLine(value.board ?? { id: value.diagramId, lesson: value.lesson, turn: value.turn, kind: value.kind })}`,
           },
         ],
+        // 🔴 0.2.1 的事实（契约 K2.1 开头那条）：工具结果进会话事件时 `content` 是 render 的产物，
+        //    结构化 `value` **不进事件**；要带结构化数据的**唯一出口**就是这里 —— 舞台优先读 `meta.board`。
+        presentationMeta: (_args, value) => ({ board: value.board }),
       },
-      execute: async (args) => {
+      execute: async (args, exec) => {
         // 编排主体在 lib/diagramstore.mjs 的 drawDiagram（三段：结构校验 → 真解析 → 落盘），
         // 抽出去是为了让这段逻辑不依赖宿主即可单测（见 test/diagram.test.mjs）。
         // 🔴 任何一段不过都**抛错**（工具报错 = 模型看得到，且什么都没落盘），不静默放行。
@@ -1048,6 +1070,8 @@ export async function apply(
           runtimeDir: join(current.dir, 'runtime'),
           lesson: currentLesson,
           turn: phase.turnCount,
+          // 会话 id：写进索引的「会话」列，也是舞台判"这节课的板书"的依据
+          session: exec?.agent?.session?.id ?? null,
           parser: getMermaidParser(),
         })
         log(`板书图落盘：${result.file}（${result.kind} → ${result.diagramType}，${result.bytes} B）`)
@@ -1063,6 +1087,9 @@ export async function apply(
           bytes: result.bytes,
           rows: result.rows,
           time: result.time,
+          diagramId: result.diagramId,
+          boardRoute: result.boardRoute,
+          board: result.board,
         }
       },
     }),
