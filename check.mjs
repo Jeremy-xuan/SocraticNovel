@@ -14,8 +14,9 @@
  *          这两条**明确记 N/A**（不是通过，也不算失败）。
  *   ④ 客户端插件测试（clients/inject-hide/test/hide.test.mjs，＝ `npm test`）；
  *   ⑤ 客户端面板测试（clients/classroom-ui）：
- *        · test/panel.test.mjs（＝ `npm test`）；
- *        · test/whiteboard.test.mjs ＋ test/whiteboard-route.test.mjs（白板服务端，两个独立断言集）；
+ *        · test/panel.test.mjs（浏览器半边：真实产物 + 真实教室文件）；
+ *        · test/host-face.test.mjs（宿主半边：typert 绑定/描述符/manifest，以及"源码里不许 import
+ *          任何 `@deepseek-ai/*`"这条机核 —— 0.2.1 删掉安装版回退目录后，这条是铁律③的根因侧）；
  *   ⑥ 舞台离线自检（clients/classroom-stage-warm/check.sh，20 项、不装 profile、不联网）；
  *   ⑦ 验收流水线的不花钱机核（acceptance/）：
  *        · 静态三守卫：footprint-self-test / whitelist-self-test / frequency-parity；
@@ -355,7 +356,7 @@ if (onlySkill) {
     }
   }
 
-  // ── ⑤ 客户端面板测试（含白板服务端两个独立断言集）────────────────────────────
+  // ── ⑤ 客户端面板测试（面板 + 宿主半边契约；白板那两套随实现一起下线，见 B2 报告 §4）──
   section('⑤ 客户端面板测试 clients/classroom-ui')
   {
     runCheckStep({
@@ -363,12 +364,8 @@ if (onlySkill) {
       entry: join(ROOT, 'clients/classroom-ui/test/panel.test.mjs'),
     })
     runCheckStep({
-      label: '白板服务端 whiteboard.test.mjs',
-      entry: join(ROOT, 'clients/classroom-ui/test/whiteboard.test.mjs'),
-    })
-    runCheckStep({
-      label: '白板路由 whiteboard-route.test.mjs',
-      entry: join(ROOT, 'clients/classroom-ui/test/whiteboard-route.test.mjs'),
+      label: '宿主半边契约 host-face.test.mjs',
+      entry: join(ROOT, 'clients/classroom-ui/test/host-face.test.mjs'),
     })
   }
 
