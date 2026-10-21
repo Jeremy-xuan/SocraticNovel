@@ -1,20 +1,31 @@
-# socratic-narrative bundle patch：挂载叙事层（N1 独立上下文运行器 + N2 日记）。
+# socratic-narrative bundle patch：挂载叙事层
+#   N1 独立上下文运行器 / N2 日记 / N3 群聊（契约 K4 的 classroomGroup 服务）/
+#   N4 定时主动消息 / N5 世界观提议审阅。
 #
 # 🔴 这里**不放任何密钥**：模型通道走实例自己已配置的 provider（`ctx.llm` 的适配器，
 #    其凭据在实例的 provider 配置 / 环境变量里），本插件只拿路由名。
 #
 # 模型路由的取值顺序（见 README §2）：
 #   ① 调用参数 `model`（引擎读 `classroom.yaml` 的 `narrative.models.<task>` 后传进来）
-#   ② 本文件的 `config.provider` / `config.model` / `config.models.<task>`
+#   ② 本文件的 `config.models.<task>` / `config.provider` / `config.model`
 #   ③ 实例的 `ctx.agentDefaultModel.currentSelection()` —— 即「实例已配置的模型通道」
 #   三者都取不到 → 抛 `ROUTE_MISSING`（大声失败，不猜、不回退到某个写死的模型）。
+#
+# 本包另外注册一个宿主服务 `classroomGroup`（契约 K4.1 的 typert Remote 宿主半边；
+# 浏览器侧由面板经 `ctx.remote.classroomGroup.<method>` 调用）。它的清单在同目录的
+# `lib/typert.host.mjs`，由 `dsh-typert-loader` 按 package.json 的 `"./typert"` 导出自动注册。
 - insert:
     - id: socratic-narrative
       name: socratic-narrative
       # config 段留空是有意的：默认吃实例的 agentDefaultModel。
-      # 要给日记/群聊分别指定模型时，在这里或 classroom.yaml 里写，例如：
+      # 常用开关（都不填就是默认）：
       #   config:
       #     models:
       #       diary: { provider: deepseek-official, model: deepseek-v4-flash }
-      #     timeoutMs: 60000
+      #       group: { provider: deepseek-official, model: deepseek-v4-flash }
+      #       review: { provider: deepseek-official, model: deepseek-v4-flash }
+      #     timeoutMs: 60000          # 单次模型调用预算
+      #     groupTickMs: 5000         # 群聊调度间隔（0＝不自起定时器，测试用）
+      #     classroomDir: /abs/path/to/classrooms/cs-os   # 显式指定教室（缺省按会话作用域解析）
+      #     review: false             # 关掉「跟日记同一轮的世界观审阅」
       config: {}

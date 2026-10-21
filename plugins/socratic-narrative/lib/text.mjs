@@ -78,3 +78,59 @@ export function formatLocalDate(ms) {
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
 }
+
+/**
+ * 取 markdown 文件头里的「引用行规则」（连续以 `>` 开头的行，直到第一个非引用行）。
+ * 找不到返回空串——**不抛**：抛不抛、抛什么码由调用方按自己的文件语义决定
+ * （日记要 `NO_DIARY_RULES`，群聊要 `NO_GROUP_RULES`）。
+ * @param {string} markdown
+ * @returns {string}
+ */
+export function extractQuotedRules(markdown) {
+  const lines = String(markdown ?? '').split('\n')
+  const rules = []
+  let collecting = false
+  for (const line of lines) {
+    if (line.startsWith('>')) {
+      collecting = true
+      rules.push(line.replace(/^>\s?/, '').trimEnd())
+      continue
+    }
+    if (collecting) break
+  }
+  return rules.join('\n').trim()
+}
+
+/**
+ * 去掉叙事层的情绪标记 `〔emo:<label>:<强度>〕`（K1.1：只有以 `emo:` 开头的括号对才是标记，
+ * 其它 `〔…〕` 是正文）。用于把学生原话写进 `notes.jsonl` 前的清洗（K3.2 要求 quote 已剥净）。
+ * @param {string} text
+ * @returns {string}
+ */
+export function stripEmotionMarkers(text) {
+  return String(text ?? '').replace(/〔emo:[^〕]*〕/g, '')
+}
+
+/**
+ * 去掉 markdown 格式符号，只留可读文字（`notes.jsonl` 的 `quote` / `note` 用）。
+ * 口径与引擎 `lib/notestore.mjs` 的 `stripMarkdown` 一致：只剥格式、不改字；**不剥 `_`**
+ * （下划线在代码里是名字的一部分）。
+ * @param {string} text
+ * @returns {string}
+ */
+export function stripMarkdown(text) {
+  let s = String(text ?? '').replace(/\r\n?/g, '\n')
+  s = s.replace(/^[ \t]*```[^\n]*$/gm, '')
+  s = s.replace(/`{1,2}([^`]*)`{1,2}/g, '$1')
+  s = s.replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+  s = s.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+  s = s.replace(/^[ \t]{0,3}#{1,6}[ \t]+/gm, '')
+  s = s.replace(/^[ \t]{0,3}>[ \t]?/gm, '')
+  s = s.replace(/^[ \t]*[-*+][ \t]+/gm, '')
+  s = s.replace(/^[ \t]*\d+[.)][ \t]+/gm, '')
+  s = s.replace(/\*\*([\s\S]*?)\*\*/g, '$1')
+  s = s.replace(/\*([^*\n]+)\*/g, '$1')
+  s = s.replace(/~~([\s\S]*?)~~/g, '$1')
+  s = s.replace(/\*+/g, '').replace(/~~/g, '')
+  return s.replace(/\s+/g, ' ').trim()
+}
