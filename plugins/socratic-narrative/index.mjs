@@ -1,8 +1,11 @@
 // index.mjs — socratic-narrative（车道 N · 叙事层地基）
 //
-// 两个交付物：
+// 五个交付物：
 //   N1 独立上下文 agent 运行器 —— lib/runner.mjs（读文件 → 调模型 → 结构化结果 → 写文件）
 //   N2 日记                     —— lib/diary.mjs（在 N1 之上）
+//   N3 群聊                     —— lib/groupservice.mjs + lib/group.mjs + lib/groupstore.mjs
+//                                  （契约 K4 的四个 Remote 方法；真源 runtime/wechat_group.jsonl）
+//   N4 定时主动消息             —— lib/proactive.mjs（北京时间 8:00–23:00、预生成、确定性检查、退避）
 //
 // 宿主面只有一件事：把服务以名字 `narrative` 提供给引擎（`ctx.get('narrative')` /
 // `ctx.narrative`，取决于引擎怎么接）。**本轮不改引擎**——接线说明见 README §7。
@@ -15,6 +18,7 @@
 
 import { ERROR_CODES, NarrativeError, describeError } from './lib/errors.mjs'
 import { DIARY_SCHEMA, buildDiaryPrompt, buildDiarySystem, collectDiaryInputs, createDiaryStore, readRecentDiaries } from './lib/diary.mjs'
+import { ClassroomGroupService } from './lib/groupservice.mjs'
 import { createAgentRunner } from './lib/runner.mjs'
 import { createRunLog } from './lib/runlog.mjs'
 import { createRunRegistry } from './lib/state.mjs'
@@ -98,6 +102,26 @@ export function createNarrativeService({
     log: (...args) => log('info', ...args),
     now,
     ...(config?.timeoutMs === undefined ? {} : { timeoutMs: config.timeoutMs }),
+  })
+
+  /** 运行日志的公共写入口（日记与群聊/审阅共用一份文件）。 */
+  async function recordRun(classroomDir, entry) {
+    await runLogFor(classroomDir).record(entry)
+  }
+
+  /**
+   * K4 群聊服务（typert Remote 的宿主半边 + 服务端节奏 + N4 定时）。
+   * `apply()` 会把它以 `classroomGroup` 这个名字 provide 出去。
+   */
+  const group = new ClassroomGroupService({
+    runTask: (spec) => runner.runTask(spec),
+    now,
+    rng: typeof config?.rng === 'function' ? config.rng : Math.random,
+    log,
+    classroomDir: typeof config?.classroomDir === 'string' ? config.classroomDir : null,
+    ...(config?.groupTickMs === undefined ? {} : { tickMs: config.groupTickMs }),
+    appendProposal: (input) => appendProposal({ ...input, now: input.now ?? now() }),
+    recordRun,
   })
 
   /**
@@ -229,6 +253,8 @@ export function createNarrativeService({
     runTask,
     /** N2 入口（浮空调用安全，永不 reject）。 */
     runDiary,
+    /** K4 群聊服务（引擎可直接调；宿主侧也以 `classroomGroup` 这个名字 provide）。 */
+    group,
     /** N2.4 读取出口：最近 N 条日记。 */
     readRecentDiaries: (request) => readRecentDiaries({ ...request, ...(io.read === undefined ? {} : { read: io.read }) }),
     /** N2.1 兜底判据（纯函数，引擎拿去判断）。 */
@@ -271,7 +297,14 @@ export function apply(ctx, config = {}) {
   })
 
   ctx.provide('narrative', service)
-  log('info', `[narrative] 叙事层已装载（timeoutMs=${config.timeoutMs ?? '默认'}）`)
+  // K4.1：群聊服务的宿主半边。名字就是契约里的 `classroomGroup`（浏览器侧 ctx.remote.classroomGroup）
+  ctx.provide('classroomGroup', service.group)
+  const ticker = service.group.start()
+  if (typeof ctx.effect === 'function') ctx.effect(() => () => ticker.stop(), 'socratic-narrative group ticker')
+  log(
+    'info',
+    `[narrative] 叙事层已装载（timeoutMs=${config.timeoutMs ?? '默认'}，群聊调度=${config.groupTickMs === undefined ? 5000 : config.groupTickMs}ms）`,
+  )
 }
 
 export { ERROR_CODES, NarrativeError } from './lib/errors.mjs'

@@ -1,9 +1,10 @@
-# socratic-narrative · 叙事层地基（车道 N）
+# socratic-narrative · 叙事层（车道 N）
 
-开发文档第 3 波的 N1 / N2：**独立上下文 agent 运行器** 与 **日记**。
+开发文档第 3 波的 N1 / N2 / N3 / N4 / N5：**独立上下文 agent 运行器**、**日记**、**群聊**、**定时主动消息**、**世界观提议**。
 
 - **N1**：`lib/runner.mjs` —— 「读文件 → 调模型 → 结构化结果 → 写文件」，每次运行一个全新上下文，异步、不进学生会话列表、失败大声。
 - **N2**：`lib/diary.mjs` —— 在 N1 之上：收集本节记录 + 她最近三条日记 + 角色卡 + 角色声音段 + 世界设定 + 最近群聊，写一条日记（≤120 字），按「会话 + 讲次」幂等。
+- **N3**：`lib/groupservice.mjs` + `lib/group.mjs` + `lib/groupstore.mjs` —— 契约 K4 的群聊服务（`history` / `send` / `poll` / `markRead`），真源是 `runtime/wechat_group.jsonl`，`wechat_group.md` 是机械投影。
 
 本包**零运行时依赖**：不 import 任何 `@deepseek-ai/*`（理由见下「宿主包纪律」）。装进 profile 后 `node_modules` 里除了它自己没有别的东西。
 
@@ -137,7 +138,12 @@ narrative.runLogPath(classroomDir)            // 运行日志的绝对路径
 |---|---|---|
 | `runtime/diary.md` | 日记 | 人读的日记本。新条目插在**条目区**（`---` 之后、口吻提示之前），文件头与口吻提示一个字不动 |
 | `runtime/.narrative/diary-ledger.jsonl` | 日记 | 幂等键账本（只有键与时间，不含正文） |
-| `runtime/.narrative/agent-runs.jsonl` | 运行器 | 运行日志：一行一次运行，成功/失败/跳过都记，跨重启可查 |
+| `runtime/.narrative/agent-runs.jsonl` | 运行器 | 运行日志：一行一次运行，成功/失败/跳过都记，跨重启可查（群聊、审阅也写这里） |
+| `runtime/wechat_group.jsonl` | 群聊 | **群聊唯一真源**，append-only，字段严格照契约 K4.2 |
+| `runtime/wechat_group.md` | 群聊 | 上面那份的**机械投影**（文件头写「机械生成，请勿手改」），只给人看 |
+| `runtime/wechat_group.rules.md` | 人 | 群聊的写死规则（N3.6）；agent 的系统提示**逐字**取它的文件头 |
+| `runtime/.narrative/group-state.json` | 群聊 | 未读游标、待回复批次、课堂状态镜像（不是消息） |
+| `runtime/notes.jsonl` | 群聊（只追加） | 群里提的知识题写一条 `group_question`；**投影由引擎重算，本包不碰**（见 §7.3） |
 
 `runtime/.narrative/` 是隐藏子目录：不占教室内容的命名空间，也不与契约 K3 的 `runtime/notes.jsonl`（**教学记录**真源）混在一起——那是教学事实，这是运行过程。
 
@@ -176,23 +182,102 @@ N2.3 的规则**不在本包里另抄一份**：运行时从 `runtime/diary.md` 
 两条出口：① `runtime/.narrative/agent-runs.jsonl`（跨重启）；② `status().lastError`（面板直接读）。
 **任何一处都不许出现「返回 null / 返回空文本 / 当作成功」这种处理**——那就是静默失败。
 
+
 ---
 
-## 7 · 引擎接线（本轮不做，交给车道 J）
+## 7 · N3 · 群聊（契约 K4）
+
+### 7.1 为什么真源是 JSONL（N3.2 要我判断并写明）
+
+`runtime/wechat_group.jsonl` 是唯一真源，`wechat_group.md` 是**机械投影**（每次追加后整份重画）。三条理由：
+
+1. **未读要用 `seq`**：K4.2 写死「`seq` 是排序与未读的唯一依据」。markdown 里没有可靠序号，靠行序＝让未读依赖解析器稳定性。
+2. **两个标签页同时发言不能丢消息**（K4.3 的 AC）：一行一条 JSON 的追加在 `O_APPEND` 下是单个写操作；markdown 必须整文件重写，「读—改—写」之间一定丢写。
+3. **坏数据隔离**：一行坏 JSON 只丢那一行（坏行计数上报）；markdown 一处坏格式会让整份读废。
+
+`ts` 一律写 **北京时间 `+08:00`**：群聊的一切时间语义（N4 的 8:00–23:00）都在北京时间，EC 明写「服务器时钟不可信」，所以不跟随进程本地时区。
+
+### 7.2 服务签名（`classroomGroup`，typert Remote）
+
+浏览器侧 `ctx.remote.classroomGroup.<method>(sessionId, ...)`，宿主侧 `ctx.get('classroomGroup')`。
+
+| 方法 | 入参（wire） | 返回 |
+|---|---|---|
+| `history` | `limit`（默认 50，收敛到 1..200） | `{ messages, nextSeq, unread }` |
+| `send` | `text`（1–2000 **码点**，空白串拒绝）、`clientId` | `{ ok: true, message, unread }` ／ `{ ok: false, error: { code, message } }` |
+| `poll` | `afterSeq`、`waitMs`（0–25000，服务端收敛） | `{ messages, typing, nextSeq, unread, serverTime }` |
+| `markRead` | `seq` | `{ unread }` |
+
+- `error.code` ∈ `EMPTY`｜`TOO_LONG`｜`RATE_LIMITED`｜`AGENT_FAILED`｜`STORE_CORRUPT`。
+- 🔴 **`AGENT_FAILED` 只用在「消息落盘了但排不进回复队列」**（可重试）。**回复生成失败不在 `send` 里**——它是异步的，失败会：① 重试一次；② 仍失败就发一条 `role:'system'` 的说明（K4.2 允许 system 作为「无法回复的说明」）；③ 写 `agent-runs.jsonl` 与 `narrative.status()`。
+- `STORE_CORRUPT`：真源里有**无法解析的行**时 `send` 拒绝写入（否则 seq 的分配依据不完整，可能撞号）；`history` / `poll` 仍照读，坏行跳过。
+- `typing` 为 true 当且仅当「她已被排入回复队列」（K4.4 的措辞）。课堂进行中会被推迟，但**排入状态不变**，所以那时仍是 true。
+- 并发：追加+投影重写整体走跨进程锁（`lib/lock.mjs`，`wx` 建锁 + 陈旧锁回收），同进程再叠一层串行队列。**两个标签页同时发言一条不丢**（有单测：12 条并发，seq 连续）。
+
+### 7.3 🔴 `runtime/notes.jsonl` 的两个写入者（边界）
+
+K3.5 说日记/群聊**只读** `notes.jsonl`。群里提的知识题要落一条 `group_question`，于是这个文件会**有两个写入者**。本包的做法（也是唯一允许的做法）：
+
+- **只追加一行 JSON**（`lib/noteswrite.mjs`，`O_APPEND` 单次写、单行 < 4KB 天然原子），`origin: "group_agent"`。
+- 🔴 **绝不重算三份投影**（`mistake_log.md` / `review_queue.md` / `knowledge_points.md` 的状态位）。那三份只有引擎（`classroom_note`）能写——两个写入者各算一次，谁后写谁把对方的结果盖掉。
+- 字段对齐引擎：`id` 是 `N-<yyyyMMddTHHmmss>-<三位序号>`（同一秒内取已有最大序号 +1），`ts` 带**本地时区偏移**（跟引擎同口径，一份文件里不混两种时间写法），`quote` 已剥 K1 情绪标记与 markdown，`resolved` **不写**。
+- `kp` 只有在 `knowledge_points.md` 里真实存在时才写，否则写 `null`（不写假编号）。
+- `session`：群聊没有宿主会话，写引擎同款兜底 `"unknown"`；引擎报过 `sessionId` 时写它。
+- 已知边界：跨进程同一秒内的 `id` 序号可能撞（引擎也没在追加时持锁）。写进「已知边界」。
+
+### 7.4 谁能开口（N3.3）
+
+`characters/*.md` 的一级标题就是名字（`# 鲸（DeepSeek 娘）· 本教室版本` → `鲸（DeepSeek 娘）`，短名 `鲸` 也认）。一次性路人写成 `路人·<称呼>`。**不在这两类里的名字直接判 `INVALID_OUTPUT`**（不静默改名）；会反复出场的人要走 N5 的提议流程。当课角色卡从 `classroom.yaml` 的 `path: characters/*.md` 解析（不硬编码文件名——这一版教室换过人）。
+
+### 7.5 节奏（N3.4）
+
+- 学生发言 → 立刻落盘、立刻返回（`send` 不等模型）；同时记「回复批次」，`dueAt = now + 10..30s 随机`。
+- 期间 `poll` 的 `typing` 为 true；学生再发一条 → **同一批次**重置 `dueAt`（按 `afterSeq` 归并，服务端去抖，不靠前端）。
+- 到点由 `tick()` 跑一次模型；**课堂进行中就挂着**，收课后补回。
+- 「课堂进行中」的判据（写死）：**相位不是 `close` 且最近一次回合活动在 30 分钟以内**。相位来源：① 引擎每回合调 `setClassroomActivity()`（推荐）；② 没有就退而读 `runtime/progress.md` 的 `current_phase:` 行 —— 那时拿不到回合活动时间，判据按「不在上课」处理。🔴 **引擎不接 ① 的话，「课堂进行中不回群」不生效**（见 §8）。
+- 首次开场（N3.7）：真源为空 → 先发一条 `kind: "open"` 的消息（失败最多试 2 次，之后不再纠缠，错误留在日志与状态里）。
+
+### 7.6 群里的写死规则（N3.6）
+
+规则不在代码里：`runtime/wechat_group.rules.md` 的文件头（连续 `>` 行）**逐字**进系统提示，抽不到就抛 `NO_GROUP_RULES`。三条由**代码**兜住（`validateSpeech`，命中即 `INVALID_OUTPUT`）：
+
+- 每条不超过 **2 行**；
+- 不使用 **emoji**（按 Unicode `Extended_Pictographic` 判，不是人肉清单）；
+- `speaker` 只能是已定义人物或 `路人·<称呼>`。
+
+🔴 给群聊/日记/审阅 agent 的提示词里**一律不出现**「会被看到／有读者／面板/未读」——有单测把这几段拼起来做机器检查。
+
+### 7.7 面板（车道 P）接线要点
+
+- 版式用 `templates/wechat-chat.html`；数据只走 `ctx.remote.classroomGroup.*`，**不读** md/jsonl。
+- 「对方正在输入」= `poll().typing`；未读数 = `poll()/history()` 的 `unread`，读完后 `markRead(maxSeq)`。
+- 长轮询：`poll(afterSeq, 25000)`，服务端可以提前返回。
+
+---
+
+## 8 · 引擎接线（本轮不做，交给车道 J）
 
 本包只提供 `narrative` 服务，**没有**改 `plugins/socratic-engine`。接线需要三处：
 
 1. **装载**：引擎 `inject` 里加上 `narrative`（或在钩子里 `ctx.get('narrative')` 判空）。
+   群聊服务由本包自己 provide 成 `classroomGroup`，引擎若要在回合里报课堂状态，`inject` 里再加 `classroomGroup`。
 2. **收课触发**：在 `classroom_set_phase` 把相位切到 `close` 的那条路径上（`plugins/socratic-engine/lib/phasestore.mjs` 的写入点之后）调
    `narrative.runDiary({ sessionId, classroomDir, lesson: currentLesson, trigger: 'close' })`，**不要 await `done`**。
 3. **闲置兜底**：在引擎现有的回合活动记账处（`agent/turn-stopping` 钩子，`lib/postclass.mjs:400` 附近）加一个扫描：
    `if (narrative.isLessonIdleClosed({ studentTurns, lastActivityAt, now }).closed) void narrative.runDiary({ ..., trigger: 'idle' })`。
-4. **下一节课注入**（N2.4）：`classroom.yaml` 里加一块 `state`/`diary` 注入，内容取
+4. **每回合报课堂状态（N3.4，🔴 不做这条「课堂进行中不回群」就不生效）**：
+   在引擎已有的回合活动记账处（`lib/postclass.mjs` 的 `agent/turn-stopping`，与第 3 条同一处）调
+   `ctx.classroomGroup.setClassroomActivity({ sessionId, classroomDir: current.dir, phase: current.phase, lastActivityAt: Date.now(), lesson })`。
+   `phase` 取引擎内存态的相位（`lib/phasestore.mjs` 的 `get phase`），`lastActivityAt` 用这一回合开始的时间。
+5. **群里提的知识题**：本包自己写 `runtime/notes.jsonl`（`group_question`），引擎只需照 K3.4 把它注入下一节课开头即可，**不要**在引擎侧再写一遍。
+6. **世界观提议**（N5.1「课堂老师也可以提」）：引擎在教师觉得该加角色/改设定时调
+   `ctx.narrative.appendProposal({ classroomDir, origin: '课堂老师', content, reason, quote })`。接线是车道 J 的事，本包只提供方法。
+7. **下一节课注入**（N2.4）：`classroom.yaml` 里加一块 `state`/`diary` 注入，内容取
    `await narrative.readRecentDiaries({ classroomDir, limit: 1 })` 的最后一条。频率按 K3.4 的口径写（必须带 `phase:`）。
 
 ---
 
-## 8 · 测试
+## 9 · 测试
 
 ```bash
 cd plugins/socratic-narrative
@@ -203,7 +288,7 @@ node --test 'test/*.test.mjs'      # 55 项，模型全部是替身，不联网�
 
 ---
 
-## 9 · 已知边界
+## 10 · 已知边界
 
 - **跨进程并发不保护**：同一进程内按文件串行（`lib/serial.mjs`）；两个 DSH 实例指向同一个教室目录时，`diary.md` 的读改写可能互相覆盖。需要的话得引入文件锁（`@deepseek-ai/dsh-atomic-write` 的 `withFileLock`），但那会踩「宿主包不进 profile」的铁律③，所以本轮不做。
 - **没有定时器**：本包不起 cron、不扫会话。触发时机由引擎决定（§7）。
