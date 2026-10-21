@@ -1789,8 +1789,8 @@ assert.equal(findAll(tree2, (node) => Object.prototype.hasOwnProperty.call(node.
   // 🔴 2026-10-21（P2）：P2 给面板加了「日记」（N2.5）与「群聊」（N3.1）两页，这条清单随之
   //    从两项变四项。**不是放宽**：四个页签一个不少，且顺序固定（教室 → 板书 → 日记 → 群聊），
   //    少一个、多一个、换顺序都会判红。
-  assert.deepEqual(tabs.map((node) => node.props['data-cui-tab']), ['classroom', 'board', 'diary'])
-  assert.deepEqual(tabs.map((node) => textOf(node)), ['教室', '板书', '日记'])
+  assert.deepEqual(tabs.map((node) => node.props['data-cui-tab']), ['classroom', 'board', 'diary', 'group'])
+  assert.deepEqual(tabs.map((node) => textOf(node)), ['教室', '板书', '日记', '群聊'])
   assert.equal(tabs[0].props['data-active'], 'true', '默认在「教室」')
   assert.ok(String(tabs[0].props.style.borderBottom).includes('var(--cui-gold)'), '当前 tab 的金褐下划线（tabActive 是叠出来的新对象，按值判）')
   assert.equal(tabs[1].props.style.borderBottom, '2px solid transparent', '非当前 tab 没有那条下划线')
@@ -1799,6 +1799,7 @@ assert.equal(findAll(tree2, (node) => Object.prototype.hasOwnProperty.call(node.
   assert.equal(findOne(tree, 'data-classroom-ui-portrait-stage') !== null, true, '「教室」页里讲台照旧在')
   assert.equal(findOne(tree, 'data-classroom-ui-board'), null, '「教室」页里不渲染板书历史（省一次读盘）')
   assert.equal(findOne(tree, 'data-classroom-ui-diary'), null, '「教室」页里不渲染日记（省一次读盘）')
+  assert.equal(findOne(tree, 'data-classroom-ui-group'), null, '「教室」页里不渲染群聊（省一次轮询）')
 
   tabs[1].props.onClick()
   const boardTree = await renderPanel()
@@ -1807,23 +1808,33 @@ assert.equal(findAll(tree2, (node) => Object.prototype.hasOwnProperty.call(node.
   tabs[0].props.onClick()
 }
 
-// 11.6 「日记」页能切过去（P2 / N2.5），且切走之后不残留
+// 11.6 「日记」页与「群聊」页能切过去（P2 / N2.5 / N3.1），且切走之后互不残留
 {
   const tree = await renderPanel()
   const tabs = findAll(tree, (node) => node.tag === 'button' && Object.prototype.hasOwnProperty.call(node.props, 'data-cui-tab'))
   const diaryTab = tabs.find((node) => node.props['data-cui-tab'] === 'diary')
+  const groupTab = tabs.find((node) => node.props['data-cui-tab'] === 'group')
   assert.ok(diaryTab !== undefined, '必须有「日记」页签')
+  assert.ok(groupTab !== undefined, '必须有「群聊」页签')
 
   diaryTab.props.onClick()
   const diaryTree = await renderPanel()
   assert.equal(findOne(diaryTree, 'data-classroom-ui-diary') !== null, true, '切到「日记」页后渲染日记')
+  assert.equal(findOne(diaryTree, 'data-classroom-ui-group'), null, '「日记」页里不渲染群聊')
   assert.equal(findOne(diaryTree, 'data-classroom-ui-portrait-stage'), null, '「日记」页里讲台卸载（与板书同一取舍）')
   assert.equal(findOne(diaryTree, 'data-classroom-ui').props['data-cui-tab'], 'diary', '面板根上的 data-cui-tab 跟着走')
 
-  // 回到「教室」：日记不在（省读盘）
+  groupTab.props.onClick()
+  const groupTree = await renderPanel()
+  assert.equal(findOne(groupTree, 'data-classroom-ui-group') !== null, true, '切到「群聊」页后渲染群聊')
+  assert.equal(findOne(groupTree, 'data-classroom-ui-diary'), null, '「群聊」页里不渲染日记')
+  assert.equal(findOne(groupTree, 'data-classroom-ui').props['data-cui-tab'], 'group')
+
+  // 回到「教室」：两页都不在（省读盘/省轮询）
   tabs[0].props.onClick()
   const backTree = await renderPanel()
   assert.equal(findOne(backTree, 'data-classroom-ui-diary'), null)
+  assert.equal(findOne(backTree, 'data-classroom-ui-group'), null)
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1993,6 +2004,225 @@ function makeTabHarness() {
   }
 }
 
+// 12.4 群聊的纯函数：消息归一 / 去重按 seq 排序 / 角色分流
+{
+  const normalized = panel.normalizeGroupMessage({ seq: 3, id: 'G-3', role: 'character', speaker: '鲸', text: '在' })
+  assert.deepEqual(normalized, { seq: 3, id: 'G-3', role: 'character', speaker: '鲸', text: '在', ts: '' })
+  const degenerate = panel.normalizeGroupMessage(null)
+  assert.equal(degenerate.seq, null, '形状不对也不抛，缺字段留空')
+  assert.equal(degenerate.text, '')
+
+  const merged = panel.mergeGroupMessages(
+    [{ seq: 2, id: 'G-2', role: 'student', speaker: '我', text: '第二条', ts: '' }],
+    [{ seq: 2, id: 'G-2', role: 'student', speaker: '我', text: '第二条', ts: '' }, { seq: 1, id: 'G-1', role: 'system', speaker: '', text: '开场', ts: '' }],
+  )
+  assert.deepEqual(merged.map((entry) => entry.seq), [1, 2], '按 seq 升序（seq 是排序的唯一依据）')
+  assert.equal(merged.length, 2, '同一条（seq 相同）只留一份：乐观追加＋poll 拉回不许出现两遍')
+
+  assert.equal(panel.groupRowModel(normalized).kind, 'peer')
+  assert.equal(panel.groupRowModel(normalized).own, false)
+  const self = panel.groupRowModel({ seq: 4, id: '', role: 'student', speaker: '', text: '在吗', ts: '' })
+  assert.equal(self.own, true, '学生自己发的在右边')
+  assert.equal(self.speaker, '我', '学生没给显示名时用「我」')
+  assert.equal(panel.groupRowModel({ role: 'system', text: '无法回复' }).kind, 'sys', 'system 走居中一行')
+
+  // clientId：每次新造、互不相同（幂等键的重试复用由组件持有，不在这里）
+  const a = panel.groupClientId()
+  const b = panel.groupClientId()
+  assert.notEqual(a, b)
+  assert.ok(a.startsWith('c-'), 'clientId 走 c- 前缀（与契约示例同形）')
+}
+
+// 12.5 `sendGroupMessage` / `pollGroup` / `markGroupRead`：失败一律归一成 `{ok:false,error:{code}}`，**不抛**
+{
+  const failing = { classroomGroup: { send: async () => ({ ok: true, value: { ok: false, error: { code: 'AGENT_FAILED', message: '排不进回复队列' } } }) } }
+  const sent = await panel.sendGroupMessage(failing, 's', '在吗', 'c-1')
+  assert.equal(sent.ok, false)
+  assert.equal(sent.error.code, 'AGENT_FAILED', '服务端的 error.code 原样保留（学生要看到稳定标识）')
+
+  const thrown = await panel.sendGroupMessage({ classroomGroup: { send: async () => { throw new Error('gateway 502') } } }, 's', '在吗', 'c-1')
+  assert.equal(thrown.ok, false)
+  assert.equal(thrown.error.code, 'REMOTE_FAILED', 'remote 自己出错也归一，不让抛错冒出渲染路径')
+  assert.ok(thrown.error.message.includes('gateway 502'))
+
+  const absent = await panel.sendGroupMessage({}, 's', '在吗', 'c-1')
+  assert.equal(absent.error.code, 'GROUP_ABSENT', '没有群聊服务 → 明确的缺席码')
+
+  const polled = await panel.pollGroup({
+    classroomGroup: { poll: async () => ({ ok: true, value: { messages: [], typing: true, nextSeq: 7, unread: 2, serverTime: 1 } }) },
+  }, 's', 5, 0)
+  assert.equal(polled.ok, true)
+  assert.equal(polled.typing, true, '「她正在输入」＝ poll().typing')
+  assert.equal(polled.nextSeq, 7)
+  assert.equal(polled.unread, 2)
+
+  const pollFailed = await panel.pollGroup({ classroomGroup: { poll: async () => { throw new Error('long-poll timeout') } } }, 's', 5, 0)
+  assert.equal(pollFailed.ok, false)
+  assert.equal(pollFailed.error.code, 'REMOTE_FAILED')
+
+  const readOk = await panel.markGroupRead({ classroomGroup: { markRead: async () => ({ ok: true, value: { unread: 0 } }) } }, 's', 7)
+  assert.deepEqual(readOk, { ok: true, unread: 0 })
+  const readFailed = await panel.markGroupRead({ classroomGroup: { markRead: async () => { throw new Error('nope') } } }, 's', 7)
+  assert.equal(readFailed.ok, false, '推已读失败不许抛')
+  const readGateway = await panel.markGroupRead({ classroomGroup: { markRead: async () => ({ ok: false, error: { code: 'gateway/internal', message: 'down' } }) } }, 's', 7)
+  assert.equal(readGateway.ok, false, '外层失败同样算失败（不假装已读）')
+
+  // 外层失败（网关/传输）与内层业务失败要分得开
+  const sendGateway = await panel.sendGroupMessage({ classroomGroup: { send: async () => ({ ok: false, error: { code: 'gateway/internal', message: 'connection closed' } }) } }, 's', '在吗', 'c-1')
+  assert.equal(sendGateway.ok, false)
+  assert.equal(sendGateway.error.code, 'gateway/internal', '外层 code 原样带出来')
+  const sendTooLong = await panel.sendGroupMessage({ classroomGroup: { send: async () => ({ ok: true, value: { ok: false, error: { code: 'TOO_LONG', message: '太长' } } }) } }, 's', '在吗', 'c-1')
+  assert.equal(sendTooLong.error.code, 'TOO_LONG', '内层业务 code（K4.3 的取值域）也原样带出来')
+}
+
+// 12.6 「群聊」页渲染：消息分左右、系统行居中、typing / unread / 发送失败（含重试复用同一个 clientId）
+{
+  const history = {
+    messages: [
+      { seq: 1, id: 'G-1', role: 'system', speaker: '', text: '鲸 创建了群聊', ts: '2026-10-20T22:00:00+08:00' },
+      { seq: 2, id: 'G-2', role: 'character', speaker: '鲸', text: '在的。今天讲进程调度。', ts: '2026-10-20T22:01:00+08:00' },
+      { seq: 3, id: 'G-3', role: 'student', speaker: '你', text: '我卡在银行家算法', ts: '2026-10-20T22:02:00+08:00' },
+    ],
+    nextSeq: 4,
+    unread: 2,
+  }
+
+  // A · 完整部署：history → markRead(nextSeq)；typing 由 poll 推上来；发送失败 → 显示 code 并可重试
+  const harness = makeTabHarness()
+  try {
+    const sends = []
+    const reads = []
+    const polls = []
+    const remote = {
+      classroomGroup: {
+        history: async () => ({ ok: true, value: history }),
+        markRead: async (_s, seq) => { reads.push(seq); return { ok: true, value: { unread: 0 } } },
+        poll: async (_s, afterSeq) => {
+          polls.push(afterSeq)
+          // 真实语义：`nextSeq` 是**下一个要分配的号**（maxSeq + 1），不是游标。
+          // 这一条正是活体验出来的坑：拿 nextSeq 当 afterSeq 会跳过下一条（见 `lastSeqOf`）。
+          return { ok: true, value: { messages: [], typing: true, nextSeq: afterSeq + 1, unread: 0, serverTime: 0 } }
+        },
+        send: async (_s, text, clientId) => {
+          sends.push({ text, clientId })
+          return { ok: true, value: { ok: false, error: { code: 'AGENT_FAILED', message: '排不进回复队列' } } }
+        },
+      },
+    }
+
+    let tree = await harness.render('GroupChatView', { remote, sessionId: 'session-under-test' })
+
+    // 消息区：一条 system ＋ 一左一右
+    assert.ok(findOne(tree, 'data-classroom-ui-group') !== null, '「群聊」页必须渲染出来')
+    assert.equal(findAll(tree, (node) => Object.prototype.hasOwnProperty.call(node.props, 'data-cui-group-system')).length, 1, 'system 只有一行')
+    const rows = findAll(tree, (node) => Object.prototype.hasOwnProperty.call(node.props, 'data-cui-group-message'))
+    assert.equal(rows.length, 2)
+    assert.deepEqual(rows.map((node) => node.props['data-cui-group-own']), ['false', 'true'], '别人在左、自己在右')
+    assert.ok(textOf(rows[0]).includes('鲸'), '别人的消息要带名字')
+    assert.ok(textOf(rows[1]).includes('我卡在银行家算法'))
+    assert.equal(findAll(tree, (node) => node.tag === 'input').length, 1, '群聊有且只有一个输入框（要能说话）')
+
+    // 未读：打开这一页＝看过了 → markRead(已见到的最后一条 seq)，未读数被清掉
+    assert.deepEqual(reads, [3], '历史里的 unread>0 → 推已读到**已见到的最后一条**（seq 3，不是 nextSeq 4）')
+    assert.equal(findOne(tree, 'data-cui-group-unread').props['data-cui-group-unread'], '0', '推过已读后未读归零')
+
+    // typing 初值：**不画**那一行（`chatTyping` 带 2px 竖线，空内容会留一小截"点"）
+    assert.equal(findOne(tree, 'data-cui-group-typing'), null, '还没轮询到 → 页面上没有「正在输入」那一行')
+
+    // 触发一次轮询：typing=true 要出现在页面上
+    assert.equal(harness.timers.length, 1, '挂载期间挂了一个轮询定时器')
+    harness.timers[0]()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    tree = await harness.render('GroupChatView', { remote, sessionId: 'session-under-test' })
+    const typingRow = findOne(tree, 'data-cui-group-typing')
+    assert.ok(typingRow !== null, 'poll().typing === true → 页面上出现「正在输入」')
+    assert.equal(typingRow.props['data-cui-group-typing'], 'true')
+    assert.ok(textOf(typingRow).includes('正在输入'), '文案要写出来')
+    assert.deepEqual(polls, [3], 'poll 的 afterSeq ＝已收到的最大 seq（不是 nextSeq；差一就会漏掉下一条）')
+
+    // 输入 + 发送失败：error.code 要显示，且可重试
+    const input = findOne(tree, 'data-cui-group-input')
+    input.props.onChange({ target: { value: '  在吗  ' } })
+    tree = await harness.render('GroupChatView', { remote, sessionId: 'session-under-test' })
+    findOne(tree, 'data-cui-group-send').props.onClick()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    tree = await harness.render('GroupChatView', { remote, sessionId: 'session-under-test' })
+    const failed = findOne(tree, 'data-cui-group-send-error')
+    assert.ok(failed !== null, '发送失败要有一块告示（不静默）')
+    assert.equal(failed.props['data-cui-group-send-error'], 'AGENT_FAILED', '服务端的 error.code 原样显示出来')
+    assert.ok(textOf(failed).includes('AGENT_FAILED'), '正文里也要能读到 code')
+    assert.ok(textOf(failed).includes('排不进回复队列'))
+    assert.equal(sends.length, 1)
+    assert.equal(sends[0].text, '在吗', '发送前去掉首尾空白')
+    assert.ok(findOne(tree, 'data-cui-group-retry') !== null, '失败要能重试')
+
+    // 重试：同一个 clientId（服务端按它幂等，不会写第二遍）
+    findOne(tree, 'data-cui-group-retry').props.onClick()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    tree = await harness.render('GroupChatView', { remote, sessionId: 'session-under-test' })
+    assert.equal(sends.length, 2, '重试要真的再发一次')
+    assert.equal(sends[1].clientId, sends[0].clientId, '重试复用同一个 clientId（幂等键）')
+  } finally {
+    harness.restore()
+  }
+
+  // B · 发送成功：草稿清空、新消息进线程；markRead 失败时未读数保留（如实显示"还没看"）
+  const harnessB = makeTabHarness()
+  try {
+    const remote = {
+      classroomGroup: {
+        history: async () => ({ ok: true, value: { messages: [], nextSeq: 0, unread: 0 } }),
+        markRead: async () => { throw new Error('markRead 不可用') },
+        poll: async (_s, afterSeq) => ({ ok: true, value: { messages: [], typing: false, nextSeq: afterSeq, unread: 2, serverTime: 0 } }),
+        send: async (_s, text, clientId) => ({
+          ok: true,
+          value: {
+            ok: true,
+            message: { seq: 9, id: 'G-9', role: 'student', speaker: '你', text, clientId, ts: '2026-10-20T23:00:00+08:00' },
+            unread: 0,
+          },
+        }),
+      },
+    }
+    let tree = await harnessB.render('GroupChatView', { remote, sessionId: 'session-under-test' })
+    assert.ok(findOne(tree, 'data-cui-group-empty') !== null, '空群要有中性说明')
+    findOne(tree, 'data-cui-group-input').props.onChange({ target: { value: '在吗' } })
+    tree = await harnessB.render('GroupChatView', { remote, sessionId: 'session-under-test' })
+    findOne(tree, 'data-cui-group-send').props.onClick()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    tree = await harnessB.render('GroupChatView', { remote, sessionId: 'session-under-test' })
+    assert.equal(findOne(tree, 'data-cui-group-send-error'), null, '发成功就没有错误块')
+    const rows = findAll(tree, (node) => Object.prototype.hasOwnProperty.call(node.props, 'data-cui-group-message'))
+    assert.equal(rows.length, 1, '自己那条立刻出现在线程里（乐观追加）')
+    assert.equal(rows[0].props['data-cui-group-own'], 'true')
+    assert.equal(findOne(tree, 'data-cui-group-input').props.value, '', '发出去后草稿要清空')
+
+    // 一次 poll 回 unread=2、markRead 抛错 → 未读数**保留**（不许假装已读）
+    harnessB.timers[0]()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    tree = await harnessB.render('GroupChatView', { remote, sessionId: 'session-under-test' })
+    assert.equal(findOne(tree, 'data-cui-group-unread').props['data-cui-group-unread'], '2', '推不动已读就如实留着未读数')
+    assert.ok(textOf(findOne(tree, 'data-cui-group-unread')).includes('2 条未读'))
+  } finally {
+    harnessB.restore()
+  }
+
+  // C · 群聊服务缺席 → 一句中性说明（不是错误、不白屏）
+  const harnessC = makeTabHarness()
+  try {
+    const tree = await harnessC.render('GroupChatView', { remote: {}, sessionId: 'session-under-test' })
+    const note = findOne(tree, 'data-cui-group-absent')
+    assert.ok(note !== null, '缺席时要有一句中性说明')
+    assert.ok(textOf(note).includes('没有群聊服务'))
+    assert.equal(findOne(tree, 'data-cui-group-error'), null, '缺席不是读失败')
+    assert.equal(findOne(tree, 'data-cui-group-input').props.disabled, true, '没有服务时输入框禁用（不让人白打一段字）')
+    assert.equal(findOne(tree, 'data-cui-group-send').props.disabled, true)
+    assert.equal(harnessC.timers.length, 0, '缺席时不起轮询定时器')
+  } finally {
+    harnessC.restore()
+  }
+}
+
 // 12.7 客户端 Remote 的挂载清单（§6.10.1）：两个命名空间六条方法，shape 要过 `$mount` 的校验
 //
 // 🔴 这一条守的是"面板能不能真的调到宿主"：客户端 `ctx.remote.<ns>` 的命名空间来自静态装配表，
@@ -2006,12 +2236,16 @@ function makeTabHarness() {
   assert.deepEqual(endpoints, [
     'classroomNarrative/status',
     'classroomNarrative/diaries',
-  ], '两条方法一条不少（与宿主清单同名同序）')
+    'classroomGroup/history',
+    'classroomGroup/send',
+    'classroomGroup/poll',
+    'classroomGroup/markRead',
+  ], '六条方法一条不少（与宿主清单同名同序）')
   const ids = new Set(contribution.descriptors.map((d) => d.id))
   assert.equal(ids.size, contribution.descriptors.length, 'id 不许重复（注册表按 id 去重）')
   for (const descriptor of contribution.descriptors) {
     assert.equal(descriptor.service, descriptor.namespace, 'service 与 namespace 一致（宿主 validateBinding 的判据）')
-    assert.equal(descriptor.invocation.kind, 'direct', '两条都是 direct（与宿主清单一致）')
+    assert.equal(descriptor.invocation.kind, 'direct', '六条都是 direct（与宿主清单一致）')
     assert.equal(descriptor.result.mode, 'strict', 'result 必须是 strict codec')
     assert.equal(typeof descriptor.result.create, 'function', 'result codec 必须有 create()（否则 $mount 直接拒收）')
     const first = descriptor.parameters[0]
@@ -2024,11 +2258,14 @@ function makeTabHarness() {
       assert.equal(parameter.codec.create().parse('x'), 'x', '手写 codec 只做 pass-through（真编解码在宿主侧）')
     }
   }
-  // 可缺省的参数：日记的 limit 可省（缺省由宿主侧 `clampLimit` 填）
+  // 可缺省的参数：K4.3 里 limit / clientId / afterSeq / waitMs 都可省，seq 与 text 不可省
   const optionalOf = (endpoint) => contribution.descriptors
     .find((d) => d.namespace + '/' + d.method === endpoint).parameters
     .filter((p) => p.source === 'json' && p.acceptsUndefined === true)
     .map((p) => p.name)
+  assert.deepEqual(optionalOf('classroomGroup/send'), ['clientId'], 'send 只有 clientId 可省（text 必填）')
+  assert.deepEqual(optionalOf('classroomGroup/poll'), ['afterSeq', 'waitMs'])
+  assert.deepEqual(optionalOf('classroomGroup/markRead'), [], 'markRead 的 seq 必填')
   assert.deepEqual(optionalOf('classroomNarrative/diaries'), ['limit'])
 
   // 拆包：外层 `{ok,value}` 与 `{ok:false,error}` 各走各的
@@ -2040,3 +2277,97 @@ function makeTabHarness() {
   assert.equal(panel.unwrapRemoteResult({ ok: true }).value, undefined, 'value 缺失时给 undefined（不编一个空对象）')
 }
 
+// 12.8 🔴 回归：轮询游标必须是"已见到的最大 seq"，**不是 `nextSeq`**
+//
+// 这条是活体验出来的（lane-p2 真浏览器）：历史里有 seq 1–3，`nextSeq` 是 4（＝下一个要分配的号），
+// 面板拿 4 当 `afterSeq` 去 poll → 她的回复拿到 seq 4 → 服务端按 `seq > afterSeq` 过滤掉 →
+// **回复永远不进面板**。而 `typing` 与未读数都正常，所以肉眼看起来像"她一直在输入、就是不回话"。
+// 单测里必须让假 poll **真的按 afterSeq 过滤**，否则两种写法都能通过（原测试就是这么漏掉的）。
+{
+  const store = [
+    { seq: 1, id: 'G-1', role: 'system', speaker: '', text: '开场', ts: '' },
+    { seq: 2, id: 'G-2', role: 'character', speaker: '鲸', text: '在的。', ts: '' },
+    { seq: 3, id: 'G-3', role: 'student', speaker: '你', text: '我卡住了', ts: '' },
+  ]
+  const seenAfter = []
+  const harness = makeTabHarness()
+  try {
+    const remote = {
+      classroomGroup: {
+        history: async () => ({ ok: true, value: { messages: store.slice(), nextSeq: 4, unread: 0 } }),
+        markRead: async () => ({ ok: true, value: { unread: 0 } }),
+        poll: async (_s, afterSeq) => {
+          seenAfter.push(afterSeq)
+          const fresh = store.filter((message) => message.seq > afterSeq)
+          return { ok: true, value: { messages: fresh, typing: false, nextSeq: store[store.length - 1].seq + 1, unread: 0, serverTime: 0 } }
+        },
+        send: async () => ({ ok: true, value: { ok: false, error: { code: 'AGENT_FAILED', message: 'x' } } }),
+      },
+    }
+    let tree = await harness.render('GroupChatView', { remote, sessionId: 'session-under-test' })
+    assert.equal(findAll(tree, (node) => Object.prototype.hasOwnProperty.call(node.props, 'data-cui-group-message')).length +
+      findAll(tree, (node) => Object.prototype.hasOwnProperty.call(node.props, 'data-cui-group-system')).length, 3, '历史 3 条都在')
+
+    // 她回了一条，拿到的正是 `nextSeq` 那个号（seq 4）
+    store.push({ seq: 4, id: 'G-4', role: 'character', speaker: '鲸', text: '先看安全序列那一步。', ts: '' })
+    harness.timers[0]()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    tree = await harness.render('GroupChatView', { remote, sessionId: 'session-under-test' })
+    assert.deepEqual(seenAfter, [3], 'afterSeq 必须是 3（已见最大 seq），不是 4（nextSeq）')
+    const rows = findAll(tree, (node) => Object.prototype.hasOwnProperty.call(node.props, 'data-cui-group-message'))
+    assert.equal(rows.length, 3, '新回复要进线程（她的开场 ＋ 自己那条 ＋ 她的回复）')
+    assert.ok(textOf(rows[2]).includes('先看安全序列那一步'), '回复正文要画出来')
+
+    // 再轮询一次：游标前进到 4，重复消息不再追加
+    harness.timers[0]()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    tree = await harness.render('GroupChatView', { remote, sessionId: 'session-under-test' })
+    assert.deepEqual(seenAfter, [3, 4], '第二次轮询的游标推进到 4')
+    assert.equal(findAll(tree, (node) => Object.prototype.hasOwnProperty.call(node.props, 'data-cui-group-message')).length, 3,
+      '同一批消息只出现一次（按 seq 去重）')
+  } finally {
+    harness.restore()
+  }
+
+  // 纯函数层面也钉一遍
+  assert.equal(panel.lastSeqOf([]), 0, '空表 → 0（还没见过任何一条）')
+  assert.equal(panel.lastSeqOf([{ seq: 2 }, { seq: null }, { seq: 7 }, { seq: 5 }]), 7, '取最大值，忽略缺 seq 的')
+}
+
+// 12.9 🔴 叙事包没装时，**群聊页也不许喊错**：`classroomGroup` 命名空间仍挂着，宿主没有对应
+//      服务 → 调用必然 404。验收要求是"一句中性说明（不是报错）"，所以失败时要先问
+//      `classroomNarrative.status()`（它总是被 provide，缺席时自己回 narrative-absent）。
+{
+  const remoteAbsent = {
+    // 命名空间在（清单是我们挂的），但每次调用都是网关 404
+    classroomGroup: {
+      history: async () => ({ ok: false, error: { code: 'gateway/internal', message: 'transport failure for /api/classroomGroup/history: HTTP 404' } }),
+      send: async () => ({ ok: false, error: { code: 'gateway/internal', message: 'HTTP 404' } }),
+      poll: async () => ({ ok: false, error: { code: 'gateway/internal', message: 'HTTP 404' } }),
+      markRead: async () => ({ ok: false, error: { code: 'gateway/internal', message: 'HTTP 404' } }),
+    },
+    classroomNarrative: { status: async () => ({ ok: true, value: { ok: false, reason: 'narrative-absent' } }) },
+  }
+  assert.equal(await panel.narrativePresence(remoteAbsent, 's'), 'absent', '叙事包缺席的判据来自 classroomNarrative')
+
+  const page = await panel.loadGroupPage(remoteAbsent, 'session-under-test', 50)
+  assert.equal(page.kind, 'absent', '叙事包没装 → 群聊页是"能力缺席"，不是"读失败"')
+  assert.equal(page.message, null, '中性说明不挂错误信息')
+
+  // 叙事包在、但这次调用真失败 → 仍然喊错（不许把所有失败都说成"没装"）
+  const remoteBroken = {
+    classroomGroup: { history: async () => ({ ok: false, error: { code: 'gateway/internal', message: 'boom' } }) },
+    classroomNarrative: { status: async () => ({ ok: true, value: { ok: true, status: { ok: true, lastError: null } } }) },
+  }
+  const broken = await panel.loadGroupPage(remoteBroken, 'session-under-test', 50)
+  assert.equal(broken.kind, 'failed', '叙事包在 → 真失败要如实报出来')
+  assert.ok(broken.message.includes('gateway/internal'))
+
+  // 探测本身失败（unknown）→ 按"故障"处理，不冒充缺席
+  const remoteUnknown = {
+    classroomGroup: { history: async () => ({ ok: false, error: { code: 'gateway/internal', message: 'boom' } }) },
+    classroomNarrative: { status: async () => { throw new Error('probe down') } },
+  }
+  assert.equal(await panel.narrativePresence(remoteUnknown, 's'), 'unknown')
+  assert.equal((await panel.loadGroupPage(remoteUnknown, 'session-under-test', 50)).kind, 'failed', 'probe 都说不出话 → 不能假装"没装"')
+}
