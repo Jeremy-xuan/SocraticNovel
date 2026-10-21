@@ -3,7 +3,7 @@
 // 模型是替身：给它一个「按提议内容决定」的 handler，就能把整条链路跑完并检查落盘。
 
 import assert from 'node:assert/strict'
-import { readFile } from 'node:fs/promises'
+import { readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import test from 'node:test'
 import { appendProposal, CHANGELOG_RELATIVE, readWorldLog } from '../lib/proposals.mjs'
@@ -50,7 +50,7 @@ test('接受：写出新角色卡 + changelog 记一行（改了什么/为什么
   const created = await readFile(join(dir, 'characters', 'an.md'), 'utf8')
   assert.match(created, /# 岸/)
   const changelog = await readFile(join(dir, CHANGELOG_RELATIVE), 'utf8')
-  assert.match(changelog, /\| 接受 \| characters\/an\.md \|/)
+  assert.match(changelog, /\| 接受 \| characters\/an\.md（新建） \|/)
   assert.match(changelog, new RegExp(proposal.id))
   assert.equal((await readWorldLog(dir)).pending.length, 0)
   assert.ok(runs.some((run) => run.state === 'ok' && run.proposalId === proposal.id))
@@ -160,4 +160,79 @@ test('模型失败：这一轮抛错、不写 changelog（提议留到下一轮�
   assert.equal(await readIfExists(join(dir, CHANGELOG_RELATIVE)), null)
   assert.equal((await readWorldLog(dir)).pending.length, 1)
   assert.ok(runs.some((run) => run.state === 'failed'))
+})
+
+test('收窄后的追加语义：既有文件只追加带 changeId 的段，原文一个字不动', async () => {
+  const dir = await makeClassroom()
+  const original = await readFile(join(dir, 'world', 'setting.md'), 'utf8')
+  const proposal = await appendProposal({ classroomDir: dir, now: NOW, origin: '群聊 agent', content: '补一层「退潮带」', reason: '她提过退潮时露出来的那片礁' })
+  const { reviewer } = makeReviewer({
+    dir,
+    handler: () => ({ decision: 'accept', reason: '与现有分层不冲突', path: 'world/setting.md', content: '- **退潮带**：退潮时露出来的一片礁，界在水线与岩床之间。' }),
+  })
+  const summary = await reviewer.run({ classroomDir: dir })
+  assert.equal(summary.accepted[0].mode, 'append')
+  const after = await readFile(join(dir, 'world', 'setting.md'), 'utf8')
+  assert.ok(after.startsWith(original), '既有内容必须原样保留在最前面')
+  assert.match(after, new RegExp(`<!-- worldview:N5 change=${proposal.id} -->`))
+  assert.match(after, new RegExp(`<!-- /worldview:N5 change=${proposal.id} -->`))
+  assert.match(after, /退潮带/)
+  const changelog = await readFile(join(dir, CHANGELOG_RELATIVE), 'utf8')
+  assert.match(changelog, /world\/setting\.md（追加）/)
+})
+
+test('两条提议写同一个文件：变成两个段，先写的那段完好（不是后写覆盖先写）', async () => {
+  const dir = await makeClassroom()
+  const first = await appendProposal({ classroomDir: dir, now: NOW, origin: '群聊 agent', content: '甲', reason: '理由甲' })
+  const second = await appendProposal({ classroomDir: dir, now: NOW + 1000, origin: '群聊 agent', content: '乙', reason: '理由乙' })
+  let round = 0
+  const { reviewer } = makeReviewer({
+    dir,
+    handler: () => {
+      round += 1
+      return { decision: 'accept', reason: `第 ${round} 段`, path: 'characters/deepseek.md', content: `第 ${round} 段要追加的内容。` }
+    },
+  })
+  const summary = await reviewer.run({ classroomDir: dir })
+  assert.equal(summary.accepted.length, 2)
+  assert.deepEqual(
+    summary.accepted.map((entry) => entry.mode),
+    ['append', 'append'],
+  )
+  const card = await readFile(join(dir, 'characters', 'deepseek.md'), 'utf8')
+  assert.match(card, /鲸（DeepSeek 娘）/, '角色卡原有的名字行还在')
+  assert.match(card, new RegExp(`change=${first.id}`))
+  assert.match(card, new RegExp(`change=${second.id}`))
+  assert.match(card, /第 1 段要追加的内容/)
+  assert.match(card, /第 2 段要追加的内容/)
+})
+
+test('同一 changeId 已经追加过 → 不重复追加（重试安全）', async () => {
+  const dir = await makeClassroom()
+  const proposal = await appendProposal({ classroomDir: dir, now: NOW, origin: '群聊 agent', content: '甲', reason: '理由甲' })
+  const target = join(dir, 'world', 'setting.md')
+  const original = await readFile(target, 'utf8')
+  // 预置：上一次已经追加过这一段（模拟「写成功了但 changelog 没写成 → 下一轮重试」）
+  const seeded = `${original}\n<!-- worldview:N5 change=${proposal.id} -->\n已经加过的内容。\n<!-- /worldview:N5 change=${proposal.id} -->\n`
+  await writeFile(target, seeded, 'utf8')
+  const { reviewer } = makeReviewer({ dir, handler: () => ({ decision: 'accept', reason: '好', path: 'world/setting.md', content: '又要加一次' }) })
+  const summary = await reviewer.run({ classroomDir: dir })
+  assert.equal(summary.accepted[0].alreadyApplied, true)
+  const after = await readFile(target, 'utf8')
+  assert.equal(after, seeded, '文件必须一个字节都不变')
+  assert.equal((after.match(new RegExp(`worldview:N5 change=${proposal.id}`, 'g')) ?? []).length, 2, '只有一对开/闭标记')
+})
+
+test('正文里伪造追加段标记 → 拒绝（MARKER_INJECTION）', async () => {
+  const dir = await makeClassroom()
+  await appendProposal({ classroomDir: dir, now: NOW, origin: '群聊 agent', content: '甲', reason: '理由甲' })
+  const { reviewer } = makeReviewer({
+    dir,
+    handler: () => ({ decision: 'accept', reason: '插一段', path: 'world/setting.md', content: '正文 <!-- worldview:N5 change=P-伪造-99 --> 混进来' }),
+  })
+  const summary = await reviewer.run({ classroomDir: dir })
+  assert.equal(summary.refused.length, 1)
+  assert.equal(summary.refused[0].code, 'MARKER_INJECTION')
+  const changelog = await readFile(join(dir, CHANGELOG_RELATIVE), 'utf8')
+  assert.match(changelog, /守卫挡下：MARKER_INJECTION/)
 })

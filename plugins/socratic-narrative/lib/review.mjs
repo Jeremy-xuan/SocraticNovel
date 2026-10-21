@@ -6,6 +6,9 @@
 //      —— 每条都**重新读一遍** characters/ 与 world/，所以第 2 条看到的是第 1 条改完之后的世界
 //   ③ 接受 → 写一个文件（`characters/**` 或 `world/**`，N5.3 的守卫在写盘前判）+ changelog 记一行
 //      拒绝 → changelog 记一行，写明理由
+//      🔴 2026-10-21 收窄（用户裁定）：目标**不存在**才整份新建；**已存在只允许追加**一个
+//      带 changeId 的标记段（`<!-- worldview:N5 change=P-… -->` … ），绝不整份重写。
+//      同一 changeId 已追加过就跳过（重试安全）。理由与代价见 `lib/worldguard.mjs` 文件头。
 //   ④ 目标路径不合法（教学文件、越界、代码维护的日志）→ **拒绝写盘**，但仍记一行 changelog，
 //      理由写清楚是被守卫挡下的 —— 不留「静默没做」的状态
 //
@@ -13,10 +16,17 @@
 
 import { readFile, readdir } from 'node:fs/promises'
 import { join } from 'node:path'
-import { writeFileAtomic } from './atomic.mjs'
+import { exists as fileExists, writeFileAtomic } from './atomic.mjs'
 import { ERROR_CODES, NarrativeError } from './errors.mjs'
 import { appendChangelogRow, readWorldLog } from './proposals.mjs'
-import { classifyWorldWrite, CODE_OWNED_FILES } from './worldguard.mjs'
+import {
+  CODE_OWNED_FILES,
+  classifyWorldWrite,
+  containsWorldviewMarker,
+  hasWorldviewChange,
+  planWorldWrite,
+  wrapWorldviewAppend,
+} from './worldguard.mjs'
 
 /** 审阅 agent 的输出字段（一条提议 = 一次调用 = 最多一个文件）。 */
 export const REVIEW_SCHEMA = Object.freeze({
@@ -47,7 +57,10 @@ export function buildReviewSystem() {
     '- 只能写 characters/ 或 world/ 下的 .md 文件，一条提议最多改一个文件。',
     '- 教学文件一律不许碰：materials/、curriculum.md、knowledge_points.md、system_core.md、_anchor.md。',
     '- world/proposals.md 与 world/changelog.md 是日志，不许重写。',
-    '- 接受时 `content` 是这个文件的**完整内容**（不是追加片段），`path` 是相对教室目录的路径。',
+    '- 目标文件**还不存在**时：`content` 是整份新文件的全文（可以写一级标题）。',
+    '- 目标文件**已经存在**时：`content` 只写**要追加的那一段**——不要重复文件里已有的内容，',
+    '  也不要再写一级标题；代码会把它包进一个带编号的段里附在文件末尾，既有内容一个字都不会动。',
+    '- `path` 是相对教室目录的路径。',
     '',
     '只输出一个 JSON 对象，不要解释。',
   ].join('\n')
@@ -65,7 +78,8 @@ export function buildReviewPrompt({ proposal, files }) {
     `理由：${proposal.reason}`,
     proposal.quote === '' ? '' : `触发它的对话：${proposal.quote}`,
     '',
-    `现在 characters/ 与 world/ 里已有的文件：${files.map((file) => file.path).join('、') || '（还没有）'}`,
+    `现在 characters/ 与 world/ 里**已有**的文件：${files.map((file) => file.path).join('、') || '（还没有）'}`,
+    '写到上面这些文件里＝只追加一段；写别的路径＝新建文件。',
     '',
     '决定：接受就写 `decision: "accept"` 并给出 `path` 与 `content`；拒绝就写 `decision: "reject"` 并给出理由。',
   ]
@@ -157,33 +171,71 @@ export function createReviewer({ runTask, now = () => Date.now(), log = () => {}
         continue
       }
 
-      const guard = classifyWorldWrite(decision.path, { bytes: Buffer.byteLength(decision.content, 'utf8') })
-      if (!guard.ok) {
+      // ① 路径先过守卫（黑名单 → 白名单 → 越界 → 日志文件）
+      const pathGuard = classifyWorldWrite(decision.path, { bytes: Buffer.byteLength(decision.content, 'utf8') })
+      // ② 正文里不许出现追加段标记（否则模型可以伪造/闭合别人的段）
+      const refuse = (code, reason) => ({
+        ok: false,
+        code,
+        reason,
+      })
+      const verdict =
+        pathGuard.ok !== true
+          ? pathGuard
+          : containsWorldviewMarker(decision.content)
+            ? refuse('MARKER_INJECTION', '正文里出现了世界观追加段的标记，不许伪造')
+            : planWorldWrite(pathGuard.path, {
+                exists: await fileExists(join(classroomDir, pathGuard.path)),
+                bytes: Buffer.byteLength(decision.content, 'utf8'),
+              })
+
+      if (verdict.ok !== true) {
         await appendChangelogRow({
           classroomDir,
           now: now(),
           verdict: '拒绝',
           target: decision.path === '' ? '—' : decision.path,
-          summary: `${guard.reason}（守卫挡下：${guard.code}）`,
+          summary: `${verdict.reason}（守卫挡下：${verdict.code}）`,
           proposalId: proposal.id,
         })
-        summary.refused.push({ proposalId: proposal.id, code: guard.code, reason: guard.reason })
-        log('error', `[narrative] 提议 ${proposal.id} 被世界观守卫拒绝：${guard.reason}`)
-        await recordRun?.(classroomDir, { task: 'review', state: 'refused', proposalId: proposal.id, code: guard.code, path: decision.path })
+        summary.refused.push({ proposalId: proposal.id, code: verdict.code, reason: verdict.reason })
+        log('error', `[narrative] 提议 ${proposal.id} 被世界观守卫拒绝：${verdict.reason}`)
+        await recordRun?.(classroomDir, { task: 'review', state: 'refused', proposalId: proposal.id, code: verdict.code, path: decision.path })
         continue
       }
 
-      await writeFileAtomic(join(classroomDir, guard.path), decision.content.endsWith('\n') ? decision.content : `${decision.content}\n`)
+      const target = join(classroomDir, verdict.path)
+      let alreadyApplied = false
+      if (verdict.mode === 'create') {
+        await writeFileAtomic(target, decision.content.endsWith('\n') ? decision.content : `${decision.content}\n`)
+      } else {
+        // 已存在的文件：**只追加**一个带 changeId 的段，既有内容一个字都不动
+        const previous = await readFile(target, 'utf8')
+        if (hasWorldviewChange(previous, proposal.id)) {
+          alreadyApplied = true
+        } else {
+          const block = wrapWorldviewAppend(decision.content, proposal.id)
+          await writeFileAtomic(target, previous.endsWith('\n') ? `${previous}${block}` : `${previous}\n${block}`)
+        }
+      }
+
       await appendChangelogRow({
         classroomDir,
         now: now(),
         verdict: '接受',
-        target: guard.path,
+        target: `${verdict.path}（${verdict.mode === 'create' ? '新建' : '追加'}）`,
         summary: decision.reason,
         proposalId: proposal.id,
       })
-      summary.accepted.push({ proposalId: proposal.id, path: guard.path, reason: decision.reason })
-      await recordRun?.(classroomDir, { task: 'review', state: 'ok', proposalId: proposal.id, path: guard.path })
+      summary.accepted.push({ proposalId: proposal.id, path: verdict.path, mode: verdict.mode, alreadyApplied, reason: decision.reason })
+      await recordRun?.(classroomDir, {
+        task: 'review',
+        state: 'ok',
+        proposalId: proposal.id,
+        path: verdict.path,
+        mode: verdict.mode,
+        ...(alreadyApplied ? { alreadyApplied: true } : {}),
+      })
     }
     return summary
   }
