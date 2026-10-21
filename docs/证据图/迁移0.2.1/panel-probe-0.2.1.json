@@ -1,0 +1,41 @@
+{
+  "steps": [
+    [
+      "Continue",
+      null
+    ],
+    [
+      "Open right sidebar",
+      "Open right sidebar"
+    ]
+  ],
+  "mid": {
+    "tabs": [
+      "Start 教室 课程表 · 本轮要讲 · 当课老师 · 进度 Workspace files Browse files in this session's workspace ⌥ ⌘ P New terminal Run commands in the Session workspace ⌃ `",
+      "Start 教室 课程表 · 本轮要讲 · 当课老师 · 进度 Workspace files Browse files in this session's workspace ⌥ ⌘ P New terminal Run commands in the Session workspace ⌃ `",
+      "Start 教室 课程表 · 本轮要讲 · 当课老师 · 进度 Workspace files Browse files in this session's workspace ⌥ ⌘ P New terminal Run commands in the Session workspace ⌃ `",
+      "Start",
+      "Start",
+      "Start",
+      "Start",
+      "Start",
+      "Start",
+      "教室 课程表 · 本轮要讲 · 当课老师 · 进度 Workspace files Browse files in this session's workspace ⌥ ⌘ P New terminal Run commands in the Session workspace ⌃ `",
+      "教室 课程表 · 本轮要讲 · 当课老师 · 进度 Workspace files Browse files in this session's workspace ⌥ ⌘ P New terminal Run commands in the Session workspace ⌃ `"
+    ],
+    "hasClassroomWord": true
+  },
+  "tabClick": true,
+  "d": {
+    "hasClassroomWord": true,
+    "classroomSection": 5,
+    "live2dState": "failed",
+    "live2dFailure": "立绘装载失败：remote.workspaceFiles.readAll is not a function",
+    "panelText": "计算机系教室 · 操作系统 操作系统 · 14 讲 · cs-os"
+  },
+  "errs": [
+    "ReferenceError: warnings is not defined",
+    "ReferenceError: warnings is not defined",
+    "ReferenceError: warnings is not defined"
+  ]
+}

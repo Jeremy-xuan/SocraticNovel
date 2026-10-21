@@ -20,12 +20,27 @@
 | `boot-隔离profile-0.2.1.log` | 隔离 profile 真启动的 stdout。**没有** `did not activate` / `failed to import` / `never started` | `grep -c "did not activate" boot-隔离profile-0.2.1.log` → 0 |
 | `browser-probe-0.2.1.json` | 真浏览器 16 秒后的取样：`stageRoot`、`slotErrors`、`crashPlaceholders`、我们的插件相关 console 问题 | `jq '.dom, .ourConsoleIssues' browser-probe-0.2.1.json` |
 | `browser-有舞台-0.2.1.png` | 真浏览器截图：整屏舞台、纸带、输入框都正常 | 直接看 |
+| `panel-probe-0.2.1.json` | 真浏览器点开右栏「教室」tab 的取样：tab 注册、面板区块数、立绘状态与**失败原文** | `jq '.d' panel-probe-0.2.1.json` |
+| `panel-教室tab-0.2.1.png` | 右栏面板展开的截图 | 直接看 |
 
 ## 这份证据证明了什么（不多说一个字）
 
 - **三插件在 0.2.1-rc.2 上装载零错误**（服务端 0 条激活告警 + 浏览器 0 条插件相关报错 + 0 个崩溃占位）。
 - **舞台在 0.2.1 上是活的**：`#stage-warm-root` 存在并渲染出整屏教室、纸带、输入框。
 - 截图里**角色（Live2D）没有画出来**：canvas 的 backing store 停在 PIXI 默认的 `300x150`，而 CSS 盒子是 `399x546`。这是本次迁移**顺带发现的既有缺陷**，不是 0.2.1 引入的——已转给舞台车道去定性并修复，**不要**把这张截图当作「立绘正常」的证据。
+
+## 这次取样顺带查明的第二件事（比截图本身更重要）
+
+**「立绘装载失败」的第一因是 0.2.1 的 API 变更，不是资产缺失：**
+
+```
+立绘装载失败：remote.workspaceFiles.readAll is not a function
+```
+
+0.2.1 的 `workspaceFiles` Remote 只注册了 `read` / `readBytes` / `list` / `stat` / `changes`（读自宿主
+`@deepseek-ai/dsh-api-workspace-files/lib/typert.host.js`），**没有 `readAll`**。面板 `lib/client.js:1704`
+调的是 `readAll`，于是立刻进 failed，**还没走到读文件那一步**。资产缺失（`clients/live2d-host/out/` 不存在）
+是第二因。两者都记在 `docs/历史报告/实现报告_B_迁移0.2.1_2026-10-20.md` 的「0.1.5 有 / 0.2.1 没有」表里。
 
 ## 已知无关噪声
 

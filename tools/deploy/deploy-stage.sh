@@ -14,7 +14,7 @@
 #   · **不复制别人的会话数据**：只复制配置骨架（profiles / cordis.patch.yml / 凭据），sessions 等一律新建
 #
 # 前提（脚本会检查，缺了就停）：
-#   · 目标机上有 DSH release（默认 /opt/dsh-releases/0.1.5-rc.1）
+#   · 目标机上有 DSH release（默认 /opt/dsh-releases/0.2.1-rc.2）
 #   · 目标机上有 pnpm（/opt/node/bin/pnpm），且能访问 npmmirror（装引擎依赖要用）
 #   · 参考实例（默认 u001）存在，用来复制凭据与 profile 骨架
 # ============================================================================
@@ -24,7 +24,7 @@ HOST="${HOST:-dsh-class-server}"
 UID_NAME="${UID_NAME:-stage}"          # 实例 uid 名（dsh-<UID_NAME>）
 PORT="${PORT:-3086}"
 REF="${REF:-u001}"                      # 参考实例（复制 profile 骨架与凭据）
-DSH_RELEASE="${DSH_RELEASE:-/opt/dsh-releases/0.1.5-rc.1}"
+DSH_RELEASE="${DSH_RELEASE:-/opt/dsh-releases/0.2.1-rc.2}"
 BASE="${BASE:-/srv/dsh-users}"
 TRUSTED_HOST="${TRUSTED_HOST:-stage.dsharness.dpdns.org}"
 PROXY="${PROXY:-http://127.0.0.1:7890}"
