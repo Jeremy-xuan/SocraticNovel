@@ -52,8 +52,25 @@ for r in "'/manifest.json'" "'/assets'" "'/board'" "'/anim'" "'/health'"; do
 done
 grep -qF "listBoards" "$PKG/lib/index.js" && ok "板书清单函数存在" || bad "缺 listBoards"
 grep -qF "listAnimations" "$PKG/lib/index.js" && ok "动画清单函数存在" || bad "缺 listAnimations"
+echo "  · 板书闭环 / 情绪通道（契约 K2.2、K1.4）"
+grep -qF "BOARD_ROUTE + '/diagrams'" "$PKG/lib/index.js" && ok "板书图路由 /stage-board/diagrams/<id> 已注册" || bad "缺板书图路由"
+grep -qF "BOARD_ROUTE + '/emotions'" "$PKG/lib/index.js" && ok "情绪通道路由 /stage-board/emotions 已注册" || bad "缺情绪通道路由"
+grep -qF "realpathSync" "$PKG/lib/index.js" && ok "读图路由做了 realpath 校验（防符号链接）" || bad "读图路由缺 realpath 校验"
+grep -qF "DIAGRAM_ID_RE" "$PKG/lib/index.js" && ok "读图路由做了 id 白名单校验" || bad "读图路由缺 id 白名单"
 
 sec "5 · 素材与文件签名"
+# 板书屏真渲染要用的 vendored mermaid：必须在 assets/l2d/ 下（那条静态路由已覆盖）
+if [ -f "$PKG/assets/l2d/mermaid.min.js" ]; then
+  mh=$(shasum -a 256 "$PKG/assets/l2d/mermaid.min.js" | cut -d' ' -f1)
+  if grep -qF "$mh" "$PKG/assets/l2d/README.md" 2>/dev/null; then
+    ok "mermaid.min.js 就位且 sha256 与 README 记录一致（${mh:0:12}…）"
+  else
+    bad "mermaid.min.js 的 sha256 与 assets/l2d/README.md 记录不一致（换版本必须重新验证）"
+  fi
+else
+  bad "缺 assets/l2d/mermaid.min.js（板书屏无法真渲染）"
+fi
+
 n_assets=$(ls "$PKG/assets/stage"/*.png 2>/dev/null | wc -l | tr -d ' ')
 [ "$n_assets" -ge 1 ] && ok "舞台素材 $n_assets 张" || bad "舞台素材缺失"
 for b in "$PKG"/assets/board/*.json; do
@@ -101,6 +118,61 @@ fs.writeFileSync("/tmp/_unit.mjs", t);' \
   || { bad "选项解析器单测未全绿"; tail -4 /tmp/_unit.out 2>/dev/null | sed 's/^/      /'; }
 else
   bad "缺 test/17-unit-parse-options.mjs"
+fi
+
+sec "7b · 纯函数区单测（K0 挂载点 / K1.3 剥离 / K2.3 板书事件 / 口型源）"
+# 🔴 从真源码里逐字抽出 [STAGE-PURE-BEGIN]…[STAGE-PURE-END] 再跑 —— 测的是产品代码本身
+if node -e '
+const fs=require("fs");
+const src=fs.readFileSync(process.argv[1],"utf8");
+const i=src.indexOf("// ── [STAGE-PURE-BEGIN]");
+const j=src.indexOf("// ── [STAGE-PURE-END]");
+if(i<0||j<0||j<=i){console.error("找不到纯函数区标记");process.exit(1)}
+fs.writeFileSync("/tmp/_stage-pure.mjs", src.slice(i,j)+"\nexport { createStageBridge, stripEmotionMarkers, boardEventOf, latestBoardOf, createTextCadenceMouth, contentTextOf, normalizeMermaidSvg }\n");
+' "$PKG/lib/client.js"; then
+  if node "$PKG/test/20-stage-pure.mjs" >/tmp/_stage-pure.out 2>&1; then
+    ok "纯函数区单测：$(grep -E '通过' /tmp/_stage-pure.out | tail -1)"
+  else
+    bad "纯函数区单测未全绿"; tail -6 /tmp/_stage-pure.out | sed 's/^/      /'
+  fi
+else
+  bad "纯函数区抽取失败（[STAGE-PURE-BEGIN] 标记被破坏？）"
+fi
+
+sec "7c · 宿主半边单测（读图路由的四条拒绝规则 / 索引 / 情绪 / 教室标识）"
+if node "$PKG/test/21-stage-board.test.mjs" >/tmp/_stage-board.out 2>&1; then
+  ok "宿主单测：$(grep -E '通过' /tmp/_stage-board.out | tail -1)"
+else
+  bad "宿主单测未全绿"; tail -8 /tmp/_stage-board.out | sed 's/^/      /'
+fi
+
+sec "7e · 表情驱动模块（X 车道产物）就位且按序加载"
+for f in stage-emotion.js stage-emotion-parse.js stage-emotion.profile.deepseek.json vendor/soullink/soullink-engine.iife.min.js; do
+  [ -f "$PKG/assets/l2d/$f" ] && ok "assets/l2d/$f 就位" || bad "缺 assets/l2d/$f（表情驱动接不上）"
+done
+if grep -qF "soullink-engine.iife.min.js" "$PKG/lib/client.js" \
+   && grep -qF "stage-emotion-parse.js" "$PKG/lib/client.js" \
+   && grep -qF "'stage-emotion.js'" "$PKG/lib/client.js"; then
+  ok "舞台按序加载 engine → 解析器 → 驱动模块（ensureStageModule）"
+else
+  bad "舞台没有按序加载表情驱动模块的三个文件"
+fi
+if grep -qF "ensureEmotionModules()" "$PKG/lib/client.js" && grep -qF "tapeTyped" "$PKG/lib/client.js"; then
+  ok "帧循环把口型节奏（tapeTyped）交给驱动"
+else
+  bad "帧循环没有把口型节奏交给驱动"
+fi
+
+sec "7d · 契约 K0 第 5 条：新模块不许塞进 listLibs() 的 phases"
+if grep -qF "function ensureStageModule" "$PKG/lib/client.js"; then
+  ok "ensureStageModule(file) 存在（复用 loadOneScript）"
+else
+  bad "缺 ensureStageModule"
+fi
+if grep -qE "const phases = \[\['pixi.min.js'\], \['live2d.min.js', 'live2dcubismcore.min.js', 'index.min.js'\]\]" "$PKG/lib/index.js"; then
+  ok "listLibs 的 phases 仍是「pixi 单独一组 + 其余一组」（没被塞进新模块）"
+else
+  bad "listLibs 的 phases 被改动了（新模块不该进 phases，见契约 K0 第 5 条）"
 fi
 
 if [ "${1:-}" = "--live" ]; then

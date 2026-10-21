@@ -60,8 +60,37 @@ window.__ModuleLoader__.load({
     const H = React.createElement
     const BUILD_ID = 'stage-warm-v0.1.0'
     const ROUTE = '/stage-static'
+    /** 板书闭环与情绪通道的宿主路由前缀（契约 K2.2、K1.4）。 */
+    const BOARD_ROUTE = '/stage-board'
+    /** 情绪通道轮询间隔（契约 K1.4：250ms，不做长轮询）。 */
+    const EMOTION_POLL_MS = 250
+    /** 一条情绪事件的有效期：超过它就回落到"平静"（情绪引擎接进来之前的舞台侧兜底）。 */
+    const EMOTION_HOLD_MS = 4000
     const KILL_KEY = 'stage-warm:kill'
     const ROOT_ID = 'stage-warm-root'
+
+    /**
+     * 降级/异常记录（模块级，**不是** apply() 里的局部变量）。
+     *
+     * 🔴 2026-10-20 修：原来只有 `apply()` 里有一个 `const warnings = []`，而
+     * `StageRoot` 的 Live2D effect 的 catch 里也写了 `warnings.push(...)` ——
+     * 那个作用域里 `warnings` **根本不存在**，于是 catch 自身抛
+     * `ReferenceError: warnings is not defined`，**把降级路径整个吃掉**：
+     * `setL2dFailed(true)` 永远不执行 → 立绘不出现也不回落静态图，页面上只留下一个
+     * 320×150 的空 canvas。真机实测（隔离 profile + Playwright）就是这个症状。
+     * 教训：**catch 里只许调用一定存在的函数**。
+     */
+    const warnings = []
+
+    function pushWarning(msg) {
+      try {
+        const s = String(msg).slice(0, 400)
+        warnings.push(s)
+        if (warnings.length > 40) warnings.shift()
+        // 留一条能看见的痕迹：真机归因时比"什么都没有"强得多
+        try { console.info('[stage-warm] ' + s) } catch { /* ignore */ }
+      } catch { /* ignore */ }
+    }
 
     // ======================================================================
     // §1 CSS —— 暖纸令牌（取自样稿 avalon-warm.html；固定画布的 px 换成视口相对量）
@@ -125,6 +154,8 @@ window.__ModuleLoader__.load({
   background:var(--paper);border:1px solid var(--gilt);transform:rotate(45deg)}
 .stage-warm-root .band-core{position:absolute;left:0;right:0;top:1px;bottom:11vh;padding:4.2vh 8.8vh 0;
   overflow-y:auto;scrollbar-width:thin;
+  /* 默认过渡：任何相位切换（含收起）都别硬跳；拉出段在下面被覆写成 .39s */
+  transition:opacity .22s,transform .22s,filter .22s;
   display:flex;flex-direction:column;justify-content:flex-start}
 /* 🔴 2026-10-19：原来用 justify-content:flex-end 实现内容贴底，但 flex-end ＋ overflow:auto
    有个经典问题：内容一旦超出容器，上半部分会被裁掉且滚不到（实测老师一段 376 字的话，
@@ -302,10 +333,21 @@ window.__ModuleLoader__.load({
   color:var(--ink3);margin-left:auto}
 .stage-warm-root .boardpanel .bp-canvas{position:absolute;left:1.6vh;right:1.6vh;top:7.4vh;bottom:1.6vh;
   border:1px solid var(--hair);overflow:hidden}
+/* mermaid 产出的 svg 带**内联** style="max-width:<图宽>px" 与 width/height 属性，
+   直接塞进画布会按固有宽度把图钉死（实测：804px 的画布只画出 343px 宽）。
+   做法不是用 !important 硬压 CSS，而是**插进去之前先把 svg 的尺寸归一化**
+   （normalizeMermaidSvg：去掉内联 max-width 与宽高属性、显式 preserveAspectRatio=meet），
+   尺寸完全交给下面这条规则 —— 这样"图铺满板且不变形"是可单测的行为，不靠层叠优先级博弈。
+   （注：CSS 模板串里不许出现反引号，注释也一样 —— check.sh 第二组就查这个。） */
 .stage-warm-root .boardpanel .bp-canvas svg{display:block;width:100%;height:100%}
 .stage-warm-root .boardpanel .bp-note{margin-top:1.4vh;font-family:var(--mono);font-size:1.2vh;
   color:var(--ink3);letter-spacing:.06em}
 .stage-warm-root .boardpanel .bp-body{position:absolute;left:0;right:0;top:5.4vh;bottom:0;padding:0}
+/* mermaid 渲染失败时的兜底：一句人话 ＋ 图的源码（不白屏，契约 K2.4） */
+.stage-warm-root .boardpanel .bp-fail{position:absolute;left:1.6vh;right:1.6vh;top:7.4vh;bottom:1.6vh;overflow:auto}
+.stage-warm-root .boardpanel .bp-fail .why{font-family:var(--sans);font-size:1.95vh;color:var(--accent);margin-bottom:1.2vh}
+.stage-warm-root .boardpanel .bp-fail pre{font-family:var(--mono);font-size:1.2vh;line-height:1.55;color:var(--ink2);
+  white-space:pre-wrap;background:var(--paper2);border:1px solid var(--hair);padding:1.2vh;margin:0}
 
 /* ⑨ · 动画屏（已定案：整屏放完自动回）
        铺满视口、盖住舞台其余部分；as-frame 是暖纸上的"放映框"（与纸卡同一套语汇） */
@@ -342,9 +384,14 @@ window.__ModuleLoader__.load({
 .stage-warm-root .boardpanel .bp-body .k{color:var(--accent);font-family:var(--mono);
   font-size:1.75vh;letter-spacing:.06em}
 /* 三段：先侧身（面板不动）→ 拉出（过冲）→ 回正 */
-.stage-warm-root .cast-wrap{transition:transform .22s cubic-bezier(.22,.61,.36,1),
-  filter .22s cubic-bezier(.22,.61,.36,1)}
-.stage-warm-root[data-board="turn"] .cast-wrap{transform:rotate(-1.6deg) translateX(-3vh) scale(.965)}
+/* 三段时长逐字对对比件：--T1 170ms（角色侧身）／--T2 390ms（拉出）／--T3 220ms（收尾落定） */
+.stage-warm-root .cast-wrap{transition:transform .17s cubic-bezier(.22,.61,.36,1),
+  filter .17s cubic-bezier(.22,.61,.36,1)}
+/* 角色侧身：对比件是 rotate(-1.6deg) translateX(-30px) scaleX(.965) scaleY(.995)；
+   −30px 在 1080 高的画布上 = 2.78vh → 取 −3vh（视口单位，换分辨率不漂），缩放两轴分开写 */
+.stage-warm-root[data-board="turn"] .cast-wrap{transform:rotate(-1.6deg) translateX(-3vh) scale(.965,.995)}
+/* 收起＝反向节拍：面板沿原路滑出（对比件 closeBoard 用 --T2 390ms），随后整块离场 */
+.stage-warm-root[data-board="turn"] .boardpanel{transition:transform .39s cubic-bezier(.16,1,.3,1),opacity .22s ease}
 .stage-warm-root[data-board="pull"] .cast-wrap{transform:rotate(-1.2deg) translateX(-1.5vh) scale(.985)}
 .stage-warm-root[data-board="settle"] .cast-wrap{transform:none}
 .stage-warm-root[data-board="turn"] .boardpanel,
@@ -352,14 +399,20 @@ window.__ModuleLoader__.load({
 .stage-warm-root[data-board="settle"] .boardpanel{opacity:1}
 .stage-warm-root[data-board="turn"] .boardpanel{transform:translateX(56vh) rotate(-2.4deg) scale(.94)}
 .stage-warm-root[data-board="pull"] .boardpanel{
-  transform:translateX(-2.2vh) rotate(.5deg) scale(1.012);   /* ← 过冲（定案值 −24px） */
+  /* ← 过冲。**单位是「面板自身宽度的百分比」，不是 px 也不是 vh**：
+     对比件（pull-out.html）过冲值是 −24px，而它的面板宽 1180px → 24/1180 = 2.03%（规格 §5.3 自己就换算过这一步）。
+     取 % 的理由：① 百分比在 translateX 里按**元素自身宽**解析，换分辨率/换屏（板书屏把面板从 62vh 放大到 80vh）都不漂；
+     ② 与对比件的定义同源（它本来就是「板宽的百分之几」）；③ 原来写的 −2.2vh ≈ 3.5% 板宽，比对比件冲过头 ~1.7 倍。 */
+  transform:translateX(-2.03%) rotate(.5deg) scale(1.012);
   transition:transform .39s cubic-bezier(.16,1,.3,1),opacity .39s cubic-bezier(.16,1,.3,1)}
 .stage-warm-root[data-board="settle"] .boardpanel{
   transform:translateX(0) rotate(0) scale(1);
   transition:transform .22s cubic-bezier(.22,1.12,.36,1),opacity .22s ease}
 /* 拉出期间正文让位（真品：dock 变暗缩小） */
-.stage-warm-root[data-board="pull"] .band-core{opacity:.45;transform:scale(.985);transition:opacity .39s,transform .39s}
-.stage-warm-root[data-board="settle"] .band-core{opacity:1;transform:none;transition:opacity .22s,transform .22s}
+.stage-warm-root[data-board="pull"] .band-core{opacity:.42;transform:scale(.975);filter:blur(1.2px);
+  transition:opacity .39s,transform .39s,filter .39s}
+.stage-warm-root[data-board="settle"] .band-core{opacity:1;transform:none;filter:none;
+  transition:opacity .22s,transform .22s,filter .22s}
 
 /* ⑥ · 底部控件收拢：次要控件只在悬停时浮出（阅读态零 chrome 的延续） */
 .stage-warm-root .quiet{opacity:0;transition:opacity 200ms;pointer-events:none}
@@ -576,6 +629,27 @@ window.__ModuleLoader__.load({
             })
             continue
           }
+          // 🔴 2026-10-20 新增（契约 K2.3）：工具**结果**节点。原来这里一律跳过，
+          //    舞台因此"看不到任何工具结果"——板书闭环就无从触发。
+          //    只为 classroom_draw 的成功结果留一条 role:'board' 的条目（不进纸带正文，
+          //    纸带只画对话；这条只是**给切屏用的信号**）。
+          if (kind === 'tool-result') {
+            const ev = boardEventOf(node)
+            if (ev && ev.id) {
+              out.push({
+                id: String(node.id || key || ('board' + out.length)),
+                role: 'board',
+                text: '',
+                reasoning: '',
+                tools: [],
+                board: ev,
+              })
+            } else if (ev && !ev.id) {
+              // 两个来源都没给出 id：不切屏，只留一条 warn（契约 K2.3 第 3 条）
+              pushWarning('classroom_draw 结果里没有 board id（meta.board.id 与 [board] 行都缺），不切屏')
+            }
+            continue
+          }
           // 其余 kind（system-prompt / compaction / turn-error / steering / context …）本轮不画
         }
 
@@ -624,6 +698,39 @@ window.__ModuleLoader__.load({
     //   🔴 这里**按 wire 格式自己渲染**，不 import 那个包 —— 宿主半边保持零依赖。
     //      少一个模块解析点，就少一条"profile 起不来"的可能。
     // ======================================================================
+    /**
+     * 纸带的 K1 防御性剥离。
+     * 优先用 X 车道的 `window.__SOCRATIC_EMOTION_PARSE__`（K1.3 的同一台流式状态机，
+     * 已穷举切分验证过）；模块没装/没加载完时退回舞台自带的 `stripEmotionMarkers`。
+     * `final=false`（这条消息还在流式）时**不 flush**：半截标记先藏着，别让 `〔emo:sh` 闪一下。
+     */
+    function stripForTape(text, isFinal) {
+      try {
+        const p = window.__SOCRATIC_EMOTION_PARSE__
+        if (p && typeof p.createEmotionStreamParser === 'function') {
+          const parser = p.createEmotionStreamParser()
+          const pushed = parser.push(String(text == null ? '' : text))
+          if (!isFinal) return pushed.text
+          const flushed = parser.flush()
+          return pushed.text + flushed.text
+        }
+      } catch (e) { /* 落到自带实现 */ }
+      return stripEmotionMarkers(text, { final: isFinal }).text
+    }
+
+    /**
+     * 角色显示名的「短名」：`鲸（DeepSeek 娘）` → `鲸`。
+     * 名字本身来自教室数据（见 manifest 的 classroom.teacher.name），这里只做排版取舍：
+     * 纸带上的署名格只有 2.2vh 宽，放不下全名。取不到名字时用「老师」——
+     * **不许**回落到任何写死的具体人名。
+     */
+    function teacherNameShort(name) {
+      const n = String(name || '').trim()
+      if (!n) return '老师'
+      const cut = n.split(/[（(]/)[0].trim()
+      return cut || n
+    }
+
     function escSvg(v) {
       return String(v == null ? '' : v)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -676,6 +783,314 @@ window.__ModuleLoader__.load({
         return '<div class="bp-note">场景渲染失败：' + escSvg(String((err && err.message) || err)) + '</div>'
       }
     }
+
+    // ======================================================================
+    // §3.6 纯函数区（K0 挂载点 / K1.3 防御性剥离 / K2.3 板书事件 / 口型源）
+    //
+    // 🔴 [STAGE-PURE-BEGIN] … [STAGE-PURE-END] 之间**只许放纯函数**：
+    //    · 只依赖入参和 globalThis，**不引用本闭包里的任何变量**（store / live / ROUTE …）
+    //    · 不碰 React / DOM / PIXI
+    //    check.sh §7 把这一段逐字抽到 /tmp 变成 ESM 模块跑单测（test/20-stage-pure.mjs）。
+    //    违反这条约束会立刻在单测里炸出来（ReferenceError），这正是要的：纯函数区不许长毛。
+    // ======================================================================
+  // ── [STAGE-PURE-BEGIN] ────────────────────────────────────────────────
+
+  /**
+   * K0 · 舞台的全局挂载点工厂。
+   *
+   * 为什么要有它：舞台的浏览器半边是一个闭包（`__ModuleLoader__.load({factory})`），
+   * `module.exports` 与 `__test` 都**不上 window** —— 独立的「表情驱动模块」
+   * （另一个 .js 文件，走 ensureStageModule 加载）拿不到 React / store / PIXI。
+   * 所以在这里开一个稳定、只读、有明确销毁顺序的全局对象。
+   *
+   * 纪律（契约 K0 逐条）：
+   *   · `subscribe/getSnapshot` 是**只读订阅**：驱动模块不改舞台 store
+   *   · `screen()` 让驱动知道现在是 live 还是 board（它不许自己切屏）
+   *   · `app` 是**活引用**（getter）：Live2D 未就绪／应用重建后自动反映最新值
+   *   · `setExpressionDriver(driver)` 是唯一写入口；`null` ＝ 交还静态待机
+   *   · `dispose()` 的顺序写死：**先** driver.dispose() → **再**摘全局
+   *
+   * @param {{global?:object, React:object, subscribe:Function, getSnapshot:Function,
+   *          getScreen:Function, getApp:Function, getModel:Function, getMouthSource:Function}} deps
+   */
+  function createStageBridge(deps) {
+    const d = deps || {}
+    const g = d.global || globalThis
+    const box = { driver: null }
+    const api = {
+      version: 1,
+      React: d.React || null,
+      /** 只读订阅：每次 store.set 后调用 fn()；返回 unsubscribe。 */
+      subscribe: function (fn) { return d.subscribe(fn) },
+      /** 只读快照：{ sessionId, running, title, messages, hasChatHook, phase } */
+      getSnapshot: function () { return d.getSnapshot() },
+      /** 舞台已解析出的屏幕状态：'live' | 'board'（驱动只读，不许切屏） */
+      screen: function () { return d.getScreen() },
+      /** 当前的口型源（可替换：将来接音频只换这个源，不动混合层） */
+      mouthSource: function () { return d.getMouthSource() },
+      /** 舞台当前注册的表情驱动（供舞台自己的帧循环取用；也便于单测断言） */
+      driver: function () { return box.driver },
+      /**
+       * 注册表情驱动。`driver = { drive(state, ctx), dispose?() }` 或 `null`。
+       * 传 null／不合法对象 ＝ 交回舞台的静态待机（现有动作层照常跑）。
+       * 换驱动时**先把旧的 dispose 掉**（否则旧驱动挂在 app.ticker 上的回调会泄漏）。
+       * @returns {object|null} 实际生效的驱动
+       */
+      setExpressionDriver: function (driver) {
+        const prev = box.driver
+        const next = (driver && typeof driver.drive === 'function') ? driver : null
+        // 🔴 先落值再 dispose：驱动的 dispose() 里**会**回调 `setExpressionDriver(null)`
+        //    （X 车道的模块就是这么写的）。若先 dispose 后落值，这次回调看到的 prev 还是旧驱动
+        //    → 再 dispose 一次；没有幂等保护的驱动就会无限递归。先落值就没有这个环。
+        box.driver = next
+        if (prev && prev !== next && typeof prev.dispose === 'function') {
+          try { prev.dispose() } catch (e) { /* 旧驱动清理失败不该拦住新驱动 */ }
+        }
+        if (typeof d.onDriverChange === 'function') {
+          try { d.onDriverChange(next) } catch (e) { /* 舞台自己的回落逻辑失败不该拦住注册 */ }
+        }
+        return next
+      },
+      /**
+       * 销毁：① 先 driver.dispose() ② 再清空引用 ③ 最后摘掉全局键。
+       * 顺序反了会出现"驱动还在跑、舞台已经不在了"（它下一帧就去碰 null 的 app）。
+       */
+      dispose: function () {
+        const drv = box.driver
+        box.driver = null
+        if (drv && typeof drv.dispose === 'function') {
+          try { drv.dispose() } catch (e) { /* ignore */ }
+        }
+        if (g.__SOCRATIC_STAGE__ === api) {
+          try { delete g.__SOCRATIC_STAGE__ } catch (e) { g.__SOCRATIC_STAGE__ = undefined }
+        }
+      },
+    }
+    // `app` 必须是活引用：Live2D 应用可能晚于挂载点创建，也可能被销毁重建
+    Object.defineProperty(api, 'app', {
+      enumerable: true,
+      get: function () { return d.getApp() },
+    })
+    api.model = function () { return d.getModel() }
+    return api
+  }
+
+  // ── K1.3 · 防御性剥离 ──────────────────────────────────────────────────
+  // 正常路径下 `llm/stream` 已经剥净（契约 K1.2），这里只兜底：
+  // 引擎没装／版本不匹配时，纸带不能把 `〔emo:shy:0.60〕` 原样显示出来。
+  const EMO_LABELS = ['calm', 'happy', 'shy', 'puzzled', 'excited']
+  const EMO_RE = /^〔emo:([a-z]+):(\d\.\d{2})〕$/
+  /** 标记的开头 5 个字符（`〔` ＋ `emo:`）——先认这个前缀，再谈"整个标记剥掉"。 */
+  const EMO_HEAD = '〔emo:'
+  const SENTENCE_END = '。？！」…\n'
+
+  /**
+   * 剥掉情绪标记。**纯函数**（K1.3 的 push 语义，不是流式对象）。
+   *
+   * 规则逐条照 K1.3：
+   *   1. 看到 `〔` 但还没有 `〕` → 这一段先不下传（`final=false` 时）；`final=true` 原样交回（宁可显示半截，不吞正文）
+   *   2. 非法标签 / 强度越界 / 缺两位小数 → 整个标记剥掉，不发事件，不报错
+   *   3. 一句（到 。？！… 或换行为止）多个标记 → 只认第一个，其余剥掉
+   *
+   * @param {string} text
+   * @param {{final?:boolean}} [opts]
+   * @returns {{text:string, events:Array<{label:string,intensity:number}>}}
+   */
+  function stripEmotionMarkers(text, opts) {
+    const src = String(text == null ? '' : text)
+    const isFinal = !!(opts && opts.final)
+    const events = []
+    let out = ''
+    let i = 0
+    let seenInSentence = false
+    while (i < src.length) {
+      const ch = src.charAt(i)
+      if (ch === '〔') {
+        // 🔴 只把 `〔emo:` 当标记开头。别的全角方括号（老师可能真用〔〕强调）原样保留 ——
+        //    「防御性剥离」不该顺手吃掉正文；引擎侧的 K1.3 解析器负责"整个标记剥掉"那一半。
+        if (src.substr(i, 5) !== EMO_HEAD) {
+          const rest = src.slice(i)
+          if (!isFinal && rest.length < EMO_HEAD.length && EMO_HEAD.indexOf(rest) === 0) break
+          out += ch
+          i += 1
+          continue
+        }
+        const close = src.indexOf('〕', i + 1)
+        if (close === -1) {
+          if (isFinal) out += src.slice(i)   // 规则 1：flush 时仍不完整 → 原样交回
+          break
+        }
+        const marker = src.slice(i, close + 1)
+        const m = EMO_RE.exec(marker)
+        if (m) {
+          const label = m[1]
+          const intensity = Number(m[2])
+          const legal = EMO_LABELS.indexOf(label) !== -1 && intensity >= 0 && intensity <= 1
+          if (legal && !seenInSentence) {
+            events.push({ label: label, intensity: intensity })
+            seenInSentence = true
+          }
+        }
+        i = close + 1                        // 规则 2/3：合法与非法标记都从正文里剥掉
+        continue
+      }
+      out += ch
+      if (SENTENCE_END.indexOf(ch) !== -1) seenInSentence = false
+      i += 1
+    }
+    return { text: out, events: events }
+  }
+
+  // ── K2.3 · 板书事件识别 ────────────────────────────────────────────────
+
+  /** 把 Chat 节点的 `content`（数组 or 字符串）拼成纯文本。 */
+  function contentTextOf(content) {
+    if (typeof content === 'string') return content
+    if (!Array.isArray(content)) return ''
+    const out = []
+    for (const part of content) {
+      if (typeof part === 'string') { out.push(part); continue }
+      if (part && typeof part.text === 'string') out.push(part.text)
+    }
+    return out.join('\n')
+  }
+
+  /**
+   * 一个 Chat 节点是不是「刚画完一张板书」的成功结果（契约 K2.3 的唯一判据）：
+   *   `kind === 'tool-result' && name === 'classroom_draw' && isError !== true`
+   * 命中后 id 的取法：① `meta.board.id` ② 文本里的 `[board] id=… lesson=… turn=… kind=…`
+   * 都没有 → `{ id: null }`（调用方不切屏，只记一条 warn）。
+   *
+   * @returns {null | {id:string|null, lesson:number|null, turn:number|null, kind:string, from:'meta'|'text'|'none'}}
+   */
+  function boardEventOf(node) {
+    if (!node || typeof node !== 'object') return null
+    const root = (node.data && node.data.root) ? node.data.root : ((node.data && node.data.kind) ? node.data : node)
+    const kind = root.kind || root.type || ''
+    if (kind !== 'tool-result') return null
+    if (String(root.name || '') !== 'classroom_draw') return null
+    if (root.isError === true) return null
+    const meta = root.meta
+    const board = meta && meta.board
+    if (board && typeof board.id === 'string' && board.id) {
+      return {
+        id: board.id,
+        lesson: Number.isFinite(Number(board.lesson)) ? Number(board.lesson) : null,
+        turn: Number.isFinite(Number(board.turn)) ? Number(board.turn) : null,
+        kind: String(board.kind || ''),
+        from: 'meta',
+      }
+    }
+    const m = /\n\[board\] id=(\S+) lesson=(\d+) turn=(\d+) kind=(\S+)/.exec('\n' + contentTextOf(root.content))
+    if (m) {
+      return { id: m[1], lesson: Number(m[2]), turn: Number(m[3]), kind: m[4], from: 'text' }
+    }
+    return { id: null, lesson: null, turn: null, kind: '', from: 'none' }
+  }
+
+  /** 消息列表里最后一张有 id 的板书（没有就 null）。 */
+  function latestBoardOf(messages) {
+    const arr = Array.isArray(messages) ? messages : []
+    for (let i = arr.length - 1; i >= 0; i--) {
+      const b = arr[i] && arr[i].board
+      if (b && b.id) return b
+    }
+    return null
+  }
+
+  // ── W-s · mermaid 产出的 svg 归一化 ─────────────────────────────────────
+  /**
+   * 把 mermaid 渲染出来的 svg 归一化成"装进画布"的形态。**纯函数**。
+   *
+   * 为什么需要：mermaid 的产物是
+   *   `<svg id=… width="100%" style="max-width: 343px;" viewBox="0 0 343 454">`
+   * 内联 max-width 会被层叠规则拿去跟 CSS 打架（不用 !important 就压不住），
+   * 而 width/height 属性又会跟画布的 100% 冲突。与其在 CSS 里博弈，不如在**插入前**
+   * 把这三样去掉、补上 preserveAspectRatio=meet —— 剩下的由画布的 width/height:100% 决定，
+   * 图按比例居中，既不裁也不变形。
+   *
+   * @param {string} svg
+   * @returns {string}
+   */
+  function normalizeMermaidSvg(svg) {
+    let out = String(svg == null ? '' : svg)
+    if (out.indexOf('<svg') === -1) return out
+    // 只动开标签那一截（正文里可能有同样形状的字符串）
+    const end = out.indexOf('>')
+    if (end === -1) return out
+    let head = out.slice(0, end + 1)
+    const rest = out.slice(end + 1)
+    head = head.replace(/\sstyle="[^"]*max-width[^"]*"/i, '')
+    head = head.replace(/\swidth="[^"]*"/i, '')
+    head = head.replace(/\sheight="[^"]*"/i, '')
+    head = head.replace(/\spreserveAspectRatio="[^"]*"/i, '')
+    head = head.replace(/<svg/i, '<svg preserveAspectRatio="xMidYMid meet"')
+    return head + rest
+  }
+
+  // ── C · 口型源（本阶段没有音频：用「纸带逐字显现」的节奏）─────────────────
+  /**
+   * 口型源接口（可替换的三件套）：
+   *   `feed(text, done)`  喂当前这句 + 是否已说完
+   *   `advance(dtMs)`     推进时钟（舞台是唯一时钟持有者，别让驱动自己计时）
+   *   `current()`         → `{ open: 0..1, speaking, revealed, total, kind }`
+   * 将来接音频：换一个 `createAudioMouth()` 实现同样三件套即可，混合层不动。
+   *
+   * 「逐字显现」的节奏模型：按 `charsPerSecond` 推进"已显现字数"，还有字要出就按
+   * `syllablesPerSecond` 摆开合；一句显示完（且已 done）→ `open` 归 0，嘴闭上。
+   */
+  function createTextCadenceMouth(opts) {
+    const o = opts || {}
+    const cps = Number.isFinite(o.charsPerSecond) && o.charsPerSecond > 0 ? o.charsPerSecond : 14
+    const syll = Number.isFinite(o.syllablesPerSecond) && o.syllablesPerSecond > 0 ? o.syllablesPerSecond : 5.2
+    const st = { text: '', done: false, revealed: 0, clock: 0, open: 0, speaking: false }
+    return {
+      kind: 'text-cadence',
+      note: '本阶段无音频：口型由纸带逐字显现的节奏驱动，一句显示完即闭嘴',
+      feed: function (text, done) {
+        const t = String(text == null ? '' : text)
+        if (t !== st.text) {
+          st.revealed = Math.min(st.revealed, t.length)
+          st.text = t
+        }
+        st.done = !!done
+      },
+      advance: function (dtMs) {
+        const dt = Math.max(0, Math.min(Number(dtMs) || 0, 250))
+        st.clock += dt
+        if (st.text) st.revealed = Math.min(st.text.length, st.revealed + (cps / 1000) * dt)
+        const pending = st.text.length - st.revealed
+        if (!st.text || pending <= 0.5) {
+          st.speaking = false
+          st.open = 0
+        } else {
+          st.speaking = true
+          const phase = (st.clock / 1000) * syll * Math.PI * 2
+          st.open = 0.16 + 0.84 * Math.abs(Math.sin(phase))
+        }
+        return st.open
+      },
+      current: function () {
+        return {
+          kind: 'text-cadence',
+          open: st.open,
+          speaking: st.speaking,
+          revealed: Math.floor(st.revealed),
+          total: st.text.length,
+        }
+      },
+      reset: function () {
+        st.text = ''
+        st.done = false
+        st.revealed = 0
+        st.clock = 0
+        st.open = 0
+        st.speaking = false
+      },
+    }
+  }
+
+  // ── [STAGE-PURE-END] ──────────────────────────────────────────────────
 
     // ======================================================================
     // §4 设置、素材与宿主报到
@@ -745,6 +1160,140 @@ window.__ModuleLoader__.load({
         throw err
       })
       return l2dLibsPromise
+    }
+
+    /**
+     * K0 · 第 5 条：**新增静态 JS 的独立加载通道**。
+     *
+     * 为什么不复用 `ensureL2dLibs(phases)`：`listLibs()` 的 phases 会被
+     * `if (!window.PIXI) throw` 连带门控（第一组必须只有 pixi），而表情驱动模块 /
+     * mermaid 与 Live2D 彼此独立 —— 塞进 phases 会让"Live2D 挂了"连累"板书渲染"。
+     *
+     * @param {string} file - 文件名（如 `mermaid.min.js`、`emotion-driver.js`）
+     * @param {string} [subdir] - `assets/` 下的子目录，默认 `l2d`（X 车道的表情驱动模块放这里）
+     * @returns {Promise<boolean>} 脚本执行完成即 resolve；失败可重试（不缓存失败）
+     */
+    const stageModulePromises = Object.create(null)
+    function ensureStageModule(file, subdir) {
+      const url = ROUTE + '/' + (subdir || 'l2d') + '/' + String(file)
+      if (stageModulePromises[url]) return stageModulePromises[url]
+      const p = loadOneScript(url).then(function () { return true }).catch(function (err) {
+        delete stageModulePromises[url]     // 失败不缓存：网络抖一下还能重试
+        throw err
+      })
+      stageModulePromises[url] = p
+      return p
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  表情驱动模块（X 车道的产物，放在 assets/l2d/）
+    //
+    //  文件与职责（都不属于本车道，S 这边只负责**按序加载**并给它 K0 挂载点）：
+    //   · vendor/soullink/soullink-engine.iife.min.js  → window.SoullinkEmotion（纯 engine）
+    //   · stage-emotion-parse.js                       → window.__SOCRATIC_EMOTION_PARSE__（K1.3）
+    //   · stage-emotion.js                             → window.__SOCRATIC_EMOTION__
+    //       **它自己**轮询 K0 挂载点并调用 setExpressionDriver（S 不替它注册），
+    //       找不到只 warn、不抛；Soullink engine 缺失时不接管（舞台回落静态待机，EC 要求）。
+    //
+    //  🔴 与 Live2D 库**分开加载**：任何一步失败都只 pushWarning，绝不连累立绘。
+    //  🔴 不走 listLibs() 的 phases（契约 K0 第 5 条，check.sh 7d 会挡）。
+    // ══════════════════════════════════════════════════════════════════════
+    let emotionModulesPromise = null
+    function ensureEmotionModules() {
+      if (emotionModulesPromise) return emotionModulesPromise
+      emotionModulesPromise = (async function () {
+        const files = [
+          'vendor/soullink/soullink-engine.iife.min.js',
+          'stage-emotion-parse.js',
+          'stage-emotion.js',
+        ]
+        for (const f of files) {
+          try {
+            await ensureStageModule(f, 'l2d')
+          } catch (err) {
+            pushWarning('表情驱动模块加载失败（' + f + '）：' + String((err && err.message) || err))
+          }
+        }
+        return true
+      })().catch(function (err) {
+        emotionModulesPromise = null           // 允许重试
+        pushWarning('表情驱动模块加载异常：' + String((err && err.message) || err))
+        return false
+      })
+      return emotionModulesPromise
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    //  mermaid（板书屏真渲染）
+    //
+    //  来源：`clients/classroom-ui/vendor/mermaid-11.17.2/mermaid.min.js` 的**逐字节副本**，
+    //  落在本包 `assets/l2d/mermaid.min.js`（见该目录 README 与 BUILD-INFO.txt）。
+    //  为什么复制而不是跨插件引用：舞台不能依赖"另一个插件恰好装着"——classroom-ui 没装
+    //  或换了目录，板书屏立刻白屏；而 git 对相同内容按 blob 去重，仓库里其实只有一份。
+    //  为什么按需加载（不是启动就装）：3.5 MB，只有真画了图才需要。
+    // ══════════════════════════════════════════════════════════════════════
+    let mermaidReady = null
+    const MERMAID_FILE = 'mermaid.min.js'
+
+    function ensureMermaid() {
+      if (mermaidReady) return mermaidReady
+      const p = ensureStageModule(MERMAID_FILE).then(function () {
+        const m = window.mermaid
+        if (!m || typeof m.render !== 'function') throw new Error('mermaid 未就绪')
+        try {
+          m.initialize({
+            startOnLoad: false,
+            securityLevel: 'strict',   // 源码来自模型：不许它注入脚本/事件
+            theme: 'base',
+            fontFamily: '"Songti SC","Source Han Serif SC","Noto Serif CJK SC",Georgia,serif',
+            themeVariables: {
+              // 暖纸配色（与舞台令牌同源，见 §1）
+              background: '#FBF3E6',
+              primaryColor: '#F3E9DA',
+              primaryTextColor: '#2A211A',
+              primaryBorderColor: '#B84A1C',
+              lineColor: '#6B5B4A',
+              secondaryColor: '#EADCC8',
+              tertiaryColor: '#FBF3E6',
+            },
+          })
+        } catch (e) { /* initialize 失败也让 render 试一次（不同小版本的配置键会变） */ }
+        return m
+      }).catch(function (err) {
+        mermaidReady = null
+        throw err
+      })
+      mermaidReady = p
+      return p
+    }
+
+    let diagramSeq = 0
+
+    /**
+     * 把一张图的 mermaid 源码渲染成 SVG 字符串。**任何失败都返回 ok:false**（板书屏据此
+     * 显示「这张图渲染失败」＋源码，不白屏 —— 契约 K2.4）。
+     */
+    function renderMermaidSvg(source, id) {
+      diagramSeq += 1
+      const renderId = 'stage-bp-' + diagramSeq
+      return ensureMermaid().then(function (m) {
+        return m.render(renderId, String(source || ''))
+      }).then(function (out) {
+        const svg = out && typeof out === 'object' ? out.svg : out
+        if (typeof svg !== 'string' || svg.indexOf('<svg') === -1) throw new Error('mermaid 没有返回 svg')
+        return { ok: true, svg: normalizeMermaidSvg(svg), id: id }
+      }).catch(function (err) {
+        return { ok: false, id: id, error: String((err && err.message) || err) }
+      })
+    }
+
+    /** 取一张板书的源码（宿主路由 `/stage-board/diagrams/<id>`，text/plain）。 */
+    function fetchDiagramSource(id) {
+      const url = BOARD_ROUTE + '/diagrams/' + encodeURIComponent(String(id))
+      return fetch(url, { cache: 'no-store' }).then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status)
+        return r.text()
+      })
     }
 
     function fetchJson(url) {
@@ -915,6 +1464,165 @@ window.__ModuleLoader__.load({
       const settings = props.settings || DEFAULTS
       const enabled = settings.enabled !== false
 
+      // ── 板书图（K2.4）：自动切屏时渲染的是**这一张**，不是 L03 静态场景 ──────────
+      // null=没在显示图 | {loading,id} | {ok:true,id,svg} | {ok:false,id,error,source}
+      const [diagram, setDiagram] = React.useState(null)
+      // K0 挂载点 / 口型源 / 屏幕状态 的活引用（effect 里读，不进依赖）
+      const bridgeRef = React.useRef(null)
+      const mouthRef = React.useRef(null)
+      const screenRef = React.useRef('live')
+      // 情绪通道：seq 游标 / 当前生效情绪（含过期时间）
+      const emoSeqRef = React.useRef(0)
+      const emoRef = React.useRef(null)
+      /** 上一帧"纸带已显现字数"（口型源的增量就靠它算）。 */
+      const tapeShownRef = React.useRef(0)
+      // 表情驱动是否已接管表情层（null ⇒ 回落到原来的静态待机表情）
+      const [driverOn, setDriverOn] = React.useState(false)
+      // 拉出/收起的定时器（卸载时清掉，避免 setState after unmount）
+      const beatTimersRef = React.useRef([])
+
+      if (!mouthRef.current) mouthRef.current = createTextCadenceMouth()
+      screenRef.current = boardScreen ? 'board' : 'live'
+
+      /** 清掉三段节拍的定时器（重复开合时也先清，避免旧拍子插进来）。 */
+      const clearBeats = function () {
+        const list = beatTimersRef.current
+        beatTimersRef.current = []
+        for (const t of list) { try { clearTimeout(t) } catch { /* ignore */ } }
+      }
+
+      // ── K0 · 全局挂载点（契约 §K0）──────────────────────────────────────────
+      // 🔴 这个 effect 必须写在 Live2D 那个 **之前**：React 按声明顺序执行 cleanup，
+      //    而销毁顺序被契约写死了 —— ① driver.dispose()（清它挂在 app.ticker 上的东西）
+      //    ② 摘 window.__SOCRATIC_STAGE__ ③ Live2D effect 的 cleanup 才 destroy PIXI 应用。
+      //    顺序反了，驱动会有一帧去碰已经 destroy 的 app。
+      React.useEffect(function () {
+        if (!enabled) return undefined
+        // 关闭态（Ctrl+Shift+M）：舞台不在，挂载点也不该在 —— 否则驱动会对着空舞台跑
+        if (killed) return undefined
+        if (bridgeRef.current) return undefined
+        let bridge = null
+        try {
+          bridge = createStageBridge({
+            React: React,
+            subscribe: function (fn) { return store.subscribe(fn) },
+            getSnapshot: function () {
+              return {
+                sessionId: live.sessionId,
+                running: live.running,
+                title: live.title,
+                messages: live.messages,
+                hasChatHook: live.hasChatHook,
+                // 相位在引擎侧，舞台如实留 null（**不编一个值**骗驱动）
+                phase: null,
+              }
+            },
+            getScreen: function () { return screenRef.current },
+            getApp: function () { return l2dAppRef.current },
+            getModel: function () { return l2dModelRef.current },
+            getMouthSource: function () { return mouthRef.current },
+            // 驱动注册/注销 → 舞台重算表情层归属（有驱动＝表情归驱动，没驱动＝静态待机）
+            onDriverChange: function (next) { try { setDriverOn(!!next) } catch (e) { /* ignore */ } },
+          })
+          window.__SOCRATIC_STAGE__ = bridge
+          bridgeRef.current = bridge
+        } catch (err) {
+          pushWarning('K0 挂载点建立失败（表情驱动将不可用）：' + String((err && err.message) || err))
+        }
+        return function () {
+          const b = bridgeRef.current
+          bridgeRef.current = null
+          if (b && typeof b.dispose === 'function') {
+            try { b.dispose() } catch (err) { /* 销毁路径不许抛 */ }
+          } else {
+            try { delete window.__SOCRATIC_STAGE__ } catch { window.__SOCRATIC_STAGE__ = undefined }
+          }
+        }
+      }, [enabled, killed])
+
+      // ── 帧循环：口型源推进 ＋ 把当前情绪交给表情驱动 ───────────────────────
+      // 挂在**舞台自己的 PIXI app.ticker** 上 ⇒ app 销毁时 ticker 一起死（10-19 那个
+      // 「关掉再打开」的坑就是这么修的）；app 重建时这里会重新挂一份。
+      const stageFrame = React.useCallback(function (dtMs) {
+        const bridge = bridgeRef.current
+        const drv = bridge && typeof bridge.driver === 'function' ? bridge.driver() : null
+        const mouth = mouthRef.current
+        if (mouth) {
+          try {
+            const msgs = live.messages || []
+            let lastTeacher = null
+            for (let i = msgs.length - 1; i >= 0; i--) {
+              if (msgs[i] && msgs[i].role === 'teacher') { lastTeacher = msgs[i]; break }
+            }
+            const text = lastTeacher ? stripForTape(lastTeacher.text, !lastTeacher.running) : ''
+            mouth.feed(text, !live.running)
+            mouth.advance(dtMs)
+            // 口型的**唯一输入源**是"纸带逐字显现的节奏"：把这一帧新增的显现字数报给驱动
+            // （驱动的口型源接口是 tapeTyped(n)；驱动自己也可能换源，所以只调存在的那个）。
+            const shown = mouth.current().revealed
+            const delta = shown - tapeShownRef.current
+            if (delta > 0) {
+              tapeShownRef.current = shown
+              if (drv && typeof drv.tapeTyped === 'function') {
+                try { drv.tapeTyped(delta) } catch (e) { /* 口型出错不该影响画面 */ }
+              }
+            } else if (delta < 0) {
+              tapeShownRef.current = shown    // 换句时 revealed 可能回退，别留负增量
+            }
+          } catch (err) { /* 口型算错不该影响画面 */ }
+        }
+        if (!drv) return
+        // 情绪自然回落：超过 HOLD 没有新事件就交 null（C5 的"回到平静"在引擎接进来之前的兜底）
+        const cur = emoRef.current
+        const active = (cur && (Date.now() - cur.at) < EMOTION_HOLD_MS)
+          ? { label: cur.label, intensity: cur.intensity }
+          : null
+        try { drv.drive({ active: active, dt: (Number(dtMs) || 0) / 1000 }, bridge) } catch (err) {
+          pushWarning('表情驱动 drive() 抛错（已隔离，舞台照常）：' + String((err && err.message) || err))
+        }
+      }, [])
+
+      // ── 情绪通道（契约 K1.4）─────────────────────────────────────────────
+      // 只在「舞台可见（页面在前台、舞台没关）且 running === true」时每 250ms 轮一次。
+      // 不做长轮询：实现简单、失败可见。
+      React.useEffect(function () {
+        if (!enabled || killed) return undefined
+        if (!data.running) return undefined
+        let stopped = false
+        let inFlight = false
+        const poll = function () {
+          if (stopped || inFlight) return
+          if (typeof document !== 'undefined' && document.hidden) return   // 页面在后台：不轮
+          inFlight = true
+          const url = BOARD_ROUTE + '/emotions?after=' + encodeURIComponent(String(emoSeqRef.current || 0))
+          fetch(url, { cache: 'no-store' })
+            .then(function (r) { return r.ok ? r.json() : null })
+            .then(function (j) {
+              if (stopped || !j || !Array.isArray(j.events)) return
+              for (const ev of j.events) {
+                const label = String(ev && ev.label || '')
+                const intensity = Number(ev && ev.intensity)
+                if (EMO_LABELS.indexOf(label) === -1) continue
+                if (!Number.isFinite(intensity) || intensity < 0 || intensity > 1) continue
+                emoRef.current = { label: label, intensity: intensity, at: Date.now() }
+                // 驱动（X 车道）自己有一台情绪引擎与队列（上限 8、丢最旧）：
+                // 有 pushEmotion 就交给它，舞台这份 active 只在没有驱动时才有意义。
+                const br = bridgeRef.current
+                const d = br && typeof br.driver === 'function' ? br.driver() : null
+                if (d && typeof d.pushEmotion === 'function') {
+                  try { d.pushEmotion(label, intensity) } catch (e) { pushWarning('pushEmotion 抛错（已隔离）') }
+                }
+              }
+              if (Number.isFinite(Number(j.nextSeq))) emoSeqRef.current = Number(j.nextSeq)
+            })
+            .catch(function () { /* 轮询失败就等下一拍：不重试、不排队 */ })
+            .then(function () { inFlight = false })
+        }
+        const timer = setInterval(poll, EMOTION_POLL_MS)
+        poll()
+        return function () { stopped = true; try { clearInterval(timer) } catch { /* ignore */ } }
+      }, [enabled, killed, data.running])
+
       // ── Live2D：库就绪 → 建 PIXI 应用 → 载模型 ─────────────────────────────
       // 🔴 规矩：这个 effect 必须在所有 return 之前（hooks 顺序铁律），且**失败要能降级**：
       //   任何一步出错都 setL2dFailed(true)，渲染时回落静态 <img>，绝不因为 Live2D 挂了而没有立绘。
@@ -933,6 +1641,8 @@ window.__ModuleLoader__.load({
 
         ensureL2dLibs(phases)
           .then(function () {
+            // 表情驱动模块（X 车道）：与立绘库并行/顺次都行，失败只记警告
+            try { ensureEmotionModules() } catch (e) { /* ensureEmotionModules 内部已兜住 */ }
             if (disposed || !l2dCanvasRef.current) return
             // 🔴 必须显式给 width/height：PIXI 默认画布是 **300×150**，而 CSS 把它拉伸到
             //    38vh×52vh（实测 399×546）—— 结果内部只渲 300×150，画面糊成一片。
@@ -952,6 +1662,11 @@ window.__ModuleLoader__.load({
             // 必须再显式 resize 一次渲染器。
             try { app.renderer.resize(hostW, hostH) } catch (e) { /* 旧版没有 resize 就跳过 */ }
             l2dAppRef.current = app
+            // 帧循环挂到 app.ticker 上：**app 销毁 ⇒ ticker 一起死**（不泄漏，10-19 那个坑的口径）。
+            // PIXI v6 的 ticker 回调参数是"帧增量"（1 = 60fps），这里换算成毫秒。
+            try {
+              app.ticker.add(function (delta) { stageFrame((Number(delta) || 1) * (1000 / 60)) })
+            } catch (e) { pushWarning('帧循环挂载失败（表情/口型不会动）：' + String((e && e.message) || e)) }
             setLibReady(true)
             const entry = models[0]
             return window.PIXI.live2d.Live2DModel.from(ROUTE + '/models/' + entry.model3, { autoInteract: false })
@@ -991,7 +1706,8 @@ window.__ModuleLoader__.load({
           })
           .catch(function (err) {
             if (disposed) return
-            warnings.push('Live2D 不可用，回落静态立绘：' + String((err && err.message) || err))
+            // 🔴 catch 里只调用一定存在的函数（见模块级 pushWarning 的注释）
+            pushWarning('Live2D 不可用，回落静态立绘：' + String((err && err.message) || err))
             setL2dFailed(true)
             try { if (l2dAppRef.current) l2dAppRef.current.destroy(false) } catch (e) {}
             l2dAppRef.current = null
@@ -1006,7 +1722,10 @@ window.__ModuleLoader__.load({
         // 🔴 props.killed 必须进依赖：关掉舞台（Ctrl+Shift+M）时组件返回 null、canvas 被销毁，
         //    再打开（Ctrl+Shift+U）时 React 重建出一个**新的** canvas —— 依赖没变 effect 就不会重跑，
         //    新 canvas 上没有 PIXI 应用，立绘消失。实测踩过。
-      }, [enabled, data, props.l2d, props.models, props.killed])
+        // 🔴 2026-10-20 修（原 bug）：这里原来还有整个 `data` 快照 —— 流式期间 store.set 每来
+        //    一块文本就换一次快照，于是 PIXI 应用**每帧被销毁重建**（表情驱动/口型会跟着抖，
+        //    还会反复重下模型）。本 effect 只用到 props 上的四个字段，删掉 data 即可。
+      }, [enabled, props.l2d, props.models, props.killed, stageFrame])
 
       // ── Live2D：状态 → 动作 ────────────────────────────────────────────────
       // 模型只有两组动作：`Idle`（1 段）与 `Anima`（0=speak / 1=thinkend / 2=thinking）。
@@ -1015,6 +1734,20 @@ window.__ModuleLoader__.load({
       //   · 老师刚说完一段    → speak（播一轮）
       //   · 学生刚说完        → thinkend（老师在消化）
       //   · 其它             → idle
+      // 🔴 2026-10-20：这一条 effect 原来把**动作层与表情层写在同一串 if 里**，且依赖整个
+      //    `data.messages`（流式期间每来一块文本都重跑 → 每块都 `model.motion()` 重新起播，
+      //    表情也被反复打断）。现在：
+      //      · 依赖收窄成「最后一个开口的角色 + 是否在生成 + 表情层归谁」；
+      //      · **动作层保留原逻辑**（running→thinking / teacher→speak / you→thinkend / 否则 idle）；
+      //      · **表情层交给独立的驱动模块**（K0 的 setExpressionDriver）；没有驱动时才用静态待机表情。
+      const lastSpokenRole = (function () {
+        const msgs = data.messages || []
+        for (let i = msgs.length - 1; i >= 0; i--) {
+          const m = msgs[i]
+          if (m && (m.role === 'teacher' || m.role === 'you')) return m.role
+        }
+        return ''
+      })()
       React.useEffect(function () {
         const model = l2dModelRef.current
         if (!model || !l2dReady) return
@@ -1022,17 +1755,16 @@ window.__ModuleLoader__.load({
           try { model.motion(group, index) } catch (e) { /* 动作缺失不该影响画面 */ }
         }
         // 表情：模型自带 5 个（happy / happy2 / puzzled / relax / unhappy）。
-        // 只在**状态切换时**设一次，不每帧刷 —— 反复 setExpression 会打断表情过渡。
+        // 有驱动接管时**只管动作、不碰表情**（驱动每帧在写参数，这里再设会打架）。
         const expr = function (name) {
+          if (driverOn) return
           try { model.expression(name) } catch (e) { /* 没有该表情就跳过 */ }
         }
-        const msgs = data.messages || []
-        const last = msgs.length ? msgs[msgs.length - 1] : null
-        if (data.running) { play('Anima', 2); expr('relax'); return }        // thinking
-        if (last && last.role === 'teacher') { play('Anima', 0); expr('happy'); return }  // speak
-        if (last && last.role === 'you') { play('Anima', 1); expr('puzzled'); return }    // thinkend
+        if (data.running) { play('Anima', 2); expr('relax'); return }                     // thinking
+        if (lastSpokenRole === 'teacher') { play('Anima', 0); expr('happy'); return }     // speak
+        if (lastSpokenRole === 'you') { play('Anima', 1); expr('puzzled'); return }       // thinkend
         play('Idle', 0)
-      }, [l2dReady, data.running, data.messages])
+      }, [l2dReady, data.running, lastSpokenRole, driverOn])
 
       // 阅读态＝正文流自己滚（Avalon 做法）：新消息到达时贴底
       React.useEffect(function () {
@@ -1074,15 +1806,66 @@ window.__ModuleLoader__.load({
       }
       const closeAnim = function () { setAnim(null) }
 
-      // 开板书：先按已定案的三段节拍拉出面板，同时取场景（缺件就降级成占位）
-      const openBoard = function (lesson) {
+      // ── 板书的「三段节拍」（已定案 170 / 390 / 220ms，切换点 170 / 560）──────
+      // 🔴 串行口径：170 后开始拉出，390 跑完才切 settle（560 = 170+390），
+      //    所以 `pull` 的 390ms 曲线是**完整**跑完的（此前的乐观值 170/560 会让它只跑 30%）。
+      const pullOut = function () {
         setBoardScreen(true)
+        if (board) return          // 已经停在板上（settle 之后）→ 不重播拉出（契约 K2.4：直接替换）
+        clearBeats()
+        setBoard('turn')
+        beatTimersRef.current.push(setTimeout(function () { setBoard('pull') }, 170))
+        beatTimersRef.current.push(setTimeout(function () { setBoard('settle') }, 560))
+      }
+
+      // 收起＝反向节拍：面板沿原路滑出（390ms），随后整块离场（对比件 closeBoard 420ms）
+      const closeBoard = function () {
+        clearBeats()
+        setBoard('turn')
+        beatTimersRef.current.push(setTimeout(function () {
+          setBoard('')
+          setBoardScreen(false)
+          setDiagram(null)
+        }, 420))
+      }
+
+      /**
+       * 开一张**真的板书图**（K2.4）：切到板书屏 → 播拉出节拍 → 取这一张的 mermaid 源码
+       * → 真渲染。渲染失败显示「这张图渲染失败」＋源码，不白屏。
+       * 已在板书屏时只替换内容（pullOut 内部会跳过重播）。
+       */
+      const openDiagram = function (req) {
+        const id = req && req.id ? String(req.id) : ''
+        if (!id) return
+        pullOut()
         setScene(null)
-        if (!board) {
-          setBoard('turn')
-          setTimeout(function () { setBoard('pull') }, 170)     // ① 预备结束
-          setTimeout(function () { setBoard('settle') }, 560)   // ② 170+390 结束（串行口径）
-        }
+        setDiagram({ loading: true, id: id })
+        fetchDiagramSource(id)
+          .then(function (src) {
+            return renderMermaidSvg(src, id).then(function (r) { return { r: r, src: src } })
+          })
+          .then(function (out) {
+            const r = out.r
+            setDiagram(function (cur) {
+              // 只认最后一次请求：老师连画两张时，先发的旧请求不许覆盖新图
+              if (!cur || cur.id !== id) return cur
+              if (r.ok) return { ok: true, id: id, svg: r.svg }
+              return { ok: false, id: id, error: r.error, source: out.src }
+            })
+          })
+          .catch(function (err) {
+            setDiagram(function (cur) {
+              if (!cur || cur.id !== id) return cur
+              return { ok: false, id: id, error: String((err && err.message) || err), source: '' }
+            })
+          })
+      }
+
+      // 开板书（静态场景版，保留手动按钮的老路径）：缺件就降级成占位
+      const openBoard = function (lesson) {
+        setDiagram(null)
+        pullOut()
+        setScene(null)
         const id = lesson || 'L03'
         fetch(ROUTE + '/board/' + encodeURIComponent(id) + '.scene.json', { cache: 'no-store' })
           .then(function (r) { return r.ok ? r.json() : null })
@@ -1096,9 +1879,36 @@ window.__ModuleLoader__.load({
           .catch(function () { setScene({ ok: false, boards: [], error: 'fetch-failed' }) })
       }
 
+      // ── K2.4 自动切屏：老师刚画完一张 → 播拉出节拍、渲染这一张 ──────────────
+      const boardReq = latestBoardOf(data.messages)
+      const boardReqId = boardReq && boardReq.id ? String(boardReq.id) : ''
+      // 挂载时已经存在的板书**不**自动弹（刷新页面后先看 live 屏）；只对"新出现的"响应
+      const seenBoardIdRef = React.useRef(boardReqId)
+      React.useEffect(function () {
+        if (!boardReqId) return
+        if (boardReqId === seenBoardIdRef.current) return
+        seenBoardIdRef.current = boardReqId
+        // 🔴 舞台关着的时候画了图：**不自动打开舞台**，只进历史（P 车道列它）
+        if (!enabled || killed) return
+        openDiagram(boardReq)
+      }, [boardReqId, enabled, killed])
+
       // 回合变化时清掉选项选中态（键用「用户消息条数」—— 流式正文不能当 effect 键，每来一个字都会变）
       const userCount = (data.messages || []).filter(function (m) { return m.role === 'you' }).length
-      React.useEffect(function () { setCursor(0); setPicked(-1) }, [userCount])
+      const prevUserCountRef = React.useRef(userCount)
+      React.useEffect(function () {
+        setCursor(0); setPicked(-1)
+        const prev = prevUserCountRef.current
+        prevUserCountRef.current = userCount
+        // 🔴 契约 K2.4：学生发下一句话 → 板书收起（反向节拍）。用 ref 读当前屏幕状态，
+        //    免得把 boardScreen 塞进依赖（那样每次开合都会重跑这个 effect）。
+        if (userCount > prev && screenRef.current === 'board') closeBoard()
+      }, [userCount])
+
+      // 卸载时清掉没跑完的节拍定时器（关舞台/热重载时别留下 setState 残骸）
+      React.useEffect(function () {
+        return function () { clearBeats() }
+      }, [])
 
       // ↑↓ 选（只在真的有选项时接管按键）
       React.useEffect(function () {
@@ -1169,41 +1979,68 @@ window.__ModuleLoader__.load({
       children.push(H('div', { key: 'veil', className: 'veil' }))
       children.push(H('div', { key: 'c1', className: 'corner tl' }, CORNER_SVG))
       children.push(H('div', { key: 'c2', className: 'corner br' }, CORNER_SVG))
+      // 🔴 2026-10-20：这里原来**写死**了 `小 鞠 知 花 · 在场`（角色早就换成「鲸」了）。
+      //    名字的唯一来源是教室数据：宿主 manifest 的 `classroom.teacher.name`
+      //    （= classroom.yaml 里 `layer: persona` 那个角色卡文件的「名字」行）。
+      //    读不到就只显示「在场」——**绝不写死任何名字**。
+      const classroomInfo = props.classroom || {}
+      const teacherName = String((classroomInfo.teacher && classroomInfo.teacher.name) || '')
       children.push(H('div', { key: 'strip', className: 'cast-strip' },
-        H('span', { className: 'cast-chip on' }, '小 鞠 知 花 · 在场')))
+        H('span', { className: 'cast-chip on' }, teacherName ? (teacherName + ' · 在场') : '在场')))
       children.push(H('div', { key: 'top', className: 'topbar' },
         H('div', { className: 'tb-lft' },
-          H('span', { className: 'cn' }, data.title || '计算机系教室 · 操作系统'),
+          H('span', { className: 'cn' }, data.title || classroomInfo.title || '教室'),
           H('span', { className: 'no' }, data.running ? '老师正在讲' : '待你开口')),
         H('div', { className: 'tools' },
           H('button', { className: 'tool', onClick: function () { props.onChrome && props.onChrome('off') } }, '读'),
           H('button', { className: 'tool', onClick: function () {
-            if (boardScreen) {           // 关板书：反向收（面板先走，角色后回正）
-              setBoard('turn')
-              setTimeout(function () { setBoard(''); setBoardScreen(false) }, 220)
-              return
-            }
-            openBoard('L03')             // 开板书：三段节拍 170/560（串行口径）＋ 取场景
+            // 手动按钮保留（契约 K2.4）。收起走反向节拍；打开时**优先看最新那张真板书图**，
+            // 没有图（这一节还没画过）才退回老的静态场景 L03。
+            if (boardScreen) { closeBoard(); return }
+            if (boardReq) { openDiagram(boardReq); return }
+            openBoard('L03')
           } }, boardScreen ? '收起板书' : '板书'),
           H('button', { className: 'tool', onClick: function () { openAnim('asset-iomodel') } }, '动画'),
           H('button', { className: 'tool', onClick: function () { setKilled(true) } }, '关闭舞台'))))
       // 板书面板：**先入 DOM ⇒ z 序低于角色**（这就是"从角色身后拉出"的机制）
       if (board) {
+        // 标题/状态行：真板书图优先（图上显示的是**这一张**，不是 L03 静态场景）
+        const bpTitle = diagram
+          ? ('板 书 · ' + String(diagram.id || ''))
+          : '板 书 · ' + (scene && scene.ok ? String(scene.scene.label || scene.scene.lesson || '') : '白板')
+        const bpRev = diagram
+          ? (diagram.loading ? '读取中…' : (diagram.ok ? 'mermaid' : '渲染失败'))
+          : (scene && scene.ok ? ('rev ' + String(scene.scene.rev || 0)) : (scene ? '无可用板书' : '读取中…'))
+        let bpBody = null
+        if (diagram) {
+          if (diagram.loading) {
+            bpBody = H('div', { className: 'bp-fallback' }, H('div', { className: 'bp-note' }, '正在取这张图…'))
+          } else if (diagram.ok) {
+            bpBody = H('div', { className: 'bp-canvas', dangerouslySetInnerHTML: { __html: diagram.svg } })
+          } else {
+            // 🔴 契约 K2.4：渲染失败不许白屏 —— 一句人话 ＋ 图的源码
+            bpBody = H('div', { className: 'bp-fail' },
+              H('div', { className: 'why' }, '这张图渲染失败'),
+              H('div', { className: 'bp-note' }, String(diagram.error || '')),
+              diagram.source ? H('pre', null, String(diagram.source)) : null)
+          }
+        } else if (scene && scene.ok) {
+          bpBody = H('div', { className: 'bp-canvas', dangerouslySetInnerHTML: { __html: renderSceneSvgString(scene.scene) } })
+        } else {
+          bpBody = H('div', { className: 'bp-fallback' },
+            H('div', null, H('span', { className: 'k' }, '就绪'), ' → ', H('span', { className: 'k' }, '运行')),
+            H('div', null, H('span', { className: 'k' }, '运行'), ' → 阻塞（等 I/O）'),
+            H('div', null, H('span', { className: 'k' }, '阻塞'), ' → 就绪（I/O 完成）'),
+            H('div', null, H('span', { className: 'k' }, '运行'), ' → 终止（exit）'),
+            H('div', { className: 'bp-note' },
+              scene ? ('板书缺件：' + String(scene.error || '') + '（可用：' + String((scene.boards || []).join('、') || '无') + '）') : ''))
+        }
         children.push(H('div', { key: 'board', className: 'boardpanel' },
           H('div', { className: 'bp-top' },
             H('span', { className: 'dm' }),
-            H('span', { className: 'bp-tx' }, '板 书 · ' + (scene && scene.ok ? String(scene.scene.label || scene.scene.lesson || '') : '白板')),
-            H('span', { className: 'bp-rev' }, scene && scene.ok ? ('rev ' + String(scene.scene.rev || 0)) : (scene ? '无可用板书' : '读取中…'))),
-          H('div', { className: 'bp-body' },
-            (scene && scene.ok)
-              ? H('div', { className: 'bp-canvas', dangerouslySetInnerHTML: { __html: renderSceneSvgString(scene.scene) } })
-              : H('div', { className: 'bp-fallback' },
-                  H('div', null, H('span', { className: 'k' }, '就绪'), ' → ', H('span', { className: 'k' }, '运行')),
-                  H('div', null, H('span', { className: 'k' }, '运行'), ' → 阻塞（等 I/O）'),
-                  H('div', null, H('span', { className: 'k' }, '阻塞'), ' → 就绪（I/O 完成）'),
-                  H('div', null, H('span', { className: 'k' }, '运行'), ' → 终止（exit）'),
-                  H('div', { className: 'bp-note' },
-                    scene ? ('板书缺件：' + String(scene.error || '') + '（可用：' + String((scene.boards || []).join('、') || '无') + '）') : '')))))
+            H('span', { className: 'bp-tx' }, bpTitle),
+            H('span', { className: 'bp-rev' }, bpRev)),
+          H('div', { className: 'bp-body' }, bpBody)))
       }
 
       if (settings.showSprite !== false) {
@@ -1247,6 +2084,8 @@ window.__ModuleLoader__.load({
       //   其余一律不画。工具细节在 DSH 自己的 Trajectory 里能看，纸带只负责对话。
       const anyRunning = msgs.some(function (x) { return x.running })
       msgs.forEach(function (m, i) {
+        // 板书信号条目（classroom_draw 的结果）只用于切屏，**不进纸带**：纸带只画对话
+        if (m.role === 'board') return
         if (m.role === 'tool') {
           if (!anyRunning || i !== msgs.length - 1) return
           lines.push(H('div', { key: 't' + i, className: 'tline' }, '⚙ ' + m.text))
@@ -1262,6 +2101,10 @@ window.__ModuleLoader__.load({
         if (isCurrent && realOptions.length > 0) {
           bodyText = stripTrailingOptionList(bodyText)
         }
+        // 🔴 契约 K1.4 的防御性剥离：正常路径下引擎已在 `llm/stream` 剥净，
+        //    这里兜的是"引擎没装/版本不匹配"——纸带绝不能把 〔emo:…〕 显示出来。
+        //    `final` 只在"这条消息已经说完"时为真：流式中间态遇到半截标记先不下传。
+        bodyText = stripForTape(bodyText, !m.running)
         bodyText = stripMarkdown(bodyText)
         lines.push(H('p', { key: 'm' + i, className: cls },
           (m.role === 'you' ? '你：' : '') + bodyText,
@@ -1369,7 +2212,7 @@ window.__ModuleLoader__.load({
             H('div', { className: 'who' },
               H('span', { className: 'bar' }),
               // 角色名：与 characters/ 里的当课老师一致（换角色改这一处）
-              H('span', { className: 'nm' }, '鲸')),
+              H('span', { className: 'nm' }, teacherNameShort(teacherName))),
             lines,
             optsNode)),
         H('div', { className: 'composer' },
@@ -1514,8 +2357,7 @@ window.__ModuleLoader__.load({
     }
 
     function apply(ctx) {
-      const warnings = []
-
+      // 🔴 不要在这里再声明一次 `warnings`：StageRoot 的降级路径也用同一份（模块级）
       try { installEscapeHatch() } catch (err) { warnings.push('逃生门安装失败：' + String(err)) }
 
       // ---- 1. 传感器（session 作用域，渲染 null） ----------------------
@@ -1540,6 +2382,8 @@ window.__ModuleLoader__.load({
           //    （而且它是**静默降级**：没有报错，只是 canvas 不出现）。
           state.props.models = j.models || []
           state.props.l2d = j.l2d || []
+          // 教室标识（教室名/老师显示名）：一律来自宿主读到的教室数据，前端不写死
+          state.props.classroom = j.classroom || null
         }
         render()
       }).catch(function (err) { warnings.push('清单加载失败：' + String(err)) })
@@ -1565,6 +2409,15 @@ window.__ModuleLoader__.load({
       // 供离线自检用（不参与运行时）
       __test: {
         readMessages: readMessages,
+        // K0 / K1.3 / K2.3 / 口型源（纯函数区的入口，test/20 用它们跑单测）
+        createStageBridge: createStageBridge,
+        stripEmotionMarkers: stripEmotionMarkers,
+        boardEventOf: boardEventOf,
+        latestBoardOf: latestBoardOf,
+        createTextCadenceMouth: createTextCadenceMouth,
+        normalizeMermaidSvg: normalizeMermaidSvg,
+        contentTextOf: contentTextOf,
+        teacherNameShort: teacherNameShort,
         classifyBlocks: classifyBlocks,
         readUserText: readUserText,
         titleOf: titleOf,
