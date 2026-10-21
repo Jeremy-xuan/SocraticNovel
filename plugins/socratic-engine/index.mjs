@@ -22,7 +22,7 @@
 //   - 运行时切教室（系统段注册是一次性的，见 接线说明_S2.md §2.3 注）
 
 import { defineTool } from './lib/toolshape.mjs'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
+import { createUserMessage } from './lib/usermessage.mjs'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import {
