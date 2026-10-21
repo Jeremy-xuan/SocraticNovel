@@ -24,8 +24,10 @@ import { fileURLToPath } from 'node:url'
 
 import {
   CONTINUITY_SECTIONS,
+  LESSON_ROW_LABEL,
   LessonJumpError,
   SKIPPED_KEY,
+  SKIPPED_ROW_LABEL,
   buildRecap,
   enterLesson,
   extractContinuity,
@@ -688,4 +690,9 @@ test('🔴 ⑨ 集成：写盘失败时内存态不动（classroom_status 仍报
   const rendered = tools.get('classroom_enter_lesson').output.render({ lesson: 5 }, value)[0].text
   assert.match(rendered, /^🔴 没有切讲成功/)
   assert.match(rendered, /本轮仍是第 1 讲/)
+})
+
+test('③ 真教室的 progress.md 有两行工具要用的人读行（模板不能悄悄丢掉它们）', () => {
+  assert.match(CSOS_PROGRESS, new RegExp(`^\\| ${LESSON_ROW_LABEL} \\|`, 'm'))
+  assert.match(CSOS_PROGRESS, new RegExp(`^\\| ${SKIPPED_ROW_LABEL} \\|`, 'm'))
 })
