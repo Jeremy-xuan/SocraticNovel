@@ -4,7 +4,16 @@
 
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { classifyWorldWrite, FORBIDDEN_FILES, MAX_WRITE_BYTES } from '../lib/worldguard.mjs'
+import {
+  classifyWorldWrite,
+  containsWorldviewMarker,
+  FORBIDDEN_FILES,
+  hasWorldviewChange,
+  MAX_WRITE_BYTES,
+  planWorldWrite,
+  worldviewMarker,
+  wrapWorldviewAppend,
+} from '../lib/worldguard.mjs'
 
 test('允许：characters/ 与 world/ 下的 .md', () => {
   for (const path of ['characters/an.md', 'characters/deepseek.md', 'world/setting.md', 'world/metaphor.md']) {
@@ -63,4 +72,41 @@ test('拒绝：超过单文件上限（防止把整本教材灌进一张角色�
 
 test('黑名单是逐条列出来的（改动时能看见自己动了什么）', () => {
   assert.deepEqual([...FORBIDDEN_FILES].sort(), ['AGENTS.md', 'CLAUDE.md', '_anchor.md', 'classroom.yaml', 'curriculum.md', 'knowledge_points.md', 'system_core.md'].sort())
+})
+
+test('收窄（2026-10-21）：目标不存在＝新建，已存在＝只能追加', () => {
+  assert.deepEqual(planWorldWrite('characters/an.md', { exists: false }), { ok: true, path: 'characters/an.md', mode: 'create' })
+  assert.deepEqual(planWorldWrite('world/setting.md', { exists: true }), { ok: true, path: 'world/setting.md', mode: 'append' })
+  // 黑名单先判：既有文件也不许碰
+  const denied = planWorldWrite('materials/ch01.md', { exists: true })
+  assert.equal(denied.ok, false)
+  assert.equal(denied.code, 'FORBIDDEN_PATH')
+  // 超量同样按「这次要写的字节」判
+  assert.equal(planWorldWrite('world/setting.md', { exists: true, bytes: MAX_WRITE_BYTES + 1 }).code, 'TOO_LARGE')
+})
+
+test('追加段的标记：开/闭成对，changeId 写在两边', () => {
+  const marker = worldviewMarker('P-20261021T181500-01')
+  assert.equal(marker.open, '<!-- worldview:N5 change=P-20261021T181500-01 -->')
+  assert.equal(marker.close, '<!-- /worldview:N5 change=P-20261021T181500-01 -->')
+  assert.throws(() => worldviewMarker(''), /需要 changeId/)
+})
+
+test('wrapWorldviewAppend：正文原样保留，块前后各一个换行', () => {
+  const block = wrapWorldviewAppend('第一行\n第二行', 'P-1')
+  assert.equal(block, '\n<!-- worldview:N5 change=P-1 -->\n第一行\n第二行\n<!-- /worldview:N5 change=P-1 -->\n')
+  assert.throws(() => wrapWorldviewAppend('   ', 'P-1'), /非空正文/)
+})
+
+test('hasWorldviewChange：认自己写的形态，也认手写的紧凑形态（N5change=）', () => {
+  assert.equal(hasWorldviewChange('<!-- worldview:N5 change=P-1 -->', 'P-1'), true)
+  assert.equal(hasWorldviewChange('<!-- /worldview:N5 change=P-1 -->', 'P-1'), true)
+  assert.equal(hasWorldviewChange('<!-- worldview:N5change=P-1 -->', 'P-1'), true)
+  assert.equal(hasWorldviewChange('<!-- worldview:N5 change=P-2 -->', 'P-1'), false)
+  assert.equal(hasWorldviewChange('', 'P-1'), false)
+})
+
+test('containsWorldviewMarker：模型想伪造标记能被认出来', () => {
+  assert.equal(containsWorldviewMarker('正文 <!-- worldview:N5 change=X --> 尾巴'), true)
+  assert.equal(containsWorldviewMarker('正文里提到 worldview 这个词不算'), false)
 })

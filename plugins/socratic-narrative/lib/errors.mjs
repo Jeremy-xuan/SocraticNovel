@@ -18,6 +18,8 @@ export const ERROR_CODES = Object.freeze({
   IO_ERROR: 'IO_ERROR',
   /** 调用方主动取消。 */
   ABORTED: 'ABORTED',
+  /** 插件配置写错了（例如 `models` 里出现没实现的任务名）——**报错而不是忽略**。 */
+  INVALID_CONFIG: 'INVALID_CONFIG',
 })
 
 /** 错误码全集（便于测试枚举）。 */
