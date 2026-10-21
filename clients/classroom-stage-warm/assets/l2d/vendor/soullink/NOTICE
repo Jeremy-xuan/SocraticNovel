@@ -1,0 +1,37 @@
+Soullink Emotion SDK — vendored component
+=========================================
+
+本目录下的第三方代码来自：
+
+  Upstream : https://github.com/nanlingyin/soullink-emotion-sdk
+  Package  : @soullink-emotion/engine（纯 engine：VAD / FACS / 分层混合 / 模型 Profile 适配）
+  Version  : 0.2.0-beta.1
+  Commit   : 02cd75ac0a085a87d84d1a885f1b33eca8742d53  (2026-09-21, "Merge pull request #4 from nanlingyin/release/0.2.0-beta.1")
+  License  : Apache-2.0（见同目录 LICENSE，与上游根目录 LICENSE 字节一致）
+  Upstream NOTICE file: 上游仓库没有 NOTICE 文件；本文件是本仓库为满足 Apache-2.0 §4(d)
+                        署名要求而写的说明。
+
+分发的文件
+----------
+
+  soullink-engine.iife.min.js
+      packages/engine/src/index.ts 的浏览器 IIFE 构建。上游只发布 ESM（tsup, format: esm），
+      没有 IIFE/UMD 产物；这里用 esbuild 0.28.2 从同一份源码打成 IIFE，未改任何源码：
+
+        npx esbuild packages/engine/src/index.ts --bundle --format=iife \
+          --global-name=SoullinkEmotion --target=es2020 --minify \
+          --legal-comments=none --outfile=soullink-engine.iife.min.js
+
+      体积：135,914 B（未压缩）/ 40,776 B（gzip -6）。
+      SHA-256：ccfbcf2eaf941b311cf541c52dc3e9019e7bbda97fcec38c6cc34464529c2a7f
+
+  LICENSE
+      Apache License 2.0 全文，逐字复制自上游仓库根目录 LICENSE。
+
+修改说明
+--------
+
+  · 未修改上游源码（构建只做打包与压缩）。
+  · 未包含上游的 Planner / TTS / Embedding / PIXI 渲染器 / Vue 校准工具，只用纯 engine。
+  · 打包时用 --legal-comments=none 去掉了产物里的注释（上游源码里没有 @license 头）；
+    署名与许可信息以本文件 + LICENSE 的形式随产物一同分发。
