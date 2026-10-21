@@ -42,7 +42,11 @@
 | 12 | 验收流水线 | `acceptance/` | 🔴 被前提冲突卡住 | 第 ⑦ 步 4 项机核全绿；`--skip-session` 走过 preflight 后卡在第 02 步「铁律③」 | 见 §二之二：铁律③ 假定「宿主包由安装版回退目录提供」，而 0.2.1 删了那个回退 |
 | 13 | 部署（服务器上的 stage 实例） | `tools/deploy/` ＋ 服务器 | 🟡 L2 | stage 已升 **0.2.1-rc.2**：`NRestarts=0`、端口 10 秒 listen、装载零告警、教室预设真浏览器可选且默认；`deploy-stage.sh` 已补预设自动转换与端口轮询 | 一次从零部署；u001–u005 的同类迁移未做（未授权） |
 | 15 | 任意讲次进入（从第 5 讲开始） | 引擎 `lib/lessonjump.mjs` ＋ 工具 `classroom_enter_lesson` | 🟡 L1 | `npm test` 505 通过（新增 44 条）：原子写改 progress 三处、前情提要机械摘录、前 1..N-1 讲知识点分档（第 14 讲该块 7651B→3339B）、故事节点 1–14 全扫每讲只放行自己那份、EC（0/15/非数字/小数/跳回/从头） | stage 上「从第 5 讲开始」的一场真机演示（要真模型） |
-| 16 | 叙事层：独立上下文运行器 ＋ 日记 | 新包 `plugins/socratic-narrative/` | 🟡 L1 | `node --test` 55 通过：N1.5 用 `ctx.llm.stream()`（三条依据见报告）、AC 四种（成功/MODEL_ERROR/TIMEOUT/INVALID_OUTPUT）都进 `agent-runs.jsonl` 与 `status().lastError`、日记 ≤120 字按码点校验不截断、幂等键 sessionId+lesson、**日记 agent 不知道有读者**（有机器守卫断言） | 引擎侧接线（收课触发 / 闲置兜底 / 下节课注入）与面板「日记」tab 都还没接；真凭据下的首个真实日记未跑 |
+| 16 | 叙事层地基：独立上下文运行器 ＋ 日记 | 新包 `plugins/socratic-narrative/` | 🟡 L2 | `node --test` **191 通过**：N1.5 用 `ctx.llm.stream()`（父回合已结束时 `startActivation` 会 UNAUTHORIZED）、AC 四种（成功/MODEL_ERROR/TIMEOUT/INVALID_OUTPUT）都进 `agent-runs.jsonl` 与 `status().lastError`、日记 ≤120 字按码点校验不截断、幂等键 sessionId+lesson、**日记 agent 不知道有读者**（机器守卫断言）。引擎侧已接通：`a807208` 收课触发＋闲置兜底＋下节课注入（活体 5 回合：turn2 close 后 23ms 三处落盘 → turn5 注入刚写的那条日记） | 面板「日记」tab；关掉页面 2 小时后的兜底要宿主层定时器（现在只在回合边界扫） |
+| 17 | 群聊（应用内仿微信群） | `plugins/socratic-narrative/` ＋ `runtime/wechat_group.jsonl` | 🟡 L1 | K4 四方法（history/send/poll/markRead）注册进 `ctx.typert`；真源 JSONL + md 机械投影；服务端节奏：typing、10–30s 回复、连发合并、课堂进行中不回群；活体一句 → typing → 19 秒回复落盘 | 面板「群聊」tab；「课堂上她不回群、下课后补回」要引擎每回合调 `setClassroomActivity`（**还没接**） |
+| 18 | 定时主动发消息 | `plugins/socratic-narrative/` | 🟡 L1 | 北京时间窗口用 UTC+8 显式换算；预生成队列；发送前确定性作废重生成；连续 2 条无人回则退避；假时钟单测覆盖正常/作废/退避/跨天/重启恢复 | stage 上真实观察一天（无真凭据，用假时钟演示过完整周期） |
+| 19 | 世界观提议 | `world/proposals.md` ＋ `world/changelog.md` | 🟡 L1 | 提议只追加；日记那一轮顺带审阅；**代码级守卫**拒绝改教学文件（活体真挡下了一条想改 `materials/ch01.md` 的提议）；改既有文件只允许追加（`<!-- worldview:N5 change=id -->` 分段），伪造标记判 `MARKER_INJECTION` | stage 上演示一次完整流转（提议→审阅→新角色→changelog→下次群聊能出场） |
+| 20 | 风格一致性（N6） | — | ⬜ 未开始 | 只有 **N6.1「单一人格源」** 这一条实质落地并被测试钉住（课堂=引擎 persona 块；日记与群聊=同一个 `resolveCharacter()` 的当课角色卡 ＋ `_anchor` 声音段；还抓出两处硬编码旧角色名的真 bug） | N6.2 生成 10 组样本、N6.3 评审量表、N6.4 盲评对照表 —— **都需要真实模型**；用 mock 的固定输出凑出来的"样本"是假的，不做 |
 | 14 | v1 参考教室（AP 物理） | `AP_Physics_EM/`、`META_PROMPT.md` | 🟡 静态内容 | 内容完整 | 不是当前主线 |
 
 **§二之二 · 本轮查明的两个「卡点不是 bug，是前提过期」**
