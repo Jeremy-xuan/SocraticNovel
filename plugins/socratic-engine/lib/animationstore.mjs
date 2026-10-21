@@ -23,6 +23,7 @@ import { accessSync, closeSync, constants, existsSync, openSync } from 'node:fs'
 import { mkdir, readFile, readdir, stat } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { withFileLock, writeFileAtomic } from './atomic-write.mjs'
 import {
   ANIMATIONS_SUBDIR,
   ANIMATION_STATES,
@@ -131,13 +132,9 @@ export function checkAnimationRuntime(env, exec = execFileSync) {
   return { ok: problems.length === 0, problems }
 }
 
-/** 宿主原子写包（动态 import：单测环境无宿主也能加载本模块）。 */
-async function loadHostAtomicWrite() {
-  const mod = await import('@deepseek-ai/dsh-atomic-write')
-  if (typeof mod?.writeFileAtomic !== 'function' || typeof mod?.withFileLock !== 'function') {
-    throw new Error('@deepseek-ai/dsh-atomic-write 未导出 writeFileAtomic/withFileLock')
-  }
-  return { writeFileAtomic: mod.writeFileAtomic, withFileLock: mod.withFileLock }
+/** 原子写 IO（`lib/atomic-write.mjs`：与宿主 `@deepseek-ai/dsh-atomic-write` 同语义同签名）。 */
+async function loadAtomicWrite() {
+  return { writeFileAtomic, withFileLock }
 }
 
 /** 读一个 JSON 文件；不存在/半截 → null（调用方按"没有"处理，不抛）。 */
@@ -197,7 +194,7 @@ export async function startAnimationTask(args, env) {
     throw new Error('classroom_animate 未配置渲染环境：缺少 animation.manim（见报告「接线」一节）')
   }
 
-  const io = env.io ?? (await loadHostAtomicWrite())
+  const io = env.io ?? (await loadAtomicWrite())
   const at = (env.now ?? Date.now)()
   const root = join(runtimeDir, ANIMATIONS_SUBDIR)
   await mkdir(root, { recursive: true })
@@ -466,7 +463,7 @@ export async function settleRunningTasks(root, opts = {}) {
       finishedAt: now,
       settledBy: 'engine',
     }
-    const io = opts.io ?? (await loadHostAtomicWrite())
+    const io = opts.io ?? (await loadAtomicWrite())
     await io.writeFileAtomic(join(t.dir, STATUS_FILE), JSON.stringify(next, null, 1), { mode: DEFAULT_FILE_MODE })
     settled.push({ ...t, status: next })
     if (typeof opts.log === 'function') {
@@ -491,7 +488,7 @@ export async function pendingNotices(root) {
 
 /** 标记"已播报"（写 task.json 的 announcedAt）。 */
 export async function markAnnounced(taskDir, opts = {}) {
-  const io = opts.io ?? (await loadHostAtomicWrite())
+  const io = opts.io ?? (await loadAtomicWrite())
   const file = join(taskDir, TASK_FILE)
   const task = await readJsonIfExists(file)
   if (task === null) throw new Error(`markAnnounced：读不到 ${file}`)

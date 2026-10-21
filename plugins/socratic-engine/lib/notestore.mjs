@@ -40,6 +40,7 @@
 
 import { readFile, stat } from 'node:fs/promises'
 import { join } from 'node:path'
+import { withFileLock, writeFileAtomic } from './atomic-write.mjs'
 import { stripEmotionMarkers } from './emotionmark.mjs'
 
 /** 真源文件名（相对教室 `runtime/`）。 */
@@ -706,13 +707,9 @@ export function findDuplicateNote(records, probe) {
 // 落盘（IO 层）
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** 宿主原子写包（动态 import：单测环境无宿主也能加载本模块）。 */
-async function loadHostAtomicWrite() {
-  const mod = await import('@deepseek-ai/dsh-atomic-write')
-  if (typeof mod?.writeFileAtomic !== 'function' || typeof mod?.withFileLock !== 'function') {
-    throw new Error('@deepseek-ai/dsh-atomic-write 未导出 writeFileAtomic/withFileLock')
-  }
-  return { writeFileAtomic: mod.writeFileAtomic, withFileLock: mod.withFileLock }
+/** 原子写 IO（`lib/atomic-write.mjs`：与宿主 `@deepseek-ai/dsh-atomic-write` 同语义同签名）。 */
+async function loadAtomicWrite() {
+  return { writeFileAtomic, withFileLock }
 }
 
 /** 读文件，ENOENT → null（其余错误照样抛）。 */
@@ -748,7 +745,7 @@ export function createNoteStore(opts = {}) {
   const mode = opts.mode ?? DEFAULT_FILE_MODE
   const log = opts.log ?? (() => {})
   let ioPromise = null
-  const resolveIo = () => (ioPromise ??= opts.io ? Promise.resolve(opts.io) : loadHostAtomicWrite())
+  const resolveIo = () => (ioPromise ??= opts.io ? Promise.resolve(opts.io) : loadAtomicWrite())
 
   const paths = {
     notes: join(runtimeDir, NOTES_FILE),
