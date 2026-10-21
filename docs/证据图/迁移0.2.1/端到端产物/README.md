@@ -35,24 +35,37 @@
 | `data-screen` | ❌ 全程 `live`（28 秒内每 2 秒采样一次，一次都没切到 `board`） |
 | 手动点「板书」按钮 | ⚠️ 切到了 `board`，但显示的是**预制静态场景「进程状态迁移」**（`boards: ["L03"]` 那张），**不是刚画的那张** |
 
-### 诊断（可直接照此修）
+### 诊断（分两步查清了，比「没实现」更准确）
 
-舞台自己的快照里，消息节点的 `kind` 只有三种：`you` / `tool` / `teacher`，而且 `tool` 节点**不带 `name`**：
+**第一步：代码是齐的，不是「没写」。** 舞台里三块都在：
+
+- `client.js:636` 的 `if (kind === 'tool-result')` → `boardEventOf(node)` → 推一条 `role:'board'` 条目；
+- `client.js:1883-1894` 的 effect：`latestBoardOf(data.messages)` 拿到 id → 新 id 就 `openDiagram(boardReq)`，
+  并**故意**跳过「挂载时已存在」的那张（刷新页面不自动弹）；
+- `client.js:2000` 的手动按钮：`boardReq ? openDiagram(boardReq) : openBoard('L03')`。
+
+**第二步：真回合里那条 `role:'board'` 条目从来没出现。** 舞台自己暴露的快照只有三种 kind：
 
 ```js
 window.__SOCRATIC_STAGE__.getSnapshot().messages
-// → [ {kind:'you'}, {kind:'tool'}, {kind:'teacher'} ]
+// → [ {kind:'you'}, {kind:'tool'}, {kind:'teacher'} ]   ← 没有 board
 ```
 
-而契约 K2.3 的判据是宿主 Chat 节点的形状：
+所以断点在这条链路的上游：**服务下发给舞台的 chat 节点里没有（或没被认成）`tool-result`**。
+也就是说 `boardEventOf` 一次都没被调用到有结果的分支——既没切屏，也没打出
+「结果里没有 board id」那条 warn（真机上 `pageerror`/console error 都是 0）。
 
-```js
-node.kind === 'tool-result' && node.name === 'classroom_draw' && node.isError !== true
-```
+**下一步该怎么查（给接手的 AI）**：在 `client.js:636` 那一支前面临时打一行
+`console.log(JSON.stringify({kind: node.kind, rootKeys: Object.keys((data&&data.root)||{})}))`，
+跑一次同款 mock 回合，看服务到底给了哪些 node kind。三种可能，对应三种改法：
 
-⇒ **这条判据永远不会在舞台自己的快照上命中**。舞台必须去读**宿主的 chat 节点**
-（`useChat` 的 `snapshot.nodes`，形状见 `docs/计划与排产/契约_功能开发_2026-10-20.md` 附二），
-而不是读它自己变换后的 `messages`。手动按钮那条路也要跟着改成「有当前图就渲染当前图，没有才回落到预制场景」。
+| 实情 | 改法 |
+|---|---|
+| 根本没有 `tool-result` 节点 | 舞台得改用另一个数据源（`useChat` 的 `snapshot.nodes`，或事件总线上的 `tool/result`） |
+| 有，但 kind 不叫 `tool-result` | 按真实 kind 改判据 |
+| 有且 kind 对，但 `name`/`meta` 在别的字段 | 改 `boardEventOf` 的取值路径 |
+
+三条都不动引擎、不动路由——那两半已经用 curl 逐条验过了。
 
 ## 三 · 这条记录证明了什么、没证明什么
 
