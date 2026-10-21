@@ -233,13 +233,33 @@ description: >-
   课程内容、当前讲次与教学纪律随教室包自带（工作区 classrooms/cs-os）。
 order: 9
 EOF
-PY
       echo '  ok: 预设骨架（persona 需按需手改）'
     else
       echo '  预设已存在，跳过'
     fi
     chown -R dsh-$UID_NAME:dsh-$UID_NAME $BASE/$UID_NAME/home/presets-private
     chmod -R a+rX $BASE/$UID_NAME/home/presets-private
+    # 🔴 0.2.1 起 `preset.yml` / `agent.cordis.yml` 这套「目录扫描」形态**已经没人读**
+    #    （`@deepseek-ai/dsh-agent-presets` 在 0.2.1 的 release 里不存在）。留着它＝预设
+    #    静默失效、默认回落到内置 standard，而且**不报错**（只在 dump 里留一行
+    #    `patch: entry \"agent-presets\" not found`）。必须把目录内联成
+    #    `@deepseek-ai/dsh-agent-preset` 的插件行。转换脚本是班级服务器既有资产，
+    #    它同时处理 {{cwd}}、workflow-worker-thread、技能绝对路径这三处坑。
+    if R \"test -f /opt/dsh-class/dsh-convert-presets-021.py\"; then
+      if R \"python3 /opt/dsh-class/dsh-convert-presets-021.py \
+              --presets-root $BASE/$UID_NAME/home/presets-private \
+              --default cs-os-classroom \
+              --apply $BASE/$UID_NAME/home/cordis.patch.yml\"; then
+        echo '  ok: 预设已转成 0.2.1 插件行形态（registry.default = cs-os-classroom）'
+        R \"chown dsh-$UID_NAME:dsh-$UID_NAME $BASE/$UID_NAME/home/cordis.patch.yml\"
+        R \"chmod 600 $BASE/$UID_NAME/home/cordis.patch.yml\"
+      else
+        echo '  ✗ 预设转换失败 —— 这份实例上的教室预设在 0.2.1 下不会生效（见上方输出）'
+      fi
+    else
+      echo '  ⚠ 没有 /opt/dsh-class/dsh-convert-presets-021.py：preset.yml 在 0.2.1 下是死文件，'
+      echo '    教室预设不会出现在预设选择器里。请手工把 agent.cordis.yml 内联成 dsh-agent-preset 插件行。'
+    fi
   "
 fi
 
@@ -247,16 +267,30 @@ say "9 · 起服务"
 R "
   systemctl reset-failed dsh-web@$UID_NAME 2>/dev/null || true
   systemctl restart dsh-web@$UID_NAME
-  sleep 30
-  systemctl is-active dsh-web@$UID_NAME
-  journalctl -u dsh-web@$UID_NAME --no-pager --since '-40s' | grep -iE 'error|failed' | head -5 || echo '  启动无报错'
-  # token 是「一次加载即失效」，且打印得比"服务 active"晚几秒 —— 轮询取，别只抓一次
+  # 🔴 不要用「is-active 之后固定 sleep」判成功。0.2.1 首次启动明显比 0.1.5 慢，
+  #    固定 sleep 会把「还没 listen」当成「起好了」，这是 8.70 那次事故的根因。
+  #    改成**轮询端口**：拿到第一个非 000 的 HTTP 码才算起来（401 是正常的，表示要 token）。
+  CODE=000
+  for i in \$(seq 1 45); do
+    CODE=\$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 http://127.0.0.1:$PORT/ 2>/dev/null || echo 000)
+    [ \"\$CODE\" != \"000\" ] && break
+    sleep 2
+  done
+  if [ \"\$CODE\" = \"000\" ]; then
+    echo \"  ✗ 90 秒内端口 $PORT 没有 listen（最后状态：\$(systemctl is-active dsh-web@$UID_NAME)）\"
+    echo '    先看：journalctl -u dsh-web@$UID_NAME --no-pager -n 120'
+    exit 1
+  fi
+  echo \"  ok: 端口 $PORT 已 listen（http_code=\$CODE，服务 \$(systemctl is-active dsh-web@$UID_NAME)，重启次数 \$(systemctl show dsh-web@$UID_NAME -p NRestarts --value)）\"
+  journalctl -u dsh-web@$UID_NAME --no-pager --since '-60s' | grep -iE 'did not activate|failed to import|never started' | head -5 \
+    || echo '  装载零告警（没有 did not activate / failed to import / never started）'
+  # token 是一次加载即失效，且打印得比"端口起来"晚几秒 —— 轮询取，别只抓一次
   for i in 1 2 3 4 5; do
     TOK=\$(journalctl -u dsh-web@$UID_NAME --no-pager -n 60 | grep -oE 'token=[A-Za-z0-9_-]+' | tail -1 | cut -d= -f2)
-    [ -n "\$TOK" ] && break
+    [ -n \"\$TOK\" ] && break
     sleep 8
   done
-  if [ -n "\$TOK" ]; then echo "  token: \$TOK"; else echo '  ⚠ 5 次都没抓到 token，去 journalctl -u dsh-web@$UID_NAME 看'; fi
+  if [ -n \"\$TOK\" ]; then echo \"  token: \$TOK\"; else echo '  ⚠ 5 次都没抓到 token，去 journalctl -u dsh-web@$UID_NAME 看'; fi
 "
 
 cat <<EOF

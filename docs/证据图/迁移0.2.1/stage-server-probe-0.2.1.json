@@ -1,0 +1,15 @@
+{
+  "d": {
+    "stageRoot": true,
+    "stageTextHead": "小 鞠 知 花 · 在场 workspace 待你开口 读 板书 动画 关闭舞台 鲸 （这段会话还没有内容） Enter 送出 · Shift+Enter 换行 送出",
+    "slotErrors": [],
+    "presetEntries": [],
+    "bodyHead": "New Session ⌥ ⌘ N Plugins Automation tasks Workspaces 教室舞台测试区 New Session Untitled 1d 操作系统第一讲学习 1d CPU为何同时只能运行一个程序 1d CPU单核运行程序原理 1d 操作系统第一讲 1d Show 7 more sessions More Into the Unknown Preview 教室舞台测试区 计算机系教室 · 操作系统 Describe what you want ",
+    "canvases": [
+      "300x150"
+    ]
+  },
+  "errs": [
+    "pageerror: ReferenceError: warnings is not defined"
+  ]
+}
