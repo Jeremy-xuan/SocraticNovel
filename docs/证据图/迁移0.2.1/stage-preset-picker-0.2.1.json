@@ -1,0 +1,9 @@
+{
+  "clicked": true,
+  "opts": [
+    "Standard mode Work with code, files, and information. Suitable for most tasks, with search, editing, terminal commands, and other tools available as needed.",
+    "Minimal mode The agent uses a terminal and image reading, with context compaction. Useful for testing and comparing its basic performance.",
+    "Creator mode Customize DSH through conversation. Let the agent write plugins that add features or UI, or combine tools and prompts to create your own mode.",
+    "计算机系教室 · 操作系统 沉浸式教室：计算机系「操作系统」14 讲。老师在同一场景里上课，按相位提问、写板书、放动画； 课程内容、当前讲次与教学纪律随教室包自带（工作区 classrooms/cs-os），由教学引擎注入。"
+  ]
+}

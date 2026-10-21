@@ -22,6 +22,8 @@
 | `browser-有舞台-0.2.1.png` | 真浏览器截图：整屏舞台、纸带、输入框都正常 | 直接看 |
 | `panel-probe-0.2.1.json` | 真浏览器点开右栏「教室」tab 的取样：tab 注册、面板区块数、立绘状态与**失败原文** | `jq '.d' panel-probe-0.2.1.json` |
 | `panel-教室tab-0.2.1.png` | 右栏面板展开的截图 | 直接看 |
+| `stage-server-0.2.1.png` / `stage-server-probe-0.2.1.json` | **服务器 stage 实例**（经 SSH 隧道）真浏览器取样：舞台渲染、`slotErrors` 为空 | `jq '.d.stageRoot,.d.slotErrors' stage-server-probe-0.2.1.json` |
+| `stage-preset-picker-0.2.1.json` / `.png` | stage 实例上打开「Choose the agent preset」后的选项清单：**「计算机系教室 · 操作系统」在列** | 直接看 JSON 的 `opts` |
 
 ## 这份证据证明了什么（不多说一个字）
 
