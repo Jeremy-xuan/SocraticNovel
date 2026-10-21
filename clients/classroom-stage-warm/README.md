@@ -281,6 +281,41 @@ http://127.0.0.1:<port>/?token=<本次 token>#stagegallery=1
 
 ---
 
+### 6. 接上 X 车道的表情驱动模块（2026-10-20 夜，X 完工后）
+
+`assets/l2d/` 下这三个文件 + `vendor/soullink/` 是 **X 车道的产物**（S 这边不改内容，只负责按序加载）：
+
+| 文件 | 挂到哪个全局 |
+|---|---|
+| `vendor/soullink/soullink-engine.iife.min.js` | `window.SoullinkEmotion`（纯 engine，Apache-2.0，LICENSE/NOTICE 随 vendor 一起在） |
+| `stage-emotion-parse.js` | `window.__SOCRATIC_EMOTION_PARSE__`（K1.3 流式解析器） |
+| `stage-emotion.js` | `window.__SOCRATIC_EMOTION__`（驱动模块，**自己**轮询 K0 并 `setExpressionDriver`） |
+
+**加载**：`ensureEmotionModules()` 在 Live2D 库就绪后**按上面顺序**用 `ensureStageModule` 逐个插；
+每步失败只 `pushWarning`，绝不连累立绘（也**不进** `listLibs()` 的 phases —— `check.sh` 7e/7d 都查）。
+
+**舞台给驱动的四样东西**（都在 K0 对象或帧循环里，驱动侧不需要第二个全局）：
+
+1. **帧循环**：舞台的 `app.ticker` 每帧调 `driver.drive({ active, dt }, stage)`（`dt` 秒）；app 销毁 ⇒ ticker 一起死。
+2. **口型节奏**：舞台把「纸带逐字显现」的**增量字数**报给 `driver.tapeTyped(n)`（口型源接口的默认源）。
+3. **情绪事件**：`/stage-board/emotions` 拿到事件后同时 `driver.pushEmotion(label, intensity)`（标签**不改名**，按 K1.1 原样传）。
+4. **防御性剥离**：纸带渲染前优先用 `__SOCRATIC_EMOTION_PARSE__.createEmotionStreamParser()`（流式中间态不 flush），
+   模块没到就退回舞台自带的 `stripEmotionMarkers`。
+
+**🔴 一个必须记住的重入**：驱动的 `dispose()` 里会回调 `stage.setExpressionDriver(null)`。
+所以挂载点的实现是**先落值、再 dispose 旧的**；反过来的话，那次回调看到的仍是旧驱动 → 再 dispose → 无限递归
+（`test/20` 有专门一例挡这个）。
+
+**实测（真机 4510 + swiftshader）**：
+
+```
+window.SoullinkEmotion / __SOCRATIC_EMOTION__ / __SOCRATIC_EMOTION_PARSE__ = 都 object
+__SOCRATIC_STAGE__.driver() 非 null；_diag = {hooked:true, modelReady:true, lip:'tape', dt:0.0167}
+pushEmotion('happy',0.95) → ParamAngleX -16.36 → 22.10、ParamEyeLOpen 0.99 → 1.00
+tapeTyped(3)×8            → 驱动写入 ParamMouthOpenY=0.075、ParamMouthForm=0.274（每帧 16 个参数、61 次）
+pageerror = 0
+```
+
 ## 六 · 自检脚本（`test/`）
 
 全部是 Playwright 脚本，**工作目录必须 = 项目根**（`playwright` 装在项目根的 node_modules）。

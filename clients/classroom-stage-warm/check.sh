@@ -146,6 +146,23 @@ else
   bad "宿主单测未全绿"; tail -8 /tmp/_stage-board.out | sed 's/^/      /'
 fi
 
+sec "7e · 表情驱动模块（X 车道产物）就位且按序加载"
+for f in stage-emotion.js stage-emotion-parse.js stage-emotion.profile.deepseek.json vendor/soullink/soullink-engine.iife.min.js; do
+  [ -f "$PKG/assets/l2d/$f" ] && ok "assets/l2d/$f 就位" || bad "缺 assets/l2d/$f（表情驱动接不上）"
+done
+if grep -qF "soullink-engine.iife.min.js" "$PKG/lib/client.js" \
+   && grep -qF "stage-emotion-parse.js" "$PKG/lib/client.js" \
+   && grep -qF "'stage-emotion.js'" "$PKG/lib/client.js"; then
+  ok "舞台按序加载 engine → 解析器 → 驱动模块（ensureStageModule）"
+else
+  bad "舞台没有按序加载表情驱动模块的三个文件"
+fi
+if grep -qF "ensureEmotionModules()" "$PKG/lib/client.js" && grep -qF "tapeTyped" "$PKG/lib/client.js"; then
+  ok "帧循环把口型节奏（tapeTyped）交给驱动"
+else
+  bad "帧循环没有把口型节奏交给驱动"
+fi
+
 sec "7d · 契约 K0 第 5 条：新模块不许塞进 listLibs() 的 phases"
 if grep -qF "function ensureStageModule" "$PKG/lib/client.js"; then
   ok "ensureStageModule(file) 存在（复用 loadOneScript）"

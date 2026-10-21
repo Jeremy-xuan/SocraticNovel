@@ -91,6 +91,25 @@ function makeDeps(extra) {
   b.setExpressionDriver(c)
   ok('驱动 · 同一个对象重复注册不 dispose 自己', disposed === 1, { disposed })
 
+  // 🔴 重入：X 车道的驱动在自己的 dispose() 里会回调 stage.setExpressionDriver(null)。
+  //    若实现是"先 dispose 再落值"，这次回调看到的 prev 还是旧驱动 → 再 dispose → 无限递归。
+  {
+    const b3 = createStageBridge(makeDeps())
+    let disposes = 0
+    const d = {
+      drive() {},
+      dispose() {
+        disposes += 1
+        if (disposes > 5) throw new Error('dispose 重入没收敛')
+        b3.setExpressionDriver(null)      // 模拟 "在 dispose 里回调"
+      },
+    }
+    b3.setExpressionDriver(d)
+    b3.setExpressionDriver(null)
+    ok('驱动 · dispose 里回调 setExpressionDriver(null) 不递归', disposes === 1 && b3.driver() === null, { disposes })
+    ok('驱动 · 重入后没有残留驱动', b3.driver() === null)
+  }
+
   // 变化回调（舞台靠它决定表情层归属：有驱动就不设静态表情）
   const seen = []
   const b2 = createStageBridge(makeDeps({ onDriverChange: (n) => seen.push(n ? 'on' : 'off') }))

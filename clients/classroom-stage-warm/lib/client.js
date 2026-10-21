@@ -699,6 +699,26 @@ window.__ModuleLoader__.load({
     //      少一个模块解析点，就少一条"profile 起不来"的可能。
     // ======================================================================
     /**
+     * 纸带的 K1 防御性剥离。
+     * 优先用 X 车道的 `window.__SOCRATIC_EMOTION_PARSE__`（K1.3 的同一台流式状态机，
+     * 已穷举切分验证过）；模块没装/没加载完时退回舞台自带的 `stripEmotionMarkers`。
+     * `final=false`（这条消息还在流式）时**不 flush**：半截标记先藏着，别让 `〔emo:sh` 闪一下。
+     */
+    function stripForTape(text, isFinal) {
+      try {
+        const p = window.__SOCRATIC_EMOTION_PARSE__
+        if (p && typeof p.createEmotionStreamParser === 'function') {
+          const parser = p.createEmotionStreamParser()
+          const pushed = parser.push(String(text == null ? '' : text))
+          if (!isFinal) return pushed.text
+          const flushed = parser.flush()
+          return pushed.text + flushed.text
+        }
+      } catch (e) { /* 落到自带实现 */ }
+      return stripEmotionMarkers(text, { final: isFinal }).text
+    }
+
+    /**
      * 角色显示名的「短名」：`鲸（DeepSeek 娘）` → `鲸`。
      * 名字本身来自教室数据（见 manifest 的 classroom.teacher.name），这里只做排版取舍：
      * 纸带上的署名格只有 2.2vh 宽，放不下全名。取不到名字时用「老师」——
@@ -819,10 +839,13 @@ window.__ModuleLoader__.load({
       setExpressionDriver: function (driver) {
         const prev = box.driver
         const next = (driver && typeof driver.drive === 'function') ? driver : null
+        // 🔴 先落值再 dispose：驱动的 dispose() 里**会**回调 `setExpressionDriver(null)`
+        //    （X 车道的模块就是这么写的）。若先 dispose 后落值，这次回调看到的 prev 还是旧驱动
+        //    → 再 dispose 一次；没有幂等保护的驱动就会无限递归。先落值就没有这个环。
+        box.driver = next
         if (prev && prev !== next && typeof prev.dispose === 'function') {
           try { prev.dispose() } catch (e) { /* 旧驱动清理失败不该拦住新驱动 */ }
         }
-        box.driver = next
         if (typeof d.onDriverChange === 'function') {
           try { d.onDriverChange(next) } catch (e) { /* 舞台自己的回落逻辑失败不该拦住注册 */ }
         }
@@ -1163,6 +1186,44 @@ window.__ModuleLoader__.load({
     }
 
     // ══════════════════════════════════════════════════════════════════════
+    //  表情驱动模块（X 车道的产物，放在 assets/l2d/）
+    //
+    //  文件与职责（都不属于本车道，S 这边只负责**按序加载**并给它 K0 挂载点）：
+    //   · vendor/soullink/soullink-engine.iife.min.js  → window.SoullinkEmotion（纯 engine）
+    //   · stage-emotion-parse.js                       → window.__SOCRATIC_EMOTION_PARSE__（K1.3）
+    //   · stage-emotion.js                             → window.__SOCRATIC_EMOTION__
+    //       **它自己**轮询 K0 挂载点并调用 setExpressionDriver（S 不替它注册），
+    //       找不到只 warn、不抛；Soullink engine 缺失时不接管（舞台回落静态待机，EC 要求）。
+    //
+    //  🔴 与 Live2D 库**分开加载**：任何一步失败都只 pushWarning，绝不连累立绘。
+    //  🔴 不走 listLibs() 的 phases（契约 K0 第 5 条，check.sh 7d 会挡）。
+    // ══════════════════════════════════════════════════════════════════════
+    let emotionModulesPromise = null
+    function ensureEmotionModules() {
+      if (emotionModulesPromise) return emotionModulesPromise
+      emotionModulesPromise = (async function () {
+        const files = [
+          'vendor/soullink/soullink-engine.iife.min.js',
+          'stage-emotion-parse.js',
+          'stage-emotion.js',
+        ]
+        for (const f of files) {
+          try {
+            await ensureStageModule(f, 'l2d')
+          } catch (err) {
+            pushWarning('表情驱动模块加载失败（' + f + '）：' + String((err && err.message) || err))
+          }
+        }
+        return true
+      })().catch(function (err) {
+        emotionModulesPromise = null           // 允许重试
+        pushWarning('表情驱动模块加载异常：' + String((err && err.message) || err))
+        return false
+      })
+      return emotionModulesPromise
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
     //  mermaid（板书屏真渲染）
     //
     //  来源：`clients/classroom-ui/vendor/mermaid-11.17.2/mermaid.min.js` 的**逐字节副本**，
@@ -1413,6 +1474,8 @@ window.__ModuleLoader__.load({
       // 情绪通道：seq 游标 / 当前生效情绪（含过期时间）
       const emoSeqRef = React.useRef(0)
       const emoRef = React.useRef(null)
+      /** 上一帧"纸带已显现字数"（口型源的增量就靠它算）。 */
+      const tapeShownRef = React.useRef(0)
       // 表情驱动是否已接管表情层（null ⇒ 回落到原来的静态待机表情）
       const [driverOn, setDriverOn] = React.useState(false)
       // 拉出/收起的定时器（卸载时清掉，避免 setState after unmount）
@@ -1481,6 +1544,8 @@ window.__ModuleLoader__.load({
       // 挂在**舞台自己的 PIXI app.ticker** 上 ⇒ app 销毁时 ticker 一起死（10-19 那个
       // 「关掉再打开」的坑就是这么修的）；app 重建时这里会重新挂一份。
       const stageFrame = React.useCallback(function (dtMs) {
+        const bridge = bridgeRef.current
+        const drv = bridge && typeof bridge.driver === 'function' ? bridge.driver() : null
         const mouth = mouthRef.current
         if (mouth) {
           try {
@@ -1489,13 +1554,23 @@ window.__ModuleLoader__.load({
             for (let i = msgs.length - 1; i >= 0; i--) {
               if (msgs[i] && msgs[i].role === 'teacher') { lastTeacher = msgs[i]; break }
             }
-            const text = lastTeacher ? stripEmotionMarkers(lastTeacher.text, { final: !lastTeacher.running }).text : ''
+            const text = lastTeacher ? stripForTape(lastTeacher.text, !lastTeacher.running) : ''
             mouth.feed(text, !live.running)
             mouth.advance(dtMs)
+            // 口型的**唯一输入源**是"纸带逐字显现的节奏"：把这一帧新增的显现字数报给驱动
+            // （驱动的口型源接口是 tapeTyped(n)；驱动自己也可能换源，所以只调存在的那个）。
+            const shown = mouth.current().revealed
+            const delta = shown - tapeShownRef.current
+            if (delta > 0) {
+              tapeShownRef.current = shown
+              if (drv && typeof drv.tapeTyped === 'function') {
+                try { drv.tapeTyped(delta) } catch (e) { /* 口型出错不该影响画面 */ }
+              }
+            } else if (delta < 0) {
+              tapeShownRef.current = shown    // 换句时 revealed 可能回退，别留负增量
+            }
           } catch (err) { /* 口型算错不该影响画面 */ }
         }
-        const bridge = bridgeRef.current
-        const drv = bridge && typeof bridge.driver === 'function' ? bridge.driver() : null
         if (!drv) return
         // 情绪自然回落：超过 HOLD 没有新事件就交 null（C5 的"回到平静"在引擎接进来之前的兜底）
         const cur = emoRef.current
@@ -1530,6 +1605,13 @@ window.__ModuleLoader__.load({
                 if (EMO_LABELS.indexOf(label) === -1) continue
                 if (!Number.isFinite(intensity) || intensity < 0 || intensity > 1) continue
                 emoRef.current = { label: label, intensity: intensity, at: Date.now() }
+                // 驱动（X 车道）自己有一台情绪引擎与队列（上限 8、丢最旧）：
+                // 有 pushEmotion 就交给它，舞台这份 active 只在没有驱动时才有意义。
+                const br = bridgeRef.current
+                const d = br && typeof br.driver === 'function' ? br.driver() : null
+                if (d && typeof d.pushEmotion === 'function') {
+                  try { d.pushEmotion(label, intensity) } catch (e) { pushWarning('pushEmotion 抛错（已隔离）') }
+                }
               }
               if (Number.isFinite(Number(j.nextSeq))) emoSeqRef.current = Number(j.nextSeq)
             })
@@ -1559,6 +1641,8 @@ window.__ModuleLoader__.load({
 
         ensureL2dLibs(phases)
           .then(function () {
+            // 表情驱动模块（X 车道）：与立绘库并行/顺次都行，失败只记警告
+            try { ensureEmotionModules() } catch (e) { /* ensureEmotionModules 内部已兜住 */ }
             if (disposed || !l2dCanvasRef.current) return
             // 🔴 必须显式给 width/height：PIXI 默认画布是 **300×150**，而 CSS 把它拉伸到
             //    38vh×52vh（实测 399×546）—— 结果内部只渲 300×150，画面糊成一片。
@@ -2020,7 +2104,7 @@ window.__ModuleLoader__.load({
         // 🔴 契约 K1.4 的防御性剥离：正常路径下引擎已在 `llm/stream` 剥净，
         //    这里兜的是"引擎没装/版本不匹配"——纸带绝不能把 〔emo:…〕 显示出来。
         //    `final` 只在"这条消息已经说完"时为真：流式中间态遇到半截标记先不下传。
-        bodyText = stripEmotionMarkers(bodyText, { final: !m.running }).text
+        bodyText = stripForTape(bodyText, !m.running)
         bodyText = stripMarkdown(bodyText)
         lines.push(H('p', { key: 'm' + i, className: cls },
           (m.role === 'you' ? '你：' : '') + bodyText,
