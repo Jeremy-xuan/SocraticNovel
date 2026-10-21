@@ -63,6 +63,29 @@ window.__ModuleLoader__.load({
     const KILL_KEY = 'stage-warm:kill'
     const ROOT_ID = 'stage-warm-root'
 
+    /**
+     * 降级/异常记录（模块级，**不是** apply() 里的局部变量）。
+     *
+     * 🔴 2026-10-20 修：原来只有 `apply()` 里有一个 `const warnings = []`，而
+     * `StageRoot` 的 Live2D effect 的 catch 里也写了 `warnings.push(...)` ——
+     * 那个作用域里 `warnings` **根本不存在**，于是 catch 自身抛
+     * `ReferenceError: warnings is not defined`，**把降级路径整个吃掉**：
+     * `setL2dFailed(true)` 永远不执行 → 立绘不出现也不回落静态图，页面上只留下一个
+     * 320×150 的空 canvas。真机实测（隔离 profile + Playwright）就是这个症状。
+     * 教训：**catch 里只许调用一定存在的函数**。
+     */
+    const warnings = []
+
+    function pushWarning(msg) {
+      try {
+        const s = String(msg).slice(0, 400)
+        warnings.push(s)
+        if (warnings.length > 40) warnings.shift()
+        // 留一条能看见的痕迹：真机归因时比"什么都没有"强得多
+        try { console.info('[stage-warm] ' + s) } catch { /* ignore */ }
+      } catch { /* ignore */ }
+    }
+
     // ======================================================================
     // §1 CSS —— 暖纸令牌（取自样稿 avalon-warm.html；固定画布的 px 换成视口相对量）
     // ======================================================================
@@ -991,7 +1014,8 @@ window.__ModuleLoader__.load({
           })
           .catch(function (err) {
             if (disposed) return
-            warnings.push('Live2D 不可用，回落静态立绘：' + String((err && err.message) || err))
+            // 🔴 catch 里只调用一定存在的函数（见模块级 pushWarning 的注释）
+            pushWarning('Live2D 不可用，回落静态立绘：' + String((err && err.message) || err))
             setL2dFailed(true)
             try { if (l2dAppRef.current) l2dAppRef.current.destroy(false) } catch (e) {}
             l2dAppRef.current = null
@@ -1514,8 +1538,7 @@ window.__ModuleLoader__.load({
     }
 
     function apply(ctx) {
-      const warnings = []
-
+      // 🔴 不要在这里再声明一次 `warnings`：StageRoot 的降级路径也用同一份（模块级）
       try { installEscapeHatch() } catch (err) { warnings.push('逃生门安装失败：' + String(err)) }
 
       // ---- 1. 传感器（session 作用域，渲染 null） ----------------------
