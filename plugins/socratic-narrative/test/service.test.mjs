@@ -28,7 +28,8 @@ async function makeClassroom(files = {}) {
     [DIARY_RELATIVE]: HEADER,
     'runtime/session_log.md': '## 记录\n\n第 3 讲：他卡在页表与 TLB 的关系。\n',
     'runtime/notes.jsonl': `${JSON.stringify({ v: 1, type: 'misconception', lesson: 3, kp: 'KP-3.2', quote: '页表就是缓存吧', note: '混了页表与 TLB' })}\n`,
-    'characters/komari.md': '# 小鞠知花\n\n> 教学方式：把思路外化。\n',
+    'classroom.yaml': 'format: socratic-classroom/0\nclassroom:\n  id: test\nblocks:\n  - id: persona\n    path: characters/deepseek.md\n',
+    'characters/deepseek.md': '# 鲸（DeepSeek 娘）· 本教室版本\n\n> 教学方式：把思路外化。\n',
     '_anchor.md': '## 角色声音速查（生成任何台词前看一眼）\n\n- **鲸**：开口时慢、低、句子短。\n\n## 教学检查\n\n- 学生是否知道我刚问的是什么？\n',
     'world/setting.md': '# 世界观\n\n观测站建在礁盘上，水线从房间中间穿过。\n',
     'runtime/wechat_group.md': '# 群聊记录\n\n值班员：今天风大。\n',
@@ -250,3 +251,4 @@ test('输入真的进了提示词：课堂记录、角色声音、群聊都在�
   // 教学检查段不该被塞进来（角色声音段按标题切）
   assert.doesNotMatch(prompt, /学生是否知道我刚问的是什么/)
 })
+

@@ -51,6 +51,19 @@ async function ensureDir(file) {
   return file
 }
 
+const MANIFEST = `format: socratic-classroom/0
+classroom:
+  id: test
+blocks:
+  - id: persona
+    path: characters/deepseek.md
+`
+
+const CHARACTER_CARD = `# 鲸（DeepSeek 娘）· 本教室版本
+
+她说话慢、句子短。
+`
+
 const DIARY_HEADER = `# 日记（她的）
 
 > **写法规则**：第一人称、短、不解释、不抒情。**只写她注意到的具体细节**。
@@ -120,7 +133,7 @@ test('写法校验：字数按 Unicode 码点算（代理对算 1 个字）', ()
 })
 
 test('🔴 发布约束守卫：给日记 agent 的提示词里不得出现"有读者"的意思', () => {
-  const system = buildDiarySystem({ rules: '第一人称、短、不超过 120 字。' })
+  const system = buildDiarySystem({ rules: '第一人称、短、不超过 120 字。', characterName: '鲸' })
   const prompt = buildDiaryPrompt({ date: '2026-10-21', lesson: 3 })
   const schemaText = describeSchema(DIARY_SCHEMA)
   const authored = [system, prompt, schemaText].join('\n')
@@ -132,10 +145,19 @@ test('🔴 发布约束守卫：给日记 agent 的提示词里不得出现"有�
 })
 
 test('🔴 提示词确实把她当成私人本子的主人（而不是内容生产者）', () => {
-  const system = buildDiarySystem({ rules: '第一人称、短、不超过 120 字。' })
-  assert.match(system, /你叫小鞠知花/)
+  const system = buildDiarySystem({ rules: '第一人称、短、不超过 120 字。', characterName: '鲸（DeepSeek 娘）' })
+  assert.match(system, /你叫鲸（DeepSeek 娘）/)
   assert.match(system, /写今天的日记/)
   assert.match(system, /第一人称、短、不超过 120 字。/)
+})
+
+test('🔴 系统位里的名字来自角色卡，不是写死的（N6.1）', () => {
+  const a = buildDiarySystem({ rules: '规则。', characterName: '鲸（DeepSeek 娘）' })
+  const b = buildDiarySystem({ rules: '规则。', characterName: '小鞠知花（Komari Chika）' })
+  assert.match(a, /你叫鲸（DeepSeek 娘）/)
+  assert.doesNotMatch(a, /小鞠/)
+  assert.match(b, /你叫小鞠知花（Komari Chika）/)
+  assert.throws(() => buildDiarySystem({ rules: '规则。' }), (error) => error.code === ERROR_CODES.INVALID_OUTPUT)
 })
 
 test('幂等键：会话 + 讲次', () => {
@@ -250,21 +272,33 @@ test('课堂记录：只取本课的卡点/误解/掌握证据/群里提的问�
   assert.doesNotMatch(text, /未来版本/)
 })
 
-test('输入收集：缺文件不崩，缺项如实写"缺失"', async () => {
-  const dir = await makeClassroom({ [DIARY_RELATIVE]: DIARY_HEADER })
+test('输入收集：角色卡之外的缺文件不崩，缺项如实写"缺失"', async () => {
+  const dir = await makeClassroom({
+    [DIARY_RELATIVE]: DIARY_HEADER,
+    'classroom.yaml': MANIFEST,
+    'characters/deepseek.md': CHARACTER_CARD,
+  })
   const collected = await collectDiaryInputs({ classroomDir: dir, lesson: 1, date: '2026-10-19' })
   assert.match(collected.rules, /第一人称/)
   const labels = collected.inputs.map((input) => input.label)
   assert.ok(labels.some((label) => label.includes('session_log.md')))
   assert.ok(labels.some((label) => label.includes('notes.jsonl')))
   assert.ok(labels.some((label) => label.includes('最近三条日记')))
-  assert.ok(labels.some((label) => label.includes('komari.md')))
+  assert.ok(labels.some((label) => label.includes('characters/deepseek.md')))
   assert.ok(labels.some((label) => label.includes('角色声音速查')))
   assert.ok(labels.some((label) => label.includes('setting.md')))
   assert.ok(labels.some((label) => label.includes('wechat_group.md')))
   // 最近三条日记：还没写过
   assert.equal(collected.inputs.find((input) => input.label === '你最近三条日记').content, '（还没写过。）')
   assert.equal(collected.facts.recentDiaries, 0)
+})
+
+test('🔴 角色卡缺失 → 明确报错，不回退到某张旧卡（N6.1）', async () => {
+  const dir = await makeClassroom({ [DIARY_RELATIVE]: DIARY_HEADER })
+  await assert.rejects(collectDiaryInputs({ classroomDir: dir, lesson: 1, date: '2026-10-19' }), (error) => {
+    assert.equal(error.code, ERROR_CODES.IO_ERROR)
+    return true
+  })
 })
 
 test('输入收集：真盘教室能读出角色声音段（不是整份 _anchor.md）', async () => {
@@ -321,4 +355,121 @@ test('插入位置：文件里一条日记都没有且没有页脚时，仍然�
   await store.append({ sessionId: 's1', lesson: 1, date: '2026-10-19', text: '一。' })
   const markdown = await readFile(join(dir, DIARY_RELATIVE), 'utf8')
   assert.match(markdown, /---\n\n### 2026-10-19 · 第 1 讲\n一。\n$/)
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 2026-10-21 修的真 bug：页脚「参考口吻」被并进最后一条日记
+//   引擎活体注入里，老师读到的"最近一条日记"混着写作示例。
+// ─────────────────────────────────────────────────────────────────────────────
+
+const FOOTER = `> 参考口吻（不是模板，别照抄）：
+> 抽屉卡了一下。按了两下才关上。上次也是这样，没修。`
+
+test('🔴 页脚「参考口吻」不进最后一条日记（空行 + > 引用块都收尾）', () => {
+  const markdown = `# 日记（她的）
+
+---
+
+### 2026-10-21 · 第 3 讲
+记录板下沿干了一道白边。
+
+${FOOTER}
+`
+  const { entries, bad } = parseDiaryEntries(markdown)
+  assert.equal(bad, 0)
+  assert.equal(entries.length, 1)
+  assert.equal(entries[0].text, '记录板下沿干了一道白边。')
+  assert.doesNotMatch(entries[0].text, /参考口吻|抽屉卡了一下/)
+})
+
+test('🔴 页脚紧贴条目（不隔空行）也照样收尾', () => {
+  const markdown = `### 2026-10-21
+写了一条。
+> 参考口吻（不是模板，别照抄）：
+> 示例。`
+  const { entries } = parseDiaryEntries(markdown)
+  assert.equal(entries[0].text, '写了一条。')
+})
+
+test('🔴 多条日记 + 页脚：只有最后一条受影响过，收尾后全部干净', () => {
+  const markdown = `### 2026-10-20
+第一条。
+### 2026-10-21
+第二条。
+
+${FOOTER}`
+  const { entries } = parseDiaryEntries(markdown)
+  assert.deepEqual(
+    entries.map((entry) => entry.text),
+    ['第一条。', '第二条。'],
+  )
+})
+
+test('🔴 解析出来的正文 ≤120 字（写入 → 读回的往返不虚高）', async () => {
+  const dir = await makeClassroom({
+    [DIARY_RELATIVE]: `# 日记（她的）
+
+> **写法规则**：第一人称、短。
+
+---
+
+${FOOTER}
+`,
+  })
+  const store = createDiaryStore({ classroomDir: dir, now: () => 1_700_000_000_000 })
+  const text = '记录'.repeat(60) // 正好 120 字
+  assert.equal(charCount(text), MAX_DIARY_CHARS)
+  await store.append({ sessionId: 's-1', lesson: 3, date: '2026-10-21', text })
+  const { entries } = await readRecentDiaries({ classroomDir: dir, limit: 1 })
+  assert.equal(entries.length, 1)
+  assert.equal(charCount(entries.at(-1).text), MAX_DIARY_CHARS)
+  assert.doesNotMatch(entries.at(-1).text, /参考口吻|抽屉/)
+  // 页脚一个字都没被删
+  const markdown = await readFile(join(dir, DIARY_RELATIVE), 'utf8')
+  assert.match(markdown, /参考口吻（不是模板，别照抄）/)
+  assert.match(markdown, /抽屉卡了一下/)
+})
+
+test('读取出口（下一节课注入用的那条）：不含示例文字', async () => {
+  const dir = await makeClassroom({
+    [DIARY_RELATIVE]: `# 日记（她的）
+
+> **写法规则**：第一人称。
+
+---
+
+### 2026-10-21 · 第 1 讲
+他把页表说成了缓存。
+
+${FOOTER}
+`,
+  })
+  const { entries } = await readRecentDiaries({ classroomDir: dir, limit: 1 })
+  assert.equal(entries.at(-1).text, '他把页表说成了缓存。')
+})
+
+test('🔴 正文带空行或以 > 开头 → INVALID_OUTPUT（不静默截断）', async () => {
+  const dir = await makeClassroom({
+    [DIARY_RELATIVE]: `# 日记（她的）
+
+> **写法规则**：第一人称。
+
+---
+
+`,
+  })
+  const store = createDiaryStore({ classroomDir: dir, now: () => 1_700_000_000_000 })
+  await assert.rejects(
+    store.append({ sessionId: 's-1', lesson: 1, date: '2026-10-21', text: '第一段。\n\n第二段。' }),
+    (error) => error.code === ERROR_CODES.INVALID_OUTPUT && error.detail.reason === 'DIARY_BLANK_LINE',
+  )
+  await assert.rejects(
+    store.append({ sessionId: 's-1', lesson: 1, date: '2026-10-21', text: '> 引用的写法' }),
+    (error) => error.code === ERROR_CODES.INVALID_OUTPUT && error.detail.reason === 'DIARY_QUOTE_LINE',
+  )
+  // 单段两行（没有空行）是合法的
+  const ok = await store.append({ sessionId: 's-1', lesson: 1, date: '2026-10-21', text: '第一行。\n第二行。' })
+  assert.equal(ok.skipped, false)
+  const { entries } = await readRecentDiaries({ classroomDir: dir, limit: 1 })
+  assert.equal(entries.at(-1).text, '第一行。\n第二行。')
 })

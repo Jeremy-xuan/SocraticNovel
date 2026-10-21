@@ -3,6 +3,10 @@
 // 分工：本文件只产「一段放在群里的文字」；落盘与节奏在 `lib/groupservice.mjs`，
 // 存储真源在 `lib/groupstore.mjs`，N4 的定时也在自己的文件里。
 //
+// 🔴 N6.1「单一人格源」：群聊的输入里必须有**当课角色卡**与 `_anchor.md` 的「角色声音速查」段，
+//    与日记走**同一个解析函数**（`classroom.mjs` 的 `resolveCharacter` / `sectionByHeading`）。
+//    缺了这两样，群聊只能靠 `world/setting.md` 猜她是谁、怎么说话 —— 三个 agent 的声音会分叉。
+//
 // 🔴 硬规则来自教室：`runtime/wechat_group.rules.md` 文件头（连续的 `>` 行），**逐字进提示词**，
 //    不在本包里另抄一份。那几条是 N3.6 写死的：她在群里比当面话多但仍短、每条不超过 2 行、
 //    不使用 emoji、群聊不承载知识点、只有 characters/ 里的人物或一次性路人（`路人·`）能开口。
@@ -15,7 +19,7 @@ import { join } from 'node:path'
 import { readTextIfExists as readText } from './atomic.mjs'
 import { ERROR_CODES, NarrativeError } from './errors.mjs'
 import { listCharacterNames, resolveCharacter } from './classroom.mjs'
-import { charCount, extractQuotedRules, tailChars } from './text.mjs'
+import { charCount, extractQuotedRules, sectionByHeading, tailChars } from './text.mjs'
 
 /** 写死规则的来源文件（相对教室目录）。 */
 export const GROUP_RULES_RELATIVE = join('runtime', 'wechat_group.rules.md')
@@ -84,22 +88,26 @@ export async function readGroupRules(classroomDir) {
  */
 export async function collectGroupInputs({ classroomDir, messages = [], historyLimit = 30, lesson = null }) {
   const rules = await readGroupRules(classroomDir)
+  // 与日记同一个解析（N6.1）：当课角色卡 + `_anchor.md` 的「角色声音速查」段
   const character = await resolveCharacter(classroomDir)
-  const [setting, sessionLog, notes, meta] = await Promise.all([
+  const [setting, anchor, sessionLog, notes, meta] = await Promise.all([
     readText(join(classroomDir, 'world', 'setting.md')),
+    readText(join(classroomDir, '_anchor.md')),
     readText(join(classroomDir, 'runtime', 'session_log.md')),
     readText(join(classroomDir, 'runtime', 'notes.jsonl')),
     listCharacterNames(classroomDir),
   ])
+  const voice = anchor === null ? null : sectionByHeading(anchor, '角色声音速查')
 
   const transcript = renderTranscript(messages.slice(Math.max(0, messages.length - historyLimit)))
 
   return {
     rules,
     character,
-    facts: { lesson, history: Math.min(messages.length, historyLimit), names: meta.names },
+    facts: { lesson, history: Math.min(messages.length, historyLimit), names: meta.names, character: character.relative, characterName: character.name },
     inputs: [
       { label: `${character.relative}（你是谁）`, content: character.content },
+      { label: '_anchor.md · 角色声音速查', content: orMissing(voice, '（没有这一段。）') },
       { label: 'world/setting.md（你所在的地方）', content: setting === null || setting.trim() === '' ? '（世界设定缺失。）' : setting },
       { label: '最近群聊（从旧到新）', content: transcript },
       {

@@ -81,7 +81,15 @@ export async function resolveClassroomDir(root) {
  * @throws {NarrativeError} IO_ERROR / NO_CHARACTER / AMBIGUOUS_CHARACTER
  */
 export async function resolveCharacter(classroomDir) {
-  const manifest = await readFile(join(classroomDir, MANIFEST_FILENAME), 'utf8')
+  let manifest
+  try {
+    manifest = await readFile(join(classroomDir, MANIFEST_FILENAME), 'utf8')
+  } catch (cause) {
+    throw new NarrativeError(ERROR_CODES.IO_ERROR, `读不到 ${join(classroomDir, MANIFEST_FILENAME)}——取不到当课角色卡`, {
+      cause,
+      detail: { reason: 'NO_CLASSROOM_MANIFEST', file: MANIFEST_FILENAME },
+    })
+  }
   const paths = []
   for (const line of manifest.split('\n')) {
     // 行首（允许缩进与列表号）必须是 `path:`；整行注释以 # 开头，天然不匹配

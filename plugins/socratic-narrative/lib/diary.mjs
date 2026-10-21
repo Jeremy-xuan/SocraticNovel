@@ -13,6 +13,7 @@
 
 import { join } from 'node:path'
 import { exists, readTextIfExists as readText, writeFileAtomic } from './atomic.mjs'
+import { resolveCharacter } from './classroom.mjs'
 import { ERROR_CODES, NarrativeError } from './errors.mjs'
 import { createSerialQueue } from './serial.mjs'
 import { charCount, sectionByHeading, tailChars } from './text.mjs'
@@ -78,6 +79,16 @@ export function extractDiaryRules(markdown) {
 /**
  * 解析日记文件里的条目（按文件顺序＝时间顺序）。
  * 坏块跳过并计入 `bad`（对齐契约 K3.5 对课堂记录的读法：一行坏数据不该让整份读废）。
+ *
+ * 🔴 一条日记的正文**在结构分隔处收尾**，不是「到下一个标题为止」。分隔有两种：
+ *   ① 空行——文件格式本身就是按空行分块的（`composeDiary` 就是这么切的）；
+ *   ② 以 `>` 开头的引用行——那是页脚提示块（例如 `> 参考口吻（不是模板，别照抄）`）。
+ *
+ * 为什么必须这样：日记文件末尾有一块「参考口吻」的 `>` 示例，它不是标题，所以旧的
+ * 「到下一个 `###` 为止」会把它**并进最后一条日记的正文** —— 引擎把「最近一条日记」注入给
+ * 老师时，老师读到的是日记 + 写作示例（2026-10-21 引擎车道活体抓到的真 bug）。
+ * 收尾之后，同一块里剩下的行一律丢弃（不再回填），直到下一个条目标题。
+ *
  * @param {string} markdown
  * @returns {{entries: Array<{date: string, lesson: number|null, text: string}>, bad: number}}
  */
@@ -100,10 +111,20 @@ export function parseDiaryEntries(markdown) {
     const heading = ENTRY_HEADING.exec(line.trim())
     if (heading !== null) {
       flush()
-      current = { date: heading[1], lesson: heading[2] === undefined ? null : Number(heading[2]), body: [] }
+      current = { date: heading[1], lesson: heading[2] === undefined ? null : Number(heading[2]), body: [], closed: false }
       continue
     }
-    if (current === null) continue
+    if (current === null || current.closed === true) continue
+    // ① 空行：块结束（正文之外的东西不再回填）
+    if (line.trim() === '') {
+      current.closed = true
+      continue
+    }
+    // ② 引用块：页脚提示（「参考口吻」那类），不是她的正文
+    if (line.startsWith('>')) {
+      current.closed = true
+      continue
+    }
     current.body.push(line)
   }
   flush()
@@ -121,6 +142,31 @@ export async function readRecentDiaries({ classroomDir, limit = 3, read = readTe
   const parsed = parseDiaryEntries(markdown)
   const wanted = Number.isInteger(limit) && limit > 0 ? limit : 3
   return { entries: parsed.entries.slice(Math.max(0, parsed.entries.length - wanted)), bad: parsed.bad }
+}
+
+/**
+ * 校验一条日记正文能不能**原样**落到文件里并被原样读回。
+ *
+ * 🔴 为什么要有这条：解析器在**空行**与 `>` 引用行处收尾（页脚「参考口吻」就是这么挡掉的）。
+ * 如果正文自己带空行或以 `>` 开头，写进去之后读回来就只剩前半段 —— 文件里有、注入里没有，
+ * 那是**静默截断**（A6 红线）。所以在这里判死，让失败大声。
+ *
+ * @param {string} text
+ * @throws {NarrativeError} INVALID_OUTPUT
+ */
+export function validateDiaryText(text) {
+  const body = String(text ?? '')
+  if (/\n\s*\n/.test(body.trim())) {
+    throw new NarrativeError(ERROR_CODES.INVALID_OUTPUT, '日记正文里有空行——它是一段，不是多段（空行是文件的结构分隔符）', {
+      detail: { reason: 'DIARY_BLANK_LINE' },
+    })
+  }
+  if (body.split('\n').some((line) => line.startsWith('>'))) {
+    throw new NarrativeError(ERROR_CODES.INVALID_OUTPUT, '日记正文里有以 > 开头的行——那是页脚提示的写法，不是她的正文', {
+      detail: { reason: 'DIARY_QUOTE_LINE' },
+    })
+  }
+  return body.trim()
 }
 
 /**
@@ -182,6 +228,7 @@ export function createDiaryStore({ classroomDir, now = () => Date.now(), write =
      * @returns {Promise<{skipped: boolean, reason?: string, writes: Array<{path: string, bytes: number}>}>}
      */
     async append({ sessionId, lesson, date, text, task = 'diary' }) {
+      validateDiaryText(text)
       const key = diaryKey(sessionId, lesson)
       return queue.run(diaryFile, async () => {
         const ledger = await readDiaryLedger({ classroomDir, read })
@@ -332,11 +379,15 @@ function isPlaceholderBlock(block) {
  * @returns {Promise<{inputs: Array<{label: string, content: string}>, facts: object}>}
  */
 export async function collectDiaryInputs({ classroomDir, lesson, date, read = readText }) {
-  const [diaryMarkdown, sessionLog, notesRaw, character, anchor, setting, group] = await Promise.all([
+  // 🔴 当课角色卡**从 classroom.yaml 解析**（与群聊同一个函数、同一个来源）。
+  //    这里曾经硬编码 `characters/komari.md` —— 那一版教室换角之后，日记会按**上一个角色**
+  //    的身份与语气写（N6.1「单一人格源」直接破功），而活体里看不出来（mock 输出固定）。
+  //    解析不到就抛 `NO_CHARACTER` / `AMBIGUOUS_CHARACTER`（不静默回退到某张旧卡）。
+  const character = await resolveCharacter(classroomDir)
+  const [diaryMarkdown, sessionLog, notesRaw, anchor, setting, group] = await Promise.all([
     read(join(classroomDir, DIARY_RELATIVE)),
     read(join(classroomDir, 'runtime', 'session_log.md')),
     read(join(classroomDir, 'runtime', 'notes.jsonl')),
-    read(join(classroomDir, 'characters', 'komari.md')),
     read(join(classroomDir, '_anchor.md')),
     read(join(classroomDir, 'world', 'setting.md')),
     read(join(classroomDir, 'runtime', 'wechat_group.md')),
@@ -357,7 +408,7 @@ export async function collectDiaryInputs({ classroomDir, lesson, date, read = re
         label: '你最近三条日记',
         content: recent.length === 0 ? '（还没写过。）' : recent.map((entry) => `- ${entry.text}`).join('\n'),
       },
-      { label: 'characters/komari.md（你是谁）', content: orMissing(character, '（角色卡缺失。）') },
+      { label: `${character.relative}（你是谁）`, content: character.content },
       { label: '_anchor.md · 角色声音速查', content: orMissing(voice, '（没有这一段。）') },
       { label: 'world/setting.md（你所在的地方）', content: orMissing(setting, '（世界设定缺失。）') },
       { label: 'runtime/wechat_group.md（最近的群聊）', content: orMissing(group, '（群里还没有消息。）') },
@@ -365,6 +416,8 @@ export async function collectDiaryInputs({ classroomDir, lesson, date, read = re
     facts: {
       date,
       lesson,
+      character: character.relative,
+      characterName: character.name,
       recentDiaries: recent.length,
       notes: notes.stats,
       rulesChars: charCount(rules),
@@ -421,12 +474,21 @@ export function selectLessonNotes(raw, { lesson }) {
  *
  * 🔴 这里写的每一句都是给「以为自己在写私人本子」的她看的。禁止出现读者/展示/学生能看到一类的意思。
  * 规则正文来自教室 `runtime/diary.md` 的文件头（N2.3 的规则就是那个文件头），逐字附在后面。
- * @param {{rules: string}} options
+ *
+ * 🔴 `characterName` **必须**由调用方从当课角色卡传进来（N6.1）：这里曾经硬编码
+ *    「你叫小鞠知花」—— 换角之后日记会按**上一个角色**的自我认知写，而输入里的角色卡却是新的，
+ *    两个来源打架（2026-10-21 集成侧抓到）。名字只有一个来源：`resolveCharacter()`。
+ * @param {{rules: string, characterName: string}} options
  * @returns {string}
  */
-export function buildDiarySystem({ rules }) {
+export function buildDiarySystem({ rules, characterName }) {
+  if (typeof characterName !== 'string' || characterName === '') {
+    throw new NarrativeError(ERROR_CODES.INVALID_OUTPUT, 'buildDiarySystem 需要 characterName（当课角色名，来自角色卡）', {
+      detail: { reason: 'NO_CHARACTER_NAME' },
+    })
+  }
   return [
-    '你叫小鞠知花。课已经上完了。',
+    `你叫${characterName}。课已经上完了。`,
     '现在是收工之后，你把本子摊在膝上，写今天的日记。',
     '',
     '日记本第一页上写着这样的规则：',

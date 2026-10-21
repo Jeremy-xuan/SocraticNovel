@@ -189,7 +189,7 @@ export function createNarrativeService({
 
         const result = await runner.runTask({
           task: 'diary',
-          system: buildDiarySystem({ rules: collected.rules }),
+          system: buildDiarySystem({ rules: collected.rules, characterName: collected.facts.characterName }),
           prompt: buildDiaryPrompt({ date, lesson }),
           inputs: collected.inputs,
           root: classroomDir,
