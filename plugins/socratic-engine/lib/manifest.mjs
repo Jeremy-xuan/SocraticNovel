@@ -55,6 +55,17 @@
 //    直接短路）。这是"先跑没有同学的课"那条顺序在**代码层**的保障。
 // 🔴 行号：本段起，`cast`／`cue` 的报错一律带 `（第 N 行）`＋期望值（作者能自己改）。
 //    行号来源 = `parseDocument` 的节点 `range` 偏移 → 行号索引（见 makeLocator）。
+//
+// ── N 接线新增（2026-10-21）：动态块 `dynamic:` ＋ 顶层 `narrative:` ─────────
+// ⑥ 块级 `dynamic: { kind: diary|wechat, limit? }`（=**第三种内容来源**，与 path/text 并列）：
+//    内容不在文件里，由引擎在**注入时**现取（lib/narrativebridge.mjs）。
+//    · 与 path/text **互斥**；只允许 `target: chat`（system 段没有"注入时"）；`section` 无效；
+//    · `limit` 只对 wechat 有效（1..50，缺省 8）；diary 固定读最近 1 条；
+//    · 没有 dynamic 的块**不挂这个键**（老教室形状逐字不变）。
+//    频率/相位/讲次门与记账**完全复用既有块语义**（injector 一行没改语义，只抽了
+//    `isBlockDue` 供"先算内容、再规划注入"复用）。
+// ⑦ 顶层 `narrative.models.diary`（模型路由，不是凭据）：引擎读出来作为 `runDiary({model})`
+//    的调用参数（README §2 第①档）。缺席 → manifest 不挂键；写一半 → 抛错。
 
 import { existsSync, readFileSync } from 'node:fs'
 import { isAbsolute, join, resolve } from 'node:path'
@@ -77,6 +88,30 @@ export const FREQUENCY_ANCHORS = ['lesson_start', 'session_start']
 // ── M3-STATE：相位状态的机器可读键名（草案 §2.0 的 runtime_store）───────────
 // 与 `current_lesson` 同构：写在 runtime_store.progress 文件里的一行 `<key>: <phase_id>`。
 export const PHASE_STATE_KEY = 'current_phase'
+
+// ── N 车道接线（2026-10-21）：动态块与叙事层的模型路由 ──────────────────────
+// 🔴 块级 `dynamic:` 是**第三种内容来源**（前两种是 `path` / `text`）：内容不在文件里，
+//    由引擎在**注入时**现取（见 lib/narrativebridge.mjs 的 resolveDynamicText）：
+//    · `kind: diary`  → 叙事服务的 `readRecentDiaries({ limit: 1 })` 最后一条（N2.4）
+//    · `kind: wechat` → `<教室>/runtime/wechat_group.jsonl` 的最后 N 条（契约 K4.2，N3.5）
+//    🔴 为什么必须走块（而不是像动画通报那样在 index.mjs 里自产文本）：这两块要的是
+//      「每讲一次」的块级记账（injectedLesson）与相位门——那就是块自然拥有的语义；
+//      自产文本会让验收侧 predictTurnBlocks（独立推导）看不到它们，A2 立刻红。
+// 🔴 顶层 `narrative.models.<task>`：README §2 写明「引擎读出来，作为调用参数传进来」。
+//    **只放路由名，不放凭据**；缺席 → manifest 不挂键（老教室形状逐字不变）。
+export const DYNAMIC_KINDS = ['diary', 'wechat']
+/** `dynamic:` 段允许出现的键（写错即报错，不静默忽略）。 */
+const DYNAMIC_KEYS = ['kind', 'limit']
+/** 群聊默认注入条数（N3.5 的「最近若干条」；这个数也写进实现报告）。 */
+export const DEFAULT_WECHAT_LIMIT = 8
+/** 群聊注入条数上界（再多就会挤掉课堂材料）。 */
+export const MAX_WECHAT_LIMIT = 50
+/** 顶层 `narrative:` 段允许出现的键。 */
+const NARRATIVE_KEYS = ['models']
+/** 可以单独指定模型的叙事任务（当前只有日记；群聊由 X 车道自己的调用方传）。 */
+const NARRATIVE_TASKS = ['diary']
+/** 一条模型路由必须给全的字段（provider + model；不许只给一个）。 */
+const NARRATIVE_MODEL_KEYS = ['provider', 'model']
 
 // ── 相位值域（P0-1 修复，2026-09-23）────────────────────────────────────────
 // 权威依据：教室manifest格式_草案_v0.md §2.0 —— 顶层 `phases:` 是**教学内容的一部分**
@@ -1209,11 +1244,17 @@ export function parseManifest(text, { baseDir } = {}) {
     })
   }
 
+  // 🔴 N 接线（2026-10-21）：顶层 `narrative:` 段（叙事任务的模型路由）。缺席 → **不挂键**。
+  //    引擎把它作为 `model` 参数传给 `narrative.runDiary`（README §2 的第①档）。
+  let narrative
+  if (!isAbsent(doc.narrative)) narrative = normalizeNarrative(doc.narrative, { loc })
+
   const manifest = { format: doc.format, classroom, phases, blocks, runtime_store: doc.runtime_store }
   if (cast !== undefined) manifest.cast = cast
   if (cue !== undefined) manifest.cue = cue
   if (animation !== undefined) manifest.animation = animation
   if (prep !== undefined) manifest.prep = prep
+  if (narrative !== undefined) manifest.narrative = narrative
   if (usesLessonGate(manifest)) validateRuntimeStore(manifest)
 
   // 🔴 M3-STATE 校验点（M2 待确认 C12）：讲次门引用的讲次号不得超过教室声明的讲数。
@@ -1239,9 +1280,21 @@ function normalizeBlock(raw, i, { baseDir, seen }) {
   const layer = raw.layer ?? 'context'
   if (!LAYERS.includes(layer)) throw new ManifestError(`${at}(${id}).layer 必须是 ${LAYERS.join('/')}`)
 
-  // 内容：path 或 text 二选一
+  // 内容：path 或 text 二选一；N 接线（2026-10-21）起还允许第三种：`dynamic`
+  //（内容不在文件里，由引擎在注入时按 kind 现取——见 lib/narrativebridge.mjs）
   let text = ''
-  if (typeof raw.text === 'string') {
+  let dynamic = null
+  if (!isAbsent(raw.dynamic)) {
+    if (typeof raw.text === 'string' || typeof raw.path === 'string') {
+      throw new ManifestError(
+        `${at}(${id}) dynamic 与 path/text 互斥（dynamic 的内容由引擎在注入时现取，不来自文件）`,
+      )
+    }
+    if (raw.section !== undefined) {
+      throw new ManifestError(`${at}(${id}) section 只对 path 有效（dynamic 块没有可切片的文件）`)
+    }
+    dynamic = normalizeDynamic(raw.dynamic, at, id)
+  } else if (typeof raw.text === 'string') {
     if (raw.path !== undefined) {
       throw new ManifestError(`${at}(${id}) path 与 text 二选一（同时写了 path=${JSON.stringify(raw.path)} 与内联 text）`)
     }
@@ -1266,13 +1319,20 @@ function normalizeBlock(raw, i, { baseDir, seen }) {
       text = raw_text
     }
   } else {
-    throw new ManifestError(`${at}(${id}) 需要 path 或 text`)
+    throw new ManifestError(`${at}(${id}) 需要 path 或 text（或 dynamic）`)
   }
 
   // position（M1：target=system 用 order；target=chat 用 depth，depth 只对 chat 有效）
   const pos = raw.position
   if (!pos || typeof pos !== 'object' || !POSITION_TARGETS.includes(pos.target)) {
     throw new ManifestError(`${at}(${id}).position.target 必须是 system/chat`)
+  }
+  // 🔴 dynamic 只能挂在 chat 块上：system 段在装载时注册一次并常驻，**没有"注入时"**可供现取。
+  if (dynamic !== null && pos.target !== 'chat') {
+    throw new ManifestError(
+      `${at}(${id}) dynamic 只能用于 position.target: chat 的块` +
+        `（system 段在装载时注册一次，没有"注入时"可以现取内容 → 写了也不会生效）`,
+    )
   }
   const position = { target: pos.target }
   if (pos.target === 'system') {
@@ -1367,7 +1427,103 @@ function normalizeBlock(raw, i, { baseDir, seen }) {
   // render（骨架：enabled + 简单 {{var}} 替换标记；缺省变量先不报错——B2 待拍板）
   const render = { enabled: raw.render?.enabled ?? false, vars: raw.render?.vars ?? {} }
 
-  return { id, layer, text, position, frequency, phase, lesson, wrap, render, source: raw.path ?? null }
+  const block = { id, layer, text, position, frequency, phase, lesson, wrap, render, source: raw.path ?? null }
+  // 🔴 老教室的形状逐字不变：没有 dynamic 的块**不挂这个键**（与 cast/cue/animation 同一约定）。
+  if (dynamic !== null) block.dynamic = dynamic
+  return block
+}
+
+/**
+ * 规范化并校验块级 `dynamic:`（N 接线，2026-10-21）。
+ *
+ * 形态（恰好一个 kind）：
+ *   dynamic: { kind: diary }                 → 叙事服务的 `readRecentDiaries({limit:1})` 最后一条
+ *   dynamic: { kind: wechat, limit: 8 }      → `runtime/wechat_group.jsonl` 的最后 8 条
+ *
+ * 🔴 白名单：多写一个键就报错（与 `assertKnownKeys` 同一条规矩：写错不许静默失效）。
+ *    块级的校验不取节点偏移（normalizeBlock 没有 loc），报错带 `blocks[i](id)` 定位。
+ * @param {unknown} raw
+ * @param {string} at - `blocks[i]`
+ * @param {string} id - 块 id
+ * @returns {{kind: 'diary'|'wechat', limit?: number}}
+ */
+function normalizeDynamic(raw, at, id) {
+  if (!isPlainMap(raw)) {
+    throw new ManifestError(`${at}(${id}).dynamic 必须是映射（如 { kind: diary } / { kind: wechat, limit: 8 }）`)
+  }
+  const stray = Object.keys(raw).filter((k) => !DYNAMIC_KEYS.includes(k))
+  if (stray.length > 0) {
+    throw new ManifestError(
+      `${at}(${id}).dynamic 有无法识别的键 ${JSON.stringify(stray)}（可用：${DYNAMIC_KEYS.join('/')}）——` +
+        `未实现的键一律报错，不静默忽略`,
+    )
+  }
+  if (!DYNAMIC_KINDS.includes(raw.kind)) {
+    throw new ManifestError(`${at}(${id}).dynamic.kind 必须是 ${DYNAMIC_KINDS.join('/')}（得到 ${JSON.stringify(raw.kind)}）`)
+  }
+  if (raw.kind === 'diary') {
+    if (!isAbsent(raw.limit)) {
+      throw new ManifestError(
+        `${at}(${id}).dynamic.limit 只对 kind: wechat 有效（diary 固定取最近 1 条——` +
+          `N2.4 的语义是"下一节课读到最近一条"，条数变了就不是这件事了）`,
+      )
+    }
+    return { kind: 'diary' }
+  }
+  const limit = isAbsent(raw.limit) ? DEFAULT_WECHAT_LIMIT : raw.limit
+  if (!Number.isInteger(limit) || limit < 1 || limit > MAX_WECHAT_LIMIT) {
+    throw new ManifestError(
+      `${at}(${id}).dynamic.limit 必须是 1..${MAX_WECHAT_LIMIT} 的整数（得到 ${JSON.stringify(raw.limit)}；未写＝${DEFAULT_WECHAT_LIMIT}）`,
+    )
+  }
+  return { kind: 'wechat', limit }
+}
+
+/**
+ * 规范化并校验顶层 `narrative:`（N 接线，2026-10-21）。
+ *
+ * ```yaml
+ * narrative:
+ *   models:
+ *     diary: { provider: deepseek-official, model: deepseek-v4-flash }
+ * ```
+ *
+ * 🔴 语义（README §2 写死）：引擎把这里读到的路由**作为调用参数**传给
+ *    `narrative.runDiary({ model })`；调用参数优先于叙事插件自己的 config。
+ *    这里**只放路由名**——凭据在实例的 provider 配置里，教室文件一个字节都碰不到。
+ * @param {unknown} raw
+ * @param {{loc: (path:(string|number)[])=>number}} ctx
+ * @returns {{models?: {diary: {provider:string, model:string}}}}
+ */
+function normalizeNarrative(raw, { loc }) {
+  const root = ['narrative']
+  if (!isPlainMap(raw)) throw new ManifestError(`${whereAt(root, loc)}必须是映射`)
+  assertKnownKeys(raw, NARRATIVE_KEYS, root, loc)
+  const out = {}
+  if (isAbsent(raw.models)) return out
+  const modelsAt = ['narrative', 'models']
+  if (!isPlainMap(raw.models)) throw new ManifestError(`${whereAt(modelsAt, loc)}必须是映射`)
+  assertKnownKeys(raw.models, NARRATIVE_TASKS, modelsAt, loc)
+  out.models = {}
+  for (const task of NARRATIVE_TASKS) {
+    if (isAbsent(raw.models[task])) continue
+    const at = [...modelsAt, task]
+    const route = raw.models[task]
+    if (!isPlainMap(route)) {
+      throw new ManifestError(`${whereAt(at, loc)}必须是映射 { provider, model }（"$TASK" 的模型路由）`)
+    }
+    assertKnownKeys(route, NARRATIVE_MODEL_KEYS, at, loc)
+    for (const key of NARRATIVE_MODEL_KEYS) {
+      if (!isNonEmptyString(route[key])) {
+        throw new ManifestError(
+          `${whereAt([...at, key], loc)}必须是非空字符串——模型路由要给全 provider 与 model` +
+            `（给一半等于没给：叙事插件的规则是"四处都取不到就 ROUTE_MISSING"，不会替你补）`,
+        )
+      }
+    }
+    out.models[task] = { provider: route.provider, model: route.model }
+  }
+  return out
 }
 
 /** 便捷入口：从教室包目录加载。 */

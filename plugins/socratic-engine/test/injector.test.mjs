@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { loadManifest } from '../lib/manifest.mjs'
-import { planTurnInjections, renderText, wrapText } from '../lib/injector.mjs'
+import { isBlockDue, planTurnInjections, renderText, wrapText } from '../lib/injector.mjs'
 import { createPhaseStore } from '../lib/phasestore.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -108,4 +108,87 @@ test('phasestore：回合自计数、相位校验、快照', () => {
   assert.equal(p.phase, 'quiz')
   assert.throws(() => p.setPhase('bogus'), /未知相位/)
   assert.deepEqual(p.snapshot(), { phase: 'quiz', turnCount: 2, onceDone: [] })
+})
+
+// ══════════════════════════════════════════════════════════════════════════════
+// N 接线（2026-10-21）：`isBlockDue` —— 动态块"先取内容、再规划注入"用的只读判定
+// 🔴 它与 `planTurnInjections` 必须是**同一套门**：这里逐格比一次，防两边漂移。
+// ══════════════════════════════════════════════════════════════════════════════
+
+const mkBlock = (over = {}) => ({
+  id: 'b',
+  text: 't',
+  position: { target: 'chat', depth: 0 },
+  frequency: { every: 'turn' },
+  phase: null,
+  lesson: null,
+  wrap: { style: 'system-reminder', role: 'user', tag: 'system-reminder' },
+  render: { enabled: false, vars: {} },
+  ...over,
+})
+
+const gateState = (over = {}) => ({
+  turnCount: 1,
+  phase: 'boot',
+  injectedOnce: new Set(),
+  injectedLesson: new Map(),
+  currentLesson: null,
+  ...over,
+})
+
+test('isBlockDue ↔ planTurnInjections：同一套门逐格一致（含相位门、n_turns、once 记账）', () => {
+  const cases = [
+    { block: mkBlock(), state: gateState() },
+    { block: mkBlock({ frequency: { every: 'n_turns', n: 3 } }), state: gateState({ turnCount: 6 }) },
+    { block: mkBlock({ frequency: { every: 'n_turns', n: 3 } }), state: gateState({ turnCount: 4 }) },
+    { block: mkBlock({ frequency: { every: 'phase' }, phase: { phases: ['quiz'] } }), state: gateState({ phase: 'quiz' }) },
+    { block: mkBlock({ frequency: { every: 'phase' }, phase: { phases: ['quiz'] } }), state: gateState({ phase: 'boot' }) },
+    { block: mkBlock({ frequency: { every: 'phase' } }), state: gateState({ phase: 'boot' }) },
+    { block: mkBlock({ frequency: { every: 'on_demand' } }), state: gateState() },
+    { block: mkBlock({ position: { target: 'system', order: 1 } }), state: gateState() },
+    { block: mkBlock({ lesson: { current: true, of: 3 } }), state: gateState({ currentLesson: 3 }) },
+    { block: mkBlock({ lesson: { current: true, of: 3 } }), state: gateState({ currentLesson: 2 }) },
+    { block: mkBlock({ frequency: { every: 'once' } }), state: gateState({ injectedOnce: new Set(['b']) }) },
+    { block: mkBlock({ frequency: { every: 'once', anchor: 'lesson_start' } }), state: gateState({ currentLesson: 3 }) },
+    { block: mkBlock({ frequency: { every: 'once', anchor: 'lesson_start' } }), state: gateState({ currentLesson: 3, injectedLesson: new Map([['b', 3]]) }) },
+    { block: mkBlock({ frequency: { every: 'once', anchor: 'lesson_start' } }), state: gateState({ currentLesson: 3, injectedLesson: new Map([['b', 2]]) }) },
+  ]
+  for (const { block, state } of cases) {
+    const planned = planTurnInjections([block], { ...state, injectedOnce: new Set(state.injectedOnce), injectedLesson: new Map(state.injectedLesson) })
+    const due = isBlockDue(block, state)
+    assert.equal(due, planned.some((d) => d.id === block.id), JSON.stringify({ block, state }))
+  }
+})
+
+test('isBlockDue 是只读的：不改 injectedOnce / injectedLesson（记账只归 planTurnInjections）', () => {
+  const injectedOnce = new Set()
+  const injectedLesson = new Map()
+  const state = gateState({ injectedOnce, injectedLesson, currentLesson: 3 })
+  assert.equal(isBlockDue(mkBlock({ frequency: { every: 'once' } }), state), true)
+  assert.equal(isBlockDue(mkBlock({ frequency: { every: 'once', anchor: 'lesson_start' } }), state), true)
+  assert.equal(injectedOnce.size, 0, '判一遍不等于注入过（否则动态块取完内容就把额度吃掉了）')
+  assert.equal(injectedLesson.size, 0)
+
+  // 对照：真的规划之后才记账
+  planTurnInjections([mkBlock({ frequency: { every: 'once' } })], state)
+  assert.equal(injectedOnce.size, 1)
+  assert.equal(isBlockDue(mkBlock({ frequency: { every: 'once' } }), state), false)
+})
+
+test('isBlockDue：缺讲次值时与计划器**同样**抛错（两份判据不许一边静默）', () => {
+  assert.throws(
+    () => isBlockDue(mkBlock({ lesson: { current: true, of: 3 } }), gateState({ currentLesson: null })),
+    /state\.currentLesson 不是整数/,
+  )
+  assert.throws(
+    () => isBlockDue(mkBlock({ frequency: { every: 'once', anchor: 'lesson_start' } }), gateState({ currentLesson: null })),
+    /没有讲次值它就无法判定/,
+  )
+})
+
+test('isBlockDue：记账表缺席（纯函数独立调用）→ 按空表判真，不就地建表', () => {
+  const state = { turnCount: 1, phase: 'boot', currentLesson: 3 }
+  const block = mkBlock({ frequency: { every: 'once', anchor: 'lesson_start' } })
+  assert.equal(isBlockDue(block, state), true)
+  assert.equal(state.injectedLesson, undefined, '不许在只读判定里给调用方塞一张表')
 })

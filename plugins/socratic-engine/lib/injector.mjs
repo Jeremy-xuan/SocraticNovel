@@ -44,6 +44,74 @@ export function wrapText(text, wrap) {
 }
 
 /**
+ * 单块「本回合该不该注入」的**只读**判定（不改任何记账）。
+ *
+ * 🔴 存在的理由（N 接线，2026-10-21）：动态块（`classroom.yaml` 的 `dynamic:`）要在
+ *    **规划之前**知道内容——不该为没到点的块每回合读一遍文件。于是把频率/讲次/相位三道门
+ *    抽成这个纯函数：引擎先 `isBlockDue` 判一遍、只给到点的动态块取内容，再交给
+ *    `planTurnInjections` 正式规划（**记账只在真的注入之后**，仍由那边负责）。
+ * 🔴 判定顺序与报错文案**逐字**沿用原实现（讲次门 → 频率 → 相位门），任何一处语义变化
+ *    都会让验收侧 `predictTurnBlocks` 与生产侧分叉（`acceptance/frequency-parity.mjs` 会红）。
+ *
+ * @param {object} block — parseManifest 产出的规范化块
+ * @param {object} state — { turnCount:number, phase:string, injectedOnce?:Set<string>,
+ *                            injectedLesson?:Map<string,number>, currentLesson?:number }
+ * @returns {boolean}
+ */
+export function isBlockDue(block, state) {
+  if (block?.position?.target !== 'chat') return false
+
+  // 讲次门（M2-SCHEMA v0.2，P0-4）：🔴 不匹配**不得静默**——缺值一律抛错。
+  if (block.lesson !== null && block.lesson !== undefined) {
+    if (!Number.isInteger(state.currentLesson)) {
+      throw new Error(
+        `块 ${block.id} 用了 lesson 讲次门，但 state.currentLesson 不是整数` +
+          `（得到 ${JSON.stringify(state.currentLesson)}）—— 引擎必须先从 runtime_store 的 progress 文件读出「本轮要讲的讲次」` +
+          `（见 lib/manifest.mjs 的 readRuntimeLesson），否则该块会静默不注入`,
+      )
+    }
+    if (!lessonGateAllows(block.lesson, state.currentLesson)) return false
+  }
+
+  const { every, n, anchor } = block.frequency
+  // 记账表可能还没建（纯函数独立调用）：按"空表"读，绝不就地写。
+  const injectedOnce = state.injectedOnce instanceof Set ? state.injectedOnce : null
+  const lessonBook = state.injectedLesson instanceof Map ? state.injectedLesson : null
+
+  // 频率裁决
+  let inject = false
+  if (every === 'once') {
+    if (anchor === 'lesson_start') {
+      // 每讲一次：讲次变化就重新注入一次。🔴 缺讲次值不得静默（否则换讲后不注入＝静默失效）。
+      if (!Number.isInteger(state.currentLesson)) {
+        throw new Error(
+          `块 ${block.id} 声明了 frequency.anchor: lesson_start（每讲一次），但 state.currentLesson 不是整数` +
+            `（得到 ${JSON.stringify(state.currentLesson)}）—— 讲次变化是它的唯一触发条件，` +
+            `没有讲次值它就无法判定（会静默不注入）`,
+        )
+      }
+      inject = (lessonBook?.get(block.id) ?? undefined) !== state.currentLesson
+    } else {
+      // anchor 缺省 / session_start：进程生命周期内一次（既有语义，未变）
+      inject = injectedOnce === null || !injectedOnce.has(block.id)
+    }
+  } else if (every === 'turn') {
+    inject = true
+  } else if (every === 'n_turns') {
+    inject = state.turnCount % n === 0
+  } else if (every === 'phase') {
+    inject = phaseGate(block.phase, state.phase)
+  } else if (every === 'on_demand') {
+    inject = false // 工具/相位触发路径（TODO：M3 工具接入）
+  }
+  if (!inject) return false
+
+  // 相位门（与 frequency.phase 可叠加：phase 门存在时必须通过）
+  if (block.phase && !phaseGate(block.phase, state.phase)) return false
+  return true
+}
+
+/**
  * 计算本回合应注入的 chat 块。
  * @param {object[]} blocks — parseManifest 产出的规范化 blocks（只处理 position.target==='chat'）
  * @param {object} state — { turnCount:number, phase:string, injectedOnce:Set<string>,
@@ -60,52 +128,7 @@ export function planTurnInjections(blocks, state, vars = {}) {
   const lessonBook = state.injectedLesson
   const due = []
   for (const block of blocks) {
-    if (block.position.target !== 'chat') continue
-
-    // 讲次门（M2-SCHEMA v0.2，P0-4）：🔴 不匹配**不得静默**——缺值一律抛错。
-    if (block.lesson !== null && block.lesson !== undefined) {
-      if (!Number.isInteger(state.currentLesson)) {
-        throw new Error(
-          `块 ${block.id} 用了 lesson 讲次门，但 state.currentLesson 不是整数` +
-            `（得到 ${JSON.stringify(state.currentLesson)}）—— 引擎必须先从 runtime_store 的 progress 文件读出「本轮要讲的讲次」` +
-            `（见 lib/manifest.mjs 的 readRuntimeLesson），否则该块会静默不注入`,
-        )
-      }
-      if (!lessonGateAllows(block.lesson, state.currentLesson)) continue
-    }
-
-    const { every, n, anchor } = block.frequency
-
-    // 频率裁决
-    let inject = false
-    if (every === 'once') {
-      if (anchor === 'lesson_start') {
-        // 每讲一次：讲次变化就重新注入一次。🔴 缺讲次值不得静默（否则换讲后不注入＝静默失效）。
-        if (!Number.isInteger(state.currentLesson)) {
-          throw new Error(
-            `块 ${block.id} 声明了 frequency.anchor: lesson_start（每讲一次），但 state.currentLesson 不是整数` +
-              `（得到 ${JSON.stringify(state.currentLesson)}）—— 讲次变化是它的唯一触发条件，` +
-              `没有讲次值它就无法判定（会静默不注入）`,
-          )
-        }
-        inject = lessonBook.get(block.id) !== state.currentLesson
-      } else {
-        // anchor 缺省 / session_start：进程生命周期内一次（既有语义，未变）
-        inject = !state.injectedOnce.has(block.id)
-      }
-    } else if (every === 'turn') {
-      inject = true
-    } else if (every === 'n_turns') {
-      inject = state.turnCount % n === 0
-    } else if (every === 'phase') {
-      inject = phaseGate(block.phase, state.phase)
-    } else if (every === 'on_demand') {
-      inject = false // 工具/相位触发路径（TODO：M3 工具接入）
-    }
-    if (!inject) continue
-
-    // 相位门（与 frequency.phase 可叠加：phase 门存在时必须通过）
-    if (block.phase && !phaseGate(block.phase, state.phase)) continue
+    if (!isBlockDue(block, state)) continue
 
     // render
     let text = block.text
@@ -115,7 +138,8 @@ export function planTurnInjections(blocks, state, vars = {}) {
       // missing 变量：骨架先放行（B2 待拍板：error 还是 default）
     }
     due.push({ id: block.id, text: wrapText(text, block.wrap) })
-    // 🔴 记账只在**真的注入**之后（上面两道门都可能 continue 掉）
+    // 🔴 记账只在**真的注入**之后（频率/相位/讲次三道门都在 isBlockDue 里）
+    const { every, anchor } = block.frequency
     if (every === 'once') {
       if (anchor === 'lesson_start') lessonBook.set(block.id, state.currentLesson)
       else state.injectedOnce.add(block.id)
