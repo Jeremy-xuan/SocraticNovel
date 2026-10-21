@@ -154,6 +154,8 @@ window.__ModuleLoader__.load({
   background:var(--paper);border:1px solid var(--gilt);transform:rotate(45deg)}
 .stage-warm-root .band-core{position:absolute;left:0;right:0;top:1px;bottom:11vh;padding:4.2vh 8.8vh 0;
   overflow-y:auto;scrollbar-width:thin;
+  /* 默认过渡：任何相位切换（含收起）都别硬跳；拉出段在下面被覆写成 .39s */
+  transition:opacity .22s,transform .22s,filter .22s;
   display:flex;flex-direction:column;justify-content:flex-start}
 /* 🔴 2026-10-19：原来用 justify-content:flex-end 实现内容贴底，但 flex-end ＋ overflow:auto
    有个经典问题：内容一旦超出容器，上半部分会被裁掉且滚不到（实测老师一段 376 字的话，
@@ -382,9 +384,12 @@ window.__ModuleLoader__.load({
 .stage-warm-root .boardpanel .bp-body .k{color:var(--accent);font-family:var(--mono);
   font-size:1.75vh;letter-spacing:.06em}
 /* 三段：先侧身（面板不动）→ 拉出（过冲）→ 回正 */
-.stage-warm-root .cast-wrap{transition:transform .22s cubic-bezier(.22,.61,.36,1),
-  filter .22s cubic-bezier(.22,.61,.36,1)}
-.stage-warm-root[data-board="turn"] .cast-wrap{transform:rotate(-1.6deg) translateX(-3vh) scale(.965)}
+/* 三段时长逐字对对比件：--T1 170ms（角色侧身）／--T2 390ms（拉出）／--T3 220ms（收尾落定） */
+.stage-warm-root .cast-wrap{transition:transform .17s cubic-bezier(.22,.61,.36,1),
+  filter .17s cubic-bezier(.22,.61,.36,1)}
+/* 角色侧身：对比件是 rotate(-1.6deg) translateX(-30px) scaleX(.965) scaleY(.995)；
+   −30px 在 1080 高的画布上 = 2.78vh → 取 −3vh（视口单位，换分辨率不漂），缩放两轴分开写 */
+.stage-warm-root[data-board="turn"] .cast-wrap{transform:rotate(-1.6deg) translateX(-3vh) scale(.965,.995)}
 /* 收起＝反向节拍：面板沿原路滑出（对比件 closeBoard 用 --T2 390ms），随后整块离场 */
 .stage-warm-root[data-board="turn"] .boardpanel{transition:transform .39s cubic-bezier(.16,1,.3,1),opacity .22s ease}
 .stage-warm-root[data-board="pull"] .cast-wrap{transform:rotate(-1.2deg) translateX(-1.5vh) scale(.985)}
@@ -394,14 +399,20 @@ window.__ModuleLoader__.load({
 .stage-warm-root[data-board="settle"] .boardpanel{opacity:1}
 .stage-warm-root[data-board="turn"] .boardpanel{transform:translateX(56vh) rotate(-2.4deg) scale(.94)}
 .stage-warm-root[data-board="pull"] .boardpanel{
-  transform:translateX(-2.2vh) rotate(.5deg) scale(1.012);   /* ← 过冲（定案值 −24px） */
+  /* ← 过冲。**单位是「面板自身宽度的百分比」，不是 px 也不是 vh**：
+     对比件（pull-out.html）过冲值是 −24px，而它的面板宽 1180px → 24/1180 = 2.03%（规格 §5.3 自己就换算过这一步）。
+     取 % 的理由：① 百分比在 translateX 里按**元素自身宽**解析，换分辨率/换屏（板书屏把面板从 62vh 放大到 80vh）都不漂；
+     ② 与对比件的定义同源（它本来就是「板宽的百分之几」）；③ 原来写的 −2.2vh ≈ 3.5% 板宽，比对比件冲过头 ~1.7 倍。 */
+  transform:translateX(-2.03%) rotate(.5deg) scale(1.012);
   transition:transform .39s cubic-bezier(.16,1,.3,1),opacity .39s cubic-bezier(.16,1,.3,1)}
 .stage-warm-root[data-board="settle"] .boardpanel{
   transform:translateX(0) rotate(0) scale(1);
   transition:transform .22s cubic-bezier(.22,1.12,.36,1),opacity .22s ease}
 /* 拉出期间正文让位（真品：dock 变暗缩小） */
-.stage-warm-root[data-board="pull"] .band-core{opacity:.45;transform:scale(.985);transition:opacity .39s,transform .39s}
-.stage-warm-root[data-board="settle"] .band-core{opacity:1;transform:none;transition:opacity .22s,transform .22s}
+.stage-warm-root[data-board="pull"] .band-core{opacity:.42;transform:scale(.975);filter:blur(1.2px);
+  transition:opacity .39s,transform .39s,filter .39s}
+.stage-warm-root[data-board="settle"] .band-core{opacity:1;transform:none;filter:none;
+  transition:opacity .22s,transform .22s,filter .22s}
 
 /* ⑥ · 底部控件收拢：次要控件只在悬停时浮出（阅读态零 chrome 的延续） */
 .stage-warm-root .quiet{opacity:0;transition:opacity 200ms;pointer-events:none}
@@ -687,6 +698,19 @@ window.__ModuleLoader__.load({
     //   🔴 这里**按 wire 格式自己渲染**，不 import 那个包 —— 宿主半边保持零依赖。
     //      少一个模块解析点，就少一条"profile 起不来"的可能。
     // ======================================================================
+    /**
+     * 角色显示名的「短名」：`鲸（DeepSeek 娘）` → `鲸`。
+     * 名字本身来自教室数据（见 manifest 的 classroom.teacher.name），这里只做排版取舍：
+     * 纸带上的署名格只有 2.2vh 宽，放不下全名。取不到名字时用「老师」——
+     * **不许**回落到任何写死的具体人名。
+     */
+    function teacherNameShort(name) {
+      const n = String(name || '').trim()
+      if (!n) return '老师'
+      const cut = n.split(/[（(]/)[0].trim()
+      return cut || n
+    }
+
     function escSvg(v) {
       return String(v == null ? '' : v)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -1389,6 +1413,8 @@ window.__ModuleLoader__.load({
       // 情绪通道：seq 游标 / 当前生效情绪（含过期时间）
       const emoSeqRef = React.useRef(0)
       const emoRef = React.useRef(null)
+      // 表情驱动是否已接管表情层（null ⇒ 回落到原来的静态待机表情）
+      const [driverOn, setDriverOn] = React.useState(false)
       // 拉出/收起的定时器（卸载时清掉，避免 setState after unmount）
       const beatTimersRef = React.useRef([])
 
@@ -1432,6 +1458,8 @@ window.__ModuleLoader__.load({
             getApp: function () { return l2dAppRef.current },
             getModel: function () { return l2dModelRef.current },
             getMouthSource: function () { return mouthRef.current },
+            // 驱动注册/注销 → 舞台重算表情层归属（有驱动＝表情归驱动，没驱动＝静态待机）
+            onDriverChange: function (next) { try { setDriverOn(!!next) } catch (e) { /* ignore */ } },
           })
           window.__SOCRATIC_STAGE__ = bridge
           bridgeRef.current = bridge
@@ -1478,6 +1506,40 @@ window.__ModuleLoader__.load({
           pushWarning('表情驱动 drive() 抛错（已隔离，舞台照常）：' + String((err && err.message) || err))
         }
       }, [])
+
+      // ── 情绪通道（契约 K1.4）─────────────────────────────────────────────
+      // 只在「舞台可见（页面在前台、舞台没关）且 running === true」时每 250ms 轮一次。
+      // 不做长轮询：实现简单、失败可见。
+      React.useEffect(function () {
+        if (!enabled || killed) return undefined
+        if (!data.running) return undefined
+        let stopped = false
+        let inFlight = false
+        const poll = function () {
+          if (stopped || inFlight) return
+          if (typeof document !== 'undefined' && document.hidden) return   // 页面在后台：不轮
+          inFlight = true
+          const url = BOARD_ROUTE + '/emotions?after=' + encodeURIComponent(String(emoSeqRef.current || 0))
+          fetch(url, { cache: 'no-store' })
+            .then(function (r) { return r.ok ? r.json() : null })
+            .then(function (j) {
+              if (stopped || !j || !Array.isArray(j.events)) return
+              for (const ev of j.events) {
+                const label = String(ev && ev.label || '')
+                const intensity = Number(ev && ev.intensity)
+                if (EMO_LABELS.indexOf(label) === -1) continue
+                if (!Number.isFinite(intensity) || intensity < 0 || intensity > 1) continue
+                emoRef.current = { label: label, intensity: intensity, at: Date.now() }
+              }
+              if (Number.isFinite(Number(j.nextSeq))) emoSeqRef.current = Number(j.nextSeq)
+            })
+            .catch(function () { /* 轮询失败就等下一拍：不重试、不排队 */ })
+            .then(function () { inFlight = false })
+        }
+        const timer = setInterval(poll, EMOTION_POLL_MS)
+        poll()
+        return function () { stopped = true; try { clearInterval(timer) } catch { /* ignore */ } }
+      }, [enabled, killed, data.running])
 
       // ── Live2D：库就绪 → 建 PIXI 应用 → 载模型 ─────────────────────────────
       // 🔴 规矩：这个 effect 必须在所有 return 之前（hooks 顺序铁律），且**失败要能降级**：
@@ -1588,6 +1650,20 @@ window.__ModuleLoader__.load({
       //   · 老师刚说完一段    → speak（播一轮）
       //   · 学生刚说完        → thinkend（老师在消化）
       //   · 其它             → idle
+      // 🔴 2026-10-20：这一条 effect 原来把**动作层与表情层写在同一串 if 里**，且依赖整个
+      //    `data.messages`（流式期间每来一块文本都重跑 → 每块都 `model.motion()` 重新起播，
+      //    表情也被反复打断）。现在：
+      //      · 依赖收窄成「最后一个开口的角色 + 是否在生成 + 表情层归谁」；
+      //      · **动作层保留原逻辑**（running→thinking / teacher→speak / you→thinkend / 否则 idle）；
+      //      · **表情层交给独立的驱动模块**（K0 的 setExpressionDriver）；没有驱动时才用静态待机表情。
+      const lastSpokenRole = (function () {
+        const msgs = data.messages || []
+        for (let i = msgs.length - 1; i >= 0; i--) {
+          const m = msgs[i]
+          if (m && (m.role === 'teacher' || m.role === 'you')) return m.role
+        }
+        return ''
+      })()
       React.useEffect(function () {
         const model = l2dModelRef.current
         if (!model || !l2dReady) return
@@ -1595,17 +1671,16 @@ window.__ModuleLoader__.load({
           try { model.motion(group, index) } catch (e) { /* 动作缺失不该影响画面 */ }
         }
         // 表情：模型自带 5 个（happy / happy2 / puzzled / relax / unhappy）。
-        // 只在**状态切换时**设一次，不每帧刷 —— 反复 setExpression 会打断表情过渡。
+        // 有驱动接管时**只管动作、不碰表情**（驱动每帧在写参数，这里再设会打架）。
         const expr = function (name) {
+          if (driverOn) return
           try { model.expression(name) } catch (e) { /* 没有该表情就跳过 */ }
         }
-        const msgs = data.messages || []
-        const last = msgs.length ? msgs[msgs.length - 1] : null
-        if (data.running) { play('Anima', 2); expr('relax'); return }        // thinking
-        if (last && last.role === 'teacher') { play('Anima', 0); expr('happy'); return }  // speak
-        if (last && last.role === 'you') { play('Anima', 1); expr('puzzled'); return }    // thinkend
+        if (data.running) { play('Anima', 2); expr('relax'); return }                     // thinking
+        if (lastSpokenRole === 'teacher') { play('Anima', 0); expr('happy'); return }     // speak
+        if (lastSpokenRole === 'you') { play('Anima', 1); expr('puzzled'); return }       // thinkend
         play('Idle', 0)
-      }, [l2dReady, data.running, data.messages])
+      }, [l2dReady, data.running, lastSpokenRole, driverOn])
 
       // 阅读态＝正文流自己滚（Avalon 做法）：新消息到达时贴底
       React.useEffect(function () {
@@ -1820,11 +1895,17 @@ window.__ModuleLoader__.load({
       children.push(H('div', { key: 'veil', className: 'veil' }))
       children.push(H('div', { key: 'c1', className: 'corner tl' }, CORNER_SVG))
       children.push(H('div', { key: 'c2', className: 'corner br' }, CORNER_SVG))
+      // 🔴 2026-10-20：这里原来**写死**了 `小 鞠 知 花 · 在场`（角色早就换成「鲸」了）。
+      //    名字的唯一来源是教室数据：宿主 manifest 的 `classroom.teacher.name`
+      //    （= classroom.yaml 里 `layer: persona` 那个角色卡文件的「名字」行）。
+      //    读不到就只显示「在场」——**绝不写死任何名字**。
+      const classroomInfo = props.classroom || {}
+      const teacherName = String((classroomInfo.teacher && classroomInfo.teacher.name) || '')
       children.push(H('div', { key: 'strip', className: 'cast-strip' },
-        H('span', { className: 'cast-chip on' }, '小 鞠 知 花 · 在场')))
+        H('span', { className: 'cast-chip on' }, teacherName ? (teacherName + ' · 在场') : '在场')))
       children.push(H('div', { key: 'top', className: 'topbar' },
         H('div', { className: 'tb-lft' },
-          H('span', { className: 'cn' }, data.title || '计算机系教室 · 操作系统'),
+          H('span', { className: 'cn' }, data.title || classroomInfo.title || '教室'),
           H('span', { className: 'no' }, data.running ? '老师正在讲' : '待你开口')),
         H('div', { className: 'tools' },
           H('button', { className: 'tool', onClick: function () { props.onChrome && props.onChrome('off') } }, '读'),
@@ -1936,6 +2017,10 @@ window.__ModuleLoader__.load({
         if (isCurrent && realOptions.length > 0) {
           bodyText = stripTrailingOptionList(bodyText)
         }
+        // 🔴 契约 K1.4 的防御性剥离：正常路径下引擎已在 `llm/stream` 剥净，
+        //    这里兜的是"引擎没装/版本不匹配"——纸带绝不能把 〔emo:…〕 显示出来。
+        //    `final` 只在"这条消息已经说完"时为真：流式中间态遇到半截标记先不下传。
+        bodyText = stripEmotionMarkers(bodyText, { final: !m.running }).text
         bodyText = stripMarkdown(bodyText)
         lines.push(H('p', { key: 'm' + i, className: cls },
           (m.role === 'you' ? '你：' : '') + bodyText,
@@ -2043,7 +2128,7 @@ window.__ModuleLoader__.load({
             H('div', { className: 'who' },
               H('span', { className: 'bar' }),
               // 角色名：与 characters/ 里的当课老师一致（换角色改这一处）
-              H('span', { className: 'nm' }, '鲸')),
+              H('span', { className: 'nm' }, teacherNameShort(teacherName))),
             lines,
             optsNode)),
         H('div', { className: 'composer' },
@@ -2213,6 +2298,8 @@ window.__ModuleLoader__.load({
           //    （而且它是**静默降级**：没有报错，只是 canvas 不出现）。
           state.props.models = j.models || []
           state.props.l2d = j.l2d || []
+          // 教室标识（教室名/老师显示名）：一律来自宿主读到的教室数据，前端不写死
+          state.props.classroom = j.classroom || null
         }
         render()
       }).catch(function (err) { warnings.push('清单加载失败：' + String(err)) })
@@ -2246,6 +2333,7 @@ window.__ModuleLoader__.load({
         createTextCadenceMouth: createTextCadenceMouth,
         normalizeMermaidSvg: normalizeMermaidSvg,
         contentTextOf: contentTextOf,
+        teacherNameShort: teacherNameShort,
         classifyBlocks: classifyBlocks,
         readUserText: readUserText,
         titleOf: titleOf,
