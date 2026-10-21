@@ -12,13 +12,14 @@
 //       note: { type: 'string' },
 //     },
 //   }
-//   type ∈ 'string' | 'integer' | 'boolean'
+//   type ∈ 'string' | 'integer' | 'boolean' | 'array'
+//   array 只支持「元素是字符串」（N4.2 的「一次生成当天几条」用得到），带 minItems/maxItems/itemMaxChars。
 
 import { NarrativeError, ERROR_CODES } from './errors.mjs'
 import { charCount } from './text.mjs'
 
 /** 允许的字段类型。 */
-export const FIELD_TYPES = Object.freeze(['string', 'integer', 'boolean'])
+export const FIELD_TYPES = Object.freeze(['string', 'integer', 'boolean', 'array'])
 
 /**
  * 去掉模型常见的一层 ``` 围栏，其余原样保留。
@@ -94,6 +95,37 @@ export function validateAgainstSchema(value, schema) {
       }
       continue
     }
+    if (type === 'array') {
+      if (!Array.isArray(raw)) {
+        issues.push(`字段 ${name} 应为数组，实际 ${typeof raw}`)
+        continue
+      }
+      if (rule.minItems !== undefined && raw.length < rule.minItems) {
+        issues.push(`字段 ${name} 有 ${raw.length} 项，少于下限 ${rule.minItems}`)
+      }
+      if (rule.maxItems !== undefined && raw.length > rule.maxItems) {
+        issues.push(`字段 ${name} 有 ${raw.length} 项，超过上限 ${rule.maxItems}`)
+      }
+      const itemType = rule.itemType ?? 'string'
+      if (itemType !== 'string') {
+        issues.push(`字段 ${name} 的元素类型 ${itemType} 不在允许集合 string 里`)
+        continue
+      }
+      raw.forEach((item, index) => {
+        if (typeof item !== 'string') {
+          issues.push(`字段 ${name} 的第 ${index + 1} 项应为字符串，实际 ${typeof item}`)
+          return
+        }
+        const length = charCount(item)
+        if (rule.itemMinChars !== undefined && length < rule.itemMinChars) {
+          issues.push(`字段 ${name} 的第 ${index + 1} 项只有 ${length} 字，少于下限 ${rule.itemMinChars}`)
+        }
+        if (rule.itemMaxChars !== undefined && length > rule.itemMaxChars) {
+          issues.push(`字段 ${name} 的第 ${index + 1} 项有 ${length} 字，超过上限 ${rule.itemMaxChars}`)
+        }
+      })
+      continue
+    }
     if (type === 'integer') {
       if (typeof raw !== 'number' || !Number.isInteger(raw)) issues.push(`字段 ${name} 应为整数`)
       continue
@@ -137,6 +169,14 @@ export function describeSchema(schema) {
     if (rule.required === true) bits.push('必填')
     if (rule.minChars !== undefined) bits.push(`至少 ${rule.minChars} 字`)
     if (rule.maxChars !== undefined) bits.push(`不超过 ${rule.maxChars} 字`)
+    if ((rule.type ?? 'string') === 'array') {
+      bits.length = 0
+      bits.push(`数组，元素是${rule.itemType === 'integer' ? '整数' : rule.itemType === 'boolean' ? '布尔值' : '字符串'}`)
+      if (rule.required === true) bits.push('必填')
+      if (rule.minItems !== undefined) bits.push(`至少 ${rule.minItems} 项`)
+      if (rule.maxItems !== undefined) bits.push(`最多 ${rule.maxItems} 项`)
+      if (rule.itemMaxChars !== undefined) bits.push(`每项不超过 ${rule.itemMaxChars} 字`)
+    }
     lines.push(`- ${name}: ${bits.join('，')}`)
   }
   lines.push('字数按 Unicode 码点算；超字数会被判为不合法，不会被截断。')

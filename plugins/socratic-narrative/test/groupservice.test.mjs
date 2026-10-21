@@ -312,6 +312,58 @@ test('作用域 → 教室目录：引擎报过 classroomDir 就按会话走（�
   assert.deepEqual(history.messages, [])
 })
 
+test('N4 接入：到点由服务把主动消息写进群（数组 schema 端到端）', async () => {
+  const dir = await makeClassroom()
+  const daytime = Date.UTC(2026, 9, 21, 1, 0, 0) // 北京 09:00（窗口内）
+  const clock = fakeClock(daytime)
+  const { service } = makeService({
+    dir,
+    clock,
+    handler: (spec) => {
+      if (spec.schema?.fields?.messages?.type === 'array') return { messages: ['风停了。'] }
+      return { speaker: '鲸', text: '在。' }
+    },
+  })
+  // 第一次 tick：首次开场 + 生成当天那条定时消息（数组 schema 走真协议）
+  await service.tick(daytime)
+  const queue = JSON.parse(await readFile(join(dir, 'runtime', '.narrative', 'proactive.json'), 'utf8'))
+  const slot = queue.slots.find((entry) => entry.state === 'pending')
+  assert.ok(slot !== undefined, '应当已经生成当天的一条定时消息')
+  assert.match(slot.text, /风停了/)
+  // 到点：这段时间里没有任何新消息 → 直接发
+  const raw = (await service.tick(slot.atMs)).flatMap((result) => result.actions)
+  assert.ok(raw.includes('proactive:sent'), JSON.stringify(raw))
+  const history = await service.history(SCOPE)
+  assert.equal(history.messages.at(-1).text, '风停了。')
+  assert.equal(history.messages.at(-1).role, 'character')
+})
+
+test('N4 接入：预生成后学生说了一句话 → 那条作废、按最新上下文重生成', async () => {
+  const dir = await makeClassroom()
+  const daytime = Date.UTC(2026, 9, 21, 1, 0, 0)
+  const clock = fakeClock(daytime)
+  const { service } = makeService({
+    dir,
+    clock,
+    replyDelay: 0,
+    handler: (spec) => {
+      if (spec.schema?.fields?.messages?.type === 'array') return { messages: ['风停了。'] }
+      return { speaker: '鲸', text: '在。' }
+    },
+  })
+  await service.tick(daytime)
+  const queue = JSON.parse(await readFile(join(dir, 'runtime', '.narrative', 'proactive.json'), 'utf8'))
+  const slot = queue.slots.find((entry) => entry.state === 'pending')
+  await service.send(SCOPE, '在吗', 'c-1')
+  await service.tick(daytime + 1) // 回她那条
+  const raw = (await service.tick(slot.atMs)).flatMap((result) => result.actions)
+  assert.ok(raw.includes('proactive:void-context'), JSON.stringify(raw))
+  assert.ok(raw.includes('proactive:regenerated'), JSON.stringify(raw))
+  const after = JSON.parse(await readFile(join(dir, 'runtime', '.narrative', 'proactive.json'), 'utf8'))
+  assert.equal(after.voided[0].reason, 'context')
+  assert.equal(after.slots.filter((entry) => entry.state === 'pending').length, 1)
+})
+
 test('运行日志：成功/失败都进 recordRun（与日记同一份 agent-runs.jsonl）', async () => {
   const dir = await makeClassroom()
   const { service, runs } = makeService({ dir, replyDelay: 0, handler: () => ({ speaker: '鲸', text: '在。' }) })

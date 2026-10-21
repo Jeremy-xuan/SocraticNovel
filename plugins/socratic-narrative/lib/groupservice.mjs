@@ -34,6 +34,7 @@ import {
 } from './group.mjs'
 import { createGroupStore, STUDENT_SPEAKER } from './groupstore.mjs'
 import { appendGroupQuestion } from './noteswrite.mjs'
+import { createProactiveScheduler } from './proactive.mjs'
 import { createSerialQueue } from './serial.mjs'
 import { charCount } from './text.mjs'
 import { GROUP_METHODS, GROUP_SERVICE_KEY, markRemoteMethods } from './typert.host.mjs'
@@ -304,6 +305,16 @@ export class ClassroomGroupService {
         const steps = []
         steps.push(...(await this.maybeOpen(actor, nowMs)))
         steps.push(...(await this.maybeReply(actor, nowMs)))
+        if (actor.proactive !== null) {
+          try {
+            const result = await actor.proactive.tick(nowMs)
+            if (result.actions.length > 0) steps.push(...result.actions.map((action) => `proactive:${action}`))
+            for (const slot of result.sentNow ?? []) await this.deliverProactive(actor, slot)
+          } catch (error) {
+            this.log('error', `[narrative] 主动消息调度失败：${error?.message ?? error}`)
+            steps.push('proactive:failed')
+          }
+        }
         return steps
       })
       results.push({ dir, actions })
@@ -346,7 +357,7 @@ export class ClassroomGroupService {
         pending: state.pending,
         lastReplyError: state.lastReplyError,
         classroom: state.classroom,
-        proactive: null,
+        proactive: actor.proactive === null ? null : await actor.proactive.status(),
       })
     }
     return out
@@ -409,6 +420,15 @@ export class ClassroomGroupService {
       serial: createSerialQueue(),
       proactive: null,
     }
+    actor.proactive = createProactiveScheduler({
+      classroomDir: dir,
+      now: this.now,
+      rng: this.rng,
+      log: this.log,
+      generate: async ({ count, times }) => this.generateNudge(actor, { count, times }),
+      readMessages: async () => (await store.readAll()).messages,
+      classroomState: async () => this.classroomStateOf(dir),
+    })
     this.actors.set(dir, actor)
     return actor
   }
@@ -630,6 +650,18 @@ export class ClassroomGroupService {
     })
     const texts = result.value.messages
     return texts.map((text) => validateSpeech({ speaker: collected.character.name, text }, { names, defaultSpeaker: collected.character.name }))
+  }
+
+  /**
+   * 把主动消息真正写进群（调度器只决定「该发」，写盘在这里）。
+   * @param {object} actor
+   * @param {object} slot
+   */
+  async deliverProactive(actor, slot) {
+    if (slot.delivered === true) return
+    const appended = await actor.store.append({ role: 'character', speaker: slot.speaker, text: slot.text, clientId: null, kind: 'message' })
+    slot.delivered = appended.message.seq
+    await this.recordRun(actor, { task: 'group', state: 'ok', kind: 'proactive', seq: appended.message.seq, chars: charCount(slot.text) })
   }
 
   /**
