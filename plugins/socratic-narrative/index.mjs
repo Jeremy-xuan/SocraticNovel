@@ -6,6 +6,7 @@
 //   N3 群聊                     —— lib/groupservice.mjs + lib/group.mjs + lib/groupstore.mjs
 //                                  （契约 K4 的四个 Remote 方法；真源 runtime/wechat_group.jsonl）
 //   N4 定时主动消息             —— lib/proactive.mjs（北京时间 8:00–23:00、预生成、确定性检查、退避）
+//   N5 世界观提议               —— lib/proposals.mjs + lib/review.mjs + lib/worldguard.mjs
 //
 // 宿主面只有一件事：把服务以名字 `narrative` 提供给引擎（`ctx.get('narrative')` /
 // `ctx.narrative`，取决于引擎怎么接）。**本轮不改引擎**——接线说明见 README §7。
@@ -19,6 +20,8 @@
 import { ERROR_CODES, NarrativeError, describeError } from './lib/errors.mjs'
 import { DIARY_SCHEMA, buildDiaryPrompt, buildDiarySystem, collectDiaryInputs, createDiaryStore, readRecentDiaries } from './lib/diary.mjs'
 import { ClassroomGroupService } from './lib/groupservice.mjs'
+import { appendProposal, readWorldLog } from './lib/proposals.mjs'
+import { createReviewer } from './lib/review.mjs'
 import { createAgentRunner } from './lib/runner.mjs'
 import { createRunLog } from './lib/runlog.mjs'
 import { createRunRegistry } from './lib/state.mjs'
@@ -110,6 +113,12 @@ export function createNarrativeService({
   }
 
   /**
+   * N5.2 的审阅器：每节课结束、跑日记的那一轮顺带把积压的提议处理完。
+   * 待审 = `world/proposals.md` 里没有在 `world/changelog.md` 出现过的那些。
+   */
+  const reviewer = createReviewer({ runTask: (spec) => runner.runTask(spec), now, log, recordRun })
+
+  /**
    * K4 群聊服务（typert Remote 的宿主半边 + 服务端节奏 + N4 定时）。
    * `apply()` 会把它以 `classroomGroup` 这个名字 provide 出去。
    */
@@ -189,7 +198,22 @@ export function createNarrativeService({
           ...(request.timeoutMs === undefined ? {} : { timeoutMs: request.timeoutMs }),
           apply: async (value) => {
             const appended = await store.append({ sessionId, lesson, date, text: value.text })
-            return { writes: appended.writes, skipped: appended.skipped }
+            const writes = [...appended.writes]
+            // N5.1：日记 agent 也可以提议扩充世界观（两个字段要一起给，否则当没提）
+            const content = typeof value.proposal_content === 'string' ? value.proposal_content.trim() : ''
+            const reason = typeof value.proposal_reason === 'string' ? value.proposal_reason.trim() : ''
+            if (content !== '' && reason !== '') {
+              const proposal = await appendProposal({
+                classroomDir,
+                now: now(),
+                origin: '日记 agent',
+                content,
+                reason,
+                quote: value.text,
+              })
+              writes.push({ path: proposal.path, bytes: proposal.bytes })
+            }
+            return { writes, skipped: appended.skipped }
           },
         })
 
@@ -209,7 +233,8 @@ export function createNarrativeService({
           chars: typeof result.value?.text === 'string' ? [...result.value.text].length : null,
         })
         log('info', `[narrative] 日记${skipped ? '已存在，跳过' : '已写入'}（第 ${lesson ?? '?'} 讲，${result.elapsedMs}ms）`)
-        return { ok: true, state: skipped ? 'skipped' : 'ok', writes: result.writes, value: result.value }
+        const review = await runReviewRound({ classroomDir, sessionId, lesson, request })
+        return { ok: true, state: skipped ? 'skipped' : 'ok', writes: result.writes, value: result.value, review }
       } catch (cause) {
         const error = cause instanceof NarrativeError ? cause : new NarrativeError(ERROR_CODES.MODEL_ERROR, String(cause?.message ?? cause), { cause })
         run.failed(error)
@@ -236,6 +261,43 @@ export function createNarrativeService({
   }
 
   /**
+   * N5.2 的「顺带审阅」：日记那一轮跑完（写成功、跳过都算）后处理积压提议。
+   *
+   * 🔴 失败**不吞**：① 记 `runtime/.narrative/agent-runs.jsonl`；② 在 `status()` 里留一条
+   * `task: 'review'` 的失败记录；③ 结果里如实写 `{ok:false, error}`。
+   *
+   * @param {{classroomDir: string, sessionId: string, lesson: number|null, request: object}} input
+   * @returns {Promise<{ok: boolean, reviewed?: number, accepted?: object[], rejected?: object[], refused?: object[], error?: object}>}
+   */
+  async function runReviewRound({ classroomDir, sessionId, lesson, request }) {
+    if (config?.review === false) return { ok: true, reviewed: 0 }
+    // 没有积压就不开这一轮：不记状态、不写日志（「什么都没发生」不该在日志里留一行噪音）
+    const world = await readWorldLog(classroomDir)
+    if (world.pending.length === 0) return { ok: true, reviewed: 0, accepted: [], rejected: [], refused: [] }
+    const run = registry.begin({ task: 'review', sessionId, lesson, trigger: 'diary-round' })
+    const runLog = runLogFor(classroomDir)
+    try {
+      const summary = await reviewer.run({
+        classroomDir,
+        ...(request.model === undefined ? {} : { model: request.model }),
+        ...(request.timeoutMs === undefined ? {} : { timeoutMs: request.timeoutMs }),
+      })
+      run.done({ bytes: summary.accepted.length })
+      await safeRecord(runLog, { runId: run.runId, task: 'review', state: 'ok', sessionId, lesson, ...summary, accepted: summary.accepted.length })
+      if (summary.reviewed > 0) {
+        log('info', `[narrative] 世界观提议审阅：处理 ${summary.reviewed} 条（接受 ${summary.accepted.length} / 拒绝 ${summary.rejected.length} / 守卫挡下 ${summary.refused.length}）`)
+      }
+      return { ok: true, ...summary }
+    } catch (cause) {
+      const error = cause instanceof NarrativeError ? cause : new NarrativeError(ERROR_CODES.MODEL_ERROR, String(cause?.message ?? cause), { cause })
+      run.failed(error)
+      log('error', `[narrative] 世界观提议审阅失败（${error.code}）：${error.message}`)
+      await safeRecord(runLog, { runId: run.runId, task: 'review', state: 'failed', sessionId, lesson, code: error.code, message: error.message })
+      return { ok: false, error: describeError(error) }
+    }
+  }
+
+  /**
    * 写一条运行日志；日志本身失败只报给 logger（**不**递归进 status，避免状态机自吞）。
    * @param {ReturnType<typeof createRunLog>} runLog
    * @param {object} entry
@@ -255,6 +317,12 @@ export function createNarrativeService({
     runDiary,
     /** K4 群聊服务（引擎可直接调；宿主侧也以 `classroomGroup` 这个名字 provide）。 */
     group,
+    /** N5.2 审阅：手动跑一轮（引擎/测试用；正常触发在 runDiary 里顺带）。 */
+    reviewProposals: (request) => runReviewRound({ classroomDir: request.classroomDir, sessionId: request.sessionId ?? 'manual', lesson: request.lesson ?? null, request }),
+    /** N5.1 追加一条世界观提议（课堂老师用）。 */
+    appendProposal: (request) => appendProposal({ ...request, now: request.now ?? now() }),
+    /** N5 只读：提议与变更记录（面板/引擎排障用）。 */
+    readWorldLog: (classroomDir) => readWorldLog(classroomDir),
     /** N2.4 读取出口：最近 N 条日记。 */
     readRecentDiaries: (request) => readRecentDiaries({ ...request, ...(io.read === undefined ? {} : { read: io.read }) }),
     /** N2.1 兜底判据（纯函数，引擎拿去判断）。 */

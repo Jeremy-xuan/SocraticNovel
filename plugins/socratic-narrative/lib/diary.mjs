@@ -33,6 +33,9 @@ const ENTRY_HEADING = /^###[ \t]+(\d{4}-\d{2}-\d{2})(?:[ \t]*·[ \t]*第[ \t]*(\
 export const DIARY_SCHEMA = Object.freeze({
   fields: {
     text: { type: 'string', required: true, minChars: 1, maxChars: MAX_DIARY_CHARS },
+    // N5.1：日记 agent 也可以提议扩充世界观（可选；两个字段要一起给）
+    proposal_content: { type: 'string', maxChars: 200 },
+    proposal_reason: { type: 'string', maxChars: 200 },
   },
 })
 
@@ -444,6 +447,7 @@ export function buildDiaryPrompt({ date, lesson }) {
     when,
     '下面是你手边的东西：这节课留下的记录、你最近写的三条、你自己是谁、你所在的地方、最近群里说过的话。',
     '把这些当成你刚经历过的一天，写今天这一条日记。',
+    '如果写的时候你觉得这个地方该多一个人、或多一件东西，可以顺手写 proposal_content 与 proposal_reason；没这个想法就别写这两个字段。',
   ].join('\n')
 }
 
