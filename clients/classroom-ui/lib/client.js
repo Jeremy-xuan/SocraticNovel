@@ -1116,7 +1116,13 @@ window.__ModuleLoader__.load({
 			let offset = 1;
 			for (;;) {
 				const result = await remote.workspaceFiles.read(sessionId, path, { offset }, signal);
-				if (!result.ok) throw new Error(result.error.message);
+				if (!result.ok) {
+					// 🔴 把宿主的 error.code 带出来：下游要判「文件不存在」（正常态）还是「读坏了」（故障），
+					//    靠**结构化字段**判，不靠对文案做正则（文案会随版本变，code 不会）。
+					const failure = new Error(result.error.message);
+					if (result.error.code !== undefined && result.error.code !== null) failure.code = String(result.error.code);
+					throw failure;
+				}
 				if (result.value.lines === 0) {
 					if (result.value.eof) break;
 					throw new Error("分页无进展：第 " + String(offset) + " 行起返回 0 行却未到末行（" + path + "）");
@@ -1711,6 +1717,49 @@ window.__ModuleLoader__.load({
 				drawSource: Object.assign({ color: ink[2], background: fill.code, borderRadius: radius.inner, margin: 0, padding: space.md + " " + space.lg, overflowX: "auto", whiteSpace: "pre-wrap", overflowWrap: "anywhere" }, t.code),
 				drawDetails: Object.assign({ color: ink[4] }, t.label),
 				drawSummary: Object.assign({ color: ink[4], cursor: "pointer" }, t.label),
+
+				// ── 面板内 tab 栏（W-p：「教室」／「板书」）────────────────────────────
+				//    层级只用**字色 ＋ 金褐下划线**表达（项目硬规矩：不许用加粗做层级）。
+				//    tab 栏本身走一条宿主发丝线收口，与「书名页」的分节线同一材质。
+				tabBar: { display: "flex", alignItems: "baseline", gap: space.xl, borderBottom: line.hair },
+				tab: Object.assign({
+					appearance: "none",
+					background: "transparent",
+					border: 0,
+					borderBottom: "2px solid transparent",
+					padding: space.xs + " 0 " + space.sm,
+					margin: 0,
+					cursor: "pointer",
+					color: ink[4],
+				}, t.label),
+				tabActive: { color: ink[1], borderBottom: "2px solid var(--cui-gold)" },
+
+				// ── 板书历史（W-p）：只读列表 ＋ 点开后的那一块 ────────────────────────
+				//    列表是**一行一条**（标题占满、元信息靠右），当前讲那一行底下走金褐发丝线。
+				//    🔴 行是 button 元素：浏览器默认的边框/底色/字体必须显式清掉，否则会跳出一套
+				//       "系统按钮"的样子（与本面板的纸面材质完全不是一回事）。
+				boardList: { display: "flex", flexDirection: "column" },
+				boardRow: Object.assign({
+					appearance: "none",
+					display: "flex",
+					flexWrap: "wrap",
+					alignItems: "baseline",
+					justifyContent: "space-between",
+					gap: space.md,
+					width: "100%",
+					textAlign: "left",
+					background: "transparent",
+					border: 0,
+					borderBottom: line.hair,
+					padding: space.sm + " 0 " + space.sm + " " + space.md,
+					cursor: "pointer",
+					color: ink[2],
+				}, t.body),
+				boardRowCurrent: { borderBottom: line.gold },
+				boardRowTitle: Object.assign({ flex: "1 1 auto", minWidth: 0, overflowWrap: "anywhere", color: ink[2] }, t.head),
+				boardRowMeta: Object.assign({ flex: "0 0 auto", color: ink[4] }, t.meta),
+				/** 点开后的那一块：像一张"翻开的书页"（内页边界 ＋ 画布底），与消息流里那张图同一材质。 */
+				boardViewer: { display: "flex", flexDirection: "column", gap: space.sm, border: line.box, borderRadius: radius.block, padding: space.lg, background: fill.plate },
 			};
 			/** `body` 是 `root` 的别名（两处都指面板根；保留旧键名以免渲染代码与测试两处各改各的）。 */
 			styles.body = styles.root;
@@ -1837,35 +1886,53 @@ window.__ModuleLoader__.load({
 		/**
 		 * 把宿主「读字节」Remote 的返回值解成 `Uint8Array`（**形状不对就响，不猜**）。
 		 *
-		 * 🔴 这是 0.2.1 迁移踩到的一处**真断裂**（实测，不是推的）：
+		 * 🔴 这是 0.2.1 迁移踩到的一处**真断裂**（两次实测，不是推的）：
 		 *    · 0.1.5 的客户端调的是 `workspaceFiles.readAll(...)`，返回值里字节是 **base64 文本**
 		 *      （`data: Buffer.from(data).toString("base64")`，见 README §4.5.1 的取证）；
 		 *    · **0.2.1 里根本没有 `readAll` 这个方法**（`workspaceFiles` 只注册
 		 *      `read` / `readBytes` / `list` / `stat` / `changes`），调用它当场
 		 *      `TypeError: remote.workspaceFiles.readAll is not a function` → 面板直接进 failed 态，
 		 *      连"读文件"那一步都没走到。这就是「立绘装载失败」的**第一因**（不是缺资产）。
-		 *    → 现在改调 `readBytes`，并按三种**真实可能出现的**负载形状解：
-		 *      ① `Uint8Array`（二进制通道直接给字节）；
-		 *      ② `ArrayBuffer`；
-		 *      ③ base64 字符串（0.1.5 的形状，留在分支里是因为**同一个面板要能跑在两代宿主上**，
-		 *         而且真机上到底给哪种我只能在浏览器里实测——两条都解，谁在场用谁）。
-		 *      其它任何形状（null / 数字 / 没见过的对象）**一律抛**，把认不出的东西暴露出来。
+		 *    · 改调 `readBytes` 之后**还有第二个坑**（2026-10-20 在真浏览器里抓到）：
+		 *      `WorkspaceFileBytes` 的 `bytes` 字段装的是**字节数（number）**，真正的负载在 `data` 里。
+		 *      只按 `bytes` 取 → 读出来是个数字 → 整条立绘链在这里断掉。
+		 *      **所以两个字段都要看，谁装着字节就用谁**（不是"哪个名字更像"）。
+		 * 支持的负载形状（都是真实可能出现的）：
+		 *   ① `Uint8Array`（二进制通道直接给字节）；
+		 *   ② `ArrayBuffer` / 任意 `ArrayBufferView`（Buffer 也是这一族）；
+		 *   ③ 数字数组（JSON 传输退化的形状）；
+		 *   ④ base64 字符串（0.1.5 的形状；同一个面板要能跑在两代宿主上）。
+		 * 两个字段都不是这四种之一 → **抛**，并在文案里把 `bytes` / `data` 各自的类型列出来。
 		 * @param value - `readBytes` 的 `value`
 		 * @param path - 出错文案里点名用
 		 * @returns {Uint8Array}
 		 */
 		function bytesOfWorkspaceFile(value, path) {
-			const fail = (shape) => new Error("读字节的返回形状认不出（" + shape + "）：" + path);
-			if (value === null || value === undefined) throw fail("value 为空");
-			const raw = value.bytes === undefined ? value.data : value.bytes;
-			if (raw === null || raw === undefined) throw fail("既没有 bytes 也没有 data");
-			if (raw instanceof Uint8Array) return raw;
-			if (typeof ArrayBuffer !== "undefined" && raw instanceof ArrayBuffer) return new Uint8Array(raw);
-			if (ArrayBuffer.isView(raw)) return new Uint8Array(raw.buffer, raw.byteOffset, raw.byteLength);
-			if (Array.isArray(raw)) return Uint8Array.from(raw);
-			if (typeof raw === "object" && Array.isArray(raw.data)) return Uint8Array.from(raw.data);
-			if (typeof raw === "string") return base64ToBytes(raw);
-			throw fail(typeof raw);
+			const kindOf = (candidate) => {
+				if (candidate === null) return "null";
+				if (candidate === undefined) return "undefined";
+				if (Array.isArray(candidate)) return "array";
+				if (typeof ArrayBuffer !== "undefined" && candidate instanceof ArrayBuffer) return "arraybuffer";
+				if (ArrayBuffer.isView(candidate)) return "view";
+				return typeof candidate;
+			};
+			const asBytes = (candidate) => {
+				if (candidate === null || candidate === undefined) return null;
+				if (candidate instanceof Uint8Array) return candidate;
+				if (typeof ArrayBuffer !== "undefined" && candidate instanceof ArrayBuffer) return new Uint8Array(candidate);
+				if (ArrayBuffer.isView(candidate)) return new Uint8Array(candidate.buffer, candidate.byteOffset, candidate.byteLength);
+				if (Array.isArray(candidate)) return Uint8Array.from(candidate);
+				if (typeof candidate === "object" && Array.isArray(candidate.data)) return Uint8Array.from(candidate.data);
+				if (typeof candidate === "string") return base64ToBytes(candidate);
+				return null;
+			};
+			if (value === null || value === undefined) throw new Error("读字节的返回形状认不出（value 为空）：" + path);
+			// 🔴 `bytes` 与 `data` 都试：0.2.1 里 `bytes` 是**字节数**，负载在 `data` 上。
+			for (const candidate of [value.bytes, value.data]) {
+				const bytes = asBytes(candidate);
+				if (bytes !== null) return bytes;
+			}
+			throw new Error("读字节的返回形状认不出（bytes=" + kindOf(value.bytes) + "，data=" + kindOf(value.data) + "）：" + path);
 		}
 
 		/**
@@ -2702,7 +2769,26 @@ window.__ModuleLoader__.load({
 			const stage = await stageRuntime();
 			if (stage.ok) return mountPixiPortrait(options, stage);
 			portraitSources.stage = false;
-			return mountCustomPortrait(options);
+			try {
+				return await mountCustomPortrait(options);
+			} catch (error) {
+				/**
+				 * 🔴 把**「能力缺席」**与**「装载故障」**分开（两件事，语义不同）：
+				 *   · 自带这条腿的**入口**＝渲染宿主 bundle（`live2d-host.bundle.mjs`）。它读不到
+				 *     ⇒ 这台 profile 上**根本没有可用的 Live2D 源**（舞台没装 ＋ 自带宿主未构建）
+				 *     ⇒ 这是**预期的能力缺席**，面板显示静态图 ＋ 一条中性说明，**不叫"装载失败"**；
+				 *   · 入口读得到、后面某一步坏了（Core 读不到/执行失败、模型 JSON 坏、着色器编译超时…）
+				 *     ⇒ 那是**故障**，原始报错一路抛出去，面板照旧显示「立绘装载失败：…」。
+				 * 判据是"重新读一次入口"（只在失败路径多读一次，正常路径零成本），
+				 * 不是拿报错文案做字符串匹配。
+				 */
+				const entry = await readFirstAvailable(options.remote, options.sessionId, frameworkCandidates(), options.signal);
+				if (entry.ok) throw error;
+				const absent = new Error("本 profile 没有可用的 Live2D 源（舞台没装，且自带渲染宿主 " + live2dRoot() + " 未构建）");
+				absent.code = "portrait/no-source";
+				absent.causes = [messageOf(error)];
+				throw absent;
+			}
 		}
 
 		/**
@@ -3889,6 +3975,173 @@ window.__ModuleLoader__.load({
 		}
 
 		// ════════════════════════════════════════════════════════════════════
+		// 6.9 · 板书历史（W-p）：右栏「板书」tab 的**只读**数据层
+		//
+		// 真源＝`<教室>/runtime/diagrams/index.md`（**引擎在写**，见 `plugins/socratic-engine/lib/
+		// diagramstore.mjs` 与 `diagram.mjs` 的 `renderIndexHeader/renderIndexRow`）。
+		// 🔴 明确**不**用 `whiteboardStore`：那个服务端服务**没有任何写入者**（本仓库里 `whiteboard`
+		//    在 lib/client.js 里 0 处命中），拿它当数据源只会得到一张永远空着的表。
+		// 🔴 索引只给"有哪些图"；**图的内容**在对应的 `.mmd` 文件里，点开才读（省 IO，也符合
+		//    "点开后渲染"这条验收）。
+		// ════════════════════════════════════════════════════════════════════
+
+		/**
+		 * 把 markdown 表格的一行切成单元格（**认 `\|` 转义**）。
+		 * 🔴 为什么不能 `line.split("|")`：引擎写标题/说明时会把 `|` 转义成 `\|`
+		 *    （`diagram.mjs` 的 `cell()` 逐字 `text.replace(/\|/g, '\\|')`），
+		 *    按裸 `|` 切会把一个标题切成两格、后面每一列都错位一格（静默错位，最难查）。
+		 * @param line - 一行 markdown 表格（首尾都是 `|`）
+		 * @returns 单元格文本数组（已 trim，首尾那两个空段去掉）
+		 */
+		function splitTableRow(line) {
+			const cells = [];
+			let current = "";
+			for (let index = 0; index < line.length; index += 1) {
+				const ch = line[index];
+				if (ch === "\\" && line[index + 1] === "|") { current += "|"; index += 1; continue; }
+				if (ch === "|") { cells.push(current); current = ""; continue; }
+				current += ch;
+			}
+			cells.push(current);
+			// 首尾各有一个空段（行首 `|` 之前、行尾 `|` 之后）
+			return cells.slice(1, cells.length - 1).map((cell) => cell.trim());
+		}
+
+		/**
+		 * 解析 `runtime/diagrams/index.md`（**纯函数**：只吃文本，测试直接喂字符串）。
+		 *
+		 * 🔴 **按表头名取列，不按固定列数/固定下标**（2026-10-20 的变更逼出来的硬要求）：
+		 *    引擎给索引**加过一列**（末尾「会话」），表头从 7 列变 8 列。按列数/下标写死的解析器
+		 *    会在那一刻**把每一行都判成"列数对不上"然后整张表变空** —— 而且不报错。
+		 *    所以：先用「含『源文件』那一行」认出表头、建成 `列名 → 下标` 的表，数据行按名字取。
+		 *    以后再加列，这里一行都不用改。
+		 *
+		 * 已知的列（**只有「源文件」是必需的**，其余缺了降级而不是报错）：
+		 *   `日期 | 讲次 | 回合 | 图类型 | 标题 | 说明 | 源文件 | 会话`
+		 *   · `会话` 是后加的，老索引里没有 → `session: null`（**不等于"不属于本会话"**，见 `BoardHistory` 的标注规则）；
+		 *   · `讲次` 可能是 `—`（引擎在"没有讲次门"时写它）→ `lesson: null`，**不填 0**。
+		 *
+		 * 输出**按时间倒序**（日期 `yyyy-MM-dd HH:mm` 可字典序比较，直接比字符串）；
+		 * 时间相同再按回合倒序；还相同则"后追加的在前"（索引 append-only，越靠后越新）。
+		 * @param text - 索引全文（读不到传 null/空串）
+		 * @returns {{items: Array<object>, skipped: number, columns: string[], legacy: boolean}}
+		 *          `legacy: true` ＝ 没认出表头，按**老版 7 列的位置**解析（降级路径，照样能用）。
+		 */
+		function parseDiagramIndex(text) {
+			const items = [];
+			let skipped = 0;
+			const empty = { items: items, skipped: skipped, columns: [], legacy: false };
+			if (typeof text !== "string" || text.trim() === "") return empty;
+
+			/** 老版 7 列的位置（只有在**认不出表头**时才用；认得出就一律按名字取）。 */
+			const LEGACY_COLUMNS = ["日期", "讲次", "回合", "图类型", "标题", "说明", "源文件"];
+			let header = null;
+			let legacy = false;
+
+			const numberOrNull = (value, pattern) => (pattern.test(String(value).trim()) ? Number.parseInt(String(value).trim(), 10) : null);
+
+			for (const rawLine of text.split("\n")) {
+				const raw = rawLine.trim();
+				if (!raw.startsWith("|") || !raw.endsWith("|")) continue;
+				const cells = splitTableRow(raw);
+				if (cells.length === 0) continue;
+				// 分隔行：每一格都只是破折号（含对齐用的 `:--`）
+				if (cells.every((cell) => /^:?-{2,}:?$/.test(cell.replace(/\s/g, "")))) continue;
+
+				if (header === null && !legacy) {
+					// 认表头：**含「源文件」那一行**。认不出就等到第一行数据时退回老版位置映射。
+					if (cells.includes("源文件")) {
+						header = new Map(cells.map((name, index) => [name, index]));
+						continue;
+					}
+					if (cells.includes("日期")) continue;   // 表头缺「源文件」——不是本文件的表，继续找
+					legacy = true;                          // 没表头：按老版 7 列位置解析（降级）
+				}
+
+				const columns = header === null ? LEGACY_COLUMNS : Array.from(header.keys());
+				if (cells.length !== columns.length) { skipped += 1; continue; }
+				const cellOf = (name) => {
+					if (header === null) {
+						const index = LEGACY_COLUMNS.indexOf(name);
+						return index < 0 ? "" : cells[index];
+					}
+					const index = header.get(name);
+					return index === undefined ? "" : cells[index];
+				};
+
+				const file = cellOf("源文件").replace(/`/g, "").trim();
+				if (file === "") { skipped += 1; continue; }
+				const lessonHit = cellOf("讲次").match(/(\d+)/);
+				items.push({
+					time: cellOf("日期"),
+					lesson: lessonHit === null ? null : Number.parseInt(lessonHit[1], 10),
+					turn: numberOrNull(cellOf("回合"), /^\d+$/),
+					kind: cellOf("图类型"),
+					title: cellOf("标题"),
+					caption: cellOf("说明"),
+					file: file,
+					/** 🔴 后加的列：**没有这一列/留空 → null**（老记录）。不许当成"不属于本会话"。 */
+					session: cellOf("会话") === "" ? null : cellOf("会话"),
+					line: items.length + skipped + 1,
+				});
+			}
+
+			items.sort((left, right) => {
+				if (left.time !== right.time) return left.time < right.time ? 1 : -1;
+				const lt = left.turn === null ? -1 : left.turn;
+				const rt = right.turn === null ? -1 : right.turn;
+				if (lt !== rt) return rt - lt;
+				return right.line - left.line;
+			});
+			return {
+				items: items,
+				skipped: skipped,
+				columns: header === null ? (legacy ? LEGACY_COLUMNS.slice() : []) : Array.from(header.keys()),
+				legacy: legacy,
+			};
+		}
+
+		/**
+		 * 读索引并解析（**每次调用都真读盘** —— 页面刷新后仍能从磁盘重建，不依赖任何内存状态）。
+		 * 索引不存在是**正常态**（这节课还没画过图）→ `items: []`、`error: null`。
+		 * @returns {{items: Array<object>, skipped: number, path: string, error: string|null, exists: boolean}}
+		 */
+		async function loadDiagramHistory(remote, sessionId, signal) {
+			const path = diagramsIndexPath();
+			let text;
+			try {
+				text = await readText(remote, sessionId, path, signal);
+			} catch (error) {
+				// 文件不存在 = 还没画过图（**不是故障**）；其它错（权限/编码…）如实回给界面。
+				// 判据：**先看结构化 error.code**（`workspace-file/not-found`），没有再退到文案
+				// （老宿主/别的实现可能只给一句话）。没有这个区分，第一次开面板就会把"还没画过图"
+				// 说成"读盘失败"——那是最容易被误当成事故的一类假告警。
+				const message = messageOf(error);
+				const byCode = error !== null && typeof error === "object" && typeof error.code === "string"
+					? /not-found/i.test(error.code) : false;
+				const missing = byCode || /not-found|not found|ENOENT|不存在/i.test(message);
+				return { items: [], skipped: 0, path: path, error: missing ? null : message, exists: false };
+			}
+			const parsed = parseDiagramIndex(text);
+			return { items: parsed.items, skipped: parsed.skipped, path: path, error: null, exists: true };
+		}
+
+		/**
+		 * 读一张 `.mmd` 的**全文**（点开时才调用）。
+		 * 路径由 `diagramPath(file)` 算，那里已做过词法拒绝（不许带 `/`、`..`）。
+		 * @returns {{ok: boolean, source: string|null, error: string|null}}
+		 */
+		async function readDiagramSource(remote, sessionId, file, signal) {
+			const path = diagramPath(file);
+			if (path === null) return { ok: false, source: null, error: "索引里的源文件名不合法（只允许本目录里的文件名）：" + String(file) };
+			try {
+				return { ok: true, source: await readText(remote, sessionId, path, signal), error: null };
+			} catch (error) {
+				return { ok: false, source: null, error: messageOf(error) };
+			}
+		}
+
+		// ════════════════════════════════════════════════════════════════════
 		// 7 · 组件
 		// ════════════════════════════════════════════════════════════════════
 
@@ -4009,7 +4262,21 @@ window.__ModuleLoader__.load({
 						setEngineVersion((value) => value + 1);
 					})
 					.catch((error) => {
-						if (!disposed) setStatus({ kind: "failed", message: messageOf(error) });
+						if (disposed) return;
+						/**
+						 * 🔴 两种终态，别混（见 `mountPortrait` 里那段判据）：
+						 *   · `absent` —— 本 profile **没有可用的 Live2D 源**（能力缺席，不是故障）；
+						 *   · `failed` —— 有源但装载过程中坏了（这才是故障，照旧报「立绘装载失败：…」）。
+						 */
+						if (error !== null && typeof error === "object" && error.code === "portrait/no-source") {
+							setStatus({
+								kind: "absent",
+								message: messageOf(error),
+								cause: Array.isArray(error.causes) && error.causes.length > 0 ? error.causes[0] : null,
+							});
+							return;
+						}
+						setStatus({ kind: "failed", message: messageOf(error) });
 					});
 				return () => {
 					disposed = true;
@@ -4137,7 +4404,7 @@ window.__ModuleLoader__.load({
 			 */
 			React.useEffect(() => {
 				const face = portraitRef.current;
-				if (status.kind !== "failed" || face === undefined || sessionKey === null) return undefined;
+				if ((status.kind !== "failed" && status.kind !== "absent") || face === undefined || sessionKey === null) return undefined;
 				let live = true;
 				let url = null;
 				const controller = new AbortController();
@@ -4183,15 +4450,16 @@ window.__ModuleLoader__.load({
 			//   · 只折 CSS 高、不动元素，故未部署时"失败"照常被看见，只是不再占掉 ~330px 空白纸。
 			//   🔴 `loading`/`ready` 两态的尺寸**与改前逐字相同**——本次没有 Live2D 资产可供验证
 			//      "装载成功"这条路，所以那条路一个像素都不动（只改我能在本机实测的失败态）。
-			const boardRaised = status.kind !== "failed";
 			/**
-			 * 🔴 D3 的三态（`data-cui-board`）：
-			 *   · `raised`   —— Live2D 起来了，画布占位（原样）；
-			 *   · `static`   —— Live2D 不可用，但**静态立绘图取到了** → 显示图（不留白）；
-			 *   · `collapsed`—— 两者都没有 → 折成 0 高（原设计：不占 ~330px 空白纸）。
+			 * 🔴 三种**终态**（D3 ＋ "能力缺席 vs 故障"的区分）：
+			 *   · `ready`/`loading`/`idle` —— 画布占位（原样）；
+			 *   · `absent` —— **本 profile 没有可用的 Live2D 源**（能力缺席，不是故障）→ 静态立绘图 ＋ 中性说明；
+			 *   · `failed` —— **有源但装载坏了**（故障）→ 「立绘装载失败：…」照旧 ＋ 折成 0 高。
 			 * 画布在三种状态下**都留在文档里**（装载效果要拿到它，失败才报得出来）。
 			 */
-			const showStatic = status.kind === "failed" && staticPortrait.kind === "ok" && staticPortrait.url !== null;
+			const boardRaised = status.kind !== "failed" && status.kind !== "absent";
+			const showStatic = (status.kind === "absent" || status.kind === "failed")
+				&& staticPortrait.kind === "ok" && staticPortrait.url !== null;
 			const boardState = boardRaised ? "raised" : (showStatic ? "static" : "collapsed");
 			board.push(React.createElement("div", {
 				style: boardRaised || showStatic ? S.portraitBox : S.portraitBoxCollapsed,
@@ -4259,6 +4527,8 @@ window.__ModuleLoader__.load({
 				+ (applied !== null && applied.ok ? " · 已应用" : "")));
 
 			// —— 🔴 立绘未就位：**显式**（一行，带原始报错）但**不抢主视觉**（不是一整块灰板）
+			//    这里只出现**故障**（有源但坏了）。「能力缺席」不走这一行（见下面那条中性说明）——
+			//    "这台机器上没有 Live2D 源"是**预期的**，把它说成"装载失败"会让每次开面板都像出了事故。
 			if (status.kind === "failed") {
 				board.push(React.createElement("div", {
 					style: S.boardNotice,
@@ -4266,6 +4536,16 @@ window.__ModuleLoader__.load({
 					"data-cui-live2d-failure": "1",
 					"data-classroom-ui-live2d": "failed",
 				}, "立绘装载失败：" + String(status.message)));
+			}
+			// —— 能力缺席（不是故障）：一行**中性**说明 ＋ 静态图顶上（D3 的退路）
+			if (status.kind === "absent") {
+				board.push(React.createElement("div", {
+					style: S.boardNotice,
+					key: "absent",
+					"data-classroom-ui-live2d": "absent",
+					"data-cui-live2d-absent": "1",
+				}, "立绘：静态图（本 profile 没有可用的 Live2D 源：舞台没装，自带渲染宿主未构建）"
+					+ (status.cause === null || status.cause === undefined ? "" : "｜原始原因：" + String(status.cause))));
 			}
 
 			// —— 讲台诊断：工程读数（**默认折起**；一条信息都没删，只是不再默认占版面）
@@ -4276,7 +4556,9 @@ window.__ModuleLoader__.load({
 			 * 🔴 D1/D2 的**如实读数**：走的是哪条腿（舞台那套 PIXI / 自带渲染宿主）、跑在几 fps、
 			 *    现在有没有被暂停。验收读这一个 DOM 属性就够，不用去猜配置有没有生效。
 			 */
-			const portraitMode = readout === null || readout.mode === undefined ? null : readout.mode;
+			const portraitMode = status.kind === "absent" ? "static-fallback"
+				: status.kind === "failed" ? "failed"
+					: (readout === null || readout.mode === undefined ? "pending" : readout.mode);
 			const portraitPaused = readout !== null && readout.paused === true;
 			const sourceLine = portraitSources.stage
 				? "舞台那套（PIXI ＋ pixi-live2d-display，模型与库走 " + STAGE_ROUTE + "）"
@@ -4321,13 +4603,15 @@ window.__ModuleLoader__.load({
 			//    判据取自宿主能力发现的 `phaseExpression.status`（原样透传，不自己猜）：
 			//      `unavailable`（表达式个数 = 0）→ 换环节**不会**换表情，必须报出来；
 			//      `partial`（1–5 个）→ **可用但下标回绕**（多个环节共用一张脸），不是失效，另说一句。
-			if (readout !== null && readout.expressions === 0) {
+			// 🔴 D1：面板只播待机动作时，"相位 → 表情"这条路**本来就不走**，那两条提示不该出现
+			//    （否则用户会以为"表情坏了"，其实是待机模式下不接线）。
+			if (!PORTRAIT_IDLE_ONLY && readout !== null && readout.expressions === 0) {
 				diag.push(React.createElement("div", {
 					style: S.note,
 					key: "expression-unavailable",
 					"data-classroom-ui-expression": "unavailable",
 				}, "相位 → 表情不可用：本模型表达式个数 = 0，切环节不会换表情（判据与处置见 live2d-host/README.md §三）。"));
-			} else if (readout !== null && readout.expressions > 0 && readout.expressions < 6) {
+			} else if (!PORTRAIT_IDLE_ONLY && readout !== null && readout.expressions > 0 && readout.expressions < 6) {
 				diag.push(React.createElement("div", {
 					style: S.note,
 					key: "expression-partial",
@@ -4437,6 +4721,9 @@ window.__ModuleLoader__.load({
 				style: S.sectionFor(true),
 				"data-classroom-ui-portrait-stage": "1",
 				"data-classroom-ui-section": "1",
+				// 🔴 立绘这一档现在处于什么状态（验收读这一个属性：pixi-idle / live2d-host-idle /
+				//    static-fallback / failed / pending）——不用去猜配置到底有没有生效。
+				"data-cui-portrait-mode": String(portraitMode),
 			}, children);
 		}
 
@@ -4460,6 +4747,19 @@ window.__ModuleLoader__.load({
 			// 書庫纸面分深浅两套：跟宿主切主题的那个 body 属性（与消息流里的图同一个判据）。
 			const [theme, setTheme] = React.useState(themeMode);
 			React.useEffect(() => watchDarkTheme(() => { setTheme(themeMode()); }), []);
+
+			/**
+			 * 🔴 W-p：面板**内部**的 tab 分流（方案甲：面板内 tab 栏，**不新增侧栏 tab 类型**）。
+			 * 两个页面：
+			 *   · `classroom` —— 原来那条长栏（书名页 ＋ 讲台 ＋ 当前 ＋ 课程表 ＋ 数据来源），**一个区块都没动**；
+			 *   · `board`     —— 「板书」**只读历史**（`BoardHistory`）。
+			 * 为什么不新增侧栏 tab 类型：侧栏 tab 类型的注册是**三段式**（类型／主体／标题），
+			 * 多一个类型就多三段注册与一套地址方案，而这两页共享同一个会话上下文与同一次读盘；
+			 * 用户要的是"面板里多一页"，不是"右栏多一个 tab"。
+			 * 🔴 切到「板书」时 `PortraitStage` **卸载** → 立绘的 rAF/渲染随之停掉（D2 的
+			 *    「tab 没打开就暂停」在这一层是天然的，不需要额外开关）。
+			 */
+			const [tab, setTab] = React.useState("classroom");
 
 			const data = snapshot.data;
 			const children = [];
@@ -4630,13 +4930,36 @@ window.__ModuleLoader__.load({
 				]);
 			}
 
+			// ── tab 栏（面板内部）：教室 ／ 板书 ────────────────────────────────────
+			//    只换"看哪一页"，不动任何数据、不新增侧栏 tab 类型（见上面 `tab` 的说明）。
+			const tabs = [["classroom", "教室"], ["board", "板书"]];
+			const tabBar = React.createElement("div", { style: S.tabBar, key: "tabs", "data-cui-tabs": "1" },
+				tabs.map((entry) => React.createElement("button", {
+					type: "button",
+					key: entry[0],
+					className: "cui-act",
+					style: tab === entry[0] ? Object.assign({}, S.tab, S.tabActive) : S.tab,
+					"data-cui-tab": entry[0],
+					"data-active": tab === entry[0] ? "true" : "false",
+					onClick: () => { setTab(entry[0]); },
+				}, entry[1])));
+			const boardNode = React.createElement(BoardHistory, {
+				key: "board",
+				remote: props.portrait === undefined || props.portrait === null ? undefined : props.portrait.ctx.remote,
+				sessionId: props.portrait === undefined || props.portrait === null ? null : props.portrait.sessionId,
+				currentLesson: data === null ? null : data.currentLesson,
+			});
+			// 课堂那一页保持**原样**（所有区块一个不少）；板书那一页只放板书历史。
+			const shown = tab === "board" ? [boardNode] : children;
+
 			return React.createElement("div", {
 				style: Object.assign({}, S.root, S.vars, S.varsFor(theme)),
 				"data-classroom-ui": "body",
 				"data-classroom-ui-skin": skinId(),
 				"data-cui-frame": "library",
 				"data-cui-theme": theme,
-			}, children);
+				"data-cui-tab": tab,
+			}, [tabBar].concat(shown));
 		}
 
 		/** tab 标题：教室 ＋ 本轮要讲（数据没到位时只显示「教室」）。 */
@@ -4647,6 +4970,217 @@ window.__ModuleLoader__.load({
 			const data = snapshot.data;
 			if (data === null || data.currentLesson === null) return PANEL_TITLE;
 			return PANEL_TITLE + " · 第 " + String(data.currentLesson) + " 讲";
+		}
+
+		// ── 6.9 的视图：右栏「板书」tab（**只读**历史）────────────────────────────
+		//
+		// 这一块只做三件事（每一件都独立可验）：
+		//   ① 读 `runtime/diagrams/index.md` → 按时间倒序列出（标题 ＋ 讲次 ＋ 回合）；
+		//   ② 点开某一行 → 读对应 `.mmd` 全文 → 用现成的 `diagramFor`（vendored mermaid）渲染；
+		//   ③ 渲染失败 → **显示源码与原因**，绝不白屏。
+		// 🔴 没有任何编辑入口：没有输入框、没有删除、没有"重画"。学生不能在白板上写字（用户已定）。
+		// 🔴 列表**每次都真读盘**（挂载时 + 「重新读盘」按钮），所以刷新页面能重建，不依赖内存状态。
+		function BoardHistory(props) {
+			const S = styles();
+			const remote = props.remote;
+			const sessionId = props.sessionId;
+			const currentLesson = props.currentLesson === undefined ? null : props.currentLesson;
+			const [history, setHistory] = React.useState({
+				kind: "loading", items: [], skipped: 0, error: null, path: diagramsIndexPath(), exists: false,
+			});
+			const [reloadSeq, setReloadSeq] = React.useState(0);
+			const [selected, setSelected] = React.useState(null);
+			const [source, setSource] = React.useState({ kind: "idle", text: null, error: null });
+			const [render, setRender] = React.useState({ kind: "idle", svg: null, ms: null, message: null });
+			const [themeName, setThemeName] = React.useState(() => (isDarkTheme() ? "dark" : "light"));
+
+			// 深浅色跟着宿主走（与消息流里那张图同一个判据）
+			React.useEffect(() => watchDarkTheme(() => { setThemeName(isDarkTheme() ? "dark" : "light"); }), []);
+
+			// ① 列表：挂载 ＋ 每次「重新读盘」都真读
+			React.useEffect(() => {
+				if (remote === undefined || remote === null || typeof remote.workspaceFiles === "undefined") {
+					setHistory({ kind: "failed", items: [], skipped: 0, error: "remote 未注入（inject 未生效）", path: diagramsIndexPath(), exists: false });
+					return undefined;
+				}
+				let live = true;
+				setHistory((previous) => Object.assign({}, previous, { kind: "loading" }));
+				loadDiagramHistory(remote, sessionId, undefined).then(
+					(result) => {
+						if (live) setHistory(Object.assign({ kind: "ready" }, result));
+					},
+					(error) => {
+						if (live) setHistory({ kind: "failed", items: [], skipped: 0, error: messageOf(error), path: diagramsIndexPath(), exists: false });
+					},
+				);
+				return () => { live = false; };
+			}, [sessionId, reloadSeq]);
+
+			// ② 点开：读 `.mmd` 全文，再交给 `diagramFor`（缓存键＝主题版本＋主题＋源码）
+			const selectedFile = selected === null ? null : selected.file;
+			React.useEffect(() => {
+				if (selectedFile === null) {
+					setSource({ kind: "idle", text: null, error: null });
+					setRender({ kind: "idle", svg: null, ms: null, message: null });
+					return undefined;
+				}
+				let live = true;
+				setSource({ kind: "loading", text: null, error: null });
+				setRender({ kind: "idle", svg: null, ms: null, message: null });
+				readDiagramSource(remote, sessionId, selectedFile, undefined).then(
+					(result) => {
+						if (!live) return;
+						if (!result.ok) {
+							setSource({ kind: "failed", text: null, error: result.error });
+							return;
+						}
+						setSource({ kind: "ok", text: result.source, error: null });
+						diagramFor({ remote: remote, sessionId: sessionId, source: result.source, themeName: themeName, signal: undefined }).then(
+							(rendered) => { if (live) setRender({ kind: "ok", svg: rendered.svg, ms: rendered.ms, message: null }); },
+							(error) => { if (live) setRender({ kind: "failed", svg: null, ms: null, message: messageOf(error) }); },
+						);
+					},
+					(error) => { if (live) setSource({ kind: "failed", text: null, error: messageOf(error) }); },
+				);
+				return () => { live = false; };
+			}, [selectedFile, themeName, sessionId]);
+
+			/** 本会话画了几张（「会话」列存在且与面板 sessionId 一致才计数；否则为 0，不猜）。 */
+			const sameSessionCount = history.items.filter((item) => item.session !== null && item.session === sessionId).length;
+			const children = [];
+			children.push(React.createElement("div", { style: S.sectionLabel, key: "label" }, "板书 · 只读历史"));
+			children.push(React.createElement("div", { style: S.note, key: "src" },
+				"真数据源：" + history.path + "（引擎写的索引；图的内容在对应的 .mmd 里，点开才读）"));
+			children.push(React.createElement("div", { style: S.note, key: "count" },
+				history.kind === "ready"
+					? "共 " + String(history.items.length) + " 张（时间倒序）"
+						+ (sameSessionCount > 0 ? "，其中本会话 " + String(sameSessionCount) + " 张" : "")
+						+ (history.skipped > 0 ? "；另有 " + String(history.skipped) + " 行列数对不上，已跳过" : "")
+						+ (history.legacy === true ? "；老版索引（没有表头）→ 按 7 列位置解析" : "")
+					: (history.kind === "loading" ? "读取索引…" : "索引没读成")));
+
+			if (history.error !== null) {
+				children.push(React.createElement("div", { style: S.error, key: "err", "data-cui-board-error": "1" },
+					"读 " + history.path + " 失败：" + String(history.error)));
+			}
+
+			if (history.kind === "ready" && history.items.length === 0) {
+				children.push(React.createElement("div", { style: S.note, key: "empty", "data-cui-board-empty": "1" },
+					history.exists
+						? "索引在，但还没有一行数据（这节课还没画过板书）。"
+						: "还没有 runtime/diagrams/index.md（这节课还没画过板书；老师第一次画图后引擎会建它）。"));
+			}
+
+			if (history.items.length > 0) {
+				const rows = history.items.map((item) => {
+					const isCurrent = currentLesson !== null && item.lesson === currentLesson;
+					/**
+					 * 「本会话」的标注（索引的「会话」列，后来才加的）：
+					 *   · `current` —— 会话号与面板的 sessionId 一致；
+					 *   · `other`   —— 是同一台工作区里别的会话画的；
+					 *   · `unknown` —— 老索引没有这一列/留空（**不等于「不属于本会话」**）。
+					 * 🔴 只**标注**、不过滤：过滤会把「引擎写的会话号与面板 sessionId 不是同一个」的图
+					 *    整批藏起来，而这种不一致在客户端没有第二条判据。宁可多显示一行，不可静默丢。
+					 */
+					const sessionMark = item.session === null ? 'unknown'
+						: (sessionId !== null && sessionId !== undefined && item.session === sessionId ? 'current' : 'other');
+					const meta = [
+						item.lesson === null ? "讲次未定" : "第 " + String(item.lesson) + " 讲",
+						item.turn === null ? "回合未知" : "第 " + String(item.turn) + " 回合",
+						item.kind === "" ? null : item.kind,
+					].filter((part) => part !== null).join(" · ");
+					return React.createElement("button", {
+						type: "button",
+						key: item.file,
+						className: "cui-act",
+						style: isCurrent ? Object.assign({}, S.boardRow, S.boardRowCurrent) : S.boardRow,
+						"data-cui-board-item": item.file,
+						"data-cui-board-current": isCurrent ? "true" : "false",
+						"data-cui-board-session": sessionMark,
+						"data-active": selectedFile === item.file ? "true" : "false",
+						onClick: () => { setSelected(item); },
+					}, [
+						React.createElement("span", { style: S.boardRowTitle, key: "t" }, item.title === "" ? "（未给标题）" : item.title),
+						React.createElement("span", { style: S.boardRowMeta, key: "m" }, meta),
+					]);
+				});
+				children.push(React.createElement("div", { style: S.boardList, key: "list", "data-cui-board-list": String(history.items.length) }, rows));
+			}
+
+			// ③ 点开后那一块：图 ＋（折起的）源码
+			if (selected !== null) {
+				const viewer = [];
+				viewer.push(React.createElement("div", { style: S.sectionLabel, key: "label" },
+					selected.title === "" ? selected.file : selected.title));
+				viewer.push(React.createElement("div", { style: S.drawMeta, key: "meta" },
+					[
+						selected.time,
+						selected.lesson === null ? "讲次未定" : "第 " + String(selected.lesson) + " 讲",
+						selected.turn === null ? "回合未知" : "第 " + String(selected.turn) + " 回合",
+						selected.kind,
+						selected.file,
+					].filter((part) => part !== null && part !== "").join(" · ")
+					+ (render.kind === "ok" ? " · 渲染 " + String(render.ms) + " ms" : "")));
+				if (selected.caption !== null && selected.caption !== "" && selected.caption !== "—") {
+					viewer.push(React.createElement("div", { style: S.drawCaption, key: "caption" }, selected.caption));
+				}
+				if (render.kind === "ok" && render.svg !== null) {
+					viewer.push(React.createElement("div", {
+						key: "svg",
+						style: S.drawCanvas,
+						"data-cui-board": "svg",
+						dangerouslySetInnerHTML: { __html: render.svg },
+					}));
+				} else if (render.kind === "failed" || source.kind === "failed") {
+					const why = source.kind === "failed"
+						? "读不到这张图的源码：" + String(source.error)
+						: "这张图在浏览器里没画出来（mermaid 渲染报错）：" + String(render.message);
+					// 🔴 渲染失败不许白屏：原因 ＋ **完整源码**一起摆出来（学生照着也能画，老师一眼看出没画成）
+					viewer.push(React.createElement("div", { style: S.drawFallback, key: "fallback", "data-cui-board": "failed" }, [
+						React.createElement("div", { style: S.drawFallbackWhy, key: "why" }, why),
+						React.createElement("pre", { style: S.drawSource, key: "src", "data-cui-board-source": "1" },
+							source.text === null ? "（这次调用没有可读的源码）" : source.text),
+					]));
+				} else {
+					viewer.push(React.createElement("div", { style: S.note, key: "loading", "data-cui-board": "loading" },
+						"正在读源码并装载 mermaid…"));
+				}
+				// 源码永远可查（默认折起，不占版面）
+				if (source.kind === "ok" && source.text !== null) {
+					viewer.push(React.createElement("details", { style: S.drawDetails, key: "details" }, [
+						React.createElement("summary", { style: S.drawSummary, className: "cui-sum", key: "sum" }, "看源码"),
+						React.createElement("pre", { style: S.drawSource, key: "src", "data-cui-board-source": "1" }, source.text),
+					]));
+				}
+				viewer.push(React.createElement("button", {
+					type: "button",
+					className: "cui-act",
+					key: "close",
+					style: S.button,
+					"data-cui-board-close": "1",
+					onClick: () => { setSelected(null); },
+				}, "收起这张图"));
+				children.push(React.createElement("div", {
+					style: S.boardViewer,
+					key: "viewer",
+					"data-cui-board-viewer": selected.file,
+				}, viewer));
+			}
+
+			children.push(React.createElement("button", {
+				type: "button",
+				className: "cui-act",
+				key: "refresh",
+				style: S.button,
+				"data-cui-board-refresh": "1",
+				onClick: () => { setReloadSeq((value) => value + 1); },
+			}, history.kind === "loading" ? "读取中…" : "重新读盘"));
+
+			return React.createElement("div", {
+				style: S.sectionFor(false),
+				"data-classroom-ui-section": "1",
+				"data-classroom-ui-board": "1",
+			}, children);
 		}
 
 		// ── 6.7 的视图：`classroom_draw` 那一条工具调用 ──────────────────────────
@@ -5030,6 +5564,13 @@ window.__ModuleLoader__.load({
 		exports.diagramFor = diagramFor;
 		exports.recordDiag = recordDiag;
 		exports.recordRenderFailure = recordRenderFailure;
+		// ── 板书历史（W-p §6.9）：纯解析器与读盘器一并导出，供 node 侧测试直接驱动同一份代码 ──
+		exports.DIAGRAMS_INDEX = DIAGRAMS_INDEX;
+		exports.DIAGRAMS_SUBDIR = DIAGRAMS_SUBDIR;
+		exports.splitTableRow = splitTableRow;
+		exports.parseDiagramIndex = parseDiagramIndex;
+		exports.loadDiagramHistory = loadDiagramHistory;
+		exports.readDiagramSource = readDiagramSource;
 		// ── 皮肤（§6）：参数表与解析器一并导出，供 node 侧测试直接驱动同一份代码 ──
 		exports.SKIN_PRESETS = SKIN_PRESETS;
 		exports.DEFAULT_SKIN = DEFAULT_SKIN;
@@ -5049,6 +5590,7 @@ window.__ModuleLoader__.load({
 		exports.installSkinCss = installSkinCss;
 		// ── 面板主体（供 node 侧测试把**真实组件**渲染成一棵可断言的树）──
 		exports.ClassroomBody = ClassroomBody;
+		exports.BoardHistory = BoardHistory;
 		exports.ClassroomTitle = ClassroomTitle;
 		exports.Field = Field;
 		exports.PortraitStage = PortraitStage;
