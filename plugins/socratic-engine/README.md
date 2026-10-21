@@ -15,7 +15,7 @@ SocraticNovel 的**宿主侧教学引擎**：读教室包 manifest，按 `positi
 | 注入频率 | `once` / `turn` / `n_turns` / `phase`（门）/ `on_demand`（占位） |
 | 状态层模板渲染 | `render.enabled` + `{{phase}}`/`{{turn}}`/`{{classroom}}` |
 | 相位与回合自计数 | `lib/phasestore.mjs`（**不依赖宿主 turn 号算术**） |
-| 教学工具 | `classroom_status`（相位/回合查询）／`classroom_set_phase`／`classroom_draw`／`classroom_animate*`／**`classroom_note`（课堂记录，A / K3）** |
+| 教学工具 | `classroom_status`（相位/回合查询）／`classroom_set_phase`／`classroom_draw`／`classroom_animate*`／**`classroom_note`（课堂记录，A / K3）**（`classroom_express` 已废弃删除） |
 
 ## 课堂记录（A · 契约 K3）
 
@@ -111,25 +111,15 @@ node "$DSH_BIN" plugin --profile <profile> add "file:$HOME/SocraticNovel-wt/plug
     classroomDir: /abs/path/to/classroom   # 必填；缺省时插件空转（skill 模式兜底）
     defaultPhase: boot                      # 可选
     enabled: true                           # 可选
-    # ── EXPR-1（老师自己决定表情）：不配这段＝表情通道关闭（不注册工具、不挂兜底，只记一条日志）
-    expression:
-      capabilityFile: /abs/path/to/capability.json   # 🔴 必须是**绝对路径**；键＝模型名的 JSON
-      model: Haru                                    # 从产物里挑哪个模型的清单
+    classroomDeclaration: /abs/path/to/classroom-declaration.json   # 可选：核"引擎写盘 == 面板读盘"
+    animation: { python: /abs/python3, manim: /abs/manim }          # 教室声明了 animation: 时必填
 ```
 
-`capabilityFile` 的**形状＝渲染侧能力发现的产物**（键＝模型名），每个模型至少要能让引擎看到这三样：
-`expressions[].name`（命名表情）、`parameters[]`（脸部参数 id）、`motionGroups[].name`（动作组名）。
-**引擎不硬编码任何表情名／参数名／动作组名**——三条并列手段各取其一，见
-`实现报告_EXPR1_表情自主控制_2026-09-24.md` §1–§3。
-
-🔴 **EXPR-2 起，引擎挑哪条路按「名字读不读得懂」算分**（不再按手段类别写死顺序）：
-有语义的名字（`Smile`／`Sad`／`ParamEyeLOpen`／`Surprise`）优先 → 无语义编号（`F01`／`expr_3`）
-**能用但不优选** → 没有名字可读的排最后；同分才按可靠性次序（命名表情 > 逐参数 > 动作）。
-老师显式指定哪条就用哪条。见 `实现报告_EXPR2_表情优先级修正_2026-09-24.md`。
-
-兜底（老师没指定时的推测）**每个 `agent/pre-step` 重算一次**，回合末再算一次——
-输入只有"本回合已说出口的文字 ＋ 本会话内老师是否指定过 ＋ 渲染侧能力产物"三样。
-表情状态写在教室 `runtime/expression.md`（引擎是唯一写者；格式见同报告 §3）。
+🔴 **预设表情层已废弃（2026-10-20）**：`config.expression.capabilityFile` / `config.expression.model`
+不再被读取，`classroom_express` 工具已删除，`lib/expression*.mjs` 与 `lib/expression-table.json`
+已移除，引擎也不再写 `runtime/expression.md`。表情改由舞台按**语气标记**（契约 K1）实时驱动，
+见下方「情绪标记」段。`classroomDeclaration` 只保留**目录一致性**那一半（立绘模型名仍从声明读，
+渲染侧以它为准）。
 
 ## 板书事件（W-e · 契约 K2）
 

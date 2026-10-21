@@ -26,9 +26,6 @@
     "./lib/animtemplates.mjs": "./lib/animtemplates.mjs",
     "./lib/prep.mjs": "./lib/prep.mjs",
     "./lib/prepstore.mjs": "./lib/prepstore.mjs",
-    "./lib/expression.mjs": "./lib/expression.mjs",
-    "./lib/expressionstore.mjs": "./lib/expressionstore.mjs",
-    "./lib/expression-table.json": "./lib/expression-table.json",
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json"
   },

@@ -61,16 +61,6 @@ import {
 } from './lib/animationstore.mjs'
 import { TEMPLATE_IDS, checkTemplateArgs, describeTemplates } from './lib/animtemplates.mjs'
 import { describeDeclaration, loadDeclaration } from './lib/declaration.mjs'
-import { createExpressionStore } from './lib/expressionstore.mjs'
-import {
-  EXPRESSION_DISCIPLINE_RULES,
-  buildExpressToolDescription,
-  describeDimensions,
-  describeExpressionStatus,
-  describePathChoice,
-  expressToolParameters,
-  renderFaceParams,
-} from './lib/expression.mjs'
 import { describePrepPlan, prepItemsForLesson } from './lib/prep.mjs'
 import { cacheKeyForItem, prepPlan, warmUpPrep } from './lib/prepstore.mjs'
 
@@ -562,88 +552,33 @@ export async function apply(
     })
   }
 
-  // ---- 1.7) 表情（EXPR-1）：老师自己指定 + 没指定时兜底 ----
-  // 🔴 用户拍板（2026-09-24 原话）：*"表情不规定，让 AI 自己决定和控制吧，加点自由度。"*
-  //    → **取消"固定按环节映射表情"**（面板原来那套 相位→表情下标），改成：
-  //      ① 老师用 `classroom_express` 自己指定（**首选**）；
-  //      ② 老师本回合没指定时，用它自己刚说过的话推一个情绪（**兜底，是推测**）。
-  // 🔴 两条**并列**的落地路径（不是主/备）：命名表情 / 逐参数直驱。
-  //    依据（主代理 2026-09-24 实测）：官方初音ミク 两版（`miku`／`miku_sample_t04`）
-  //    **命名表情个数 = 0**，但各有 17 个脸部参数（眼 6／眉 8／口 2／颊 1）
-  //    → 对这类模型"按 model.expression(name) 设表情"根本不成立，只剩逐参数。
-  // 🔴 表情清单**只能**来自渲染侧的能力发现产物（`config.expression.capabilityFile`），
-  //    引擎**不硬编码**任何表情名或参数名（研究件 R3 的告诫：他们那套在 8 个官方样本里 4 个会失效）。
-  // 🔴 未配置 `capabilityFile` → 本段整块不生效（不注册工具、不挂兜底），并**记一条日志**说明
-  //    通道是关的（不是静默失效：装载日志里看得到）。
-  const exprCfg = config.expression ?? {}
-  let expressionStore = null
-  /** 装载时读到的能力快照（用于工具描述；调用时还会重读，见 lib/expressionstore.mjs 的 mtime 缓存）。 */
-  let expressionAtLoad = null
-  // ---- 1.65) 部署声明（EXPR-5）：面板读的目录 == 引擎写的目录，且立绘模型名**一处声明** ----
-  // 🔴 为什么必须有这一步：面板按 `__DSH_CLASSROOM_UI_CONFIG__.root`（缺省＝代码常量）读教室文件，
-  //    引擎按 `config.classroomDir`（缺省＝工作区自动发现）写 `runtime/expression.md`。
-  //    **两边指不同目录时没有任何一处会出声**——引擎照写、面板照读（读不到就显示"还没有表情"），
-  //    表现成"引擎写了但面板看不到"，而日志与画面都不说这是配置错。
-  //    → 声明文件同时声明 `classroomRoot` 与 `portraitModel`：本引擎**核对**前者（不一致就带修法出声），
-  //      **读**后者（这样"改模型名"从"profile 与客户端两处手工对齐"变成"改一处"）。
-  // 🔴 未配置 `config.classroomDeclaration` → 一致性没有机核，**明说**（不静默），行为与改动前一致。
+  // ---- 1.65) 部署声明（EXPR-5 的**保留部分**）：面板读的目录 == 引擎写的目录 ----
+  // 🔴 为什么留着：面板按 `__DSH_CLASSROOM_UI_CONFIG__.root`（缺省＝代码常量）读教室文件，
+  //    引擎按 `config.classroomDir`（缺省＝工作区自动发现）写 `runtime/`。
+  //    **两边指不同目录时没有任何一处会出声**——引擎照写、面板照读（读不到就显示"还没有"），
+  //    表现成"引擎写了但面板看不到"，日志与画面都不说这是配置错。
+  //    → 声明文件里声明 `classroomRoot`，本引擎**核对**它（不一致就带修法出声）。
+  // 🔴 未配置 `config.classroomDeclaration` → 一致性没有机核，**明说**（不静默）。
+  // 📌 2026-10-20（C-e 废弃预设表情层）：`portraitModel` 不再被本引擎消费（表情改由舞台按 K1
+  //    语气标记驱动），这里只保留**目录一致性**这一半；`describeDeclaration` 仍会把声明里的
+  //    立绘模型名打进日志（渲染侧仍以它为准）。
   const declaration = await loadDeclaration({
     file: config.classroomDeclaration,
     workspaceRoot: discovery.workspaceRoot(),
     classroomDir: current.dir,
   })
-  for (const line of describeDeclaration(declaration, exprCfg.model)) log(line)
-  /** 立绘模型名：**声明优先**（一处声明、两侧读）；没声明时才退回 profile 的 config.expression.model。 */
-  const portraitModel =
-    declaration.ok === true && typeof declaration.portraitModel === 'string'
-      ? declaration.portraitModel
-      : exprCfg.model
-  if (typeof exprCfg.capabilityFile === 'string' && exprCfg.capabilityFile !== '') {
-    expressionStore = createExpressionStore({
-      capabilityFile: exprCfg.capabilityFile,
-      model: portraitModel,
-      runtimeDir: () => (current ? join(current.dir, 'runtime') : null),
-      getTurn: () => phase.turnCount,
-      log,
-    })
-    expressionAtLoad = await expressionStore.capability()
-    if (expressionAtLoad.ok) {
-      log(
-        `表情通道已启用：模型 ${expressionAtLoad.model}｜命名表情 ${expressionAtLoad.names.length} 个` +
-          `（${expressionAtLoad.names.join('/') || '无'}）｜参数 ${expressionAtLoad.parameters.length} 个` +
-          `（${describeDimensions(expressionAtLoad.dimensions)}）｜动作组 ${expressionAtLoad.motions.length} 个` +
-          `（${expressionAtLoad.motions.join('/') || '无'}）｜按名字可读性选中：${expressionAtLoad.path}` +
-          `（${expressionAtLoad.pathReadability?.kind ?? '?'}，均分 ${expressionAtLoad.pathReadability?.score?.toFixed(2) ?? '?'}）` +
-          `｜候选：${describePathChoice(expressionAtLoad.pathRanking, expressionAtLoad.path)}` +
-          `｜能力来源 ${expressionAtLoad.file}`,
-      )
-      if (expressionAtLoad.path !== 'named-expression') {
-        log(
-          `🔴 模型 ${expressionAtLoad.model} 走的是 **${expressionAtLoad.path}**` +
-            '（命名表情这条路对它不成立，或有更读得懂的一条）→ 客户端必须实现对应的那一条（见报告 §客户端接线说明）',
-        )
-      }
-    } else {
-      log(`🔴 表情通道**不可用**（会明说、不静默）：${expressionAtLoad.reason}`)
-    }
-    expressionStore.register(ctx)
-    // 🔴 渠道纪律（系统段）：**只挂工具、不给纪律时，老师一次都不会调**（EXPR-1 会话 A 实测：
-    //    `classroom_express` 0 次，而同一回合它调了 set_phase / draw / animate_template）。
-    //    这与 ANIM-ORCH 的实测同型，故照动画那一套补一段引擎自产的纪律。
-    //    🔴 只在本通道**启用**时注入（未配置 capabilityFile → 这一节根本不存在，行为不变）；
-    //       §口径是"不规定映射"——纪律只管"什么时候该说、怎么说"，不管"哪个环节配哪个表情"。
-    ctx.systemPrompt.section({
-      name: 'socratic-engine:expression.discipline',
-      order: 10650, // 紧跟教学动画纪律（10600）
-      interpolate: false,
-      text: ['## 表情的使用纪律（引擎注入）', '', ...EXPRESSION_DISCIPLINE_RULES].join('\n'),
-    })
-  } else {
-    log(
-      '表情通道未启用：profile 的 socratic-engine config.expression.capabilityFile 未配置' +
-        '（表情清单必须来自渲染侧能力发现，引擎不硬编码）',
-    )
-  }
+  for (const line of describeDeclaration(declaration)) log(line)
+
+  // ---- 1.7) 预设表情层：**已废弃**（2026-10-20）----
+  // 🔴 原 §1.7 是 EXPR-1/EXPR-2 的「老师调 classroom_express 在 5 个预设表情间切换」：
+  //    `lib/expression.mjs`（能力发现 + 推测兜底 + 三档落盘）+ `lib/expressionstore.mjs`
+  //    + `lib/expression-table.json` + `classroom_express` 工具 + `runtime/expression.md`。
+  //    按开发文档 §四 C 的「废弃」条整条删除：表情改由舞台侧的表情驱动模块按**语气标记**
+  //    （契约 K1，见 lib/emotionmark.mjs / lib/emotionchannel.mjs）实时驱动，引擎不再指定表情，
+  //    也不再写 `runtime/expression.md`。
+  //    删除理由（写进实现报告）：① 驱动源变了（句子语气 vs 老师显式点名）；
+  //    ② 预设表与「按环节硬切」正是用户要废掉的那套；③ 少一条引擎→客户端的落盘契约（少一个静默分叉点）。
+  // ⚠️ `clients/**` 里读 `runtime/expression.md` 的面板代码不在本车道范围内，需要 P 车道处理。
 
   // ---- 2) 系统段注册（一次性） ----
   let registered = 0
@@ -811,24 +746,18 @@ export async function apply(
             discovered: { type: 'integer', required: true },
             selectedBy: { type: 'string', required: true },
             ambiguity: { type: 'string', required: true },
-            expression: { type: 'string', required: true },
-            expressionFace: { type: 'string', required: true },
-            expressionMotion: { type: 'string', required: true },
-            expressionOrigin: { type: 'string', required: true },
           },
         },
         render: (_args, value) => [
           {
             type: 'text',
-            text: `教室 ${value.classroom}｜相位 ${value.phase}｜第 ${value.turn} 回合｜本轮要讲第 ${value.lesson} 讲｜候选 ${value.discovered} 个（来源 ${value.selectedBy}）` +
-              `｜表情：${describeExpressionStatus(value)}`,
+            text: `教室 ${value.classroom}｜相位 ${value.phase}｜第 ${value.turn} 回合｜本轮要讲第 ${value.lesson} 讲｜候选 ${value.discovered} 个（来源 ${value.selectedBy}）`,
           },
         ],
       },
       execute: async () => {
         const result = discovery.last()
         const selected = result?.selected ?? null
-        const expr = expressionStore?.status() ?? null
         return {
           classroom: current.manifest.classroom.id,
           phase: phase.phase,
@@ -839,11 +768,6 @@ export async function apply(
           discovered: result?.candidates.length ?? 0,
           selectedBy: selected?.source ?? 'none',
           ambiguity: result !== null && result.status === 'ambiguous' ? result.reason : '',
-          // 🔴 EXPR-1：表情状态也在这里说清（工具侧的口径；落盘口径见 runtime/expression.md）
-          expression: expr?.expression ?? '',
-          expressionFace: expr === null ? '' : renderFaceParams(expr.face ?? {}),
-          expressionMotion: expr?.motion ?? '',
-          expressionOrigin: expr?.origin ?? (expressionStore === null ? 'off' : 'unavailable'),
         }
       },
     }),
@@ -917,63 +841,11 @@ export async function apply(
     }),
   )
 
-  // ---- 5.5) classroom_express 工具（EXPR-1：老师自己决定表情）----
-  // 🔴 形态裁定：**新增一个工具**，不复用 `classroom_set_phase` 的入参。理由：
-  //    ① 语义不同——相位是"课的环节"（值域来自教室声明、会落进 progress.md 的 current_phase 行），
-  //       表情是"这一回合教师的表现"，混进一个工具会让两者的值域与落盘互相污染；
-  //    ② 描述即渠道——本项目实证（T3a/T3b）：**工具描述写不写得像"该调它"决定它会不会被调用**；
-  //       两条并列路径（命名/逐参数）＋可用清单需要一整段描述，塞进 set_phase 的入参说明里会糊掉；
-  //    ③ 报错契约不同——表情要"非法名 → 报错并列出可用清单"，相位那套是"值域来自教室声明"。
-  // 🔴 描述在**装载时**把该模型实际有的清单写进去（老师在上下文里就能看到合法取值，
-  //    不必先错一次才知道）；调用时还会重读能力产物做校验（见 lib/expressionstore.mjs 的 mtime 缓存）。
-  if (expressionStore !== null) {
-    ctx.tools.register(
-      defineTool({
-        name: 'classroom_express',
-        description: buildExpressToolDescription(expressionAtLoad),
-        parameters: expressToolParameters(),
-        output: {
-          schema: {
-            type: 'object',
-            additionalProperties: false,
-            properties: {
-              path: { type: 'string', required: true },
-              expression: { type: 'string', required: true },
-              face: { type: 'string', required: true },
-              motion: { type: 'string', required: true },
-              origin: { type: 'string', required: true },
-              emotion: { type: 'string', required: true },
-              turn: { type: 'integer', required: true },
-              model: { type: 'string', required: true },
-              available: { type: 'string', required: true },
-              availableCount: { type: 'integer', required: true },
-              dimensions: { type: 'string', required: true },
-              parameterCount: { type: 'integer', required: true },
-              motionCount: { type: 'integer', required: true },
-              persisted: { type: 'boolean', required: true },
-              file: { type: 'string', required: true },
-              note: { type: 'string', required: true },
-            },
-          },
-          render: (_args, value) => [
-            {
-              type: 'text',
-              text:
-                `本回合表情已定（走 ${value.path}）｜` +
-                (value.expression === '' ? '' : `命名表情 ${value.expression}｜`) +
-                (value.face === '' ? '' : `逐参数 ${value.face}｜`) +
-                (value.motion === '' ? '' : `动作 ${value.motion}｜`) +
-                `第 ${value.turn} 回合｜模型 ${value.model}（可用：命名表情 ${value.availableCount} 个／` +
-                `参数 ${value.parameterCount} 个／动作组 ${value.motionCount} 个）｜` +
-                `${value.persisted ? '已落盘' : '未落盘'}：${value.note}\n` +
-                `客户端（立绘面板）按 runtime/expression.md 的机器可读行应用；本回合没有指定时会由引擎兜底。`,
-            },
-          ],
-        },
-        execute: async (args) => expressionStore.specify(args),
-      }),
-    )
-  }
+  // ---- 5.5) classroom_express：**已废弃**（2026-10-20，开发文档 §四 C「废弃」条）----
+  // 原实现＝老师用工具在 5 个预设表情之间硬切（`lib/expression*.mjs` + `expression-table.json`）。
+  // 现在表情由舞台侧的表情驱动模块按**语气标记**（契约 K1）实时驱动，引擎不再指定表情，
+  // 因此**不注册这个工具**：工具表里没有这个名字，模型也就不会看到一条用不了的选项。
+  // ⚠️ 消费方：`clients/**`（面板读 `runtime/expression.md`）不在本车道范围 → 需 P 车道处理。
 
   // ---- 6) classroom_draw 工具（T3a：把白板真的画出来并落盘）----
   // 🔴 三段判据，缺一不可（每一段失败都**报错**，都不静默）：
