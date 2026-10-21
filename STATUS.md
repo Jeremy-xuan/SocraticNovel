@@ -28,10 +28,10 @@
 
 | # | 能力 | 代码在哪 | 状态 | 证据（2026-10-20 实测） | 差什么才能升级 |
 |---|---|---|---|---|---|
-| 1 | 教学引擎（相位、注入、工具、课后更新） | `plugins/socratic-engine/` | 🟡 L1 | `node check.mjs` 第 ⑧ 步：**461/461** 通过 | 一次完整 `acceptance/run.sh`（L3），卡在验收流水线的「铁律③ vs 0.2.1」冲突（见 §二之二） |
+| 1 | 教学引擎（相位、注入、工具、课后更新、动态块、任意讲次、叙事接线） | `plugins/socratic-engine/` | 🟡 L1 | `node check.mjs` 第 ⑧ 步：**553/553** 通过 | 一次完整 `acceptance/run.sh`（L3），卡在验收流水线的「铁律③ vs 0.2.1」冲突（见 §二之二） |
 | 2 | 教室包（操作系统 14 讲） | `classrooms/cs-os/` | 🟡 L1 | `check.mjs` 第 ① 步：17 个必需文件齐全、声明路径全在盘、14 讲正文齐全；第 ② 步与技能镜像 **54 文件 sha256 全一致** | 已在 stage 实例上做成 0.2.1 的插件行形态预设且真浏览器可选（`docs/证据图/迁移0.2.1/stage-preset-picker-0.2.1.json`），L2 装配过 |
 | 3 | 技能包（装上就能用的分发形态） | `skills/socratic-classroom/` | 🟡 L1 | `check.mjs` ①②：`validate` 退出码 0；与教室真源 sha256 全一致 | L2 安装＋被发现（09-24 做过，迁移后未复验） |
-| 4 | 整屏舞台（暖色教室界面） | `clients/classroom-stage-warm/` | 🟡 L2 | `./check.sh` **35/35**（原 20 项）；`--live` 33/33；真浏览器（swiftshader）里 canvas `399x546`、**立绘画出来了**、`pageerror` 0、K0 挂载点 11 键齐全 | 无崩溃交互回归；完整课堂对话属 M4-T |
+| 4 | 整屏舞台（暖色教室界面） | `clients/classroom-stage-warm/` | 🟡 L2 | `./check.sh` **36/36**（原 20 项）；`--live` 33/33；真浏览器（swiftshader）里 canvas `399x546`、**立绘画出来了**、`pageerror` 0、K0 挂载点 11 键齐全 | 无崩溃交互回归；完整课堂对话属 M4-T |
 | 5 | 右栏面板（课程表／立绘／板书历史） | `clients/classroom-ui/` | 🟡 L2 | `check.mjs` 第 ⑤ 步：panel ＋ 白板服务端 **69** ＋ 白板路由 **44** 全绿；真浏览器里 tab 能开、`data-cui-portrait-mode="pixi-idle"`、15.0 fps、舞台打开时 0 帧 | 「没装舞台」的 profile 里静态立绘读不到（面板只能读工作区相对路径，插件包内没有读通道） |
 | 6 | 板书闭环（老师画 → 舞台自动切屏 → 面板只读历史） | `clients/classroom-stage-warm` ＋ `classroom-ui` ＋ 引擎 `classroom_draw` | 🟡 L2 | **真机端到端通了**：mock 真回合里老师调 `classroom_draw` → 同一采样点内切到板书屏、完整三段节拍 1.88s、渲染的是**这一张**；显示中又来一张只换内容不重播；学生下一句 1.00s 反向收起；渲染失败显示「这张图渲染失败」＋源码不白屏；舞台关着时画图不自动打开。8 张证据图＋采样 trace 在 `docs/证据图/迁移0.2.1/W2_自动切屏_2026-10-21/` | 「面板只读历史」的真浏览器点开一张真图还没验（那个工作区没有 `runtime/diagrams/`）；一节课 3 张的顺序未连测 |
 | 7 | 课堂记录（第一节课的卡点，第二节课被引用） | 引擎 `lib/notestore.mjs` ＋ `runtime/notes.jsonl` ＋ 三份机械投影 | 🟡 L1 | `test/notestore.test.mjs` + `postclass` 覆盖：三档状态推导、跳讲不算掌握、review +1/+3/+7、幂等、(lesson,turn,id) 定序、resolved 推导 | **stage 上的真实两节课验证**（要真实模型与两次会话） |
@@ -60,7 +60,7 @@
 2. **`STATUS.md` 旧说法「渲染环境随旧工作区删除」不准**：Manim 0.20.1 就在本机
    `/Library/Frameworks/Python.framework/Versions/3.13/bin/`，`tools/animation-gate/animation_gate.py` 也在盘。
 
-**门槛覆盖率**：`node check.mjs` 现在 8 步，覆盖 ①②③④⑤⑥⑦⑧，合计 **461（引擎）＋ 69＋44（白板）＋ 21（注入隐藏）＋ 35（舞台 check.sh）** 条断言，退出码 0。
+**门槛覆盖率**：`node check.mjs` 现在 8 步，覆盖 ①②③④⑤⑥⑦⑧，合计 **553（引擎）＋ 69＋44（白板）＋ 21（注入隐藏）＋ 36（舞台 check.sh）** 条断言，退出码 0。
 舞台另有 `./check.sh --live` 33 项（建隔离 profile、真装进去、`--dump-config` 预检）。
 
 ---
