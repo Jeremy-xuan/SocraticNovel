@@ -162,6 +162,37 @@ node "$DSH_BIN" plugin --profile <profile> add "file:$HOME/SocraticNovel-wt/plug
 > ⚠️ 跨车道影响：面板（P 车道）读这张表来列板书历史。**新列在末尾**，按表头名解析不受影响；
 > 按固定列数解析会多一格。这一条写在实现报告里请主代理转达。
 
+## 情绪标记（C-e · 契约 K1）
+
+老师在句末写 `〔emo:<label>:<强度两位小数>〕`（`label` ∈ `calm`/`happy`/`shy`/`puzzled`/`excited`），
+引擎在 `llm/stream` waterfall 里**逐 chunk 剥掉**，并把剥出的事件追加写
+`<教室>/runtime/emotions.jsonl`（供舞台的表情驱动模块轮询）。
+
+- **为什么只能在流里剥**（K1.0 的取证，不重复调研）：0.2.1 的原生对话框把 HTML 注释原样转义显示，
+  `〔…〕` 也可见；没有"助手文本持久化前 transform"的钩子。能改助手输出的位置只有 `llm/stream`。
+  → 标记**只在流里存在**，落盘与显示的全是剥净文本。
+- **纯函数层**（`lib/emotionmark.mjs`）：`parseEmotionBody`（语法）与 `createEmotionStreamParser`
+  （K1.3 流式解析）。判据写死并按单测逐条覆盖：跨 chunk 拼接不吐半截、flush 时残留原样交回、
+  非法标记整段剥掉且不发事件、一句只取第一个、**任意切分方式输出逐字节一致**（测试里对每段样本
+  穷举 1/2/3 段切法）。
+- **接线层**（`lib/emotionchannel.mjs`）：`registerEmotionChannel(ctx)` 注册 `llm/stream` 监听器。
+  🔴 监听器**同步**返回 async iterable（`llm.stream()` 直接把它交给 `for await`）；
+  改的只有两处：`text-delta.text` 与 **`block-end` 里文本块的 `block.text`**，其余 chunk
+  **原样透传（同一引用）**；任何异常 → 退化为透传并记日志。
+  🔴 为什么 `block-end` 也必须剥（**契约 K1.2 的必要补充**，本机实测发现）：宿主 `dsh-llm` 的
+  `BlockAssembler` 在 `block-end` 处用 `partial.block = chunk.block` **覆盖**它按 delta 累出来的文本
+  （`dsh-llm/lib/index.js:992`），而适配器给的 `block.text` 是**未剥原文**。只剥 delta 的后果是实打实的：
+  `emotions.jsonl` 拿到了事件，而 headless 打印的正文里标记还在、落盘的 `assistant/message` 也带标记。
+  补上这一处之后实测：正文干净、事件照常落盘（见实现报告的「K1 chunk 形状实测」节）。
+  会话标题等旁路调用带 `options.purpose`，**不播情绪**（只剥文本）。
+- **chunk 形状实测**（0.2.1-rc.2，隔离 profile 里挂 observer 打出来的，不是猜）：
+  `{ type: 'text-delta', index: 0, text: '…' }`；`options` 键含 `sessionId`/`signal`/`model`…
+- **通道**（K1.4）：`{ v, seq, ts, session, turn, label, intensity }`，append-only，`withFileLock`
+  串行化，权限 0600；`seq` 进程内计数器 + 启动时从末行续号；超过 **64 KB** 折叠成
+  `{"v":1,"collapsed":true,"upTo":N}` + 最近 8 行（保持"读末尾即可"）。
+- **落盘前再剥一次**（K1.2 末、K1.5）：`session_log.md`（`lib/postclass.mjs`）与
+  `classroom_note`（`lib/notestore.mjs` 的 `cleanRecordText`）都会调同一个剥离函数（幂等、防御性）。
+
 ## 教学动画与备课（ANIM-ORCH / ANIM-PREP / ALIGN-EXEC）
 
 - 顶层 `animation:` 段（`enabled` 等）控制动画通道：段**缺席** → 引擎不注册动画工具；启用后

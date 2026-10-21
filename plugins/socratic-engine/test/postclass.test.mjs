@@ -537,3 +537,21 @@ test('端到端：幂等跨格式 —— 文件里已有老格式标记时，同
     await env.cleanup()
   }
 })
+
+// ──────────────────────────────────────────────────────────── K1：落盘前剥情绪标记
+
+test('🔴 落盘前剥净情绪标记（K1.2 末：防御性，历史事件里可能带标记）', () => {
+  const facts = {
+    turn: 5,
+    time: null,
+    phase: 'probe',
+    lesson: 3,
+    studentTexts: ['FIFO 快吧？〔emo:puzzled:0.70〕', '那 SJF 呢〔emo:calm:0.50〕'],
+    toolCalls: [],
+    hasContent: true,
+  }
+  const entry = renderSessionLogEntry(facts, { marker: MARKER_TURN2, timeLabel: TIME_LABEL })
+  assert.equal(entry.includes('emo:'), false, 'session_log 里不得出现标记原文')
+  assert.match(entry, /FIFO 快吧？/)
+  assert.match(entry, /那 SJF 呢/)
+})

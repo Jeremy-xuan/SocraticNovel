@@ -84,3 +84,85 @@ export function stripEmotionMarkers(text) {
 export function stripEmotionMarkersClean(text) {
   return stripEmotionMarkers(text).replace(/[ \t]{2,}/g, ' ').trim()
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// K1.3 流式解析器（纯函数；任意切分方式结果逐字节一致）
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** 句子终止符（K1.1：标记写在句末）。出现即开新的一句，句子级的"至多一个"随之重置。 */
+const SENTENCE_END = /[。？！?！…\n]/
+
+/**
+ * 创建**流式**情绪标记解析器（契约 K1.3）。**纯函数式**：不碰 IO、不发时间、无全局状态。
+ *
+ * ```js
+ * const p = createEmotionStreamParser()
+ * p.push('同学你好。')            // → { text: '同学你好。', events: [] }
+ * p.push('〔emo:calm:0.50〕')     // → { text: '', events: [{label:'calm', intensity:0.5}] }
+ * p.flush()                       // → { text: '' }
+ * ```
+ *
+ * 规则（逐条对应 K1.3，test/emotionmark.test.mjs 每一条都有用例）：
+ * 1. **跨 chunk 拼接**：看到 `〔` 还没有 `〕` 时，这一段先**不往下传**，等后续 chunk 补齐再判定。
+ *    因此"标记被切两半"（`〔emo:sh` + `y:0.60〕`）不会漏出半截。
+ * 2. **flush 时仍不完整**：缓冲**原样交回**（宁可显示半截，也不吞正文），不发事件。
+ * 3. **非法标签 / 强度越界 / 缺两位小数**：整个标记**剥掉**（不显示）、不发事件、不报错。
+ * 4. **一句多个标记**：取该句**第一个**，其余剥掉（"一句"＝上一个 `。？！…` 或换行之后）。
+ * 5. **同一段文本，任意切分方式的 chunk 序列，输出必须逐字节相同**（文本与事件序列都相同）。
+ *
+ * @returns {{push(chunk: string): {text: string, events: {label:string, intensity:number}[]},
+ *            flush(): {text: string}}}
+ */
+export function createEmotionStreamParser() {
+  /** 可能是"标记开头"的尾巴缓冲（K1.3-1）。 */
+  let pending = ''
+  /** 本句是否已经出过事件（K1.3-4 的"一句至多一个"）。 */
+  let sentenceHasEvent = false
+
+  return {
+    push(chunk) {
+      const events = []
+      let out = ''
+      pending += typeof chunk === 'string' ? chunk : String(chunk ?? '')
+
+      /** 把一段**一定不含未闭合标记**的文本发给下游，并据终止符更新句子状态。 */
+      const emit = (segment) => {
+        if (segment === '') return
+        out += segment
+        if (SENTENCE_END.test(segment)) sentenceHasEvent = false
+      }
+
+      for (;;) {
+        const open = pending.indexOf(MARK_OPEN)
+        if (open === -1) {
+          emit(pending)
+          pending = ''
+          break
+        }
+        // `〔` 之前的正文照常下发（它不可能被切掉）
+        emit(pending.slice(0, open))
+        const close = pending.indexOf(MARK_CLOSE, open + 1)
+        if (close === -1) {
+          // 还没闭合：整段先扣住，等后续 chunk（K1.3-1）
+          pending = pending.slice(open)
+          break
+        }
+        const event = parseEmotionBody(pending.slice(open + 1, close))
+        if (event !== null && !sentenceHasEvent) {
+          events.push(event)
+          sentenceHasEvent = true
+        }
+        // 合法与非法的标记都**整段剥掉**（K1.3-3）；合法但本句已有事件 → 也剥掉（K1.3-4）
+        pending = pending.slice(close + 1)
+      }
+      return { text: out, events }
+    },
+
+    flush() {
+      const text = pending
+      pending = ''
+      sentenceHasEvent = false
+      return { text }
+    },
+  }
+}

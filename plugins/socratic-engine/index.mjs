@@ -45,6 +45,7 @@ import { DIAGRAM_KIND_IDS, renderBoardLine } from './lib/diagram.mjs'
 import { drawDiagram } from './lib/diagramstore.mjs'
 import { createMermaidParser } from './lib/mermaid-parse.mjs'
 import { NOTE_TYPES, assertRuntimeDir, createNoteStore } from './lib/notestore.mjs'
+import { registerEmotionChannel } from './lib/emotionchannel.mjs'
 import { ANIMATIONS_SUBDIR, EXPECTED_RANGE_TEXT, TERMINAL_STATES, describeState, nowLabel } from './lib/animation.mjs'
 import {
   animationNoticeSource,
@@ -320,6 +321,20 @@ export async function apply(
     //    模型在回合内把 progress.md 改成下一讲，不影响本回合记录归属（记录的是"当时"）。
     //    教室没有讲次门 → currentLesson 为 null → 标记与标题都不带讲次（行为同升级前）。
     getLesson: () => currentLesson,
+    log,
+  })
+
+  // ---- 1.55) 情绪标记的源头剥离（C-e · 契约 K1.2）----
+  // 🔴 为什么必须在引擎里剥（K1.0 的取证结论，不重复调研）：0.2.1 的原生对话框把 HTML 注释
+  //    原样转义显示，`〔…〕` 走 text 节点同样可见；**没有**"助手文本持久化前 transform"的钩子。
+  //    能改助手输出的位置只有 `llm/stream` waterfall（在落盘之前）与端上遮蔽（遮蔽后无法复用
+  //    宿主渲染器）。所以标记**只在流里存在**：下游（assistant/message 持久化、原生界面、
+  //    session_log.md、classroom_note）拿到的都已经是剥净文本。
+  // 🔴 情绪事件追加写 `<教室>/runtime/emotions.jsonl`（K1.4），舞台/表情模块按 seq 轮询。
+  // 🔴 任何异常都**原样透传**并记日志（宁可原生界面脏一行，也不能让课堂断流）。
+  registerEmotionChannel(ctx, {
+    runtimeDir: config.runtimeDir ?? (() => (current ? join(current.dir, 'runtime') : null)),
+    getTurn: () => phase.turnCount,
     log,
   })
 
