@@ -1778,15 +1778,19 @@ assert.equal(findAll(tree2, (node) => Object.prototype.hasOwnProperty.call(node.
   assert.equal(findAll(tree2, (node) => Object.prototype.hasOwnProperty.call(node.props, 'data-cui-board-item')).length, 2)
 }
 
-// 11.5 面板内 tab 栏：「教室」／「板书」两个页面，默认在教室；切到板书时不渲染讲台（立绘随卸载停掉）
+// 11.5 面板内 tab 栏：「教室」／「板书」／「日记」／「群聊」四个页面，默认在教室；
+//      切到板书时不渲染讲台（立绘随卸载停掉）
 {
   const tree = await renderPanel()
   const tabBar = findOne(tree, 'data-cui-tabs')
   assert.ok(tabBar !== null, '面板内部必须有 tab 栏（方案甲：不新增侧栏 tab 类型）')
   // 只取 tab 按钮：面板根上也有一个 data-cui-tab（表示现在在哪一页）
   const tabs = findAll(tree, (node) => node.tag === 'button' && Object.prototype.hasOwnProperty.call(node.props, 'data-cui-tab'))
-  assert.deepEqual(tabs.map((node) => node.props['data-cui-tab']), ['classroom', 'board'])
-  assert.deepEqual(tabs.map((node) => textOf(node)), ['教室', '板书'])
+  // 🔴 2026-10-21（P2）：P2 给面板加了「日记」（N2.5）与「群聊」（N3.1）两页，这条清单随之
+  //    从两项变四项。**不是放宽**：四个页签一个不少，且顺序固定（教室 → 板书 → 日记 → 群聊），
+  //    少一个、多一个、换顺序都会判红。
+  assert.deepEqual(tabs.map((node) => node.props['data-cui-tab']), ['classroom', 'board', 'diary'])
+  assert.deepEqual(tabs.map((node) => textOf(node)), ['教室', '板书', '日记'])
   assert.equal(tabs[0].props['data-active'], 'true', '默认在「教室」')
   assert.ok(String(tabs[0].props.style.borderBottom).includes('var(--cui-gold)'), '当前 tab 的金褐下划线（tabActive 是叠出来的新对象，按值判）')
   assert.equal(tabs[1].props.style.borderBottom, '2px solid transparent', '非当前 tab 没有那条下划线')
@@ -1794,6 +1798,7 @@ assert.equal(findAll(tree2, (node) => Object.prototype.hasOwnProperty.call(node.
   assert.equal(Object.prototype.hasOwnProperty.call(S.tab, 'fontWeight'), false)
   assert.equal(findOne(tree, 'data-classroom-ui-portrait-stage') !== null, true, '「教室」页里讲台照旧在')
   assert.equal(findOne(tree, 'data-classroom-ui-board'), null, '「教室」页里不渲染板书历史（省一次读盘）')
+  assert.equal(findOne(tree, 'data-classroom-ui-diary'), null, '「教室」页里不渲染日记（省一次读盘）')
 
   tabs[1].props.onClick()
   const boardTree = await renderPanel()
@@ -1801,3 +1806,237 @@ assert.equal(findAll(tree2, (node) => Object.prototype.hasOwnProperty.call(node.
   assert.equal(findOne(boardTree, 'data-classroom-ui-portrait-stage'), null, '切到「板书」页后讲台卸载（立绘 rAF 随之停掉，D2）')
   tabs[0].props.onClick()
 }
+
+// 11.6 「日记」页能切过去（P2 / N2.5），且切走之后不残留
+{
+  const tree = await renderPanel()
+  const tabs = findAll(tree, (node) => node.tag === 'button' && Object.prototype.hasOwnProperty.call(node.props, 'data-cui-tab'))
+  const diaryTab = tabs.find((node) => node.props['data-cui-tab'] === 'diary')
+  assert.ok(diaryTab !== undefined, '必须有「日记」页签')
+
+  diaryTab.props.onClick()
+  const diaryTree = await renderPanel()
+  assert.equal(findOne(diaryTree, 'data-classroom-ui-diary') !== null, true, '切到「日记」页后渲染日记')
+  assert.equal(findOne(diaryTree, 'data-classroom-ui-portrait-stage'), null, '「日记」页里讲台卸载（与板书同一取舍）')
+  assert.equal(findOne(diaryTree, 'data-classroom-ui').props['data-cui-tab'], 'diary', '面板根上的 data-cui-tab 跟着走')
+
+  // 回到「教室」：日记不在（省读盘）
+  tabs[0].props.onClick()
+  const backTree = await renderPanel()
+  assert.equal(findOne(backTree, 'data-classroom-ui-diary'), null)
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 12 · 「日记」（N2.5）与「群聊」（N3.1）两页（P2）
+//
+// 🔴 这两页的数据**只走 remote**（`classroomNarrative` / `classroomGroup`），所以这里用假 remote
+//    直接喂 wire 形状，测的是"面板拿到这种数据会画成什么"，不碰叙事包的实现。
+// ════════════════════════════════════════════════════════════════════════════
+
+/**
+ * 一个**独立**的渲染夹具：新 React 实例 ＋ 新模块实例，并把 `setInterval` 换成可手动触发的假定时器。
+ * 为什么不用 `renderPanel`：那一个复用全局 `react`（hook 表跨用例保留），而群聊要靠 effect 里的
+ * 轮询把 `typing` 推上来——必须能自己决定"这一轮定时器什么时候响"。
+ * @returns {{render: (name: string, props: object) => Promise<object>, timers: Function[], restore: () => void}}
+ */
+function makeTabHarness() {
+  const fresh = makeReact()
+  const api = registration.factory((specifier) => {
+    if (specifier === 'react') return fresh.api
+    throw new Error(`未预期的 require("${specifier}")`)
+  })
+  const realSetInterval = globalThis.setInterval
+  const realClearInterval = globalThis.clearInterval
+  const timers = []
+  globalThis.setInterval = (fn) => { timers.push(fn); return timers.length }
+  globalThis.clearInterval = () => {}
+  return {
+    api,
+    timers,
+    render: (name, props) => fresh.render(fresh.api.createElement(api[name], props)),
+    restore: () => {
+      globalThis.setInterval = realSetInterval
+      globalThis.clearInterval = realClearInterval
+    },
+  }
+}
+
+// 12.1 `sortDiariesDesc`：按时间倒序（服务给的是时间顺序），同一天按讲次倒序，缺日期的排最后
+{
+  const ascending = [
+    { date: '2026-10-18', lesson: 1, text: '第一条' },
+    { date: '2026-10-19', lesson: 2, text: '第二条' },
+    { date: '2026-10-20', lesson: 3, text: '第三条' },
+  ]
+  const desc = panel.sortDiariesDesc(ascending)
+  assert.deepEqual(desc.map((entry) => entry.text), ['第三条', '第二条', '第一条'], '最近的日记在最上面')
+  assert.deepEqual(ascending.map((entry) => entry.text), ['第一条', '第二条', '第三条'], '不许改服务手里那一份（复制后排序）')
+
+  const sameDay = [
+    { date: '2026-10-20', lesson: 2, text: '同日第 2 讲' },
+    { date: '2026-10-20', lesson: 4, text: '同日第 4 讲' },
+  ]
+  assert.deepEqual(panel.sortDiariesDesc(sameDay).map((entry) => entry.text), ['同日第 4 讲', '同日第 2 讲'], '同一天按讲次倒序')
+
+  const broken = [{ date: '', lesson: null, text: '日期未记' }, { date: '2026-10-20', lesson: 3, text: '正常' }]
+  assert.deepEqual(panel.sortDiariesDesc(broken).map((entry) => entry.text), ['正常', '日期未记'], '缺日期的排最后（不替它编一个日期）')
+  assert.deepEqual(panel.sortDiariesDesc(null), [], '不是数组 → 空表，不抛')
+}
+
+// 12.2 `loadDiaryPage`：status ＋ diaries 两跳，四种终态各走各的出口，**永不抛**
+{
+  // 🔴 客户端 Remote 的返回是**两层**：外层 `{ok,value}`（网关）＋ 内层服务自己的形状。
+  //    这里刻意按真实两层写：只有外层通了，内层的 `{ok:false,reason}` 才会被当成"能力缺席"。
+  const diaryRemote = (over = {}) => ({
+    classroomNarrative: Object.assign({
+      status: async () => ({ ok: true, value: { ok: true, status: { ok: true, active: [], lastError: null, lastSuccess: null, recent: [] } } }),
+      diaries: async () => ({ ok: true, value: { ok: true, entries: [{ date: '2026-10-19', lesson: 2, text: '旧' }, { date: '2026-10-20', lesson: 3, text: '新' }], bad: 0 } }),
+    }, over),
+  })
+
+  const ready = await panel.loadDiaryPage(diaryRemote(), 'session-under-test', 20)
+  assert.equal(ready.kind, 'ready')
+  assert.deepEqual(ready.entries.map((entry) => entry.text), ['新', '旧'], '页面这一层就排成时间倒序')
+  assert.equal(ready.lastError, null, '没有 lastError 时不给错误块')
+
+  const withError = await panel.loadDiaryPage(diaryRemote({
+    status: async () => ({ ok: true, value: { ok: true, status: { ok: false, active: [], lastError: { code: 'MODEL_ERROR', message: '模型超时' }, lastSuccess: null, recent: [] } } }),
+  }), 'session-under-test', 20)
+  assert.equal(withError.kind, 'ready')
+  assert.equal(withError.lastError.code, 'MODEL_ERROR', 'lastError 要原样带到页面上')
+
+  const absent = await panel.loadDiaryPage({ classroomNarrative: {
+    status: async () => ({ ok: true, value: { ok: false, reason: 'narrative-absent' } }),
+    diaries: async () => ({ ok: true, value: { ok: false, reason: 'narrative-absent' } }),
+  } }, 'session-under-test', 20)
+  assert.equal(absent.kind, 'absent', '叙事包缺席 → 中性态（不是 failed）')
+
+  const noRemote = await panel.loadDiaryPage({}, 'session-under-test', 20)
+  assert.equal(noRemote.kind, 'absent', '连 classroomNarrative 命名空间都没有 → 同样中性')
+
+  const failed = await panel.loadDiaryPage(diaryRemote({ diaries: async () => ({ ok: true, value: { ok: false, reason: 'read-failed', message: 'EACCES' } }) }), 'session-under-test', 20)
+  assert.equal(failed.kind, 'failed')
+  assert.ok(failed.message.includes('EACCES'), '失败要把原因带出来')
+
+  const thrown = await panel.loadDiaryPage(diaryRemote({ status: async () => { throw new Error('gateway down') } }), 'session-under-test', 20)
+  assert.equal(thrown.kind, 'failed', 'remote 抛错也归一成 failed，不许把抛错冒出渲染路径')
+  assert.ok(thrown.message.includes('gateway down'))
+
+  const gatewayDown = await panel.loadDiaryPage(diaryRemote({ status: async () => ({ ok: false, error: { code: 'gateway/internal', message: 'connection closed' } }) }), 'session-under-test', 20)
+  assert.equal(gatewayDown.kind, 'failed', '外层失败（网关不通）是故障，不是能力缺席')
+  assert.ok(gatewayDown.message.includes('gateway/internal'), '外层 error.code 要带出来')
+
+  assert.ok(panel.describeNarrativeFailure({ ok: false, reason: 'no-classroom', message: '没有教室' }).includes('找不到教室'))
+  assert.ok(panel.describeLastError({ code: 'IO_ERROR', message: '写不进去' }).includes('IO_ERROR'))
+  assert.equal(panel.describeLastError(null), '')
+}
+
+// 12.3 「日记」页渲染：倒序列出条目；`lastError` **有错才出现**；缺席时一句中性说明
+{
+  const entries = [
+    { date: '2026-10-18', lesson: 1, text: '第一次课，抽屉卡了一下。' },
+    { date: '2026-10-20', lesson: 3, text: '今天讲完了进程调度。' },
+  ]
+  const make = (statusPayload) => ({
+    classroomNarrative: {
+      status: async () => ({ ok: true, value: statusPayload }),
+      diaries: async () => ({ ok: true, value: { ok: true, entries, bad: 0 } }),
+    },
+  })
+
+  // A · 没有错误
+  const harnessA = makeTabHarness()
+  try {
+    const tree = await harnessA.render('DiaryView', { remote: make({ ok: true, status: { ok: true, active: [], lastError: null, recent: [] } }), sessionId: 'session-under-test' })
+    assert.ok(findOne(tree, 'data-classroom-ui-diary') !== null, '「日记」页必须渲染出来')
+    const rows = findAll(tree, (node) => Object.prototype.hasOwnProperty.call(node.props, 'data-cui-diary-item'))
+    assert.equal(rows.length, 2)
+    assert.deepEqual(rows.map((node) => node.props['data-cui-diary-item']), ['2026-10-20', '2026-10-18'], '列表是时间倒序')
+    assert.ok(textOf(rows[0]).includes('今天讲完了进程调度'), '最新那条的正文要显示')
+    assert.ok(textOf(rows[0]).includes('第 3 讲'), '讲次要显示')
+    assert.ok(textOf(rows[0]).includes('2026-10-20'), '日期要显示')
+    assert.equal(findOne(tree, 'data-cui-diary-status-error'), null, '没有 lastError → 不画错误块（"有错才显示"）')
+    assert.ok(findOne(tree, 'data-cui-diary-refresh') !== null, '「重新读盘」在（读失败能重试）')
+    // 只读：日记页不许出现输入控件
+    assert.equal(findAll(tree, (node) => node.tag === 'input' || node.tag === 'textarea').length, 0, '日记**只读**')
+  } finally {
+    harnessA.restore()
+  }
+
+  // B · 有 lastError
+  const harnessB = makeTabHarness()
+  try {
+    const tree = await harnessB.render('DiaryView', {
+      remote: make({ ok: true, status: { ok: false, active: [], lastError: { code: 'MODEL_ERROR', message: '模型超时' }, recent: [] } }),
+      sessionId: 'session-under-test',
+    })
+    const block = findOne(tree, 'data-cui-diary-status-error')
+    assert.ok(block !== null, 'lastError 非空 → 顶部必须出现错误状态')
+    assert.ok(textOf(block).includes('MODEL_ERROR'), '错误状态要写清 code')
+    assert.ok(textOf(block).includes('模型超时'), '错误状态要写清 message')
+  } finally {
+    harnessB.restore()
+  }
+
+  // C · 叙事包缺席 → 中性说明（不是错误块、不白屏）
+  const harnessC = makeTabHarness()
+  try {
+    const tree = await harnessC.render('DiaryView', { remote: {}, sessionId: 'session-under-test' })
+    const note = findOne(tree, 'data-cui-diary-absent')
+    assert.ok(note !== null, '缺席时要有一句中性说明')
+    assert.ok(textOf(note).includes('没有叙事服务'), '说明里要讲清"没有叙事服务"')
+    assert.equal(findOne(tree, 'data-cui-diary-error'), null, '缺席**不是**读失败（不画错误块）')
+    assert.equal(findAll(tree, (node) => Object.prototype.hasOwnProperty.call(node.props, 'data-cui-diary-item')).length, 0)
+    assert.ok(findOne(tree, 'data-cui-diary-refresh') !== null, '缺席时也留着「重新读盘」（装上后能立刻重试）')
+  } finally {
+    harnessC.restore()
+  }
+}
+
+// 12.7 客户端 Remote 的挂载清单（§6.10.1）：两个命名空间六条方法，shape 要过 `$mount` 的校验
+//
+// 🔴 这一条守的是"面板能不能真的调到宿主"：客户端 `ctx.remote.<ns>` 的命名空间来自静态装配表，
+//    第三方包没有 client 面的 remote 产物 → 必须由本插件自己 `$mount` 一份清单。
+//    清单写错（少方法 / codec 不是 strict / 没有 create）在浏览器里只会表现为"没有服务"，
+//    没有任何报错——所以这里把它钉死在结构上。
+{
+  const contribution = panel.narrativeRemoteContribution()
+  assert.equal(contribution.package, 'classroom-ui', '贡献的 package 必须唯一（重复挂载会被注册表拒收）')
+  const endpoints = contribution.descriptors.map((d) => d.namespace + '/' + d.method)
+  assert.deepEqual(endpoints, [
+    'classroomNarrative/status',
+    'classroomNarrative/diaries',
+  ], '两条方法一条不少（与宿主清单同名同序）')
+  const ids = new Set(contribution.descriptors.map((d) => d.id))
+  assert.equal(ids.size, contribution.descriptors.length, 'id 不许重复（注册表按 id 去重）')
+  for (const descriptor of contribution.descriptors) {
+    assert.equal(descriptor.service, descriptor.namespace, 'service 与 namespace 一致（宿主 validateBinding 的判据）')
+    assert.equal(descriptor.invocation.kind, 'direct', '两条都是 direct（与宿主清单一致）')
+    assert.equal(descriptor.result.mode, 'strict', 'result 必须是 strict codec')
+    assert.equal(typeof descriptor.result.create, 'function', 'result codec 必须有 create()（否则 $mount 直接拒收）')
+    const first = descriptor.parameters[0]
+    assert.equal(first.source, 'lookup')
+    assert.equal(first.lookup, 'workspaceFileScope', '第一参数永远是会话作用域（网关据此解析 sessionId）')
+    assert.equal(first.wire, 'workspaceFileScopeId', 'wire 名必须与宿主逐字一致')
+    for (const parameter of descriptor.parameters) {
+      assert.equal(parameter.codec.mode, 'strict', `参数 ${parameter.name} 的 codec 必须是 strict`)
+      assert.equal(typeof parameter.codec.create, 'function', `参数 ${parameter.name} 的 codec 必须有 create()`)
+      assert.equal(parameter.codec.create().parse('x'), 'x', '手写 codec 只做 pass-through（真编解码在宿主侧）')
+    }
+  }
+  // 可缺省的参数：日记的 limit 可省（缺省由宿主侧 `clampLimit` 填）
+  const optionalOf = (endpoint) => contribution.descriptors
+    .find((d) => d.namespace + '/' + d.method === endpoint).parameters
+    .filter((p) => p.source === 'json' && p.acceptsUndefined === true)
+    .map((p) => p.name)
+  assert.deepEqual(optionalOf('classroomNarrative/diaries'), ['limit'])
+
+  // 拆包：外层 `{ok,value}` 与 `{ok:false,error}` 各走各的
+  assert.deepEqual(panel.unwrapRemoteResult({ ok: true, value: { a: 1 } }), { ok: true, value: { a: 1 } })
+  const outerFailed = panel.unwrapRemoteResult({ ok: false, error: { code: 'gateway/internal', message: 'down' } })
+  assert.equal(outerFailed.ok, false)
+  assert.equal(outerFailed.error.code, 'gateway/internal')
+  assert.equal(panel.unwrapRemoteResult(undefined).error.code, 'REMOTE_FAILED', '空结果归一成 REMOTE_FAILED，不抛')
+  assert.equal(panel.unwrapRemoteResult({ ok: true }).value, undefined, 'value 缺失时给 undefined（不编一个空对象）')
+}
+

@@ -12,6 +12,14 @@
 
 import { z } from 'zod'
 
+// 叙事只读那两条（`classroomNarrative`：status / diaries，P2「日记」tab 的数据口）
+// 在 `typert.narrative.host.js` 里单独维护，这里只是把它们**并入同一份 TYPERT**。
+// 🔴 为什么必须并进来：`dsh-typert-loader` 只认 `package.json` 的 `exports["./typert"]`
+//    **一个**产物（0.2.1-rc.2 的 `typertExportOf` 只处理字符串或带 `default` 的对象，
+//    别的一律不用）。所以「再加一个 `./typert.narrative` 导出」不会被任何人读到；
+//    而把 `./typert` 改指向叙事那份，白板的 save/load/index 会整批从注册表里消失。
+import { NARRATIVE_INVOCATIONS, NARRATIVE_SERVICE } from './typert.narrative.host.js'
+
 // 🔴 2026-10-19：0.1.5-rc.1 的 dsh-typert-loader 会校验每个 invocation 参数的 codec 必须是
 //    **真的 zod v4 schema 实例**（它检查 `"_zod" in schema.schema`）。原先这里是 `undefined`，
 //    于是报 `invocation … parameter codec is not backed by a zod v4 schema`，整包装载失败、实例起不来。
@@ -96,6 +104,9 @@ export const TYPERT = {
       result: _codec('unknown', () => _unknownSchema, {}),
       sourceLocation: { file: 'clients/classroom-ui/lib/whiteboard-host.mjs', line: 166, column: 3 },
     },
+    // ── 叙事只读（P2「日记」tab，见 `lib/typert.narrative.host.js`）──────────────
+    //    同样 `service`/`namespace` 一致、`invocation.kind: 'direct'`、codec 带 `create()`。
+    ...NARRATIVE_INVOCATIONS,
   ],
   // 🔴 2026-10-19：0.1.5-rc.1 的 typert-loader 要求清单里必须有 `model`（描述宿主暴露给浏览器的
   //    服务形状），缺它会直接判 `TYPERT.model must be an object` 并把整个 profile 拉不起来。
@@ -136,6 +147,8 @@ export const TYPERT = {
           },
         ],
       },
+      // 叙事只读服务的形状（status / diaries）。与白板那条同构：`types: []`。
+      NARRATIVE_SERVICE,
     ],
     // 0.1.5-rc.1 的 typert-loader 还要求这两项存在（可以是空数组）：事件与对象模型。
     // 0.1.7 起似乎放宽了，但为了在班级服务器的版本上能起来，显式给空数组。

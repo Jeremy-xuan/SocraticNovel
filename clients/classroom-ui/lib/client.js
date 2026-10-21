@@ -1760,6 +1760,17 @@ window.__ModuleLoader__.load({
 				boardRowMeta: Object.assign({ flex: "0 0 auto", color: ink[4] }, t.meta),
 				/** 点开后的那一块：像一张"翻开的书页"（内页边界 ＋ 画布底），与消息流里那张图同一材质。 */
 				boardViewer: { display: "flex", flexDirection: "column", gap: space.sm, border: line.box, borderRadius: radius.block, padding: space.lg, background: fill.plate },
+
+				// ── 「日记」tab（P2 / N2.5）────────────────────────────────────────────
+				//    一条日记＝「日期 · 第 N 讲」（等宽＋标签字）＋正文（散文体）。
+				//    左侧一条金褐发丝当书签边，与「数据来源」的既读橙竖线同一语汇（不新增色）。
+				diaryList: { display: "flex", flexDirection: "column" },
+				diaryItem: { display: "flex", flexDirection: "column", gap: space.xs, padding: space.md + " 0 " + space.md + " " + space.md, borderBottom: line.hair, borderLeft: "2px solid var(--cui-gold-rule)" },
+				diaryHead: Object.assign({ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: space.md, color: ink[3] }, t.meta),
+				diaryDate: { fontFamily: MONO, color: ink[3] },
+				diaryLesson: { color: ink[4] },
+				diaryText: Object.assign({ color: ink[2], whiteSpace: "pre-wrap", overflowWrap: "anywhere" }, t.prose),
+
 			};
 			/** `body` 是 `root` 的别名（两处都指面板根；保留旧键名以免渲染代码与测试两处各改各的）。 */
 			styles.body = styles.root;
@@ -4930,9 +4941,11 @@ window.__ModuleLoader__.load({
 				]);
 			}
 
-			// ── tab 栏（面板内部）：教室 ／ 板书 ────────────────────────────────────
+			// ── tab 栏（面板内部）：教室 ／ 板书 ／ 日记 ──────────────────────────────
 			//    只换"看哪一页"，不动任何数据、不新增侧栏 tab 类型（见上面 `tab` 的说明）。
-			const tabs = [["classroom", "教室"], ["board", "板书"]];
+			//    2026-10-21（P2）：新增「日记」（N2.5）——只读、只走 `remote.classroomNarrative`。
+			//    这一页的数据在**挂载时**才读，切走就停（与「板书」同一取舍：省一次读盘）。
+			const tabs = [["classroom", "教室"], ["board", "板书"], ["diary", "日记"]];
 			const tabBar = React.createElement("div", { style: S.tabBar, key: "tabs", "data-cui-tabs": "1" },
 				tabs.map((entry) => React.createElement("button", {
 					type: "button",
@@ -4943,14 +4956,19 @@ window.__ModuleLoader__.load({
 					"data-active": tab === entry[0] ? "true" : "false",
 					onClick: () => { setTab(entry[0]); },
 				}, entry[1])));
+			/** 三页共用同一份 `ctx.remote` 与 sessionId（都从 `portrait` 面取，与板书那条一致）。 */
+			const remote = props.portrait === undefined || props.portrait === null ? undefined : props.portrait.ctx.remote;
+			const sessionId = props.portrait === undefined || props.portrait === null ? null : props.portrait.sessionId;
 			const boardNode = React.createElement(BoardHistory, {
 				key: "board",
-				remote: props.portrait === undefined || props.portrait === null ? undefined : props.portrait.ctx.remote,
-				sessionId: props.portrait === undefined || props.portrait === null ? null : props.portrait.sessionId,
+				remote: remote,
+				sessionId: sessionId,
 				currentLesson: data === null ? null : data.currentLesson,
 			});
-			// 课堂那一页保持**原样**（所有区块一个不少）；板书那一页只放板书历史。
-			const shown = tab === "board" ? [boardNode] : children;
+			const diaryNode = React.createElement(DiaryView, { key: "diary", remote: remote, sessionId: sessionId });
+			// 课堂那一页保持**原样**（所有区块一个不少）；其它三页只放各自那一块。
+			const pages = { classroom: children, board: [boardNode], diary: [diaryNode] };
+			const shown = Object.prototype.hasOwnProperty.call(pages, tab) ? pages[tab] : children;
 
 			return React.createElement("div", {
 				style: Object.assign({}, S.root, S.vars, S.varsFor(theme)),
@@ -5183,6 +5201,425 @@ window.__ModuleLoader__.load({
 			}, children);
 		}
 
+		// ════════════════════════════════════════════════════════════════════
+		// 6.10 · 「日记」tab（N2.5）—— 只走 `ctx.remote.classroomNarrative`
+		//
+		// 数据来源（宿主半边 `lib/narrative-host.mjs` 转出来的两个只读方法）：
+		//   · `status()`  —— 最近一次跑完的运行有没有失败；顶部一行只在 `lastError` 非空时出现，
+		//                    写清 `code + message`。这是 N1.4「错误必须在面板可见」的消费方。
+		//   · `diaries()` —— `[{ date, lesson, text }]`，服务给的是时间顺序，这一页倒序展示。
+		//
+		// 🔴 不读 `runtime/.narrative/` 里的账本与运行日志：那是运行过程，不是展示内容
+		//    （NE 报告 §7.4）。历史跨重启要读也只能走叙事服务自己的出口。
+		// 🔴 叙事包没装时：两个方法回 `{ ok:false, reason:'narrative-absent' }`，
+		//    这一页显示**一句中性说明**（不是报错、不白屏）——「能力缺席」与「读失败」是两件事。
+		// ════════════════════════════════════════════════════════════════════
+
+		/** 日记一次取多少条（够翻看，又不至于把右栏撑成长卷）。 */
+		const DIARY_LIMIT = 20;
+
+		// ── 6.10.0 客户端 Remote 的**两层**返回：外层是"调用通没通"，内层是"服务说行不行" ──
+		//
+		// 🔴 这一层是实测出来的（不是猜）：`dsh-api-gateway` 的 client 面把宿主方法的返回值
+		//    **包进 `value`**：`ctx.remote.<ns>.<method>(...)` → `{ ok:true, value:<宿主返回值> }`
+		//    ／ `{ ok:false, error:{ code, message } }`（`gateway-client.js` 的 `invoke`：
+		//    `return { ok: true, value: ... }`）。而本插件宿主的两个方法**自己也**回
+		//    `{ ok:false, reason }`（叙事包缺席 / 找不到教室 / 读失败）——
+		//    两层 `ok` 各管一件事，混为一谈就会把"网关不通"说成"叙事包没装"。
+		//    现有 `readText`（§2 的 workspaceFiles 通道）用的是同一个外层形状，这里保持一致。
+		/**
+		 * 拆外层：`{ ok:true, value }` ／ `{ ok:false, error }` → 统一的 `{ ok, value | error }`。
+		 * **永不抛**（形状不对也归一成 `REMOTE_FAILED`）。
+		 * @param result - remote 调用的原始返回
+		 * @returns {{ok: true, value: unknown} | {ok: false, error: {code: string, message: string}}}
+		 */
+		function unwrapRemoteResult(result) {
+			if (result === null || result === undefined || typeof result !== "object") {
+				return { ok: false, error: { code: "REMOTE_FAILED", message: "Remote 返回了空结果" } };
+			}
+			if (result.ok === false) {
+				const error = result.error !== null && typeof result.error === "object" ? result.error : {};
+				return {
+					ok: false,
+					error: {
+						code: typeof error.code === "string" && error.code.length > 0 ? error.code : "REMOTE_FAILED",
+						message: typeof error.message === "string" && error.message.length > 0 ? error.message : "Remote 调用失败",
+					},
+				};
+			}
+			return { ok: true, value: result.value };
+		}
+
+		// ── 6.10.1 🔴 客户端 Remote 的挂载（契约 K4.1 没写的一步，实测补上）──
+		//
+		// `ctx.remote.<ns>` 的命名空间**不是**按宿主侧 `ctx.typert` 自动长出来的：
+		//   浏览器侧的 `ctx.remote` 由 `dsh-api-remotes` 的那份**静态装配表**逐个
+		//   `ctx.remote.$mount(contribution)` 挂出来（`dsh-api-remotes/lib/types/client/index.js`
+		//   只 import 了官方包各自的 `remote` 产物）。第三方包里没有 client 面的
+		//   `typert.remote-client` 产物，于是 `ctx.remote.classroomGroup` 在浏览器里**根本不存在**
+		//   （活体实测：面板两页都落到"没有服务"的中性说明，宿主日志一句错都没有）。
+		// 修法只有一条：由**消费方**用公开的 `ctx.remote.$mount(contribution)` 自己挂一份清单。
+		//   本插件就是这两个命名空间唯一的消费方，所以清单写在这里；挂载失败只记一条警告，
+		//   面板照旧显示"能力缺席"（不白屏、不把槽位崩成占位）。
+		// 🔴 清单里的 codec 是**手写的 strict codec**（`{mode:'strict', typeSymbol, create()}`）：
+		//   客户端产物不经打包器、`require` 只认 `react`，所以拿不到 zod；而 `$mount` 的校验只要求
+		//   `mode === 'strict'` ＋ `create` 是函数（`gateway-client.js` 的 `requireStrictCodec`）。
+		//   真正的编解码在宿主侧（它有完整清单），这里只负责"形状对得上"。
+
+		/**
+		 * 插件激活时记下的客户端根 Context。
+		 * 🔴 为什么要它：`remote.<ns>` 是 cordis 的**服务键**（`remoteServiceKey` → `remote.<namespace>`），
+		 *    读 `ctx.remote.classroomNarrative` 要求本插件在 `inject` 里声明过它；
+		 *    可这两个命名空间**是本插件自己在 apply 里挂的**——声明进 `inject` 就成了死锁
+		 *    （服务没挂 → 插件不激活 → 服务永远挂不上）。实测报错逐字：
+		 *    `cannot get property "remote.classroomNarrative" without inject`。
+		 *    `ctx.get(name)` 是"读服务但不要求 inject"的那条路（cordis 的服务存储直读），
+		 *    所以这里留一份 ctx，用 `ctx.get` 取命名空间；取不到就是"没挂上"。
+		 */
+		let clientContext = null;
+
+		/** 手写 strict codec（客户端只过 `$mount` 的结构校验，不做真编解码）。 */
+		function passThroughCodec(typeSymbol, jsonSchema) {
+			return {
+				mode: "strict",
+				typeSymbol: typeSymbol,
+				jsonSchema: jsonSchema === undefined ? {} : jsonSchema,
+				create: () => ({ parse: (value) => value }),
+			};
+		}
+
+		/** `workspaceFileScope` lookup 那一条（与宿主 `typert.host.js` 的 wire 逐字一致）。 */
+		function scopeParameter() {
+			return {
+				name: "scope",
+				wire: "workspaceFileScopeId",
+				source: "lookup",
+				lookup: "workspaceFileScope",
+				codec: passThroughCodec("@deepseek-ai/dsh-session/types#SessionId", { type: "string" }),
+			};
+		}
+
+		/** 一条 JSON 参数（可选的那些显式 `acceptsUndefined`，与宿主清单一致）。 */
+		function jsonParameter(name, optional) {
+			return {
+				name: name,
+				wire: name,
+				source: "json",
+				...(optional === true ? { acceptsUndefined: true } : {}),
+				codec: passThroughCodec("json", {}),
+			};
+		}
+
+		/**
+		 * 叙事只读命名空间的客户端清单：`classroomNarrative`（status / diaries）。
+		 * @returns {{package: string, descriptors: Array<object>}}
+		 */
+		function narrativeRemoteContribution() {
+			const resultCodec = () => passThroughCodec("unknown", {});
+			const endpoint = (namespace, method, parameters) => ({
+				id: "classroom-ui#" + namespace + "/" + method,
+				service: namespace,
+				namespace: namespace,
+				method: method,
+				invocation: { kind: "direct" },
+				parameters: parameters,
+				result: resultCodec(),
+			});
+			return {
+				// 一份贡献里可以带多个命名空间（`mountContribution` 按 namespace 分组装）。
+				package: "classroom-ui",
+				descriptors: [
+					endpoint("classroomNarrative", "status", [scopeParameter()]),
+					endpoint("classroomNarrative", "diaries", [scopeParameter(), jsonParameter("limit", true)]),
+				],
+			};
+		}
+
+		/**
+		 * 取一个 Remote 命名空间服务。
+		 * 顺序：① `ctx.get('remote.<name>')`（免 inject，浏览器里的正路）；
+		 *       ② 传入的 `remote` 对象上的同名属性（node 侧测试直接喂假 remote 时走这条）。
+		 * **永不抛**：两条都不通就是 `null`（＝能力缺席，不是故障）。
+		 * @param remote - `ctx.remote`（可能为 undefined）
+		 * @param name - 命名空间名，如 `classroomNarrative`
+		 * @returns {object|null}
+		 */
+		function remoteNamespaceOf(remote, name) {
+			if (clientContext !== null && clientContext !== undefined) {
+				try {
+					const service = clientContext.get("remote." + name);
+					if (service !== null && service !== undefined) return service;
+				} catch {
+					// ctx.get 在极端情况下（上下文已销毁）会抛 —— 当作"没挂上"，继续走第二条。
+				}
+			}
+			try {
+				const service = remote === null || remote === undefined ? undefined : remote[name];
+				return service === null || service === undefined ? null : service;
+			} catch {
+				// 读 `remote.<ns>` 在没 inject 时会抛（cordis 的 accessor 会拦）——同样当缺席。
+				return null;
+			}
+		}
+
+		/**
+		 * 把一个"异步挂载"接成 `ctx.effect` 的同步形状：effect 立刻返回一个卸载器，
+		 * 挂载完成（或失败）后再补上真正的 dispose。
+		 * @param ctx - 客户端根 Context
+		 * @returns {() => void} 卸载器（幂等）
+		 */
+		function mountNarrativeRemotesEffect(ctx) {
+			let dispose = null;
+			let dead = false;
+			const remote = ctx === null || ctx === undefined ? undefined : ctx.remote;
+			const mount = remote === null || remote === undefined ? undefined : remote.$mount;
+			if (typeof mount !== "function") {
+				// 宿主版本没有 `$mount`（或 remote 没注入）：两页会落到"缺席"说明，这是对的形状。
+				return () => {};
+			}
+			Promise.resolve(mount.call(remote, narrativeRemoteContribution())).then(
+				(fn) => { if (dead) { if (typeof fn === "function") fn(); return; } dispose = fn; },
+				(error) => {
+					// 最可能的两种：命名空间已被别处挂过（未来的叙事包自带 client 面）、清单形状被新版拒收。
+					// 两种都不该让面板崩，只留一条可查的警告。
+					if (typeof console !== "undefined" && console !== null && typeof console.warn === "function") {
+						console.warn("[classroom-ui] 叙事/群聊 Remote 挂载失败：", messageOf(error));
+					}
+				},
+			);
+			return () => {
+				dead = true;
+				if (dispose !== null && typeof dispose === "function") {
+					dispose();
+					dispose = null;
+				}
+			};
+		}
+
+		/**
+		 * 一条日记的排序键（缺字段也给确定值，**不猜**）。
+		 * @param entry - `{ date, lesson, text }`
+		 * @returns {{date: string, lesson: number}}
+		 */
+		function diarySortKey(entry) {
+			const date = entry !== null && entry !== undefined && typeof entry.date === "string" ? entry.date : "";
+			const raw = entry === null || entry === undefined ? null : entry.lesson;
+			const lesson = typeof raw === "number" && Number.isFinite(raw) ? raw : -1;
+			return { date: date, lesson: lesson };
+		}
+
+		/**
+		 * 日记按**时间倒序**（近的在上）。
+		 * 服务返回的是文件顺序（＝时间顺序），这里复制后倒排——不改服务手里那一份。
+		 * 同一天多条（补写/复写）时按讲次倒序；日期缺失的排在最后（不给它们编一个日期）。
+		 * @param entries - 服务返回的 `entries`
+		 * @returns {Array<object>}
+		 */
+		function sortDiariesDesc(entries) {
+			const list = Array.isArray(entries) ? entries.slice() : [];
+			list.sort((left, right) => {
+				const a = diarySortKey(left);
+				const b = diarySortKey(right);
+				if (a.date !== b.date) return a.date < b.date ? 1 : -1;
+				return b.lesson - a.lesson;
+			});
+			return list;
+		}
+
+		/**
+		 * 把叙事服务的失败形状翻成**人话**（reason 是稳定的，message 是给人看的）。
+		 * @param result - `{ ok:false, reason, message? }`
+		 * @returns {string}
+		 */
+		function describeNarrativeFailure(result) {
+			const reason = result !== null && result !== undefined && typeof result.reason === "string" ? result.reason : "unknown";
+			const message = result !== null && result !== undefined && typeof result.message === "string" ? result.message : "";
+			const head = {
+				"narrative-absent": "叙事服务未部署",
+				"no-classroom": "找不到教室目录",
+				"read-failed": "读日记失败",
+				"status-failed": "读叙事状态失败",
+			}[reason];
+			return (head === undefined ? "叙事服务回了失败（" + reason + "）" : head) + (message === "" ? "" : "：" + message);
+		}
+
+		/**
+		 * 读「日记」页的全部数据：`status` ＋ `diaries`。
+		 * **永不抛**——四种终态各有明确出口：`absent` / `ready` / `failed` / `empty`（empty 由 ready＋空表推出）。
+		 * @param remote - `ctx.remote`
+		 * @param sessionId - 会话 id（网关据此解析 `workspaceFileScope`）
+		 * @param limit - 条数
+		 * @returns {Promise<{kind: string, entries: Array<object>, bad: number, lastError: object|null, message: string|null}>}
+		 */
+		async function loadDiaryPage(remote, sessionId, limit) {
+			const service = remoteNamespaceOf(remote, "classroomNarrative");
+			if (service === null || typeof service.status !== "function") {
+				return { kind: "absent", entries: [], bad: 0, lastError: null, message: null };
+			}
+			/** 常见终态构造器（四处一样，写一次）。 */
+			const absent = () => ({ kind: "absent", entries: [], bad: 0, lastError: null, message: null });
+			const failed = (message) => ({ kind: "failed", entries: [], bad: 0, lastError: null, message: message });
+			try {
+				// ① 状态：外层 `{ok,value}` → 内层 `{ok,status}` / `{ok:false,reason}`
+				const statusOuter = unwrapRemoteResult(typeof service.status === "function" ? await service.status(sessionId) : null);
+				if (!statusOuter.ok) return failed(describeRemoteFailure(statusOuter.error));
+				const status = statusOuter.value;
+				if (status !== null && status !== undefined && status.ok === false && status.reason === "narrative-absent") return absent();
+				if (status === null || status === undefined || status.ok !== true) return failed(describeNarrativeFailure(status));
+
+				// ② 条目：同样两层
+				const listedOuter = unwrapRemoteResult(await service.diaries(sessionId, limit));
+				if (!listedOuter.ok) return failed(describeRemoteFailure(listedOuter.error));
+				const listed = listedOuter.value;
+				if (listed !== null && listed !== undefined && listed.ok === false && listed.reason === "narrative-absent") return absent();
+				if (listed === null || listed === undefined || listed.ok !== true) return failed(describeNarrativeFailure(listed));
+
+				const inner = status.status;
+				const lastError = inner !== null && inner !== undefined && inner.lastError !== null && inner.lastError !== undefined
+					? inner.lastError
+					: null;
+				return {
+					kind: "ready",
+					entries: sortDiariesDesc(listed.entries),
+					bad: typeof listed.bad === "number" ? listed.bad : 0,
+					lastError: lastError,
+					message: null,
+				};
+			} catch (error) {
+				return failed(messageOf(error));
+			}
+		}
+
+		/**
+		 * 外层失败（网关/传输）→ 人话。`code` 原样保留（它比文案稳定）。
+		 * @param error - `{ code, message }`
+		 * @returns {string}
+		 */
+		function describeRemoteFailure(error) {
+			const code = error !== null && error !== undefined && typeof error.code === "string" ? error.code : "REMOTE_FAILED";
+			const message = error !== null && error !== undefined && typeof error.message === "string" ? error.message : "";
+			return message === "" ? code : code + " — " + message;
+		}
+
+		/**
+		 * 一行 `lastError` 的文字：`code — message`（两个都可能缺，缺哪个就少哪个，不编）。
+		 * @param error - `{ code, message }`
+		 * @returns {string}
+		 */
+		function describeLastError(error) {
+			if (error === null || error === undefined) return "";
+			const code = typeof error.code === "string" ? error.code : "";
+			const message = typeof error.message === "string" ? error.message : "";
+			if (code === "" && message === "") return "（叙事服务没给出原因）";
+			if (code === "") return message;
+			return message === "" ? code : code + " — " + message;
+		}
+
+		/**
+		 * 「日记」tab：按时间倒序的条目列 ＋ 顶部错误状态。
+		 * @param props - `{ remote, sessionId }`
+		 */
+		function DiaryView(props) {
+			const S = styles();
+			const remote = props.remote;
+			const sessionId = props.sessionId;
+			const [page, setPage] = React.useState({ kind: "loading", entries: [], bad: 0, lastError: null, message: null });
+			const [reloadSeq, setReloadSeq] = React.useState(0);
+
+			React.useEffect(() => {
+				let live = true;
+				setPage((previous) => Object.assign({}, previous, { kind: "loading" }));
+				loadDiaryPage(remote, sessionId, DIARY_LIMIT).then(
+					(result) => { if (live) setPage(result); },
+					(error) => { if (live) setPage({ kind: "failed", entries: [], bad: 0, lastError: null, message: messageOf(error) }); },
+				);
+				return () => { live = false; };
+			}, [sessionId, reloadSeq]);
+
+			const children = [];
+			children.push(React.createElement("div", { style: S.sectionLabel, key: "label" }, "日记 · 时间倒序"));
+
+			if (page.kind === "absent") {
+				// 中性说明：没装叙事包不是故障，是"这个教室还没有这个能力"。
+				children.push(React.createElement("div", {
+					style: S.note,
+					key: "absent",
+					"data-cui-diary-absent": "1",
+				}, "这个工作区没有叙事服务（没装叙事包），所以还没有日记。装上之后，每上完一节课它会自己写一条。"));
+			}
+
+			if (page.kind === "failed") {
+				children.push(React.createElement("div", {
+					style: S.error,
+					key: "failed",
+					"data-cui-diary-error": "1",
+				}, "读日记失败：" + String(page.message)));
+			}
+
+			// 🔴 顶部错误状态：**只在有错时出现**（N1.4 的消费方）。
+			//    「后来成功了」不清空 lastError（服务端的语义就是"最近一次失败"，见 README §3）。
+			if (page.lastError !== null) {
+				children.push(React.createElement("div", {
+					style: S.error,
+					key: "last-error",
+					"data-cui-diary-status-error": "1",
+				}, "上次写日记失败：" + describeLastError(page.lastError)));
+			}
+
+			if (page.kind === "ready" && page.entries.length === 0) {
+				children.push(React.createElement("div", {
+					style: S.note,
+					key: "empty",
+					"data-cui-diary-empty": "1",
+				}, "还没有日记。上完一节课（收课）后，这里会出现那节课的一条。"));
+			}
+
+			if (page.entries.length > 0) {
+				const rows = page.entries.map((entry, index) => {
+					const key = diarySortKey(entry);
+					const lesson = key.lesson < 0 ? "讲次未定" : "第 " + String(key.lesson) + " 讲";
+					const text = entry !== null && entry !== undefined && typeof entry.text === "string" ? entry.text : "";
+					return React.createElement("div", {
+						style: S.diaryItem,
+						key: "d" + String(index) + "-" + key.date,
+						"data-cui-diary-item": key.date === "" ? "" : key.date,
+						"data-cui-diary-lesson": key.lesson < 0 ? "" : String(key.lesson),
+					}, [
+						React.createElement("div", { style: S.diaryHead, key: "head" }, [
+							React.createElement("span", { style: S.diaryDate, key: "date" }, key.date === "" ? "日期未记" : key.date),
+							React.createElement("span", { style: S.diaryLesson, key: "lesson" }, lesson),
+						]),
+						React.createElement("div", { style: S.diaryText, key: "text" }, text),
+					]);
+				});
+				children.push(React.createElement("div", {
+					style: S.diaryList,
+					key: "list",
+					"data-cui-diary-list": String(page.entries.length),
+				}, rows));
+			}
+
+			if (page.bad > 0) {
+				children.push(React.createElement("div", { style: S.note, key: "bad", "data-cui-diary-bad": String(page.bad) },
+					"另有 " + String(page.bad) + " 条日记格式不完整，已跳过（叙事服务报的计数，不是猜的）。"));
+			}
+
+			children.push(React.createElement("button", {
+				type: "button",
+				className: "cui-act",
+				key: "refresh",
+				style: S.button,
+				"data-cui-diary-refresh": "1",
+				onClick: () => { setReloadSeq((value) => value + 1); },
+			}, page.kind === "loading" ? "读取中…" : "重新读盘"));
+
+			return React.createElement("div", {
+				style: S.sectionFor(false),
+				"data-classroom-ui-section": "1",
+				"data-classroom-ui-diary": "1",
+			}, children);
+		}
+
 		// ── 6.7 的视图：`classroom_draw` 那一条工具调用 ──────────────────────────
 
 		/**
@@ -5402,6 +5839,12 @@ window.__ModuleLoader__.load({
 			// 皮肤里那几条只有 CSS 能表达的规则（`:hover` / `:focus-visible` / `summary::marker`）。
 			// 幂等；规则只引 `--cui-*` 变量，故换方向不用重插。
 			installSkinCss();
+			clientContext = ctx;
+
+			// ── 叙事/群聊两个 Remote 命名空间：**由本插件自己挂**（见 §6.10.1 的说明）──
+			// 客户端 `ctx.remote` 的命名空间来自静态装配表，第三方包没有 client 面的 remote 产物，
+			// 所以不挂这两个命名空间，面板就只能显示"没有服务"。挂载是异步的，effect 同步返回卸载器。
+			ctx.effect(() => mountNarrativeRemotesEffect(ctx), "classroom-ui: 叙事 Remote（日记 / 群聊）");
 
 			ctx.effect(() => ctx.sidebarRightTabs.register({
 				id: TYPE_ID,
@@ -5594,6 +6037,21 @@ window.__ModuleLoader__.load({
 		exports.ClassroomTitle = ClassroomTitle;
 		exports.Field = Field;
 		exports.PortraitStage = PortraitStage;
+		// ── 「日记」（N2.5）：纯函数与读盘器一并导出，
+		//    供 node 侧测试直接驱动同一份代码（排序、失败归一都不在组件里另写一遍）──
+		exports.narrativeRemoteContribution = narrativeRemoteContribution;
+		exports.mountNarrativeRemotesEffect = mountNarrativeRemotesEffect;
+		exports.unwrapRemoteResult = unwrapRemoteResult;
+		exports.remoteNamespaceOf = remoteNamespaceOf;
+		exports.describeRemoteFailure = describeRemoteFailure;
+		exports.passThroughCodec = passThroughCodec;
+		exports.DiaryView = DiaryView;
+		exports.sortDiariesDesc = sortDiariesDesc;
+		exports.diarySortKey = diarySortKey;
+		exports.loadDiaryPage = loadDiaryPage;
+		exports.describeNarrativeFailure = describeNarrativeFailure;
+		exports.describeLastError = describeLastError;
+		exports.DIARY_LIMIT = DIARY_LIMIT;
 
 		return module.exports;
 	},
