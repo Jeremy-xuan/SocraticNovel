@@ -22,6 +22,7 @@
 
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { withFileLock, writeFileAtomic } from './atomic-write.mjs'
 import { lessonsDeclaredBy, readRuntimeLesson, resolveProgressFile } from './manifest.mjs'
 import { readProgressState } from './notestore.mjs'
 
@@ -562,23 +563,8 @@ export async function enterLesson({ classroomDir, manifest, lesson, log = () => 
     context = { title: '', continuity: [], overview: { arc: null, questions: [] }, prerequisites: [], missing: [`读教室文件失败：${cause?.message ?? cause}`] }
   }
 
-  let host = io
-  if (host === null) {
-    try {
-      host = await import('@deepseek-ai/dsh-atomic-write')
-    } catch (cause) {
-      return {
-        persisted: false,
-        lesson: previous,
-        previous,
-        skipped: [],
-        title: context.title,
-        recap: '',
-        file,
-        note: `宿主原子写不可用（${cause?.message ?? cause}）：讲次不移动`,
-      }
-    }
-  }
+  // 原子写：测试可注入（`io`），生产走本地实现（lib/atomic-write.mjs，与宿主同语义）。
+  const host = io ?? { withFileLock, writeFileAtomic }
 
   let nextSkipped = new Set()
   try {

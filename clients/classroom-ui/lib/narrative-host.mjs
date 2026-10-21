@@ -8,7 +8,7 @@
 //      必须在面板可见」的消费方：**日记没写成功这件事，面板要自己说出来**，不能只在日志里。
 //   ② `diaries()`  —— 最近 N 条日记正文，形状 `{ date, lesson, text }`（叙事包已把标题行切走）。
 //
-// 机制与 `whiteboard-host.mjs` 同构：继承 `TypertRemoteService`，把方法标成 Remote
+// 机制：继承本地 `RemoteService`（`lib/remote-service.mjs`），把方法标成 Remote
 //   （字符串键描述符，等价于 `@Remote` 装饰器），随 `package.json` 的 `"./typert"` 导出被
 //   `dsh-typert-loader` 自动注册进 `ctx.typert`；浏览器半边经 `ctx.remote.classroomNarrative` 调用。
 //
@@ -24,35 +24,11 @@
 //      `classrooms/<name>` / 多个时不许静默选一个）是叙事包的知识。抄一份到面板＝两份判定会漂移，
 //      所以这里**委托**，不复制。
 
-import { TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
-
-// ── 手动标记 Remote 方法（等价于 @Remote 装饰器，避免装饰器语法依赖） ──────────
-// 与 `whiteboard-host.mjs` 的 `markRemote` 同一形状：在类原型上写入字符串键
-// `"@deepseek-ai/dsh-typert-protocol/remote-methods"` 的描述符（version:1 + methods 数组）。
-const REMOTE_METHOD_DESCRIPTOR = '@deepseek-ai/dsh-typert-protocol/remote-methods'
-
-function sameInvocation(left, right) {
-  if (left.kind === 'direct') return right.kind === 'direct'
-  if (right.kind === 'direct') return false
-  return left.context === right.context
-}
-
-function markRemote(prototype, method, invocation = { kind: 'direct' }) {
-  const descriptor = Object.getOwnPropertyDescriptor(prototype, REMOTE_METHOD_DESCRIPTOR)?.value
-  const marker = Object.freeze({ method, invocation: Object.freeze(invocation) })
-  const current = descriptor?.methods?.find((candidate) => candidate.method === method)
-  if (current !== undefined) {
-    if (sameInvocation(current.invocation, marker.invocation) && current.mode === marker.mode) return
-    throw new Error(`narrative-host: Remote 方法 "${method}" 的调用标记冲突`)
-  }
-  Object.defineProperty(prototype, REMOTE_METHOD_DESCRIPTOR, {
-    configurable: true,
-    value: Object.freeze({
-      version: 1,
-      methods: Object.freeze([...(descriptor?.methods ?? []), marker]),
-    }),
-  })
-}
+// 🔴 2026-10-21（B2）：不再 import `@deepseek-ai/dsh-typert-protocol` ——
+//    基类与 `markRemote` 都收到本地 `lib/remote-service.mjs`（与宿主同一条 cordis/cordis-gateway
+//    契约，逐字段取证见该文件头）。import 宿主包会逼着把它写进 dependencies，
+//    于是 profile 的 node_modules 出现 `@deepseek-ai/*`，验收铁律③必红。
+import { RemoteService, markRemote } from './remote-service.mjs'
 
 /** 服务名 / wire 命名空间（与 `lib/typert.narrative.host.js` 的清单必须逐字一致）。 */
 const SERVICE_KEY = 'classroomNarrative'
@@ -131,7 +107,7 @@ async function classroomDirOf(narrative, scope) {
  *    （活体实测：日记页整页变成"读日记失败：gateway/internal — Receiver must be…"）。
  *    所以类里只留**公开方法**做转发，其余逻辑都是模块级函数（拿 `service.ctx` 读上下文）。
  */
-export class ClassroomNarrative extends TypertRemoteService {
+export class ClassroomNarrative extends RemoteService {
   constructor(ctx) {
     super(ctx, SERVICE_KEY)
     markRemote(ClassroomNarrative.prototype, 'status')

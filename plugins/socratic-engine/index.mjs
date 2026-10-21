@@ -21,8 +21,9 @@
 //   - render.missing 的 error/default 语义（M1-B2 待拍板）
 //   - 运行时切教室（系统段注册是一次性的，见 接线说明_S2.md §2.3 注）
 
-import { defineTool } from '@deepseek-ai/dsh-tools'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
+import { defineTool } from './lib/toolshape.mjs'
+import { createUserMessage } from './lib/usermessage.mjs'
+import { withFileLock, writeFileAtomic } from './lib/atomic-write.mjs'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import {
@@ -378,10 +379,11 @@ export async function apply(
       }
     }
     try {
-      const io = await import('@deepseek-ai/dsh-atomic-write')
-      await io.withFileLock(file, async () => {
+      // 本地原子写（lib/atomic-write.mjs）：0.2.1 没有可用的宿主原子写服务，
+      // 而 import 宿主包会让插件依赖进 profile（违反验收铁律③），详见该文件头。
+      await withFileLock(file, async () => {
         const text = await readFile(file, 'utf8')
-        await io.writeFileAtomic(file, renderRuntimePhase(text, next), { mode: 0o600 })
+        await writeFileAtomic(file, renderRuntimePhase(text, next), { mode: 0o600 })
       })
       return { persisted: true, file, note: `已写回 ${file}` }
     } catch (cause) {

@@ -19,6 +19,7 @@
 import { existsSync } from 'node:fs'
 import { mkdir, readFile, stat } from 'node:fs/promises'
 import { join } from 'node:path'
+import { withFileLock, writeFileAtomic } from './atomic-write.mjs'
 import {
   DIAGRAMS_SUBDIR,
   INDEX_FILE,
@@ -36,13 +37,9 @@ import {
 /** 教室 runtime 文件的权限位（实测既有文件是 `-rw-------`，见 postclass.mjs）。 */
 export const DEFAULT_FILE_MODE = 0o600
 
-/** 宿主原子写包（动态 import：单测环境无宿主也能加载本模块）。 */
-async function loadHostAtomicWrite() {
-  const mod = await import('@deepseek-ai/dsh-atomic-write')
-  if (typeof mod?.writeFileAtomic !== 'function' || typeof mod?.withFileLock !== 'function') {
-    throw new Error('@deepseek-ai/dsh-atomic-write 未导出 writeFileAtomic/withFileLock')
-  }
-  return { writeFileAtomic: mod.writeFileAtomic, withFileLock: mod.withFileLock }
+/** 原子写 IO（`lib/atomic-write.mjs`：与宿主 `@deepseek-ai/dsh-atomic-write` 同语义同签名）。 */
+async function loadAtomicWrite() {
+  return { writeFileAtomic, withFileLock }
 }
 
 /**
@@ -65,7 +62,7 @@ export async function saveDiagram(spec, opts = {}) {
   if (typeof runtimeDir !== 'string' || runtimeDir === '') {
     throw new Error('saveDiagram 需要 runtimeDir（教室 runtime/ 目录绝对路径）')
   }
-  const io = opts.io ?? (await loadHostAtomicWrite())
+  const io = opts.io ?? (await loadAtomicWrite())
   const mode = opts.mode ?? DEFAULT_FILE_MODE
   const at = (opts.now ?? Date.now)()
   const dir = join(runtimeDir, DIAGRAMS_SUBDIR)

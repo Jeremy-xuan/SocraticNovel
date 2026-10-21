@@ -14,7 +14,8 @@
 |---|---|
 | `package.json` | `dsh.bundle.patch`（成为 profile 的一层）＋ `dsh.client`（浏览器 roster 声明）＋ `exports["./client"]`（浏览器半边产物路径） |
 | `cordis.patch.yml` | 往 profile 树里插一行 loader 条目（`id/name = classroom-ui`） |
-| `lib/index.js` | 宿主半边：**空**。存在的唯一理由是 Loader 行要有一个可 import 的宿主模块 |
+| `lib/index.js` | 宿主半边：挂**一个**只读 Remote 服务 `classroomNarrative`（「日记」tab 的数据口）。叙事包缺席时也要 provide —— 面板靠这个命名空间在不在判断「叙事包装没装」 |
+| `lib/remote-service.mjs` | 本地「typert source-mode 远程服务」基类 ＋ `markRemote()`。**不 import `@deepseek-ai/dsh-typert-protocol`**（理由与逐字段契约见该文件头与 §5.1） |
 | `lib/client.js` | 浏览器半边：**手写的产物文件**（`window.__ModuleLoader__.load({id, factory})` 格式）。① 注册 tab 类型 + 面板主体 + 标题；② 读盘与解析（§3–§4）；③ **立绘挂载**（§4.5 与文件里的 §6.5）；④ **板书图：`classroom_draw` 的工具视图**（§4.6 与文件里的 §6.7）；⑤ **皮肤**（§4.7：`SKIN_PRESETS` 一张参数表 ＋ 由它派生的样式；SKIN-2 起**只有一个方向 `library`**） |
 | `test/panel.test.mjs` | node 侧测试：**驱动 `lib/client.js` 的真实代码**，喂**真实教室文件与真实 model3.json**，覆盖解析、分页读取、单文件失败、相位映射、model3 引用枚举、base64、私有 scheme 解析器、**板书图的入参解析/节点形状/主题映射**，以及 **§10 的视觉 DOM 断言**（用最小 React 替身把**真实组件**渲染成树，断言書庫的木框/纸面/书脊/索引/层级手段） |
 | `vendor/mermaid-11.17.2/mermaid.min.js` | **本插件自带的 mermaid 浏览器产物**（单文件 IIFE 构建，3.57 MB）。版本、下载命令、与「服务端判据同一份」的哈希对照见同目录 `BUILD-INFO.txt` |
@@ -430,12 +431,33 @@ M2_URL="..." /opt/homebrew/bin/node .../tools/mermaid-wiring-followup.cjs none  
 
 ## 5 · 装载与运行
 
+### 5.1 🔴 本插件不 import 任何 `@deepseek-ai/*`（B2，2026-10-21）
+
+`package.json` 的 `dependencies` 里只剩 `zod`。这不是风格偏好：0.2.1 删掉了「安装版回退目录」，
+插件一旦 import 宿主包，包就必须写进 `dependencies`，于是 profile 的 `node_modules/@deepseek-ai/`
+必然出现宿主副本 ⇒ 双实例 / Symbol 失配 ⇒ 验收流水线铁律③必红。
+
+为此做了两件事：
+
+| 改动 | 结果 | 证据 |
+|---|---|---|
+| **白板 Remote 服务整体下线**（`whiteboardStore` 的 save/load/index ＋ `lib/whiteboard.mjs` ＋ `lib/whiteboard-route.mjs`） | 面板不再需要 `dsh-typert-protocol` ＋ `dsh-atomic-write` 两份额外依赖 | 它**没有任何浏览器消费者**（板书历史改读 `<教室>/runtime/diagrams/index.md`，见 `lib/client.js` §6.9）；下线论证见 `docs/历史报告/实现报告_B2_去宿主包依赖_2026-10-21.md` §4 |
+| **叙事服务的基类换成 `lib/remote-service.mjs`** | 仍然只用 `ctx.provide()` ＋ 原型上的 `remote-methods` 描述符 ＋ `typertRemote` 绑定 —— 全是宿主网关读的那三样 | 逐字段依据（`readBinding` 要求 `service === originalOf(receiver)`、`serviceKey` 相等、`namespace` 是字符串；`getTraceable()` 见 `Symbol.for('cordis.tracker')` 才包 proxy）抄在该文件头 |
+
+验证边界（诚实写清）：`test/host-face.test.mjs` 钉住「绑定／描述符／manifest／不许 import」四件事；
+`tools/probes/toolshape-live/` 在**真 profile** 里验证到「服务被 provide ＋ 绑定逐字段正确 ＋
+host-face 清单注册进 `ctx.typert`（`classroomNarrative/status`、`/diaries` 都在）」。
+**没验到的**：浏览器经网关 HTTP 派发那最后一跳（要真开 web UI 点开「日记」tab）——
+改的只是基类，网关读的字段一个没少，但这一跳没有本次证据。
+
+### 5.2 装载命令
+
 ```bash
-export DSH_BIN="/Applications/DSH Desktop.app/Contents/Resources/app/node_modules/@deepseek-ai/dsh/lib/bin.js"
+DSH_BIN="/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh"
 
 # 装进测试 profile（本地包用 file:，绝不用 link:）
-node "$DSH_BIN" plugin --profile socratic-dev add \
-  "file:/Users/wujunjie/Documents/ChatGPT/大学申请/clients/classroom-ui"
+"$DSH_BIN" plugin --profile socratic-dev add \
+  "file:/abs/path/to/SocraticNovel/clients/classroom-ui"
 
 # 起 web UI（会打印带 token 的地址）
 # 🔴 必须用 /opt/homebrew/bin/node（PATH 里的 node 是 Electron 垫片）；

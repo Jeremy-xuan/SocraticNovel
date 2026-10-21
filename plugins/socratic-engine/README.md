@@ -215,13 +215,50 @@ SocraticNovel 的**宿主侧教学引擎**：读教室包 manifest，按 `positi
 ## 安装（🔴 两个坑，务必照做）
 
 ```bash
-export DSH_HOME=~/Library/Application\ Support/dsh-desktop/harness
-DSH_BIN="/Applications/DSH Desktop.app/Contents/Resources/app/node_modules/@deepseek-ai/dsh/lib/bin.js"
-node "$DSH_BIN" plugin --profile <profile> add "file:$HOME/SocraticNovel-wt/plugins/socratic-engine"
+DSH_BIN="/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh"
+"$DSH_BIN" plugin --profile <profile> add "file:$HOME/SocraticNovel-wt/plugins/socratic-engine"
 ```
 
-1. 🔴 **不要**把 `@deepseek-ai/dsh-tools`／`dsh-llm` 等宿主核心包装进 profile 或插件本地 node_modules——会造成**模块实例分裂**（Symbol 失配），工具调用崩在 `Cannot read properties of undefined (reading 'prepare')`。宿主自带解析。
-2. 用 **`file:`** 装（`link:` 会让插件从自己路径解析、找不到宿主核心包）。开发循环：`file:` 装一次，之后改完 `cp -R index.mjs lib <profile>/node_modules/socratic-engine/`。
+1. 🔴 **本插件不 import 任何 `@deepseek-ai/*`**（`package.json` 的 `dependencies` 里也没有）。
+   这不是风格偏好，是**硬约束**：0.2.1 删掉了「安装版回退目录」，插件一旦 import 宿主包，
+   包就必须写进 `dependencies`，于是 profile 的 `node_modules/@deepseek-ai/` 必然出现宿主包副本
+   ⇒ 双实例 / Symbol 失配（工具调用崩在 `Cannot read properties of undefined (reading 'prepare')`）
+   ⇒ 验收流水线铁律③ 必红。**要用的三样东西都在本仓库里有本地实现**，见下一节。
+   机核：`test/no-host-imports.test.mjs`（源码静态 + 动态 import 都查，`npm test` 就会跑）。
+2. 用 **`file:`** 装（`link:` 会让插件从自己路径解析）。开发循环：`file:` 装一次，之后改完
+   `cp -R index.mjs lib <profile>/node_modules/socratic-engine/`。
+
+## 宿主契约：本仓库自己实现的三块（B2，2026-10-21）
+
+上一节那条「不 import 宿主包」把三个宿主包从依赖里拿掉了。它们原本各管一件事，现在由三个本地模块
+承担，**每个都逐行对照过 0.2.1-rc.2 的宿主实现**：
+
+| 本地模块 | 替掉谁 | 复刻了什么 | **没有**复刻什么 |
+|---|---|---|---|
+| `lib/toolshape.mjs` | `@deepseek-ai/dsh-tools` 的 `defineTool` | 作者面 schema → 受支持的 raw JSON Schema 子集（`required` 上提、`additionalProperties` 必填、`type:'json'`、`oneOf`、注解）；`execute` 的参数校验（`ToolArgsError` / `invalid arguments: …`，路径与文案逐字对齐）；`presentCall/presentResult/isConcurrencySafe` 的软校验 | `HarnessError` 的**类身份**（我们的 `ToolArgsError` 不是它的子类 ⇒ 失败结果里少了 `error:{name,code}` 结构化元数据，正文消息不受影响）；`assertSupportedJsonSchema`（交给宿主 `ctx.tools.register()` 继续把关，不重复实现） |
+| `lib/usermessage.mjs` | `@deepseek-ai/dsh-llm` 的 `createUserMessage` | `{...input, role:'user', id:<v4 UUID>}` + `structuredClone` + 深度冻结（跳过 AbortSignal）。字段判据取自宿主 `dsh-session` 的 `assertMessageEventShape()`（`id` 非空、`role==='user'`、`source.kind` 非空、`content` 是数组） | `brandString` 的品牌类型（运行期是恒等函数，无行为差异） |
+| `lib/atomic-write.mjs` | `@deepseek-ai/dsh-atomic-write` | `writeFileAtomic`（`wx` 独占创建随机后缀临时文件 + `rename` 提交，新 inode 直接带 `mode`，失败清临时文件，Windows 有界重试）＋ `withFileLock`（`<file>.lock` 的 `wx` 锁、指数退避超时、持锁进程已死的**认领接管**） | 无（整份 220 行都对照过；见该文件头「与宿主的实质差异」） |
+
+**宿主升级后怎么发现漂移**（三个盯点，从廉价到昂贵）：
+
+1. **装载就会说话**：宿主 `ctx.tools.register()` 仍会跑它自己的 `assertSupportedJsonSchema`
+   （`output.schema` 不合格直接抛），`agent/pre-step` 的注入消息仍要过 `assertMessageEventShape`。
+   这三处是宿主自己的判据，我们没抄一遍 —— 它们变了，装载阶段立刻报错。
+2. **`npm test` 里的两条机核**：`test/no-host-imports.test.mjs`（依赖面不许回潮）＋
+   `test/toolshape.test.mjs` / `test/atomic-write.test.mjs` / `test/usermessage.test.mjs`
+   （期望值就是与真宿主比对出来的那一份，改期望值＝改契约，要重跑第 3 条）。
+3. **漂移探针**（真宿主 vs 本地实现逐字段比对，**不进流水线**、要手动跑）：
+
+   ```bash
+   mkdir -p /tmp/dsh-tools-ref && cd /tmp/dsh-tools-ref && npm init -y >/dev/null \
+     && npm i @deepseek-ai/dsh-tools@0.2.1-rc.2
+   node tools/probes/toolshape-drift/check.mjs /tmp/dsh-tools-ref/node_modules/@deepseek-ai/dsh-tools
+   # → "✔ 一致：6 组编译 + 7 组作者错误 + 8 组参数校验"，否则非零退出并打印第一处分叉
+   ```
+
+   还有一个**活体**探针 `tools/probes/toolshape-live/`：装进隔离 profile，等引擎注册完工具后
+   走宿主自己的执行管线真调一次（`ctx.tools.execute()`），验证「宿主接受我们返回的 definition、
+   `output.render` 真被调用、非法参数真被拦」。用法见该目录的文件头。
 
 ## 配置（profile 的 `cordis.patch.yml`）
 

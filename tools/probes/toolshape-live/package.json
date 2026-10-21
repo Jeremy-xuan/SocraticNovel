@@ -1,0 +1,8 @@
+{
+  "name": "toolshape-live",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./index.mjs",
+  "description": "B2 探针：在真 profile 里走宿主执行管线真调一次工具，验证本地 defineTool 的产物被宿主接受（不注册任何产品工具）"
+}

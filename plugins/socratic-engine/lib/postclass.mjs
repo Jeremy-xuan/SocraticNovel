@@ -27,6 +27,7 @@
 import { readFile, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import { stripEmotionMarkersClean } from './emotionmark.mjs'
+import { withFileLock, writeFileAtomic } from './atomic-write.mjs'
 import { createTurnLedger, fireDiary } from './narrativebridge.mjs'
 
 /** 本插件自有注入的 source.kind（index.mjs 注入 classroom 块时使用）。 */
@@ -274,13 +275,9 @@ export function appendEntryToContent(content, entry) {
   return trimmed === '' ? `${entry}\n` : `${trimmed}\n\n${entry}\n`
 }
 
-/** 宿主原子写包（`@deepseek-ai/dsh-atomic-write`）。动态 import：单测环境无宿主也能加载本模块。 */
-async function loadHostAtomicWrite() {
-  const mod = await import('@deepseek-ai/dsh-atomic-write')
-  if (typeof mod?.writeFileAtomic !== 'function' || typeof mod?.withFileLock !== 'function') {
-    throw new Error('@deepseek-ai/dsh-atomic-write 未导出 writeFileAtomic/withFileLock')
-  }
-  return { writeFileAtomic: mod.writeFileAtomic, withFileLock: mod.withFileLock }
+/** 本地原子写（`lib/atomic-write.mjs`）：与宿主 `@deepseek-ai/dsh-atomic-write` 同语义同签名。 */
+async function loadAtomicWrite() {
+  return { writeFileAtomic, withFileLock }
 }
 
 /** 第一版唯一 updater：追加 `runtime/session_log.md`。 */
@@ -339,7 +336,7 @@ export function registerPostClass(ctx, opts = {}) {
 
   function resolveIo() {
     if (injectedIo) return Promise.resolve(injectedIo)
-    ioPromise ??= loadHostAtomicWrite()
+    ioPromise ??= loadAtomicWrite()
     return ioPromise
   }
 

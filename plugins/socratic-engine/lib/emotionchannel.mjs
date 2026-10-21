@@ -28,6 +28,7 @@
 
 import { appendFile, mkdir, readFile, stat } from 'node:fs/promises'
 import { join } from 'node:path'
+import { withFileLock, writeFileAtomic } from './atomic-write.mjs'
 import { createEmotionStreamParser, stripEmotionMarkers } from './emotionmark.mjs'
 
 /** 情绪通道文件名（相对教室 `runtime/`）。 */
@@ -39,13 +40,9 @@ export const MAX_CHANNEL_BYTES = 64 * 1024
 /** 教室 runtime 文件权限位（与 postclass / notestore 一致）。 */
 export const DEFAULT_FILE_MODE = 0o600
 
-/** 宿主原子写包（动态 import：单测环境无宿主也能加载本模块）。 */
-async function loadHostAtomicWrite() {
-  const mod = await import('@deepseek-ai/dsh-atomic-write')
-  if (typeof mod?.writeFileAtomic !== 'function' || typeof mod?.withFileLock !== 'function') {
-    throw new Error('@deepseek-ai/dsh-atomic-write 未导出 writeFileAtomic/withFileLock')
-  }
-  return { writeFileAtomic: mod.writeFileAtomic, withFileLock: mod.withFileLock }
+/** 原子写 IO（`lib/atomic-write.mjs`：与宿主 `@deepseek-ai/dsh-atomic-write` 同语义同签名）。 */
+async function loadAtomicWrite() {
+  return { writeFileAtomic, withFileLock }
 }
 
 /** 本地时间 + 时区偏移的 ISO 8601（与 notestore 的口径一致）。 */
@@ -161,7 +158,7 @@ export function createEmotionChannel(opts = {}) {
   const mode = opts.mode ?? DEFAULT_FILE_MODE
   const log = opts.log ?? (() => {})
   let ioPromise = null
-  const resolveIo = () => (ioPromise ??= opts.io ? Promise.resolve(opts.io) : loadHostAtomicWrite())
+  const resolveIo = () => (ioPromise ??= opts.io ? Promise.resolve(opts.io) : loadAtomicWrite())
   /** 进程内计数器（首次写入时从文件末行续号，K1.4）。 */
   let seqCounter = null
 
