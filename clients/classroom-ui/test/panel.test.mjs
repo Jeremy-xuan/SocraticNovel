@@ -65,6 +65,30 @@ assert.equal(panel.TYPE_ID, 'classroom-ui')
 assert.equal(panel.TYPE_KIND, 'classroom')
 assert.deepEqual(panel.inject, ['slots', 'sidebarRightTabs', 'remote', 'remote.workspaceFiles'])
 
+// ── 1.5 🔴 回归：「面板永远打不开」的那条真因（2026-10-19 取证）──
+//    侧栏的指南条目读的是 **`entry.kind`**（`openTab(entry.kind)` 与
+//    `data-sidebar-right-guide-entry={entry.kind}` 都取它）。当初只写了 `id`、没写 `kind`，
+//    于是 `openTab(undefined)` → **面板永远打不开**，而且注册本身不报错、日志里也看不出来。
+//    这条断言就是那颗钉子：`id` 与 `kind` 都要在，`kind` 必须等于 tab 类型的 kind。
+{
+  let registered = null
+  const ctx = {
+    effect: (fn) => { fn() },
+    sidebarRightTabs: { register: (spec) => { registered = spec; return () => {} } },
+    slots: { inject: () => () => {}, register: () => () => {} },
+    remote: { workspaceFiles: {} },
+  }
+  panel.apply(ctx)
+  assert.ok(registered !== null, 'apply() 必须注册右栏 tab 类型')
+  assert.equal(registered.id, panel.TYPE_ID, 'tab 类型的 id 必须等于包名（面板主体按 id 派发）')
+  assert.equal(registered.kind, panel.TYPE_KIND, 'tab 类型的 kind 必须是 TYPE_KIND')
+  assert.ok(Array.isArray(registered.guide) && registered.guide.length > 0, '必须给出指南条目（否则右栏「新建 tab」里看不到入口）')
+  assert.ok(registered.guide[0].id !== undefined, '指南条目必须写 id')
+  assert.ok(registered.guide[0].kind !== undefined, '指南条目必须写 kind（读的是这个字段——只写 id 会让面板永远打不开）')
+  assert.equal(registered.guide[0].kind, panel.TYPE_KIND, '指南条目的 kind 必须等于 TYPE_KIND')
+  assert.equal(registered.guide[0].id, 'classroom', '指南条目的 id 保留（兼容按 id 读的版本）')
+}
+
 // ── 2 · 解析：喂真实文件 ────────────────────────────────────────────────────
 const read = (rel) => readFileSync(join(WORKSPACE, CLASSROOM, rel), 'utf8')
 
@@ -304,11 +328,16 @@ restore()
 assert.equal(globalThis.fetch, nativeFetch, '解析器必须还原 fetch')
 assert.equal(globalThis.Image, FakeImage, '解析器必须还原 Image')
 
-// 5.5 materializeAssets：**一律走字节通道**（readAll → base64 → 字节），产出可加载的 objectURL
+// 5.5 materializeAssets：**一律走字节通道**（readBytes → 字节），产出可加载的 objectURL
 //     🔴 为什么立绘资源不走分页 `read`：`read` 的 `text` 契约不含末行终止符，
 //        分页拼接会丢掉文件末尾的换行；官方框架把多份着色器源码直接字符串拼接成一份 GLSL，
 //        少一个换行就让下一段的 `#define` 落到同一行 → 编译报
 //        `ERROR: 0:354: '#' : unexpected token after conditional expression`。
+//     🔴 0.2.1 迁移（P 车道实测）：0.1.5 的 `readAll` 在 0.2.1 里**不存在**
+//        （`workspaceFiles` 只注册 read / readBytes / list / stat / changes）。调用它当场
+//        `TypeError: … readAll is not a function` → 面板直接进 failed 态（连读盘都没走到）。
+//        现在走 `readBytes`，且两种**真实可能出现的**负载形状都解（字节 / base64 字符串），
+//        认不出的形状当场抛（不猜）。
 //    ——本子测试**不读盘**：用合成 bytes 验证「字节通道解出的文本保留末尾换行」这一条核心不变量。
 {
   const syntheticShader = 'precision mediump float;\nvoid main(){\n  gl_FragColor = vec4(1.0);\n}\n'
@@ -316,9 +345,10 @@ assert.equal(globalThis.Image, FakeImage, '解析器必须还原 Image')
   const byteRemote = {
     workspaceFiles: {
       read: async () => { throw new Error('立绘资源不走分页 read') },
-      readAll: async (_sessionId, path) => {
+      readAll: async () => { throw new Error('0.2.1 没有 readAll —— 面板不许再调它') },
+      readBytes: async (_sessionId, path) => {
         seen.push(path)
-        return { ok: true, value: { data: Buffer.from(syntheticShader, 'utf8').toString('base64'), eof: true } }
+        return { ok: true, value: { bytes: new TextEncoder().encode(syntheticShader), eof: true } }
       },
     },
   }
@@ -327,7 +357,7 @@ assert.equal(globalThis.Image, FakeImage, '解析器必须还原 Image')
   ], new AbortController().signal)
   assert.equal(urls.size, 1)
   assert.ok(urls.get('shaders/WebGL/frag.frag').startsWith('blob:'), '资源产出 objectURL')
-  assert.deepEqual([...new Set(seen.map((entry) => entry))], ['clients/live2d-host/out/shaders/WebGL/frag.frag'], '立绘资源一律走 readAll（字节），不走分页 read')
+  assert.deepEqual([...new Set(seen.map((entry) => entry))], ['clients/live2d-host/out/shaders/WebGL/frag.frag'], '立绘资源一律走 readBytes（字节），不走分页 read')
   // 字节通道解出的文本保留末尾换行（就是上面那个编译错误的根因）
   const decoded = panel.base64ToBytes(Buffer.from(syntheticShader, 'utf8').toString('base64'))
   assert.equal(panel.decodeText(decoded).endsWith('\n'), true, '字节通道解出的文本保留末尾换行')
@@ -336,16 +366,90 @@ assert.equal(globalThis.Image, FakeImage, '解析器必须还原 Image')
   assert.equal(pageText.endsWith('\n'), false, '分页 read 的拼接结果会丢掉末尾换行（反例）')
 }
 
+// 5.5b 🔴 `readBytes` 的返回形状：四种真形状都解，其它一律抛（不猜、不静默）
+{
+  const text = '%%{init}%%\nflowchart TD\n'
+  const expected = Array.from(new TextEncoder().encode(text))
+  const base64 = Buffer.from(text, 'utf8').toString('base64')
+  const cases = [
+    ['字节（Uint8Array）', { bytes: new TextEncoder().encode(text) }],
+    ['ArrayBuffer', { bytes: new TextEncoder().encode(text).buffer }],
+    ['0.1.5 的 base64 文本', { data: base64 }],
+    ['Buffer 视图', { bytes: Buffer.from(text, 'utf8') }],
+  ]
+  for (const [label, value] of cases) {
+    assert.deepEqual([...panel.bytesOfWorkspaceFile(value, 'x.mmd')], expected, `readBytes 的 ${label} 形状必须解成同样的字节`)
+  }
+  // 认不出的形状：当场抛，且文案里点名文件
+  for (const [label, value] of [['null', null], ['空对象', {}], ['数字', { bytes: 42 }]]) {
+    assert.throws(() => panel.bytesOfWorkspaceFile(value, 'x.mmd'), /读字节的返回形状认不出|value 为空/,
+      `${label} 这种形状必须抛（把它暴露出来，不许静默产出空字节）`)
+  }
+  assert.throws(() => panel.bytesOfWorkspaceFile(null, 'a/b/frag.frag'), /a\/b\/frag\.frag/, '抛错必须点名是哪个文件')
+}
+
 // 5.6 配置读取（含调试开关默认关）
 delete globalThis.__DSH_CLASSROOM_UI_CONFIG__
 assert.equal(panel.debugEnabled(), false, '调试控件默认关（生产路径不出现）')
 assert.equal(panel.live2dRoot(), 'clients/live2d-host/out')
-assert.equal(panel.modelName(), 'Haru')
+// 🔴 D4：兜底模型名＝deepseek（本仓库只有这一张模型：舞台包的 assets/models/deepseek/）。
+//    改前是 Haru —— 本仓库一张 Haru 都没有，声明与舞台两侧不一致。
+assert.equal(panel.modelName(), 'deepseek')
 globalThis.__DSH_CLASSROOM_UI_CONFIG__ = { debug: true, model: 'Mao', live2dRoot: 'x/y/' }
 assert.equal(panel.debugEnabled(), true)
 assert.equal(panel.modelName(), 'Mao')
 assert.equal(panel.live2dRoot(), 'x/y', '去尾斜杠')
 delete globalThis.__DSH_CLASSROOM_UI_CONFIG__
+
+// 5.7 🔴 D3：立绘的**三来源路径**（舞台路由 → 工作区 out → 舞台包 assets）与静态图路径
+{
+  assert.equal(panel.STAGE_ROUTE, '/stage-static', '舞台那条路由的前缀必须与舞台宿主半边的 ROUTE_BASE 逐字一致')
+  assert.equal(panel.portraitAssetsRoot(), 'clients/classroom-stage-warm/assets', '第二资产根默认指到舞台包（本机唯一真有立绘资产的地方）')
+  assert.equal(panel.staticPortraitPath(), 'clients/classroom-stage-warm/assets/stage/teacher_gen.png', 'D3 退路＝舞台的教师立绘')
+  // Core 有**两个**候选（两边目录布局不同，这是事实，不能统一）
+  assert.deepEqual(panel.coreCandidates(), [
+    'clients/live2d-host/out/live2dcubismcore.min.js',
+    'clients/classroom-stage-warm/assets/l2d/live2dcubismcore.min.js',
+  ], 'Core 的两个候选路径都必须给（out 根 / 舞台包的 l2d 目录）')
+  // 渲染宿主 bundle 只有一个来源（舞台不发它，这是 D3 的边界）
+  assert.deepEqual(panel.frameworkCandidates(), ['clients/live2d-host/out/live2d-host.bundle.mjs'],
+    '渲染宿主 bundle 只有 out 一个来源（舞台的静态根里没有它）')
+  assert.deepEqual(panel.shaderCandidates('vertshadersrc.vert'),
+    ['clients/live2d-host/out/shaders/WebGL/vertshadersrc.vert'], '13 个着色器只有 out 一份')
+  // 模型目录内的资源：out 优先，其次舞台包（两处布局相同：models/<名>/…）
+  assert.deepEqual(panel.assetCandidates('models/deepseek/deepseek.model3.json'), [
+    'clients/live2d-host/out/models/deepseek/deepseek.model3.json',
+    'clients/classroom-stage-warm/assets/models/deepseek/deepseek.model3.json',
+  ])
+  // 配置可覆盖第二资产根（部署换位置时只改一处）
+  globalThis.__DSH_CLASSROOM_UI_CONFIG__ = { portraitAssets: 'x/y/' }
+  assert.equal(panel.portraitAssetsRoot(), 'x/y', '第二资产根可注入且去尾斜杠')
+  delete globalThis.__DSH_CLASSROOM_UI_CONFIG__
+  // D1：帧率常量与待机模式（约 15fps；不是删 rAF）
+  assert.equal(panel.PORTRAIT_FPS, 15)
+  assert.ok(Math.abs(panel.PORTRAIT_FRAME_MS - 1000 / 15) < 1e-9, '两帧最小间隔＝1000/15 ms')
+  assert.equal(panel.PORTRAIT_IDLE_ONLY, true, 'D1：面板立绘只播待机动作（不做实时驱动）')
+}
+
+// 5.8 🔴 D2：舞台「铺满整屏」的判据（只读 DOM；关闭态不算打开）
+{
+  // 没有 document（node 侧）→ 判 false，不抛
+  assert.equal(panel.stageOverlayOpen(), false, '没有 document 时判"舞台没开"，不抛错')
+  const layer = (attrs) => ({ getAttribute: (name) => (attrs[name] === undefined ? null : attrs[name]) })
+  // ① 容器根本不在（舞台没装）
+  globalThis.document = { getElementById: () => null }
+  assert.equal(panel.stageOverlayOpen(), false, '没有舞台容器 → 舞台没开')
+  // ② 容器在、但没有真舞台那层（舞台 enabled=false 时就是这样）
+  globalThis.document = { getElementById: () => ({ querySelector: () => null }) }
+  assert.equal(panel.stageOverlayOpen(), false, '容器在但没有真舞台那层 → 不算打开')
+  // ③ 真舞台那层在、且不是关闭态
+  globalThis.document = { getElementById: () => ({ querySelector: () => layer({}) }) }
+  assert.equal(panel.stageOverlayOpen(), true, '真舞台那层在且不是关闭态 → 舞台开着')
+  // ④ Ctrl+Shift+M 关闭态：那层带 data-killed="on"（只剩一条横幅）
+  globalThis.document = { getElementById: () => ({ querySelector: () => layer({ 'data-killed': 'on' }) }) }
+  assert.equal(panel.stageOverlayOpen(), false, '关闭态（data-killed="on"）不算打开——那时舞台只是一条横幅')
+  delete globalThis.document
+}
 
 // ══════════════════════════════════════════════════════════════════════════
 // B · 立绘资产「读不到」时必须明确报出来（不静默白屏）
@@ -368,13 +472,13 @@ if (live2dDeployed) {
 }
 
 // B.2 model3.json 读不到 → 立绘装载链如实报错（不静默白屏）。
-//    用 readAll 返回 not-found 的假 remote 驱动真实的 materializeAssets/读盘代码：
+//    用 readBytes 返回 not-found 的假 remote 驱动真实的 materializeAssets/读盘代码：
 //    缺 out 时整个资源块读不到 → 抛错，错误文案必须点名是「资源读不到」而非乱码。
 {
   const missingRemote = {
     workspaceFiles: {
       read: async () => { throw new Error('not used for portrait') },
-      readAll: async (_sessionId, _path) => ({ ok: false, error: { code: 'workspace-file/not-found', message: 'no such file' } }),
+      readBytes: async (_sessionId, _path) => ({ ok: false, error: { code: 'workspace-file/not-found', message: 'no such file' } }),
     },
   }
   await assert.rejects(
@@ -391,7 +495,16 @@ if (live2dDeployed) {
   const ok = panel.parseDeclaration(readFileSync(join(WORKSPACE, panel.DEFAULT_DECLARATION_PATH), 'utf8'))
   assert.equal(ok.ok, true, '仓库自带的声明必须可解析')
   assert.equal(ok.classroomRoot, 'classrooms/cs-os')
-  assert.equal(ok.portraitModel, 'Haru')
+  // 🔴 D4：声明里的模型名＝deepseek（与舞台实际在用的那份模型一致）。改前写 Haru，两侧不一致。
+  assert.equal(ok.portraitModel, 'deepseek')
+  // 🔴 D3：`portraitAssets` 是**可选**字段（不给＝用代码默认）；给了就必须是工作区相对路径。
+  assert.equal(ok.portraitAssets, 'clients/classroom-stage-warm/assets', '仓库自带的声明必须给出第二资产根')
+  assert.equal(panel.parseDeclaration('{"classroomRoot":"a","portraitModel":"deepseek"}').portraitAssets, null,
+    '不给 portraitAssets → null（不填默认值，默认在 portraitAssetsRoot 里）')
+  assert.equal(panel.parseDeclaration('{"classroomRoot":"a","portraitModel":"deepseek","portraitAssets":"/abs"}').ok, false,
+    'portraitAssets 写绝对路径 → 整份声明判不可用')
+  assert.equal(panel.parseDeclaration('{"classroomRoot":"a","portraitModel":"deepseek","portraitAssets":42}').ok, false,
+    'portraitAssets 不是字符串 → 整份声明判不可用')
   assert.equal(panel.parseDeclaration('{').ok, false)
   assert.equal(panel.parseDeclaration('[]').ok, false, '顶层必须是对象')
   assert.equal(panel.parseDeclaration('{"portraitModel":"Haru"}').ok, false, '缺 classroomRoot')
@@ -399,6 +512,7 @@ if (live2dDeployed) {
   assert.ok(panel.parseDeclaration('{"classroomRoot":"/abs/x","portraitModel":"Haru"}').reason.includes('工作区相对'),
     '绝对路径必须当场判不可用（面板只能读工作区相对路径）')
   assert.equal(panel.parseDeclaration('{"classroomRoot":"a/b/","portraitModel":"Haru"}').classroomRoot, 'a/b', '尾斜杠归一')
+  assert.equal(panel.parseDeclaration('{').portraitAssets, null, '失败结果里也带 portraitAssets（免得调用方多一种 undefined）')
 }
 
 // B.4 一致性自检：三种结论（ok / mismatch / unreadable）＋ 每种的"怎么改"
@@ -1121,7 +1235,7 @@ function failingRemote() {
   return {
     workspaceFiles: {
       read: async (_sessionId, path) => missing(path),
-      readAll: async (_sessionId, path) => missing(path),
+      readBytes: async (_sessionId, path) => missing(path),
     },
   }
 }
