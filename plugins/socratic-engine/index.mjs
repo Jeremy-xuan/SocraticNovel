@@ -44,6 +44,7 @@ import { registerPostClass } from './lib/postclass.mjs'
 import { DIAGRAM_KIND_IDS } from './lib/diagram.mjs'
 import { drawDiagram } from './lib/diagramstore.mjs'
 import { createMermaidParser } from './lib/mermaid-parse.mjs'
+import { NOTE_TYPES, assertRuntimeDir, createNoteStore } from './lib/notestore.mjs'
 import { ANIMATIONS_SUBDIR, EXPECTED_RANGE_TEXT, TERMINAL_STATES, describeState, nowLabel } from './lib/animation.mjs'
 import {
   animationNoticeSource,
@@ -142,6 +143,26 @@ export const ANIMATE_TEMPLATE_TOOL_DESCRIPTION =
 
 // ── 模板 id 列表（工具参数 enum；顺序即描述里的呈现顺序）─────────────────────
 export const ANIMATION_TEMPLATE_IDS = TEMPLATE_IDS
+
+// ── classroom_note 的工具描述（A：课上记录）────────────────────────────────────
+// 🔴 写法口径与 classroom_draw / classroom_animate 一致：**动词优先**，把触发条件写成直接指令
+//    （"发现有学生原话作证据的那一刻就记"），不写"如果需要的话可以…"这类条件措辞——本项目实证：
+//    条件措辞让模型犹豫，工具就不被调用（A/B 对照见实现报告_T3a §4）。
+// 🔴 同时**必须**把"不要每轮都调"写进来（A5）：这个工具最大的风险不是不调，而是每回合都调一次，
+//    把记录表灌成流水账——那样下一节课的注入就变成噪音。判据只有一条：**有没有学生原话作证据**。
+export const NOTE_TOOL_DESCRIPTION =
+  'Record one teaching fact the student just revealed, so the next lesson can pick it up. ' +
+  'Call it at the moment it happens — when the student says something that is wrong in a specific way, ' +
+  'gets stuck on one identifiable step, or explains a mechanism in their own words — and pass their words ' +
+  'verbatim in `quote`. The engine appends one line to runtime/notes.jsonl and mechanically recomputes the ' +
+  'mistake log, the review queue and the knowledge-point status from it, so the first lesson\'s blocker can ' +
+  'be quoted in the second lesson. ' +
+  'DO NOT call it every turn. The only trigger is that the student actually said something you can quote: ' +
+  'a lesson where nothing was revealed deserves no record, and calling it after every explanation turns the ' +
+  'record into noise that the next lesson has to read. Never call it to mark something you merely explained: ' +
+  'only `type: evidence` marks a knowledge point as mastered, and `evidence` means the student explained it or ' +
+  'used it, not that you covered it. A record whose `kp` does not exist in knowledge_points.md, or whose ' +
+  '`quote` is empty, is refused and nothing is written.'
 
 
 export async function apply(
@@ -1042,6 +1063,143 @@ export async function apply(
           bytes: result.bytes,
           rows: result.rows,
           time: result.time,
+        }
+      },
+    }),
+  )
+
+  // ---- 6.5) classroom_note 工具（A：课上记录 → 确定性落盘，契约 K3）----
+  // 🔴 分工（用户已定的设计，开发文档 §四 A）：
+  //    **判断在课上做，落盘是确定性的**。老师当场判断"这是误解 / 卡点 / 掌握证据"，
+  //    调一次本工具；引擎只做三件事：校验入参 → 追加 `runtime/notes.jsonl` → 机械重算三份
+  //    投影（`mistake_log.md` / `review_queue.md` / `knowledge_points.md` 的状态位）。
+  //    **不加**课后另调一次 LLM 做总结——引擎红线：不许用 LLM 生成式改写教学事实。
+  // 🔴 红线的落点：`[x]` 的唯一来源是 `type: evidence` 的记录，而记录要求 `quote` 是**学生原话**。
+  //    "老师讲过"在这条链路上**不产生任何记录**（没有任何按讲解行为推断掌握的路径）。
+  // 🔴 幂等：同一回合（session + turn）里 type/kp/原话三样都相同 → 视为同一条记录，
+  //    返回既有 id、不重复追加。身份用的就是 postclass 的 turnMarker 编码的同一对字段
+  //    （`lib/notestore.mjs` 的 findDuplicateNote 注释里写了为什么**不新造键**）。
+  // 🔴 报错一律**抛**（工具报错＝模型看得到，且什么都没落盘）：kp 不存在、quote 为空、
+  //    runtime/ 不可写，都不静默。
+  ctx.tools.register(
+    defineTool({
+      name: 'classroom_note',
+      description: NOTE_TOOL_DESCRIPTION,
+      parameters: {
+        type: {
+          type: 'string',
+          required: true,
+          enum: NOTE_TYPES,
+          description:
+            'Which kind of record this is. ' +
+            '`misconception` = the student said something that is wrong in a specific way (a wrong model of a ' +
+            'mechanism, not a slip of the tongue); `blocker` = the student is stuck on one identifiable step and ' +
+            'cannot get past it even after help; `evidence` = the student explained the mechanism in their own ' +
+            'words or used it correctly in a new case (this is the ONLY thing that can ever mark a knowledge ' +
+            'point as mastered); `group_question` = a knowledge question the student asked in the group chat, to ' +
+            'be picked up in the next lesson (no kp needed).',
+        },
+        kp: {
+          type: 'string',
+          description:
+            'The knowledge point this belongs to, exactly as it appears in knowledge_points.md: "KP-<lesson>.<n>", ' +
+            'e.g. "KP-3.2". Required for every type except group_question. Read knowledge_points.md first — an id ' +
+            'that does not exist in that file is refused and nothing is written.',
+        },
+        quote: {
+          type: 'string',
+          required: true,
+          description:
+            'The student\'s own words, verbatim — the evidence for this record, not your summary of it. ' +
+            'Copy the sentence they actually said (a short clause is fine); never invent or paraphrase it. ' +
+            'An empty quote is refused: without the student\'s words there is no record to make. ' +
+            'Emotion markers and markdown are stripped before saving.',
+        },
+        note: {
+          type: 'string',
+          description:
+            'Optional one sentence from you: which step they went wrong at, or what they just demonstrated. ' +
+            'This is the useful part for the next lesson — "错了" is useless, "把平均当成了每个" is not. ≤ 500 characters.',
+        },
+      },
+      output: {
+        schema: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            id: { type: 'string', required: true },
+            time: { type: 'string', required: true },
+            type: { type: 'string', required: true },
+            kp: { type: 'string', required: true },
+            quote: { type: 'string', required: true },
+            note: { type: 'string', required: true },
+            lesson: { type: 'integer', required: true },
+            turn: { type: 'integer', required: true },
+            origin: { type: 'string', required: true },
+            duplicate: { type: 'boolean', required: true },
+            kpChanged: { type: 'integer', required: true },
+            unresolved: { type: 'integer', required: true },
+            due: { type: 'integer', required: true },
+            files: { type: 'string', required: true },
+            note_: { type: 'string', required: true },
+          },
+        },
+        render: (_args, value) => [
+          {
+            type: 'text',
+            text:
+              (value.duplicate
+                ? `这一条本回合已经记过了（${value.id}），没有重复追加。\n`
+                : `课堂记录已写入：${value.id}｜${value.type}${value.kp === '' ? '' : ` · ${value.kp}`}｜` +
+                  `第 ${value.lesson === 0 ? '（无讲次）' : `${value.lesson} 讲`} · 第 ${value.turn} 回合 · ${value.time}\n`) +
+              `原话：${value.quote}\n` +
+              `现行状态：未解决的卡点/误解 ${value.unresolved} 条｜到期复习 ${value.due} 项｜` +
+              `知识点状态位改动 ${value.kpChanged} 处\n` +
+              `投影已重算：${value.files === '' ? '（无）' : value.files}（真源 runtime/notes.jsonl，投影请勿手改）` +
+              (value.note_ === '' ? '' : `\n${value.note_}`),
+          },
+        ],
+      },
+      execute: async (args, exec) => {
+        const runtimeDir = join(current.dir, 'runtime')
+        // 🔴 先确认真实可写（不许"报了成功其实没落盘"）；不可写直接抛，模型看得到
+        await assertRuntimeDir(runtimeDir)
+        const session = exec?.agent?.session?.id ?? 'unknown'
+        const store = createNoteStore({
+          classroomDir: current.dir,
+          runtimeDir,
+          log,
+        })
+        const result = await store.append(args, {
+          session,
+          lesson: currentLesson,
+          turn: phase.turnCount,
+          origin: 'teacher',
+        })
+        const record = result.record
+        log(
+          `课堂记录 ${record.id}：${record.type}${record.kp === null ? '' : ` ${record.kp}`}` +
+            `（第 ${record.lesson} 讲 · 第 ${record.turn} 回合）` +
+            (result.duplicate ? '｜重复调用，未追加' : `｜投影重算：状态位 ${result.kpChanged} 处`),
+        )
+        return {
+          id: record.id,
+          time: record.ts,
+          type: record.type,
+          kp: record.kp ?? '',
+          quote: record.quote,
+          note: record.note,
+          lesson: record.lesson,
+          turn: record.turn,
+          origin: record.origin,
+          duplicate: result.duplicate === true,
+          kpChanged: result.kpChanged,
+          unresolved: result.unresolved,
+          due: result.due,
+          files: result.files.join(' / '),
+          note_: result.duplicate
+            ? '`[x]` 只来自 evidence 记录；同一回合重复调用不会重复记。'
+            : '`[x]` 只来自 evidence 记录；「老师讲过」永远不产生 `[x]`（本文件的状态位由记录推导）。',
         }
       },
     }),

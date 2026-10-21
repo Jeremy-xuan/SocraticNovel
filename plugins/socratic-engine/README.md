@@ -15,7 +15,81 @@ SocraticNovel 的**宿主侧教学引擎**：读教室包 manifest，按 `positi
 | 注入频率 | `once` / `turn` / `n_turns` / `phase`（门）/ `on_demand`（占位） |
 | 状态层模板渲染 | `render.enabled` + `{{phase}}`/`{{turn}}`/`{{classroom}}` |
 | 相位与回合自计数 | `lib/phasestore.mjs`（**不依赖宿主 turn 号算术**） |
-| 教学工具 | `classroom_status`（相位/回合查询）／`classroom_set_phase`／`classroom_draw`／`classroom_animate*`／**`classroom_express`（表情，EXPR-1）** |
+| 教学工具 | `classroom_status`（相位/回合查询）／`classroom_set_phase`／`classroom_draw`／`classroom_animate*`／**`classroom_note`（课堂记录，A / K3）** |
+
+## 课堂记录（A · 契约 K3）
+
+课上老师说了一句「这是误解 / 这是卡点 / 他刚展示了理解」，就调一次 `classroom_note`；
+引擎**只做确定性落盘**，不做总结、不调 LLM（红线：不许用 LLM 生成式改写教学事实）。
+
+### 单一真源与三份投影（K3.1）
+
+- 真源：`<教室>/runtime/notes.jsonl`（append-only，一行一条 JSON）。
+- 三份 markdown 是**从 JSONL 机械重算出来的投影**，**整文件重写**，文件头逐字带
+  `> 本文件由 runtime/notes.jsonl 机械生成，请勿手改。`：
+  `runtime/mistake_log.md`、`runtime/review_queue.md`、`knowledge_points.md` 的状态位。
+- 为什么不拿 markdown 当真源：机械推导要解析 markdown 表格，那是"不确定性"的来源，
+  也无法保证幂等与并发安全（K3.1 的裁定理由）。
+
+### 记录字段与 id（K3.2）
+
+`v` / `id`（`N-<yyyyMMddTHHmmss>-<三位序号>`，同秒内靠序号区分）/ `ts`（带时区 ISO 8601）/
+`session` / `lesson`（无讲次门写 `0`）/ `turn` / `type`（`misconception`｜`blocker`｜
+`evidence`｜`group_question`）/ `kp`（`KP-<讲>.<序>`，`group_question` 可为 null）/
+`quote`（学生原话，非空）/ `note` / `origin`。
+`resolved` **不由工具写入**（写回时忽略输入值），只在投影推导里出现。
+
+### 推导规则（K3.3，逐条对应 `test/notestore.test.mjs` 的一条单测）
+
+排序键：**`(lesson, turn, id)` 字典序**＝时间序（`compareNotes`）。
+
+1. **`knowledge_points.md` 的状态位**：对每个 `kp`，取时间序**最后一条**学习类记录
+   （`misconception` / `blocker` / `evidence`）——是 `evidence` → `[x]`；是 `misconception` /
+   `blocker` → `[~]`；**没有记录 → 该行一个字都不改**（不写 `[x]`）。
+   - 🔴 红线：**「老师讲过」不产生记录**，所以永远不会因"讲过了"推断出 `[x]`。
+   - 该 `kp` 所属讲次在 `progress.md` 里是**跳过**（`skipped_lessons:` 行）→ 状态位**不动**，
+     只在行尾加「（跳过）」（J2 红线）。
+2. **`mistake_log.md`**：每条 `misconception|blocker` 一行；`resolved` ＝ 同 `kp` 上存在
+   **更晚**的 `evidence` 记录（"更早的 evidence"不解决后来的卡点）。已解决的记录**保留**，
+   只标注「已解决（第 N 讲 · 第 T 回合）」。
+3. **`review_queue.md`**：对每条 `misconception|blocker`，到期点 = 记录时讲次 **+1 / +3 / +7**
+   （只保留 ≤ 课程总讲数的；`lesson=0` 的记录不排期）。条目在「当前讲次 ≥ 到期讲次」且
+   `resolved === false` 时为**到期**；`resolved === true` → 后续到期点作废（计划仍列出）。
+   同一 `kp` 多条记录**只保留最早一条**的到期点（避免堆积）。投影上显示的到期点是
+   **最近一个已经过去的**到期讲次（"现在欠了哪一次"），不是最早那一格。
+4. **`progress.md`**：本模块**只读不写**。读两行：`current_lesson: <int>`（判定到期）与
+   可选的 `skipped_lessons: 2,3`（判定跳过讲次；该行缺失＝没有跳过，J 尚未实现）。
+   写回 `progress.md` 是**模型课后更新**的职责——课中工具若也写，两边会抢同一个文件。
+   `totalLessons` 取自 `knowledge_points.md` 里出现过的最大讲次号（不依赖 manifest）。
+
+### 幂等与并发（AC）
+
+- **幂等**：同一回合（`session` + `turn`）里 `type` + `kp` + 清洗后 `quote` 三样都相同 →
+  视为同一条记录，返回既有 `id`、不重复追加。身份用的就是 `lib/postclass.mjs` 的
+  `turnMarker` 编码的同一对字段（`session` + `turn`），**不新造键**。
+  同一回合记两条**不同原话**是合法的（学生说了两句不同的话）。
+- **并发**：写 `notes.jsonl` 走 `withFileLock` + `writeFileAtomic`（宿主
+  `@deepseek-ai/dsh-atomic-write`，权限 `0600`，与 `lib/postclass.mjs` 同一套）；
+  锁内**重读再判重**，所以两个并发的调用不会互相覆盖。投影在真源落盘之后重算，
+  重算失败会抛错说明"记录已落盘、投影未更新"（投影随时可从真源重算：`reproject()`）。
+
+### 落盘前清洗
+
+`quote` / `note` 先按 **K1** 剥情绪标记（`〔emo:label:intensity〕`），再去 markdown 格式
+（`cleanRecordText`）。两步都幂等；下划线**不剥**（`fork_exec` 不能被改坏）。
+
+### 注入（K3.4）
+
+`classrooms/cs-os/classroom.yaml` 有两块把「未解决的卡点」与「到期复习项」在**下节课开头**
+（`phase: { phases: [open] }`）注入：`state.mistakes.due`（`section: 未解决`）、
+`state.review.due`（`section: 到期待复习`）——用 `section:` 只切那一段，不重复注入整份文件。
+**必须带 `phase:`**——裸 `every: phase` 的门恒真（`if (!phase) return true`），是假门。
+去重走现有的 `(sessionId, turn)` 幂等门，不新造去重表。
+
+**同一份文件的相位分工**（避免一回合注入两遍）：`open` 只看**切片**（未解决 / 到期），
+`check` 看**整份**错题本（对答案的靶子），`review` 看**整份**复习计划。为此把既有的
+`state.mistakes` 从 `[open, check]` 收窄成 `[check]`、`state.review` 从 `[open]` 改成 `[review]`
+——这是**有意**的语义调整，`test/phase.test.mjs` 的签署表（`SIGNED_FREQUENCY_GATES`）已同步更新。
 
 ## 安装（🔴 两个坑，务必照做）
 

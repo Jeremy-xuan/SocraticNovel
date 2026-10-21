@@ -538,11 +538,12 @@ blocks:
 // F · 真实教室 cs-os 回归（钉住本报告 §2／§3 的数字）
 // ══════════════════════════════════════════════════════════════════════════════
 
-test('F1 cs-os：47 块 / 6 相位 / lessons=14', () => {
+test('F1 cs-os：49 块 / 6 相位 / lessons=14', () => {
   const m = loadManifest(CS_OS)
   // 34→47 是因为教材 1–14 讲全部落盘后 classroom.yaml 新增 13 条 material.current.*；
+  // 47→49 是 A（课堂记录 K3.4）新增的两条「下一节课开头」块：state.mistakes.due / state.review.due。
   // 本条是快照钉，不是不变量。
-  assert.equal(m.blocks.length, 47)
+  assert.equal(m.blocks.length, 49)
   // 🔴 结构性断言（长期正确的那条）：教材块数 === 教室声明的讲数。
   //   讲数按本文件既有读法取 lessonsDeclaredBy(m.classroom)，不新造机制 → 以后加讲不再假红。
   assert.equal(
@@ -728,8 +729,18 @@ const SIGNED_FREQUENCY_GATES = {
   'material.current.14': 'chat · phase(phases=probe,check) · lesson(current,of=14)',
   'state.progress': 'chat · turn',
   'state.learner': 'chat · n_turns(5)',
-  'state.mistakes': 'chat · phase(phases=open,check)',
-  'state.review': 'chat · phase(phases=open)',
+  // 🔴 2026-10-20（A · 课堂记录 K3.4）**有意收窄**这两块的相位门，避免与下面两块重复注入：
+  //    open 相位只看「未解决 / 到期」两个切片，整份文件改在 check / review 相位给。
+  'state.mistakes': 'chat · phase(phases=check)',
+  'state.review': 'chat · phase(phases=review)',
+  // 🔴 2026-10-20（A · 课堂记录 K3.4）：新增两块——「下一节课开头」注入「未解决的卡点」
+  //    （`runtime/mistake_log.md` 的 `## 未解决` 段）与「到期复习项」（`runtime/review_queue.md`
+  //    的 `## 到期待复习` 段）。**有意变更**，逐条登记。
+  //    语义：`every: turn` 管"每回合重新裁决"，`phase: { phases: [open] }` 管"只在开场相位出现"
+  //    ——契约 K3.4 点名**必须带 `phase:`**（裸 `every: phase` 的 phaseGate 恒真，是假门）。
+  //    去重靠现有的 (sessionId, turn) 幂等门，没有新造去重表。
+  'state.mistakes.due': 'chat · turn · phase(phases=open)',
+  'state.review.due': 'chat · turn · phase(phases=open)',
   'state.session_log': 'chat · on_demand',
   'state.archive': 'chat · on_demand',
   'state.diary': 'chat · on_demand · phase(phases=close)',

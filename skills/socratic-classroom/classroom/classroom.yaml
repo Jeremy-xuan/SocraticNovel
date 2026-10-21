@@ -744,26 +744,65 @@ blocks:
     wrap: { style: system-reminder }
     render: { enabled: false }
 
-  # runtime/mistake_log.md（387B）· 草案 §4.4 `state.mistakes` · phase{open,check}
-  # 两处用：open 相位（复习方式"不重讲，直接问：上次那条，你还能推一遍吗？"）＋
-  #   check 相位（对答案需靶子）。它是草案 §3 里 {{last_blocker}} 的来源。
+  # runtime/mistake_log.md · 草案 §4.4 `state.mistakes` · **phase{check}**（A 改：2026-10-20）
+  # 用途：**对答案时要靶子**（整份错题本，含已解决的历史）。它是草案 §3 里 {{last_blocker}} 的来源。
+  # 🔴 为什么从 `phases: [open, check]` 收窄成 `[check]`：open 相位的「未解决卡点」已由
+  #    `state.mistakes.due`（只切 `## 未解决` 那段）负责；两块都挂 open 会让同一份内容
+  #    在一回合里注入两遍（整份 + 段落），既是噪音也违背契约 K3.4「与现有块区分」。
+  #    现在分工：**open 只看未解决**，**check 看整份**。
   - id: state.mistakes
     path: runtime/mistake_log.md
     layer: state
     position: { target: chat, depth: 0 }
     frequency: { every: phase }
-    phase: { phases: [open, check] }
+    phase: { phases: [check] }
     wrap: { style: system-reminder }
     render: { enabled: false }
 
-  # runtime/review_queue.md（658B）· 草案 §4.4 `state.review` · phase{open}
-  # 文件头："**课前必查**：今天日期是否 ≥ 任意一行的'下次复习日期'。是 → 本节课开头先做
-  #   复习" → open 相位注入（决定今天是否进 review 相位）。
+  # runtime/review_queue.md · 草案 §4.4 `state.review` · **phase{review}**（A 改：2026-10-20）
+  # 用途：进入**复习相位**时看整份计划（已到期 + 未来到期点，决定这一轮复习覆盖哪些）。
+  # 🔴 为什么从 `phases: [open]` 改成 `[review]`：open 相位只该看到「**今天到期**的那几条」，
+  #    那由 `state.review.due`（只切 `## 到期待复习` 那段）负责；两块都挂 open 会重复注入。
+  #    现在分工：**open 只看到期项**，**review 看整份计划**。
   - id: state.review
     path: runtime/review_queue.md
     layer: state
     position: { target: chat, depth: 0 }
     frequency: { every: phase }
+    phase: { phases: [review] }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  # ── A（课堂记录）：下一节课开头「未解决的卡点 + 到期复习项」────────────────────
+  # 🔴 数据链路（契约 K3）：课上老师调 `classroom_note` → 追加 `runtime/notes.jsonl`（唯一真源）
+  #    → 引擎机械重算三份投影（`mistake_log.md` / `review_queue.md` / `knowledge_points.md` 状态位）。
+  #    下面两块按 `section:` 只取投影里的那一段，**不重复注入整份文件**（整份仍由上面的
+  #    `state.mistakes` / `state.review` 负责，两块的相位门不同、内容粒度不同）。
+  # 🔴 **必须带 `phase:`**：裸 `every: phase` 的门恒真（`if (!phase) return true`），
+  #    前面 `anchor.check` 的注释点名过这条红线。这里 `frequency: { every: turn }` 管"每回合都重新裁决"，
+  #    `phase: { phases: [open] }` 管"只在开场相位出现"——**下节课开头**就是它的语义。
+  # 🔴 去重**不新造表**：走现有的 (sessionId, turn) 幂等门（`lib/dedup.mjs`）＋ 注入计划器的
+  #    块级记账；同一回合只注入一次，跨会话重新注入（这正是"下节课开头"要的）。
+  # 🔴 段标题 `未解决` / `到期待复习` 由 `lib/notestore.mjs` 机械生成；改名必须同步改这里，
+  #    否则引擎装载时**报错并列出该文件实际存在的标题**（不静默失效）。
+  #    `acceptance/lib/asserts.mjs` 的 `predictTurnBlocks` 会自动把这两块算进期望注入集合
+  #    （它按 manifest 字段独立推导；本块没有引入新的频率语义，故**无需改验收侧**）。
+  - id: state.mistakes.due
+    path: runtime/mistake_log.md
+    section: 未解决
+    layer: state
+    position: { target: chat, depth: 0 }
+    frequency: { every: turn }
+    phase: { phases: [open] }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  - id: state.review.due
+    path: runtime/review_queue.md
+    section: 到期待复习
+    layer: state
+    position: { target: chat, depth: 1 }
+    frequency: { every: turn }
     phase: { phases: [open] }
     wrap: { style: system-reminder }
     render: { enabled: false }
