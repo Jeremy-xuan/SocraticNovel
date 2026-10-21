@@ -331,10 +331,21 @@ window.__ModuleLoader__.load({
   color:var(--ink3);margin-left:auto}
 .stage-warm-root .boardpanel .bp-canvas{position:absolute;left:1.6vh;right:1.6vh;top:7.4vh;bottom:1.6vh;
   border:1px solid var(--hair);overflow:hidden}
+/* mermaid 产出的 svg 带**内联** style="max-width:<图宽>px" 与 width/height 属性，
+   直接塞进画布会按固有宽度把图钉死（实测：804px 的画布只画出 343px 宽）。
+   做法不是用 !important 硬压 CSS，而是**插进去之前先把 svg 的尺寸归一化**
+   （normalizeMermaidSvg：去掉内联 max-width 与宽高属性、显式 preserveAspectRatio=meet），
+   尺寸完全交给下面这条规则 —— 这样"图铺满板且不变形"是可单测的行为，不靠层叠优先级博弈。
+   （注：CSS 模板串里不许出现反引号，注释也一样 —— check.sh 第二组就查这个。） */
 .stage-warm-root .boardpanel .bp-canvas svg{display:block;width:100%;height:100%}
 .stage-warm-root .boardpanel .bp-note{margin-top:1.4vh;font-family:var(--mono);font-size:1.2vh;
   color:var(--ink3);letter-spacing:.06em}
 .stage-warm-root .boardpanel .bp-body{position:absolute;left:0;right:0;top:5.4vh;bottom:0;padding:0}
+/* mermaid 渲染失败时的兜底：一句人话 ＋ 图的源码（不白屏，契约 K2.4） */
+.stage-warm-root .boardpanel .bp-fail{position:absolute;left:1.6vh;right:1.6vh;top:7.4vh;bottom:1.6vh;overflow:auto}
+.stage-warm-root .boardpanel .bp-fail .why{font-family:var(--sans);font-size:1.95vh;color:var(--accent);margin-bottom:1.2vh}
+.stage-warm-root .boardpanel .bp-fail pre{font-family:var(--mono);font-size:1.2vh;line-height:1.55;color:var(--ink2);
+  white-space:pre-wrap;background:var(--paper2);border:1px solid var(--hair);padding:1.2vh;margin:0}
 
 /* ⑨ · 动画屏（已定案：整屏放完自动回）
        铺满视口、盖住舞台其余部分；as-frame 是暖纸上的"放映框"（与纸卡同一套语汇） */
@@ -374,6 +385,8 @@ window.__ModuleLoader__.load({
 .stage-warm-root .cast-wrap{transition:transform .22s cubic-bezier(.22,.61,.36,1),
   filter .22s cubic-bezier(.22,.61,.36,1)}
 .stage-warm-root[data-board="turn"] .cast-wrap{transform:rotate(-1.6deg) translateX(-3vh) scale(.965)}
+/* 收起＝反向节拍：面板沿原路滑出（对比件 closeBoard 用 --T2 390ms），随后整块离场 */
+.stage-warm-root[data-board="turn"] .boardpanel{transition:transform .39s cubic-bezier(.16,1,.3,1),opacity .22s ease}
 .stage-warm-root[data-board="pull"] .cast-wrap{transform:rotate(-1.2deg) translateX(-1.5vh) scale(.985)}
 .stage-warm-root[data-board="settle"] .cast-wrap{transform:none}
 .stage-warm-root[data-board="turn"] .boardpanel,
@@ -603,6 +616,27 @@ window.__ModuleLoader__.load({
               reasoning: '',
               tools: [{ name: String(root.name || 'tool'), cid: cid }],
             })
+            continue
+          }
+          // 🔴 2026-10-20 新增（契约 K2.3）：工具**结果**节点。原来这里一律跳过，
+          //    舞台因此"看不到任何工具结果"——板书闭环就无从触发。
+          //    只为 classroom_draw 的成功结果留一条 role:'board' 的条目（不进纸带正文，
+          //    纸带只画对话；这条只是**给切屏用的信号**）。
+          if (kind === 'tool-result') {
+            const ev = boardEventOf(node)
+            if (ev && ev.id) {
+              out.push({
+                id: String(node.id || key || ('board' + out.length)),
+                role: 'board',
+                text: '',
+                reasoning: '',
+                tools: [],
+                board: ev,
+              })
+            } else if (ev && !ev.id) {
+              // 两个来源都没给出 id：不切屏，只留一条 warn（契约 K2.3 第 3 条）
+              pushWarning('classroom_draw 结果里没有 board id（meta.board.id 与 [board] 行都缺），不切屏')
+            }
             continue
           }
           // 其余 kind（system-prompt / compaction / turn-error / steering / context …）本轮不画
@@ -1104,6 +1138,79 @@ window.__ModuleLoader__.load({
       return p
     }
 
+    // ══════════════════════════════════════════════════════════════════════
+    //  mermaid（板书屏真渲染）
+    //
+    //  来源：`clients/classroom-ui/vendor/mermaid-11.17.2/mermaid.min.js` 的**逐字节副本**，
+    //  落在本包 `assets/l2d/mermaid.min.js`（见该目录 README 与 BUILD-INFO.txt）。
+    //  为什么复制而不是跨插件引用：舞台不能依赖"另一个插件恰好装着"——classroom-ui 没装
+    //  或换了目录，板书屏立刻白屏；而 git 对相同内容按 blob 去重，仓库里其实只有一份。
+    //  为什么按需加载（不是启动就装）：3.5 MB，只有真画了图才需要。
+    // ══════════════════════════════════════════════════════════════════════
+    let mermaidReady = null
+    const MERMAID_FILE = 'mermaid.min.js'
+
+    function ensureMermaid() {
+      if (mermaidReady) return mermaidReady
+      const p = ensureStageModule(MERMAID_FILE).then(function () {
+        const m = window.mermaid
+        if (!m || typeof m.render !== 'function') throw new Error('mermaid 未就绪')
+        try {
+          m.initialize({
+            startOnLoad: false,
+            securityLevel: 'strict',   // 源码来自模型：不许它注入脚本/事件
+            theme: 'base',
+            fontFamily: '"Songti SC","Source Han Serif SC","Noto Serif CJK SC",Georgia,serif',
+            themeVariables: {
+              // 暖纸配色（与舞台令牌同源，见 §1）
+              background: '#FBF3E6',
+              primaryColor: '#F3E9DA',
+              primaryTextColor: '#2A211A',
+              primaryBorderColor: '#B84A1C',
+              lineColor: '#6B5B4A',
+              secondaryColor: '#EADCC8',
+              tertiaryColor: '#FBF3E6',
+            },
+          })
+        } catch (e) { /* initialize 失败也让 render 试一次（不同小版本的配置键会变） */ }
+        return m
+      }).catch(function (err) {
+        mermaidReady = null
+        throw err
+      })
+      mermaidReady = p
+      return p
+    }
+
+    let diagramSeq = 0
+
+    /**
+     * 把一张图的 mermaid 源码渲染成 SVG 字符串。**任何失败都返回 ok:false**（板书屏据此
+     * 显示「这张图渲染失败」＋源码，不白屏 —— 契约 K2.4）。
+     */
+    function renderMermaidSvg(source, id) {
+      diagramSeq += 1
+      const renderId = 'stage-bp-' + diagramSeq
+      return ensureMermaid().then(function (m) {
+        return m.render(renderId, String(source || ''))
+      }).then(function (out) {
+        const svg = out && typeof out === 'object' ? out.svg : out
+        if (typeof svg !== 'string' || svg.indexOf('<svg') === -1) throw new Error('mermaid 没有返回 svg')
+        return { ok: true, svg: normalizeMermaidSvg(svg), id: id }
+      }).catch(function (err) {
+        return { ok: false, id: id, error: String((err && err.message) || err) }
+      })
+    }
+
+    /** 取一张板书的源码（宿主路由 `/stage-board/diagrams/<id>`，text/plain）。 */
+    function fetchDiagramSource(id) {
+      const url = BOARD_ROUTE + '/diagrams/' + encodeURIComponent(String(id))
+      return fetch(url, { cache: 'no-store' }).then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status)
+        return r.text()
+      })
+    }
+
     function fetchJson(url) {
       try {
         return fetch(url, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null)
@@ -1272,6 +1379,9 @@ window.__ModuleLoader__.load({
       const settings = props.settings || DEFAULTS
       const enabled = settings.enabled !== false
 
+      // ── 板书图（K2.4）：自动切屏时渲染的是**这一张**，不是 L03 静态场景 ──────────
+      // null=没在显示图 | {loading,id} | {ok:true,id,svg} | {ok:false,id,error,source}
+      const [diagram, setDiagram] = React.useState(null)
       // K0 挂载点 / 口型源 / 屏幕状态 的活引用（effect 里读，不进依赖）
       const bridgeRef = React.useRef(null)
       const mouthRef = React.useRef(null)
@@ -1279,9 +1389,18 @@ window.__ModuleLoader__.load({
       // 情绪通道：seq 游标 / 当前生效情绪（含过期时间）
       const emoSeqRef = React.useRef(0)
       const emoRef = React.useRef(null)
+      // 拉出/收起的定时器（卸载时清掉，避免 setState after unmount）
+      const beatTimersRef = React.useRef([])
 
       if (!mouthRef.current) mouthRef.current = createTextCadenceMouth()
       screenRef.current = boardScreen ? 'board' : 'live'
+
+      /** 清掉三段节拍的定时器（重复开合时也先清，避免旧拍子插进来）。 */
+      const clearBeats = function () {
+        const list = beatTimersRef.current
+        beatTimersRef.current = []
+        for (const t of list) { try { clearTimeout(t) } catch { /* ignore */ } }
+      }
 
       // ── K0 · 全局挂载点（契约 §K0）──────────────────────────────────────────
       // 🔴 这个 effect 必须写在 Live2D 那个 **之前**：React 按声明顺序执行 cleanup，
@@ -1457,7 +1576,10 @@ window.__ModuleLoader__.load({
         // 🔴 props.killed 必须进依赖：关掉舞台（Ctrl+Shift+M）时组件返回 null、canvas 被销毁，
         //    再打开（Ctrl+Shift+U）时 React 重建出一个**新的** canvas —— 依赖没变 effect 就不会重跑，
         //    新 canvas 上没有 PIXI 应用，立绘消失。实测踩过。
-      }, [enabled, data, props.l2d, props.models, props.killed, stageFrame])
+        // 🔴 2026-10-20 修（原 bug）：这里原来还有整个 `data` 快照 —— 流式期间 store.set 每来
+        //    一块文本就换一次快照，于是 PIXI 应用**每帧被销毁重建**（表情驱动/口型会跟着抖，
+        //    还会反复重下模型）。本 effect 只用到 props 上的四个字段，删掉 data 即可。
+      }, [enabled, props.l2d, props.models, props.killed, stageFrame])
 
       // ── Live2D：状态 → 动作 ────────────────────────────────────────────────
       // 模型只有两组动作：`Idle`（1 段）与 `Anima`（0=speak / 1=thinkend / 2=thinking）。
@@ -1525,15 +1647,66 @@ window.__ModuleLoader__.load({
       }
       const closeAnim = function () { setAnim(null) }
 
-      // 开板书：先按已定案的三段节拍拉出面板，同时取场景（缺件就降级成占位）
-      const openBoard = function (lesson) {
+      // ── 板书的「三段节拍」（已定案 170 / 390 / 220ms，切换点 170 / 560）──────
+      // 🔴 串行口径：170 后开始拉出，390 跑完才切 settle（560 = 170+390），
+      //    所以 `pull` 的 390ms 曲线是**完整**跑完的（此前的乐观值 170/560 会让它只跑 30%）。
+      const pullOut = function () {
         setBoardScreen(true)
+        if (board) return          // 已经停在板上（settle 之后）→ 不重播拉出（契约 K2.4：直接替换）
+        clearBeats()
+        setBoard('turn')
+        beatTimersRef.current.push(setTimeout(function () { setBoard('pull') }, 170))
+        beatTimersRef.current.push(setTimeout(function () { setBoard('settle') }, 560))
+      }
+
+      // 收起＝反向节拍：面板沿原路滑出（390ms），随后整块离场（对比件 closeBoard 420ms）
+      const closeBoard = function () {
+        clearBeats()
+        setBoard('turn')
+        beatTimersRef.current.push(setTimeout(function () {
+          setBoard('')
+          setBoardScreen(false)
+          setDiagram(null)
+        }, 420))
+      }
+
+      /**
+       * 开一张**真的板书图**（K2.4）：切到板书屏 → 播拉出节拍 → 取这一张的 mermaid 源码
+       * → 真渲染。渲染失败显示「这张图渲染失败」＋源码，不白屏。
+       * 已在板书屏时只替换内容（pullOut 内部会跳过重播）。
+       */
+      const openDiagram = function (req) {
+        const id = req && req.id ? String(req.id) : ''
+        if (!id) return
+        pullOut()
         setScene(null)
-        if (!board) {
-          setBoard('turn')
-          setTimeout(function () { setBoard('pull') }, 170)     // ① 预备结束
-          setTimeout(function () { setBoard('settle') }, 560)   // ② 170+390 结束（串行口径）
-        }
+        setDiagram({ loading: true, id: id })
+        fetchDiagramSource(id)
+          .then(function (src) {
+            return renderMermaidSvg(src, id).then(function (r) { return { r: r, src: src } })
+          })
+          .then(function (out) {
+            const r = out.r
+            setDiagram(function (cur) {
+              // 只认最后一次请求：老师连画两张时，先发的旧请求不许覆盖新图
+              if (!cur || cur.id !== id) return cur
+              if (r.ok) return { ok: true, id: id, svg: r.svg }
+              return { ok: false, id: id, error: r.error, source: out.src }
+            })
+          })
+          .catch(function (err) {
+            setDiagram(function (cur) {
+              if (!cur || cur.id !== id) return cur
+              return { ok: false, id: id, error: String((err && err.message) || err), source: '' }
+            })
+          })
+      }
+
+      // 开板书（静态场景版，保留手动按钮的老路径）：缺件就降级成占位
+      const openBoard = function (lesson) {
+        setDiagram(null)
+        pullOut()
+        setScene(null)
         const id = lesson || 'L03'
         fetch(ROUTE + '/board/' + encodeURIComponent(id) + '.scene.json', { cache: 'no-store' })
           .then(function (r) { return r.ok ? r.json() : null })
@@ -1547,9 +1720,36 @@ window.__ModuleLoader__.load({
           .catch(function () { setScene({ ok: false, boards: [], error: 'fetch-failed' }) })
       }
 
+      // ── K2.4 自动切屏：老师刚画完一张 → 播拉出节拍、渲染这一张 ──────────────
+      const boardReq = latestBoardOf(data.messages)
+      const boardReqId = boardReq && boardReq.id ? String(boardReq.id) : ''
+      // 挂载时已经存在的板书**不**自动弹（刷新页面后先看 live 屏）；只对"新出现的"响应
+      const seenBoardIdRef = React.useRef(boardReqId)
+      React.useEffect(function () {
+        if (!boardReqId) return
+        if (boardReqId === seenBoardIdRef.current) return
+        seenBoardIdRef.current = boardReqId
+        // 🔴 舞台关着的时候画了图：**不自动打开舞台**，只进历史（P 车道列它）
+        if (!enabled || killed) return
+        openDiagram(boardReq)
+      }, [boardReqId, enabled, killed])
+
       // 回合变化时清掉选项选中态（键用「用户消息条数」—— 流式正文不能当 effect 键，每来一个字都会变）
       const userCount = (data.messages || []).filter(function (m) { return m.role === 'you' }).length
-      React.useEffect(function () { setCursor(0); setPicked(-1) }, [userCount])
+      const prevUserCountRef = React.useRef(userCount)
+      React.useEffect(function () {
+        setCursor(0); setPicked(-1)
+        const prev = prevUserCountRef.current
+        prevUserCountRef.current = userCount
+        // 🔴 契约 K2.4：学生发下一句话 → 板书收起（反向节拍）。用 ref 读当前屏幕状态，
+        //    免得把 boardScreen 塞进依赖（那样每次开合都会重跑这个 effect）。
+        if (userCount > prev && screenRef.current === 'board') closeBoard()
+      }, [userCount])
+
+      // 卸载时清掉没跑完的节拍定时器（关舞台/热重载时别留下 setState 残骸）
+      React.useEffect(function () {
+        return function () { clearBeats() }
+      }, [])
 
       // ↑↓ 选（只在真的有选项时接管按键）
       React.useEffect(function () {
@@ -1629,32 +1829,53 @@ window.__ModuleLoader__.load({
         H('div', { className: 'tools' },
           H('button', { className: 'tool', onClick: function () { props.onChrome && props.onChrome('off') } }, '读'),
           H('button', { className: 'tool', onClick: function () {
-            if (boardScreen) {           // 关板书：反向收（面板先走，角色后回正）
-              setBoard('turn')
-              setTimeout(function () { setBoard(''); setBoardScreen(false) }, 220)
-              return
-            }
-            openBoard('L03')             // 开板书：三段节拍 170/560（串行口径）＋ 取场景
+            // 手动按钮保留（契约 K2.4）。收起走反向节拍；打开时**优先看最新那张真板书图**，
+            // 没有图（这一节还没画过）才退回老的静态场景 L03。
+            if (boardScreen) { closeBoard(); return }
+            if (boardReq) { openDiagram(boardReq); return }
+            openBoard('L03')
           } }, boardScreen ? '收起板书' : '板书'),
           H('button', { className: 'tool', onClick: function () { openAnim('asset-iomodel') } }, '动画'),
           H('button', { className: 'tool', onClick: function () { setKilled(true) } }, '关闭舞台'))))
       // 板书面板：**先入 DOM ⇒ z 序低于角色**（这就是"从角色身后拉出"的机制）
       if (board) {
+        // 标题/状态行：真板书图优先（图上显示的是**这一张**，不是 L03 静态场景）
+        const bpTitle = diagram
+          ? ('板 书 · ' + String(diagram.id || ''))
+          : '板 书 · ' + (scene && scene.ok ? String(scene.scene.label || scene.scene.lesson || '') : '白板')
+        const bpRev = diagram
+          ? (diagram.loading ? '读取中…' : (diagram.ok ? 'mermaid' : '渲染失败'))
+          : (scene && scene.ok ? ('rev ' + String(scene.scene.rev || 0)) : (scene ? '无可用板书' : '读取中…'))
+        let bpBody = null
+        if (diagram) {
+          if (diagram.loading) {
+            bpBody = H('div', { className: 'bp-fallback' }, H('div', { className: 'bp-note' }, '正在取这张图…'))
+          } else if (diagram.ok) {
+            bpBody = H('div', { className: 'bp-canvas', dangerouslySetInnerHTML: { __html: diagram.svg } })
+          } else {
+            // 🔴 契约 K2.4：渲染失败不许白屏 —— 一句人话 ＋ 图的源码
+            bpBody = H('div', { className: 'bp-fail' },
+              H('div', { className: 'why' }, '这张图渲染失败'),
+              H('div', { className: 'bp-note' }, String(diagram.error || '')),
+              diagram.source ? H('pre', null, String(diagram.source)) : null)
+          }
+        } else if (scene && scene.ok) {
+          bpBody = H('div', { className: 'bp-canvas', dangerouslySetInnerHTML: { __html: renderSceneSvgString(scene.scene) } })
+        } else {
+          bpBody = H('div', { className: 'bp-fallback' },
+            H('div', null, H('span', { className: 'k' }, '就绪'), ' → ', H('span', { className: 'k' }, '运行')),
+            H('div', null, H('span', { className: 'k' }, '运行'), ' → 阻塞（等 I/O）'),
+            H('div', null, H('span', { className: 'k' }, '阻塞'), ' → 就绪（I/O 完成）'),
+            H('div', null, H('span', { className: 'k' }, '运行'), ' → 终止（exit）'),
+            H('div', { className: 'bp-note' },
+              scene ? ('板书缺件：' + String(scene.error || '') + '（可用：' + String((scene.boards || []).join('、') || '无') + '）') : ''))
+        }
         children.push(H('div', { key: 'board', className: 'boardpanel' },
           H('div', { className: 'bp-top' },
             H('span', { className: 'dm' }),
-            H('span', { className: 'bp-tx' }, '板 书 · ' + (scene && scene.ok ? String(scene.scene.label || scene.scene.lesson || '') : '白板')),
-            H('span', { className: 'bp-rev' }, scene && scene.ok ? ('rev ' + String(scene.scene.rev || 0)) : (scene ? '无可用板书' : '读取中…'))),
-          H('div', { className: 'bp-body' },
-            (scene && scene.ok)
-              ? H('div', { className: 'bp-canvas', dangerouslySetInnerHTML: { __html: renderSceneSvgString(scene.scene) } })
-              : H('div', { className: 'bp-fallback' },
-                  H('div', null, H('span', { className: 'k' }, '就绪'), ' → ', H('span', { className: 'k' }, '运行')),
-                  H('div', null, H('span', { className: 'k' }, '运行'), ' → 阻塞（等 I/O）'),
-                  H('div', null, H('span', { className: 'k' }, '阻塞'), ' → 就绪（I/O 完成）'),
-                  H('div', null, H('span', { className: 'k' }, '运行'), ' → 终止（exit）'),
-                  H('div', { className: 'bp-note' },
-                    scene ? ('板书缺件：' + String(scene.error || '') + '（可用：' + String((scene.boards || []).join('、') || '无') + '）') : '')))))
+            H('span', { className: 'bp-tx' }, bpTitle),
+            H('span', { className: 'bp-rev' }, bpRev)),
+          H('div', { className: 'bp-body' }, bpBody)))
       }
 
       if (settings.showSprite !== false) {
@@ -1698,6 +1919,8 @@ window.__ModuleLoader__.load({
       //   其余一律不画。工具细节在 DSH 自己的 Trajectory 里能看，纸带只负责对话。
       const anyRunning = msgs.some(function (x) { return x.running })
       msgs.forEach(function (m, i) {
+        // 板书信号条目（classroom_draw 的结果）只用于切屏，**不进纸带**：纸带只画对话
+        if (m.role === 'board') return
         if (m.role === 'tool') {
           if (!anyRunning || i !== msgs.length - 1) return
           lines.push(H('div', { key: 't' + i, className: 'tline' }, '⚙ ' + m.text))
@@ -2021,8 +2244,8 @@ window.__ModuleLoader__.load({
         boardEventOf: boardEventOf,
         latestBoardOf: latestBoardOf,
         createTextCadenceMouth: createTextCadenceMouth,
-        contentTextOf: contentTextOf,
         normalizeMermaidSvg: normalizeMermaidSvg,
+        contentTextOf: contentTextOf,
         classifyBlocks: classifyBlocks,
         readUserText: readUserText,
         titleOf: titleOf,

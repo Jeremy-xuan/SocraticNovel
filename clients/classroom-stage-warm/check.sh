@@ -52,7 +52,25 @@ for r in "'/manifest.json'" "'/assets'" "'/board'" "'/anim'" "'/health'"; do
 done
 grep -qF "listBoards" "$PKG/lib/index.js" && ok "板书清单函数存在" || bad "缺 listBoards"
 grep -qF "listAnimations" "$PKG/lib/index.js" && ok "动画清单函数存在" || bad "缺 listAnimations"
+echo "  · 板书闭环 / 情绪通道（契约 K2.2、K1.4）"
+grep -qF "BOARD_ROUTE + '/diagrams'" "$PKG/lib/index.js" && ok "板书图路由 /stage-board/diagrams/<id> 已注册" || bad "缺板书图路由"
+grep -qF "BOARD_ROUTE + '/emotions'" "$PKG/lib/index.js" && ok "情绪通道路由 /stage-board/emotions 已注册" || bad "缺情绪通道路由"
+grep -qF "realpathSync" "$PKG/lib/index.js" && ok "读图路由做了 realpath 校验（防符号链接）" || bad "读图路由缺 realpath 校验"
+grep -qF "DIAGRAM_ID_RE" "$PKG/lib/index.js" && ok "读图路由做了 id 白名单校验" || bad "读图路由缺 id 白名单"
+
 sec "5 · 素材与文件签名"
+# 板书屏真渲染要用的 vendored mermaid：必须在 assets/l2d/ 下（那条静态路由已覆盖）
+if [ -f "$PKG/assets/l2d/mermaid.min.js" ]; then
+  mh=$(shasum -a 256 "$PKG/assets/l2d/mermaid.min.js" | cut -d' ' -f1)
+  if grep -qF "$mh" "$PKG/assets/l2d/README.md" 2>/dev/null; then
+    ok "mermaid.min.js 就位且 sha256 与 README 记录一致（${mh:0:12}…）"
+  else
+    bad "mermaid.min.js 的 sha256 与 assets/l2d/README.md 记录不一致（换版本必须重新验证）"
+  fi
+else
+  bad "缺 assets/l2d/mermaid.min.js（板书屏无法真渲染）"
+fi
+
 n_assets=$(ls "$PKG/assets/stage"/*.png 2>/dev/null | wc -l | tr -d ' ')
 [ "$n_assets" -ge 1 ] && ok "舞台素材 $n_assets 张" || bad "舞台素材缺失"
 for b in "$PKG"/assets/board/*.json; do
@@ -119,6 +137,13 @@ fs.writeFileSync("/tmp/_stage-pure.mjs", src.slice(i,j)+"\nexport { createStageB
   fi
 else
   bad "纯函数区抽取失败（[STAGE-PURE-BEGIN] 标记被破坏？）"
+fi
+
+sec "7c · 宿主半边单测（读图路由的四条拒绝规则 / 索引 / 情绪 / 教室标识）"
+if node "$PKG/test/21-stage-board.test.mjs" >/tmp/_stage-board.out 2>&1; then
+  ok "宿主单测：$(grep -E '通过' /tmp/_stage-board.out | tail -1)"
+else
+  bad "宿主单测未全绿"; tail -8 /tmp/_stage-board.out | sed 's/^/      /'
 fi
 
 sec "7d · 契约 K0 第 5 条：新模块不许塞进 listLibs() 的 phases"
