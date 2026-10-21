@@ -627,6 +627,8 @@ test('⑨ 集成：apply() 注册 classroom_enter_lesson；execute 改盘＋改�
   const ctx = {
     logger: () => ({ info: (...a) => logs.push(a.join(' ')) }),
     on: () => {},
+    // cordis 的 ctx.inject（registry 方法）；引擎用它登记可选的 `narrative` 服务键。
+    inject: () => {},
     systemPrompt: { section: () => {} },
     tools: { register: (t) => tools.set(t.name, t) },
   }
@@ -662,6 +664,7 @@ test('🔴 ⑨ 集成：写盘失败时内存态不动（classroom_status 仍报
   const ctx = {
     logger: () => ({ info: () => {} }),
     on: () => {},
+    inject: () => {},
     systemPrompt: { section: () => {} },
     tools: { register: (t) => tools.set(t.name, t) },
   }
