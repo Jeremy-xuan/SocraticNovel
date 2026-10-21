@@ -208,8 +208,39 @@ JS
 say "8 · 装教室包 + 教室预设"
 R "mkdir -p $BASE/$UID_NAME/workspace/classrooms $BASE/$UID_NAME/home/presets-private"
 if [ -d "$REPO_CLASSROOM/classrooms/cs-os" ]; then
+  # 🔴 2026-10-21（开发文档 N5 的 EC）：**线上会演化**的那几个目录不许被仓库版覆盖。
+  #    N5 的世界观提议通过后，agent 会把新角色/新设定写进线上的 `world/` 与 `characters/`，
+  #    上课产生的事实写进 `runtime/` —— 它们**只存在于线上**，仓库里没有。
+  #    直接 `cp -r` 会把它们冲掉，而且**冲掉之后没有任何痕迹**。
+  #    做法：先把线上那三个目录整份挪到备份，再同步仓库版，最后把备份**合并回去**
+  #    （线上独有的文件保留；同名文件以线上为准——线上是"已经演化过"的那一份）。
+  EVOLVING="world characters runtime"
+  R "set -e
+     W=$BASE/$UID_NAME/workspace/classrooms/cs-os
+     B=$BASE/$UID_NAME/workspace/classrooms/.evolved-keep-\$(date +%Y%m%d%H%M%S)
+     if [ -d \$W ]; then
+       mkdir -p \$B
+       for d in $EVOLVING; do
+         if [ -d \$W/\$d ]; then cp -a \$W/\$d \$B/; echo \"  keep: \$d\"; fi
+       done
+       echo \$B > /tmp/.evolved-keep-path
+     else
+       mkdir -p \$B; echo \$B > /tmp/.evolved-keep-path
+     fi"
   SC -r "$REPO_CLASSROOM/classrooms/cs-os" "$HOST:$BASE/$UID_NAME/workspace/classrooms/"
-  echo "  ok: 教室包"
+  echo "  ok: 教室包（仓库版）"
+  R "set -e
+     W=$BASE/$UID_NAME/workspace/classrooms/cs-os
+     B=\$(cat /tmp/.evolved-keep-path)
+     for d in $EVOLVING; do
+       if [ -d \$B/\$d ]; then
+         mkdir -p \$W/\$d
+         # 线上那份盖回仓库版之上：同名以线上为准，线上独有的保留，仓库独有的留着
+         cp -a \$B/\$d/. \$W/\$d/ 2>/dev/null || true
+         echo \"  restored: \$d\"
+       fi
+     done
+     echo \"  线上演化目录已保留（备份留在 \$B，确认无误后可删）\""
   # 🔴 教室包是"仓库原版"（animation + prep 都在）。目标机没有 Manim 时必须**按环境裁剪**，
   #    否则引擎 loadManifest 抛「声明了备课清单但没启用动画」→ 整份教室内容不注入（静默降级）。
   #    实测踩过：脚本覆盖教室包后实例直接崩在 ManifestError。
