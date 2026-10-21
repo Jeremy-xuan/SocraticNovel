@@ -13,6 +13,7 @@ import {
   stripEmotionMarkers,
   boardEventOf,
   latestBoardOf,
+  shouldAutoOpenBoard,
   createTextCadenceMouth,
   contentTextOf,
   normalizeMermaidSvg,
@@ -250,6 +251,23 @@ function makeDeps(extra) {
   ]
   ok('板书 · latestBoardOf 取最后一张', latestBoardOf(msgs).id === 'B')
   ok('板书 · latestBoardOf 空列表为 null', latestBoardOf([]) === null)
+
+  // 真机形状（W2 定性）：外层 tool-call、结果折在 data.root —— 也要能认出来
+  const realNode = {
+    kind: 'tool-call',
+    data: { root: { kind: 'tool-result', name: 'classroom_draw', time: 1792561297915, meta: { board: { id: 'L01-T01', lesson: 1, turn: 1, kind: 'flowchart' } }, content: [] } },
+  }
+  const realEv = boardEventOf(realNode)
+  ok('板书 · 真机形状（tool-call 节点的 data.root）也命中', realEv && realEv.id === 'L01-T01', realEv)
+  ok('板书 · 事件时间被带出来', realEv && realEv.time === 1792561297915, realEv)
+
+  // K2.4：只有「挂载之后新画的那张」才自动切屏（刷新页面不许弹历史图）
+  const M = 1792561297915
+  ok('切屏 · 历史图（早于挂载）不弹', shouldAutoOpenBoard(M, '', { id: 'A', time: M - 1000 }) === false)
+  ok('切屏 · 挂载后画的图要弹', shouldAutoOpenBoard(M, '', { id: 'A', time: M + 1 }) === true)
+  ok('切屏 · 已经处理过的同一张不重复弹', shouldAutoOpenBoard(M, 'A', { id: 'A', time: M + 5000 }) === false)
+  ok('切屏 · 没有 id 不弹', shouldAutoOpenBoard(M, '', { id: '' }) === false && shouldAutoOpenBoard(M, '', null) === false)
+  ok('切屏 · 时间未知（null）按新图处理', shouldAutoOpenBoard(M, '', { id: 'A', time: null }) === true)
 }
 
 // ══════════════════════════════════════════════════════════════════════════

@@ -128,7 +128,7 @@ const src=fs.readFileSync(process.argv[1],"utf8");
 const i=src.indexOf("// ── [STAGE-PURE-BEGIN]");
 const j=src.indexOf("// ── [STAGE-PURE-END]");
 if(i<0||j<0||j<=i){console.error("找不到纯函数区标记");process.exit(1)}
-fs.writeFileSync("/tmp/_stage-pure.mjs", src.slice(i,j)+"\nexport { createStageBridge, stripEmotionMarkers, boardEventOf, latestBoardOf, createTextCadenceMouth, contentTextOf, normalizeMermaidSvg }\n");
+fs.writeFileSync("/tmp/_stage-pure.mjs", src.slice(i,j)+"\nexport { createStageBridge, stripEmotionMarkers, boardEventOf, latestBoardOf, shouldAutoOpenBoard, createTextCadenceMouth, contentTextOf, normalizeMermaidSvg }\n");
 ' "$PKG/lib/client.js"; then
   if node "$PKG/test/20-stage-pure.mjs" >/tmp/_stage-pure.out 2>&1; then
     ok "纯函数区单测：$(grep -E '通过' /tmp/_stage-pure.out | tail -1)"
@@ -144,6 +144,19 @@ if node "$PKG/test/21-stage-board.test.mjs" >/tmp/_stage-board.out 2>&1; then
   ok "宿主单测：$(grep -E '通过' /tmp/_stage-board.out | tail -1)"
 else
   bad "宿主单测未全绿"; tail -8 /tmp/_stage-board.out | sed 's/^/      /'
+fi
+
+sec "7f · 判据单测（真机节点形状 · node --test）"
+# 🔴 这份测的是 `readMessages`：真回合里工具结果**不是**独立 tool-result 节点，
+#    而是折在 tool-call 节点的 data.root 里。用例逐字照抄那次 dump 的键名，钉住这个形状。
+if [ -f "$PKG/test/22-read-messages.test.mjs" ]; then
+  if node --test "$PKG/test/22-read-messages.test.mjs" >/tmp/_stage-rm.out 2>&1; then
+    ok "判据单测：$(grep -oE '(pass|fail) [0-9]+' /tmp/_stage-rm.out | tr '\n' ' ')"
+  else
+    bad "判据单测未全绿"; grep -E '^. not ok|AssertionError' /tmp/_stage-rm.out | head -6 | sed 's/^/      /'
+  fi
+else
+  bad "缺 test/22-read-messages.test.mjs"
 fi
 
 sec "7e · 表情驱动模块（X 车道产物）就位且按序加载"
