@@ -26,6 +26,7 @@ import {
   CONTINUITY_SECTIONS,
   LESSON_ROW_LABEL,
   LessonJumpError,
+  PREREQ_FULL_WINDOW,
   SKIPPED_KEY,
   SKIPPED_ROW_LABEL,
   buildRecap,
@@ -34,6 +35,7 @@ import {
   extractKnowledgePoints,
   extractOverviewRecap,
   formatLessonRanges,
+  knowledgePointHeading,
   nextSkippedLessons,
   parseLessonNumber,
   readLessonContext,
@@ -312,6 +314,11 @@ test('④ 拼装的前情提要：只有 < N 的内容，且不含「第 N 讲�
   }
   // 第 5 讲自己的知识点也不进「前置知识点」段（它由 curriculum 与本讲清单给）
   assert.equal(recap.includes('KP-5.1 地址空间'), false)
+  // 分档（2026-10-21 拍板）：第 3、4 讲（N-2、N-1）给条目原文，第 1、2 讲只列标题
+  assert.match(recap, /- \[ \] \*\*KP-4\.1 彩票调度的机制\*\* —— 判据：/)
+  assert.match(recap, /- \[ \] \*\*KP-3\.1 调度指标\*\* —— 判据：/)
+  assert.match(recap, /· KP-1\.1 进程是什么/)
+  assert.equal(recap.includes('KP-1.1 进程是什么** —— 判据：'), false)
 })
 
 test('④ 拼装：跳到第 1 讲（从头开始）→ 没有前几讲，也没有前置知识点，只剩一句实话', () => {
@@ -695,4 +702,29 @@ test('🔴 ⑨ 集成：写盘失败时内存态不动（classroom_status 仍报
 test('③ 真教室的 progress.md 有两行工具要用的人读行（模板不能悄悄丢掉它们）', () => {
   assert.match(CSOS_PROGRESS, new RegExp(`^\\| ${LESSON_ROW_LABEL} \\|`, 'm'))
   assert.match(CSOS_PROGRESS, new RegExp(`^\\| ${SKIPPED_ROW_LABEL} \\|`, 'm'))
+})
+
+test('④ 知识点行压成标题：抽得出 KP id 就压，抽不出就原样保留（不猜不丢）', () => {
+  assert.equal(knowledgePointHeading('- [ ] **KP-3.2 FIFO 的问题** —— 判据：学生能举出例子。'), 'KP-3.2 FIFO 的问题')
+  assert.equal(knowledgePointHeading('- [~] **KP-10.4 锁的粒度** —— 判据：…'), 'KP-10.4 锁的粒度')
+  assert.equal(knowledgePointHeading('随便一行'), '随便一行')
+})
+
+test('④ 跳到第 14 讲：只近两讲给原文（N-2、N-1），更早的 1–11 讲只列标题，块体量腰斩', async () => {
+  const ctx = await readLessonContext({ classroomDir: CS_OS, lesson: 14 })
+  const skipped = Array.from({ length: 13 }, (_, i) => i + 1)
+  const recap = buildRecap({ lesson: 14, skipped, ...ctx })
+  const kpBlock = recap.slice(recap.indexOf('【第 14 讲的前置知识点'), recap.indexOf('【没摘到的部分'))
+  const fullTagged = ctx.prerequisites.filter((p) => p.full).map((p) => p.lesson)
+  assert.deepEqual(fullTagged, [14 - PREREQ_FULL_WINDOW, 13])
+  // 近两讲是原文，更早的是「· KP-x.y 标题」
+  assert.match(kpBlock, /- \[ \] \*\*KP-12\.1 非死锁缺陷\*\*/)
+  assert.match(kpBlock, /- \[ \] \*\*KP-13\.1 inode\*\*/)
+  assert.match(kpBlock, /· KP-1\.1 进程是什么/)
+  assert.equal(kpBlock.includes('判据：能区分静态程序文件'), false)
+  // 体量：全量原文时约 7.6KB，分档后 < 4KB（这就是分档的目的）
+  const allFull = buildRecap({ lesson: 14, skipped, ...ctx, prerequisites: ctx.prerequisites.map((p) => ({ ...p, full: true })) })
+  const allBlock = allFull.slice(allFull.indexOf('【第 14 讲的前置知识点'), allFull.indexOf('【没摘到的部分'))
+  assert.ok(Buffer.byteLength(kpBlock) < 4000, `分档后应 < 4KB，实得 ${Buffer.byteLength(kpBlock)}`)
+  assert.ok(Buffer.byteLength(kpBlock) * 2 < Buffer.byteLength(allBlock), '分档后应不到全量原文的一半')
 })

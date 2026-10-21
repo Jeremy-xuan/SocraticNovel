@@ -33,6 +33,12 @@ export const LESSON_ROW_LABEL = '本轮要讲'
 export const SKIPPED_ROW_LABEL = '跳过的讲次'
 /** 每个讲次文件里的「连续性要点」标题（ch01 与 ch02–14 用了两个不同的名字）。 */
 export const CONTINUITY_SECTIONS = ['本讲位置', '这一讲在故事里的作用']
+/**
+ * 前置知识点的**近窗**：只给最近这几讲（N-2、N-1）的条目原文，更早的只列标题。
+ * 🔴 为什么分档（2026-10-21 拍板）：跳到第 14 讲时全量原文约 8 KB，会挤掉别的注入块；
+ *    而「学生真正需要的前置」几乎都在近两讲。判据正文仍可自己读 knowledge_points.md 那一节。
+ */
+export const PREREQ_FULL_WINDOW = 2
 
 /** 本模块的错误类型：参数越界／教室文件不可用——都是**看得出原因**的失败，不静默。 */
 export class LessonJumpError extends Error {
@@ -338,6 +344,18 @@ export function extractKnowledgePoints(text, { lesson }) {
   return { title, lines }
 }
 
+/**
+ * 把一条知识点行压成标题：`- [ ] **KP-3.2 FIFO 的问题** —— 判据：…` → `KP-3.2 FIFO 的问题`。
+ * 用于「更早的讲次只列标题」这一档；抽不出 id 的行原样保留（不猜、不丢）。
+ * @param {string} line
+ * @returns {string}
+ */
+export function knowledgePointHeading(line) {
+  const m = String(line).match(/^\s*-\s*\[[ x~]\]\s*\*\*(KP-\d+\.\d+)\s+([^*]+?)\s*\*\*/)
+  if (m === null) return String(line).trim()
+  return `${m[1]} ${m[2]}`
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ④ 拼「前情提要 ＋ 前置知识点」（纯函数）
 // ─────────────────────────────────────────────────────────────────────────────
@@ -351,7 +369,7 @@ export function extractKnowledgePoints(text, { lesson }) {
  * @param {number[]} [input.skipped] — 写进 progress.md 的跳过讲次（人读文本用）
  * @param {{lesson:number, file:string, title:string, body:string}[]} input.continuity
  * @param {{arc:{name,range,state}|null, questions:{lesson,core}[]}} input.overview
- * @param {{lesson:number, title:string|null, lines:string[]}[]} input.prerequisites
+ * @param {{lesson:number, title:string|null, lines:string[], full:boolean}[]} input.prerequisites
  * @param {string[]} [input.missing] — 没摘到的文件／段（如实列出，不假装完整）
  * @returns {string}
  */
@@ -402,13 +420,23 @@ export function buildRecap({
   }
 
   if (prerequisites.length > 0) {
+    const full = prerequisites.filter((p) => p.full !== false).map((p) => p.lesson)
     out.push('')
-    out.push(`【第 ${lesson} 讲的前置知识点（取自 knowledge_points.md，逐字摘录）】`)
-    out.push('这些是前面几讲要拿下的知识点，学生没有它们的记录——按需补讲，不要假设他已经会了。')
+    out.push(`【第 ${lesson} 讲的前置知识点（取自 knowledge_points.md）】`)
+    out.push(
+      '这些是前面几讲要拿下的知识点，学生没有它们的记录——按需补讲，不要假设他已经会了。' +
+        (full.length > 0 && full.length < prerequisites.length
+          ? `${formatLessonRanges(full)}给条目原文，更早的只列标题（判据在 knowledge_points.md 里，需要时自己读那一节）。`
+          : ''),
+    )
     for (const p of prerequisites) {
       out.push('')
       out.push(p.title === null ? `第 ${p.lesson} 讲` : `第 ${p.lesson} 讲 · ${p.title}`)
-      for (const line of p.lines) out.push(line)
+      if (p.full === false) {
+        for (const line of p.lines) out.push(`· ${knowledgePointHeading(line)}`)
+      } else {
+        for (const line of p.lines) out.push(line)
+      }
     }
   }
 
@@ -462,7 +490,7 @@ export async function readLessonContext({ classroomDir, lesson }) {
         missing.push(`knowledge_points.md 里第 ${n} 讲没有知识点条目`)
         continue
       }
-      prerequisites.push({ lesson: n, title: got.title, lines: got.lines })
+      prerequisites.push({ lesson: n, title: got.title, lines: got.lines, full: n >= lesson - PREREQ_FULL_WINDOW })
     }
   }
 
