@@ -15,7 +15,7 @@ SocraticNovel 的**宿主侧教学引擎**：读教室包 manifest，按 `positi
 | 注入频率 | `once` / `turn` / `n_turns` / `phase`（门）/ `on_demand`（占位） |
 | 状态层模板渲染 | `render.enabled` + `{{phase}}`/`{{turn}}`/`{{classroom}}` |
 | 相位与回合自计数 | `lib/phasestore.mjs`（**不依赖宿主 turn 号算术**） |
-| 教学工具 | `classroom_status`（相位/回合查询）／`classroom_set_phase`／`classroom_draw`／`classroom_animate*`／**`classroom_note`（课堂记录，A / K3）**（`classroom_express` 已废弃删除） |
+| 教学工具 | `classroom_status`（相位/回合查询）／`classroom_set_phase`／**`classroom_enter_lesson`（跳讲，J）**／`classroom_draw`／`classroom_animate*`／**`classroom_note`（课堂记录，A / K3）**（`classroom_express` 已废弃删除） |
 
 ## 课堂记录（A · 契约 K3）
 
@@ -58,8 +58,9 @@ SocraticNovel 的**宿主侧教学引擎**：读教室包 manifest，按 `positi
    同一 `kp` 多条记录**只保留最早一条**的到期点（避免堆积）。投影上显示的到期点是
    **最近一个已经过去的**到期讲次（"现在欠了哪一次"），不是最早那一格。
 4. **`progress.md`**：本模块**只读不写**。读两行：`current_lesson: <int>`（判定到期）与
-   可选的 `skipped_lessons: 2,3`（判定跳过讲次；该行缺失＝没有跳过，J 尚未实现）。
-   写回 `progress.md` 是**模型课后更新**的职责——课中工具若也写，两边会抢同一个文件。
+   可选的 `skipped_lessons: 2,3`（判定跳过讲次；该行缺失＝没有跳过）。
+   写回 `progress.md` 是**模型课后更新**（`current_lesson`）与**课上跳讲工具**
+   （`classroom_enter_lesson`，见下节）的职责——课中记录工具不碰它，否则会有两个写者。
    `totalLessons` 取自 `knowledge_points.md` 里出现过的最大讲次号（不依赖 manifest）。
 
 ### 幂等与并发（AC）
@@ -90,6 +91,53 @@ SocraticNovel 的**宿主侧教学引擎**：读教室包 manifest，按 `positi
 `check` 看**整份**错题本（对答案的靶子），`review` 看**整份**复习计划。为此把既有的
 `state.mistakes` 从 `[open, check]` 收窄成 `[check]`、`state.review` 从 `[open]` 改成 `[review]`
 ——这是**有意**的语义调整，`test/phase.test.mjs` 的签署表（`SIGNED_FREQUENCY_GATES`）已同步更新。
+
+## 任意讲次进入（J · 契约 K3.3 的 `skipped_lessons`）
+
+学生说「从第 5 讲开始」时，老师调 **`classroom_enter_lesson(lesson: 5)`**。引擎做三件事，
+全部确定性（🔴 不调 LLM、不做生成式改写）：
+
+| 落点 | 做什么 |
+|---|---|
+| `runtime/progress.md` | 一次原子写改三处：机器行 `current_lesson: N`、**人读行** `\| 本轮要讲 \|`（与机器行同值）、机器行 `skipped_lessons: 1,2,3,4`；文件里还有 `\| 跳过的讲次 \|` 人读行时一并同步（没这行就不造） |
+| 工具结果 | 一段**机械摘录**的前情提要 ＋ 第 N 讲的前置知识点，直接交到老师手里 |
+| 内存态 | `currentLesson = N`——**只在写盘成功之后**赋值 |
+
+### 为什么是新工具，而不是扩 `classroom_set_phase`
+
+1. **写的是另一组键**：`set_phase` 的契约是「只写 `current_phase` 一行、不动别的」
+   （契约 K3.3.4）；跳讲要写 `current_lesson` ＋ `skipped_lessons` ＋ 人读表格。
+   合体会把两条互不相干的写路径绑死，任一侧改判据都会牵动另一侧。
+2. **返回值形态不同**：跳讲要一次交出几 KB 机械摘录，`set_phase` 只回一句短状态。
+3. **触发词不同**（「从第 N 讲开始」 vs 「进入追问环节」）：本项目实证条件措辞会让模型犹豫、
+   工具就够不着（见 `实现报告_T3a` §4），两条触发各写死在各自的工具描述里更可靠。
+
+### 注入集合规则（J3 / 验收 A1）
+
+`story.node.NN` 本来就挂在 `lesson: {current: true, of: N}` 上，跳讲只改 `current_lesson`
+→ **注入哪些故事节点完全由这条门决定**：跳到第 N 讲之后只有 `story.node.N` 放行
+（`test/lessonjump.test.mjs` 把 1–14 全扫一遍断言）。前情提要自己也守同一条线：
+
+- `story/ch{01..N-1}.md` 只取「**本讲位置**」（ch01 是「这一讲在故事里的作用」）**那一段正文**；
+  「场景节点」「机会节点」「暗线种子」「留给后面的事」一律不取——那些段里写着**后面几讲**的
+  回收点（如 ch02 的「ch14 回收」），取它们就等于提前剧透。
+- `story/overview.md` 只取两块：「人物弧」表里**讲次区间含 N** 的那一行的**前三格**
+  （段 / 讲次 / 状态）；第四格「标志」写的是"第 9 讲她主动讲起…"这类**后面几讲的里程碑**，
+  丢掉。「每讲核心疑问」只取 `< N` 的行。
+- `knowledge_points.md` 取第 `1..N-1` 讲的**知识点行原文**（学生缺的就是这些）；
+  第 N 讲自己的知识点**不进**「前置知识点」段（它由 `curriculum` 与本讲清单给）。
+- 没摘到的文件／段**如实列进** recap 末尾的「没摘到的部分」，不假装完整。
+
+### 失败与红线
+
+- **先写盘、后改内存**：写盘失败返回 `persisted:false` ＋ 原因（与 `persistPhase` 同形），
+  同时把 `lesson` **原样退回旧值**——调用方无论怎么接线都不会出现「内存说第 5 讲、盘上第 1 讲」。
+- **跳过 ≠ 掌握**（J2）：跳过的讲次只写进 `skipped_lessons`；`knowledge_points.md` 的状态位
+  由 `lib/notestore.mjs` 推导，属于被跳过讲次的 `kp` **状态位不动、只加「（跳过）」**，
+  永远不因「跳过了／讲过了」出 `[x]`。
+- **参数越界即拒**：`0`（＝还没开始）／超出 `classroom.lessons`／非整数都在**写盘之前**报错，
+  报错信息带合法区间；跳回已经上过的讲次、跳讲后又要求从头开始都合法
+  （后者会把 `skipped_lessons` 整行删掉，回到「缺失＝无跳过」）。
 
 ## 安装（🔴 两个坑，务必照做）
 

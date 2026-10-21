@@ -17,6 +17,7 @@
     "./lib/diagram.mjs": "./lib/diagram.mjs",
     "./lib/diagramstore.mjs": "./lib/diagramstore.mjs",
     "./lib/notestore.mjs": "./lib/notestore.mjs",
+    "./lib/lessonjump.mjs": "./lib/lessonjump.mjs",
     "./lib/emotionmark.mjs": "./lib/emotionmark.mjs",
     "./lib/emotionchannel.mjs": "./lib/emotionchannel.mjs",
     "./lib/mermaid-parse.mjs": "./lib/mermaid-parse.mjs",
