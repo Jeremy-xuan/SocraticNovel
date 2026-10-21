@@ -24,6 +24,12 @@ import { join } from 'node:path'
 /** 叙事服务的注册名（README §3）。 */
 export const NARRATIVE_SERVICE = 'narrative'
 
+/**
+ * 群聊服务（叙事包提供）的服务键。引擎每回合把「课堂活动到哪儿了」告诉它，
+ * 它才能实现 N3.4 的「课堂进行中她不回群、下课后补回」。
+ */
+export const GROUP_SERVICE = 'classroomGroup'
+
 /** 动态块取值：最近一条日记（N2.4）。 */
 export const DIARY_KIND = 'diary'
 /** 动态块取值：最近若干条群聊（N3.5）。 */
@@ -51,6 +57,22 @@ export const WECHAT_PLACEHOLDER_FAILED = '（这次读不到群里的消息。�
 export function narrativeOf(ctx) {
   if (ctx === null || ctx === undefined || typeof ctx.get !== 'function') return null
   const service = ctx.get(NARRATIVE_SERVICE)
+  return service !== null && typeof service === 'object' ? service : null
+}
+
+/**
+ * 取群聊服务（可能是 null）。**不抛**：`ctx.get` 对未提供的服务返回 undefined。
+ *
+ * 🔴 为什么引擎要做这件事：N3.4 的「课堂进行中不回群」判据是「相位不是 close 且最近回合活动在
+ *    30 分钟以内」。相位与回合活动只有引擎知道；群聊服务自己看不到课堂在不在上。
+ *    没有这条上报，群聊会在上课时照回不误——而且**不会有任何报错**（静默违背产品决定）。
+ *
+ * @param {{get?: (name: string) => unknown}} ctx
+ * @returns {object|null}
+ */
+export function groupServiceOf(ctx) {
+  if (ctx === null || ctx === undefined || typeof ctx.get !== 'function') return null
+  const service = ctx.get(GROUP_SERVICE)
   return service !== null && typeof service === 'object' ? service : null
 }
 

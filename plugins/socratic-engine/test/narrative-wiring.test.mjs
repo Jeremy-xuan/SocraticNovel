@@ -37,7 +37,7 @@ async function copyClassroom() {
 }
 
 /** 假 ctx：多监听器（index.mjs 会往同名事件上挂好几个处理器）＋ 可选叙事服务。 */
-function makeCtx({ narrative = undefined } = {}) {
+function makeCtx({ narrative = undefined, group = undefined } = {}) {
   const listeners = new Map()
   const injectCalls = []
   const sections = []
@@ -64,7 +64,9 @@ function makeCtx({ narrative = undefined } = {}) {
       // 真实的 cordis 会等服务出现再跑 callback；这里不模拟（服务缺席时它就该一直 PENDING）。
     },
     get(name) {
-      return name === 'narrative' ? narrative : undefined
+      if (name === 'narrative') return narrative
+      if (name === 'classroomGroup') return group
+      return undefined
     },
     systemPrompt: { section: (section) => sections.push(section) },
     tools: { register: (tool) => toolsByName.set(tool.name, tool) },
@@ -74,9 +76,9 @@ function makeCtx({ narrative = undefined } = {}) {
   }
 }
 
-async function boot({ narrative = undefined, classroomDir } = {}) {
+async function boot({ narrative = undefined, group = undefined, classroomDir } = {}) {
   const { apply } = await import('../index.mjs')
-  const ctx = makeCtx({ narrative })
+  const ctx = makeCtx({ narrative, group })
   const dir = classroomDir ?? (await copyClassroom())
   await apply(ctx, { classroomDir: dir, animation: { python: '/usr/bin/true', manim: '/usr/bin/true' } })
   return { ctx, dir }
@@ -296,4 +298,54 @@ test('close 相位：日记/群聊块不注入（相位门 phase: open）', asyn
   const decision = await ctx.fire('agent/pre-step', { agent: { session: { id: SESSION } }, turn: 2, step: 1 }, enter)
   assert.ok(!decision.messages.some((m) => m.source?.block === 'state.diary.recent'))
   assert.ok(!decision.messages.some((m) => m.source?.block === 'state.wechat.recent'))
+})
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ⑥ N3.4：群聊活动上报（课堂进行中不回群靠它）
+// ══════════════════════════════════════════════════════════════════════════════
+
+test('N3.4 每个回合把会话/相位/讲次报给群聊服务（群聊才知道课堂在不在上）', async () => {
+  const calls = []
+  const group = { setClassroomActivity: (input) => calls.push(input) }
+  const { ctx, dir } = await boot({ group })
+
+  await ctx.fire('agent/pre-step', { agent: { session: { id: SESSION } }, turn: 1, step: 1 }, enter)
+
+  assert.equal(calls.length, 1, '一个回合应上报恰好一次')
+  const [call] = calls
+  assert.equal(call.sessionId, SESSION)
+  assert.equal(call.classroomDir, await realpath(dir), '教室目录必须是引擎真正在用的那个')
+  assert.equal(typeof call.phase, 'string')
+  assert.ok(call.phase.length > 0, '相位不能是空串')
+  assert.equal(typeof call.lastActivityAt, 'number', '活动时间应是毫秒时间戳')
+  assert.ok(call.lastActivityAt > 0)
+})
+
+test('N3.4 群聊服务不存在 → 引擎照常进入这一回合（不抛、不静默改行为）', async () => {
+  const { ctx } = await boot()
+  const decision = await ctx.fire(
+    'agent/pre-step',
+    { agent: { session: { id: SESSION } }, turn: 1, step: 1 },
+    enter,
+  )
+  assert.equal(decision.kind, 'enter')
+})
+
+test('N3.4 上报自己抛错 → 只记日志，课堂照常进入（旁路不许打断学生这一轮）', async () => {
+  const logs = []
+  const group = {
+    setClassroomActivity: () => {
+      throw new Error('群聊服务内部炸了')
+    },
+  }
+  const { ctx } = await boot({ group })
+  ctx.logger = () => ({ info: (line) => logs.push(String(line)) })
+
+  const decision = await ctx.fire(
+    'agent/pre-step',
+    { agent: { session: { id: SESSION } }, turn: 1, step: 1 },
+    enter,
+  )
+  assert.equal(decision.kind, 'enter', '上报失败不许影响注入决策')
 })

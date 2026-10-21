@@ -67,6 +67,7 @@ import { enterLesson, formatLessonRanges } from './lib/lessonjump.mjs'
 import {
   createTurnLedger,
   fireDiary,
+  groupServiceOf,
   narrativeOf,
   resolveDynamicBlocks,
 } from './lib/narrativebridge.mjs'
@@ -649,6 +650,32 @@ export async function apply(
     })
   }
 
+  /**
+   * 把本回合的课堂活动报给群聊服务（N3.4 的「课堂进行中不回群」靠它）。
+   *
+   * 群聊服务只看得到消息与相位，**看不到"课堂正在上"这件事**——相位与回合活动只有引擎知道。
+   * 不报的话群聊会在上课时照回不误，而且**不会有任何报错**（静默违背产品决定）。
+   *
+   * 全部包在 try/catch 里：这是**旁路上报**，失败绝不许影响课堂（pre-step 抛错会打断学生这一轮）。
+   *
+   * @param {{sessionId: string, phase: string}} input
+   */
+  const reportClassroomActivity = (input) => {
+    try {
+      const service = groupServiceOf(ctx)
+      if (service === null || typeof service.setClassroomActivity !== 'function') return
+      service.setClassroomActivity({
+        sessionId: input.sessionId,
+        classroomDir: current.dir,
+        phase: input.phase,
+        lastActivityAt: Date.now(),
+        lesson: currentLesson,
+      })
+    } catch (cause) {
+      log(`群聊活动上报失败（课堂不受影响）：${cause?.message ?? cause}`)
+    }
+  }
+
   // ---- 1.65) 部署声明（EXPR-5 的**保留部分**）：面板读的目录 == 引擎写的目录 ----
   // 🔴 为什么留着：面板按 `__DSH_CLASSROOM_UI_CONFIG__.root`（缺省＝代码常量）读教室文件，
   //    引擎按 `config.classroomDir`（缺省＝工作区自动发现）写 `runtime/`。
@@ -713,6 +740,13 @@ export async function apply(
     if (gate.mode !== 'turn') log(`去重门退化（${gate.reason}）`)
 
     phase.noteTurnStart()
+
+    // 🔴 N3.4 接线（2026-10-21）：把「课堂活动到哪儿了」报给群聊服务。
+    //    群聊服务要靠它实现「课堂进行中她不回群、下课后补回」——
+    //    相位与回合活动只有引擎知道，它自己看不到课堂在不在上。
+    //    · 服务没装 → 什么都不做（照常上课）；
+    //    · 上报失败 → 只记日志（**绝不抛**：pre-step 抛错会打断学生这一轮）。
+    reportClassroomActivity({ sessionId: sessionIdOf(payload), phase: phase.phase })
 
     // 讲次门：每个回合开始前重读 progress 文件（课后更新会把讲次 +1）。
     // 🔴 读不到/值非法 → 报错（不静默）。宿主钩子报错会打断用户这一轮，故先拦一层记日志。
