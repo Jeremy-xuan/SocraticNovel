@@ -853,6 +853,43 @@ blocks:
     render: { enabled: false }
 
   # ══════════════════════════════════════════════════════════════════════════
+  # E · N 车道接线（2026-10-21）：下节课开头「她读到自己写的 / 群里最近的消息」
+  #
+  # 🔴 内容**不在文件里**：`dynamic:` 让引擎在**注入时**现取（lib/narrativebridge.mjs）：
+  #    · state.diary.recent  → 叙事服务 `readRecentDiaries({limit:1})` 的最后一条（N2.4）
+  #    · state.wechat.recent → runtime/wechat_group.jsonl 的最后 8 条（契约 K4.2 / 开发文档 N3.5）
+  #    🔴 叙事服务没装 / 群聊还没有消息 → 注入一行**诚实的占位行**（如"（你还没有写过日记。）"）。
+  #      为什么不是"整块不注入"：频率门过了就必须出现——否则验收侧 predictTurnBlocks
+  #      （独立推导）会预测它、生产侧却不注入，A2 立刻红；而且"没生效"会静默消失、没人知道。
+  #
+  # 🔴 **频率必须带 phase:**（裸 `every: phase` 的门恒真，是上面 state.mistakes.due 那段的红线）。
+  #    这里：`frequency: {every: once, anchor: lesson_start}` 管「每讲一次」，
+  #    `phase: {phases: [open]}` 管「只在开场相位」——合起来＝**下节课开头**。
+  #    两个记账都走现有的（injectedLesson / injectedOnce），**不新造去重表**。
+  # 🔴 **不加 lesson: 讲次门**：这两块是**跨讲**的（每讲开头都读"最近"的那一条/那几条），
+  #    不属于某一讲；挂上讲次门反而会在换讲时整块消失。
+  # 🔴 验收侧的第二份频率实现（acceptance/lib/asserts.mjs 的 predictTurnBlocks）按 manifest
+  #    字段独立推导这两块——这里**没有引入新的频率语义**，所以那边不用改。
+  # ══════════════════════════════════════════════════════════════════════════
+  - id: state.diary.recent
+    dynamic: { kind: diary }
+    layer: state
+    position: { target: chat, depth: 0 }
+    frequency: { every: once, anchor: lesson_start }
+    phase: { phases: [open] }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  - id: state.wechat.recent
+    dynamic: { kind: wechat, limit: 8 }
+    layer: state
+    position: { target: chat, depth: 0 }
+    frequency: { every: once, anchor: lesson_start }
+    phase: { phases: [open] }
+    wrap: { style: system-reminder }
+    render: { enabled: false }
+
+  # ══════════════════════════════════════════════════════════════════════════
   # 未声明为注入块的文件（2/33）—— 口径见文件头 ①
   #   AGENTS.md  : 宿主 agent-instructions 包注入（source kind=agent-instructions）
   #   CLAUDE.md  : 别名文件，419B，正文只有一句"完整指令在 AGENTS.md"
