@@ -26,6 +26,7 @@
 
 import { readFile, stat } from 'node:fs/promises'
 import { join } from 'node:path'
+import { stripEmotionMarkersClean } from './emotionmark.mjs'
 
 /** 本插件自有注入的 source.kind（index.mjs 注入 classroom 块时使用）。 */
 export const ENGINE_SOURCE_KIND = 'socratic-engine'
@@ -215,7 +216,9 @@ export function renderSessionLogEntry(facts, { marker, timeLabel }) {
   if (lesson !== null) head.push(`第 ${lesson} 讲`)
   const lines = [marker, `### ${head.join(' · ')}`]
   if (facts.studentTexts.length > 0) {
-    lines.push(`- 学生：${facts.studentTexts.map(oneLine).join(' ／ ')}`)
+    // 🔴 K1.2 末：落盘前再剥一次情绪标记（幂等、防御性）——这里读到的事件可能来自
+    //    历史会话或别的写入者（`llm/stream` 的剥离只保证本引擎生效之后的流）。
+    lines.push(`- 学生：${facts.studentTexts.map(oneLine).map(stripEmotionMarkersClean).join(' ／ ')}`)
   }
   if (facts.toolCalls.length > 0) {
     const tools = facts.toolCalls.map((c) => `${c.name}（${toolOutcome(c.isError)}）`)

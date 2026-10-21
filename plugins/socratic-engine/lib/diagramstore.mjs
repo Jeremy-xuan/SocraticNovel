@@ -23,8 +23,11 @@ import {
   DIAGRAMS_SUBDIR,
   INDEX_FILE,
   appendIndexRow,
+  boardRouteOf,
+  boardSummary,
   checkDiagramArgs,
   diagramFileName,
+  diagramIdOf,
   nowLabel,
   renderIndexRow,
   uniqueFileName,
@@ -48,7 +51,7 @@ async function loadHostAtomicWrite() {
  * 改写会让人看不出"当时画的是哪一版"。
  *
  * @param {{kind:string, source:string, title:string, caption:string, diagramType:string,
- *          lesson:number|null, turn:number}} spec
+ *          lesson:number|null, turn:number, session?:string|null}} spec
  * @param {object} [opts]
  * @param {string} opts.runtimeDir - 教室 runtime/ 目录绝对路径
  * @param {{writeFileAtomic:Function, withFileLock:Function}} [opts.io] - 注入 IO（测试用）
@@ -78,6 +81,8 @@ export async function saveDiagram(spec, opts = {}) {
   await io.writeFileAtomic(filePath, content, { mode })
 
   const indexPath = join(dir, INDEX_FILE)
+  // 🔴 W-e：索引多一列「会话」——回合号是**会话内**自增的（新会话从 1 重来），
+  //    同一讲跨两次会话时，"哪些图属于本节课"必须靠 session 才分得清（见 lib/diagram.mjs 的注释）。
   const row = renderIndexRow({
     timeLabel: nowLabel(at),
     lesson: spec.lesson,
@@ -86,6 +91,7 @@ export async function saveDiagram(spec, opts = {}) {
     title: spec.title,
     caption: spec.caption,
     file: name,
+    session: spec.session ?? null,
   })
   let rows = 0
   await io.withFileLock(indexPath, async () => {
@@ -103,6 +109,8 @@ export async function saveDiagram(spec, opts = {}) {
   })
 
   const info = await stat(filePath)
+  const diagramId = diagramIdOf(name)
+  const board = boardSummary({ diagramId, lesson: spec.lesson, turn: spec.turn, kind: spec.kind })
   return {
     file: `${DIAGRAMS_SUBDIR}/${name}`,
     filePath,
@@ -111,6 +119,9 @@ export async function saveDiagram(spec, opts = {}) {
     timeLabel: nowLabel(at),
     bytes: info.size,
     rows,
+    diagramId,
+    boardRoute: boardRouteOf(diagramId),
+    board,
   }
 }
 
@@ -130,11 +141,14 @@ export async function saveDiagram(spec, opts = {}) {
  * @param {string} env.runtimeDir - 教室 runtime/ 目录绝对路径
  * @param {number|null} env.lesson - 本轮要讲的讲次（无讲次概念时 null）
  * @param {number} env.turn - 本会话回合号
+ * @param {string|null} [env.session] - 宿主 session id（写进索引的「会话」列；取不到写 null）
  * @param {{parse:(source:string)=>Promise<{diagramType:string}>}} env.parser - 真解析器（lib/mermaid-parse.mjs 的产物）
  * @param {{writeFileAtomic:Function, withFileLock:Function}} [env.io] - 注入 IO（测试用）
  * @param {() => number} [env.now] - 取当前时间（测试用）
  * @returns {Promise<{file:string, indexFile:string, kind:string, diagramType:string, title:string,
- *                    lesson:number|null, turn:number, lines:number, bytes:number, rows:number, time:string}>}
+ *                    lesson:number|null, turn:number, lines:number, bytes:number, rows:number, time:string,
+ *                    diagramId:string, boardRoute:string,
+ *                    board:{id:string, lesson:number, turn:number, kind:string}}>}
  */
 export async function drawDiagram(args, env) {
   // ① 结构性校验（纯函数；一次报全）
@@ -170,6 +184,7 @@ export async function drawDiagram(args, env) {
         diagramType: parsed.diagramType,
         lesson: env.lesson ?? null,
         turn: env.turn,
+        session: env.session ?? null,
       },
       { runtimeDir: env.runtimeDir, io: env.io, now: env.now },
     )
@@ -189,5 +204,9 @@ export async function drawDiagram(args, env) {
     bytes: saved.bytes,
     rows: saved.rows,
     time: saved.timeLabel,
+    // 🔴 W-e（契约 K2.1）：图 id / 舞台读图路由 / 结构化板书事件，三样一起给
+    diagramId: saved.diagramId,
+    boardRoute: saved.boardRoute,
+    board: saved.board,
   }
 }

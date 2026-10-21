@@ -41,9 +41,11 @@ import { createPhaseStore, PHASES } from './lib/phasestore.mjs'
 import { registerDiscovery } from './lib/discovery.mjs'
 import { registerDedup, sessionIdOf } from './lib/dedup.mjs'
 import { registerPostClass } from './lib/postclass.mjs'
-import { DIAGRAM_KIND_IDS } from './lib/diagram.mjs'
+import { DIAGRAM_KIND_IDS, renderBoardLine } from './lib/diagram.mjs'
 import { drawDiagram } from './lib/diagramstore.mjs'
 import { createMermaidParser } from './lib/mermaid-parse.mjs'
+import { NOTE_TYPES, assertRuntimeDir, createNoteStore } from './lib/notestore.mjs'
+import { registerEmotionChannel } from './lib/emotionchannel.mjs'
 import { ANIMATIONS_SUBDIR, EXPECTED_RANGE_TEXT, TERMINAL_STATES, describeState, nowLabel } from './lib/animation.mjs'
 import {
   animationNoticeSource,
@@ -59,16 +61,6 @@ import {
 } from './lib/animationstore.mjs'
 import { TEMPLATE_IDS, checkTemplateArgs, describeTemplates } from './lib/animtemplates.mjs'
 import { describeDeclaration, loadDeclaration } from './lib/declaration.mjs'
-import { createExpressionStore } from './lib/expressionstore.mjs'
-import {
-  EXPRESSION_DISCIPLINE_RULES,
-  buildExpressToolDescription,
-  describeDimensions,
-  describeExpressionStatus,
-  describePathChoice,
-  expressToolParameters,
-  renderFaceParams,
-} from './lib/expression.mjs'
 import { describePrepPlan, prepItemsForLesson } from './lib/prep.mjs'
 import { cacheKeyForItem, prepPlan, warmUpPrep } from './lib/prepstore.mjs'
 
@@ -142,6 +134,26 @@ export const ANIMATE_TEMPLATE_TOOL_DESCRIPTION =
 
 // ── 模板 id 列表（工具参数 enum；顺序即描述里的呈现顺序）─────────────────────
 export const ANIMATION_TEMPLATE_IDS = TEMPLATE_IDS
+
+// ── classroom_note 的工具描述（A：课上记录）────────────────────────────────────
+// 🔴 写法口径与 classroom_draw / classroom_animate 一致：**动词优先**，把触发条件写成直接指令
+//    （"发现有学生原话作证据的那一刻就记"），不写"如果需要的话可以…"这类条件措辞——本项目实证：
+//    条件措辞让模型犹豫，工具就不被调用（A/B 对照见实现报告_T3a §4）。
+// 🔴 同时**必须**把"不要每轮都调"写进来（A5）：这个工具最大的风险不是不调，而是每回合都调一次，
+//    把记录表灌成流水账——那样下一节课的注入就变成噪音。判据只有一条：**有没有学生原话作证据**。
+export const NOTE_TOOL_DESCRIPTION =
+  'Record one teaching fact the student just revealed, so the next lesson can pick it up. ' +
+  'Call it at the moment it happens — when the student says something that is wrong in a specific way, ' +
+  'gets stuck on one identifiable step, or explains a mechanism in their own words — and pass their words ' +
+  'verbatim in `quote`. The engine appends one line to runtime/notes.jsonl and mechanically recomputes the ' +
+  'mistake log, the review queue and the knowledge-point status from it, so the first lesson\'s blocker can ' +
+  'be quoted in the second lesson. ' +
+  'DO NOT call it every turn. The only trigger is that the student actually said something you can quote: ' +
+  'a lesson where nothing was revealed deserves no record, and calling it after every explanation turns the ' +
+  'record into noise that the next lesson has to read. Never call it to mark something you merely explained: ' +
+  'only `type: evidence` marks a knowledge point as mastered, and `evidence` means the student explained it or ' +
+  'used it, not that you covered it. A record whose `kp` does not exist in knowledge_points.md, or whose ' +
+  '`quote` is empty, is refused and nothing is written.'
 
 
 export async function apply(
@@ -299,6 +311,20 @@ export async function apply(
     //    模型在回合内把 progress.md 改成下一讲，不影响本回合记录归属（记录的是"当时"）。
     //    教室没有讲次门 → currentLesson 为 null → 标记与标题都不带讲次（行为同升级前）。
     getLesson: () => currentLesson,
+    log,
+  })
+
+  // ---- 1.55) 情绪标记的源头剥离（C-e · 契约 K1.2）----
+  // 🔴 为什么必须在引擎里剥（K1.0 的取证结论，不重复调研）：0.2.1 的原生对话框把 HTML 注释
+  //    原样转义显示，`〔…〕` 走 text 节点同样可见；**没有**"助手文本持久化前 transform"的钩子。
+  //    能改助手输出的位置只有 `llm/stream` waterfall（在落盘之前）与端上遮蔽（遮蔽后无法复用
+  //    宿主渲染器）。所以标记**只在流里存在**：下游（assistant/message 持久化、原生界面、
+  //    session_log.md、classroom_note）拿到的都已经是剥净文本。
+  // 🔴 情绪事件追加写 `<教室>/runtime/emotions.jsonl`（K1.4），舞台/表情模块按 seq 轮询。
+  // 🔴 任何异常都**原样透传**并记日志（宁可原生界面脏一行，也不能让课堂断流）。
+  registerEmotionChannel(ctx, {
+    runtimeDir: config.runtimeDir ?? (() => (current ? join(current.dir, 'runtime') : null)),
+    getTurn: () => phase.turnCount,
     log,
   })
 
@@ -526,88 +552,33 @@ export async function apply(
     })
   }
 
-  // ---- 1.7) 表情（EXPR-1）：老师自己指定 + 没指定时兜底 ----
-  // 🔴 用户拍板（2026-09-24 原话）：*"表情不规定，让 AI 自己决定和控制吧，加点自由度。"*
-  //    → **取消"固定按环节映射表情"**（面板原来那套 相位→表情下标），改成：
-  //      ① 老师用 `classroom_express` 自己指定（**首选**）；
-  //      ② 老师本回合没指定时，用它自己刚说过的话推一个情绪（**兜底，是推测**）。
-  // 🔴 两条**并列**的落地路径（不是主/备）：命名表情 / 逐参数直驱。
-  //    依据（主代理 2026-09-24 实测）：官方初音ミク 两版（`miku`／`miku_sample_t04`）
-  //    **命名表情个数 = 0**，但各有 17 个脸部参数（眼 6／眉 8／口 2／颊 1）
-  //    → 对这类模型"按 model.expression(name) 设表情"根本不成立，只剩逐参数。
-  // 🔴 表情清单**只能**来自渲染侧的能力发现产物（`config.expression.capabilityFile`），
-  //    引擎**不硬编码**任何表情名或参数名（研究件 R3 的告诫：他们那套在 8 个官方样本里 4 个会失效）。
-  // 🔴 未配置 `capabilityFile` → 本段整块不生效（不注册工具、不挂兜底），并**记一条日志**说明
-  //    通道是关的（不是静默失效：装载日志里看得到）。
-  const exprCfg = config.expression ?? {}
-  let expressionStore = null
-  /** 装载时读到的能力快照（用于工具描述；调用时还会重读，见 lib/expressionstore.mjs 的 mtime 缓存）。 */
-  let expressionAtLoad = null
-  // ---- 1.65) 部署声明（EXPR-5）：面板读的目录 == 引擎写的目录，且立绘模型名**一处声明** ----
-  // 🔴 为什么必须有这一步：面板按 `__DSH_CLASSROOM_UI_CONFIG__.root`（缺省＝代码常量）读教室文件，
-  //    引擎按 `config.classroomDir`（缺省＝工作区自动发现）写 `runtime/expression.md`。
-  //    **两边指不同目录时没有任何一处会出声**——引擎照写、面板照读（读不到就显示"还没有表情"），
-  //    表现成"引擎写了但面板看不到"，而日志与画面都不说这是配置错。
-  //    → 声明文件同时声明 `classroomRoot` 与 `portraitModel`：本引擎**核对**前者（不一致就带修法出声），
-  //      **读**后者（这样"改模型名"从"profile 与客户端两处手工对齐"变成"改一处"）。
-  // 🔴 未配置 `config.classroomDeclaration` → 一致性没有机核，**明说**（不静默），行为与改动前一致。
+  // ---- 1.65) 部署声明（EXPR-5 的**保留部分**）：面板读的目录 == 引擎写的目录 ----
+  // 🔴 为什么留着：面板按 `__DSH_CLASSROOM_UI_CONFIG__.root`（缺省＝代码常量）读教室文件，
+  //    引擎按 `config.classroomDir`（缺省＝工作区自动发现）写 `runtime/`。
+  //    **两边指不同目录时没有任何一处会出声**——引擎照写、面板照读（读不到就显示"还没有"），
+  //    表现成"引擎写了但面板看不到"，日志与画面都不说这是配置错。
+  //    → 声明文件里声明 `classroomRoot`，本引擎**核对**它（不一致就带修法出声）。
+  // 🔴 未配置 `config.classroomDeclaration` → 一致性没有机核，**明说**（不静默）。
+  // 📌 2026-10-20（C-e 废弃预设表情层）：`portraitModel` 不再被本引擎消费（表情改由舞台按 K1
+  //    语气标记驱动），这里只保留**目录一致性**这一半；`describeDeclaration` 仍会把声明里的
+  //    立绘模型名打进日志（渲染侧仍以它为准）。
   const declaration = await loadDeclaration({
     file: config.classroomDeclaration,
     workspaceRoot: discovery.workspaceRoot(),
     classroomDir: current.dir,
   })
-  for (const line of describeDeclaration(declaration, exprCfg.model)) log(line)
-  /** 立绘模型名：**声明优先**（一处声明、两侧读）；没声明时才退回 profile 的 config.expression.model。 */
-  const portraitModel =
-    declaration.ok === true && typeof declaration.portraitModel === 'string'
-      ? declaration.portraitModel
-      : exprCfg.model
-  if (typeof exprCfg.capabilityFile === 'string' && exprCfg.capabilityFile !== '') {
-    expressionStore = createExpressionStore({
-      capabilityFile: exprCfg.capabilityFile,
-      model: portraitModel,
-      runtimeDir: () => (current ? join(current.dir, 'runtime') : null),
-      getTurn: () => phase.turnCount,
-      log,
-    })
-    expressionAtLoad = await expressionStore.capability()
-    if (expressionAtLoad.ok) {
-      log(
-        `表情通道已启用：模型 ${expressionAtLoad.model}｜命名表情 ${expressionAtLoad.names.length} 个` +
-          `（${expressionAtLoad.names.join('/') || '无'}）｜参数 ${expressionAtLoad.parameters.length} 个` +
-          `（${describeDimensions(expressionAtLoad.dimensions)}）｜动作组 ${expressionAtLoad.motions.length} 个` +
-          `（${expressionAtLoad.motions.join('/') || '无'}）｜按名字可读性选中：${expressionAtLoad.path}` +
-          `（${expressionAtLoad.pathReadability?.kind ?? '?'}，均分 ${expressionAtLoad.pathReadability?.score?.toFixed(2) ?? '?'}）` +
-          `｜候选：${describePathChoice(expressionAtLoad.pathRanking, expressionAtLoad.path)}` +
-          `｜能力来源 ${expressionAtLoad.file}`,
-      )
-      if (expressionAtLoad.path !== 'named-expression') {
-        log(
-          `🔴 模型 ${expressionAtLoad.model} 走的是 **${expressionAtLoad.path}**` +
-            '（命名表情这条路对它不成立，或有更读得懂的一条）→ 客户端必须实现对应的那一条（见报告 §客户端接线说明）',
-        )
-      }
-    } else {
-      log(`🔴 表情通道**不可用**（会明说、不静默）：${expressionAtLoad.reason}`)
-    }
-    expressionStore.register(ctx)
-    // 🔴 渠道纪律（系统段）：**只挂工具、不给纪律时，老师一次都不会调**（EXPR-1 会话 A 实测：
-    //    `classroom_express` 0 次，而同一回合它调了 set_phase / draw / animate_template）。
-    //    这与 ANIM-ORCH 的实测同型，故照动画那一套补一段引擎自产的纪律。
-    //    🔴 只在本通道**启用**时注入（未配置 capabilityFile → 这一节根本不存在，行为不变）；
-    //       §口径是"不规定映射"——纪律只管"什么时候该说、怎么说"，不管"哪个环节配哪个表情"。
-    ctx.systemPrompt.section({
-      name: 'socratic-engine:expression.discipline',
-      order: 10650, // 紧跟教学动画纪律（10600）
-      interpolate: false,
-      text: ['## 表情的使用纪律（引擎注入）', '', ...EXPRESSION_DISCIPLINE_RULES].join('\n'),
-    })
-  } else {
-    log(
-      '表情通道未启用：profile 的 socratic-engine config.expression.capabilityFile 未配置' +
-        '（表情清单必须来自渲染侧能力发现，引擎不硬编码）',
-    )
-  }
+  for (const line of describeDeclaration(declaration)) log(line)
+
+  // ---- 1.7) 预设表情层：**已废弃**（2026-10-20）----
+  // 🔴 原 §1.7 是 EXPR-1/EXPR-2 的「老师调 classroom_express 在 5 个预设表情间切换」：
+  //    `lib/expression.mjs`（能力发现 + 推测兜底 + 三档落盘）+ `lib/expressionstore.mjs`
+  //    + `lib/expression-table.json` + `classroom_express` 工具 + `runtime/expression.md`。
+  //    按开发文档 §四 C 的「废弃」条整条删除：表情改由舞台侧的表情驱动模块按**语气标记**
+  //    （契约 K1，见 lib/emotionmark.mjs / lib/emotionchannel.mjs）实时驱动，引擎不再指定表情，
+  //    也不再写 `runtime/expression.md`。
+  //    删除理由（写进实现报告）：① 驱动源变了（句子语气 vs 老师显式点名）；
+  //    ② 预设表与「按环节硬切」正是用户要废掉的那套；③ 少一条引擎→客户端的落盘契约（少一个静默分叉点）。
+  // ⚠️ `clients/**` 里读 `runtime/expression.md` 的面板代码不在本车道范围内，需要 P 车道处理。
 
   // ---- 2) 系统段注册（一次性） ----
   let registered = 0
@@ -775,24 +746,18 @@ export async function apply(
             discovered: { type: 'integer', required: true },
             selectedBy: { type: 'string', required: true },
             ambiguity: { type: 'string', required: true },
-            expression: { type: 'string', required: true },
-            expressionFace: { type: 'string', required: true },
-            expressionMotion: { type: 'string', required: true },
-            expressionOrigin: { type: 'string', required: true },
           },
         },
         render: (_args, value) => [
           {
             type: 'text',
-            text: `教室 ${value.classroom}｜相位 ${value.phase}｜第 ${value.turn} 回合｜本轮要讲第 ${value.lesson} 讲｜候选 ${value.discovered} 个（来源 ${value.selectedBy}）` +
-              `｜表情：${describeExpressionStatus(value)}`,
+            text: `教室 ${value.classroom}｜相位 ${value.phase}｜第 ${value.turn} 回合｜本轮要讲第 ${value.lesson} 讲｜候选 ${value.discovered} 个（来源 ${value.selectedBy}）`,
           },
         ],
       },
       execute: async () => {
         const result = discovery.last()
         const selected = result?.selected ?? null
-        const expr = expressionStore?.status() ?? null
         return {
           classroom: current.manifest.classroom.id,
           phase: phase.phase,
@@ -803,11 +768,6 @@ export async function apply(
           discovered: result?.candidates.length ?? 0,
           selectedBy: selected?.source ?? 'none',
           ambiguity: result !== null && result.status === 'ambiguous' ? result.reason : '',
-          // 🔴 EXPR-1：表情状态也在这里说清（工具侧的口径；落盘口径见 runtime/expression.md）
-          expression: expr?.expression ?? '',
-          expressionFace: expr === null ? '' : renderFaceParams(expr.face ?? {}),
-          expressionMotion: expr?.motion ?? '',
-          expressionOrigin: expr?.origin ?? (expressionStore === null ? 'off' : 'unavailable'),
         }
       },
     }),
@@ -881,63 +841,11 @@ export async function apply(
     }),
   )
 
-  // ---- 5.5) classroom_express 工具（EXPR-1：老师自己决定表情）----
-  // 🔴 形态裁定：**新增一个工具**，不复用 `classroom_set_phase` 的入参。理由：
-  //    ① 语义不同——相位是"课的环节"（值域来自教室声明、会落进 progress.md 的 current_phase 行），
-  //       表情是"这一回合教师的表现"，混进一个工具会让两者的值域与落盘互相污染；
-  //    ② 描述即渠道——本项目实证（T3a/T3b）：**工具描述写不写得像"该调它"决定它会不会被调用**；
-  //       两条并列路径（命名/逐参数）＋可用清单需要一整段描述，塞进 set_phase 的入参说明里会糊掉；
-  //    ③ 报错契约不同——表情要"非法名 → 报错并列出可用清单"，相位那套是"值域来自教室声明"。
-  // 🔴 描述在**装载时**把该模型实际有的清单写进去（老师在上下文里就能看到合法取值，
-  //    不必先错一次才知道）；调用时还会重读能力产物做校验（见 lib/expressionstore.mjs 的 mtime 缓存）。
-  if (expressionStore !== null) {
-    ctx.tools.register(
-      defineTool({
-        name: 'classroom_express',
-        description: buildExpressToolDescription(expressionAtLoad),
-        parameters: expressToolParameters(),
-        output: {
-          schema: {
-            type: 'object',
-            additionalProperties: false,
-            properties: {
-              path: { type: 'string', required: true },
-              expression: { type: 'string', required: true },
-              face: { type: 'string', required: true },
-              motion: { type: 'string', required: true },
-              origin: { type: 'string', required: true },
-              emotion: { type: 'string', required: true },
-              turn: { type: 'integer', required: true },
-              model: { type: 'string', required: true },
-              available: { type: 'string', required: true },
-              availableCount: { type: 'integer', required: true },
-              dimensions: { type: 'string', required: true },
-              parameterCount: { type: 'integer', required: true },
-              motionCount: { type: 'integer', required: true },
-              persisted: { type: 'boolean', required: true },
-              file: { type: 'string', required: true },
-              note: { type: 'string', required: true },
-            },
-          },
-          render: (_args, value) => [
-            {
-              type: 'text',
-              text:
-                `本回合表情已定（走 ${value.path}）｜` +
-                (value.expression === '' ? '' : `命名表情 ${value.expression}｜`) +
-                (value.face === '' ? '' : `逐参数 ${value.face}｜`) +
-                (value.motion === '' ? '' : `动作 ${value.motion}｜`) +
-                `第 ${value.turn} 回合｜模型 ${value.model}（可用：命名表情 ${value.availableCount} 个／` +
-                `参数 ${value.parameterCount} 个／动作组 ${value.motionCount} 个）｜` +
-                `${value.persisted ? '已落盘' : '未落盘'}：${value.note}\n` +
-                `客户端（立绘面板）按 runtime/expression.md 的机器可读行应用；本回合没有指定时会由引擎兜底。`,
-            },
-          ],
-        },
-        execute: async (args) => expressionStore.specify(args),
-      }),
-    )
-  }
+  // ---- 5.5) classroom_express：**已废弃**（2026-10-20，开发文档 §四 C「废弃」条）----
+  // 原实现＝老师用工具在 5 个预设表情之间硬切（`lib/expression*.mjs` + `expression-table.json`）。
+  // 现在表情由舞台侧的表情驱动模块按**语气标记**（契约 K1）实时驱动，引擎不再指定表情，
+  // 因此**不注册这个工具**：工具表里没有这个名字，模型也就不会看到一条用不了的选项。
+  // ⚠️ 消费方：`clients/**`（面板读 `runtime/expression.md`）不在本车道范围 → 需 P 车道处理。
 
   // ---- 6) classroom_draw 工具（T3a：把白板真的画出来并落盘）----
   // 🔴 三段判据，缺一不可（每一段失败都**报错**，都不静默）：
@@ -1007,19 +915,41 @@ export async function apply(
             bytes: { type: 'integer', required: true },
             rows: { type: 'integer', required: true },
             time: { type: 'string', required: true },
+            // 🔴 W-e（契约 K2.1）：图 id / 舞台读图路由 / 结构化板书事件。
+            //    结构化数据在事件里走 `presentationMeta`（`value` 不进事件），这三样进 schema
+            //    是为了让**模型自己**也能读到 id 与路由（它可能要在正文里提"这张图在哪"）。
+            diagramId: { type: 'string', required: true },
+            boardRoute: { type: 'string', required: true },
+            board: {
+              type: 'object',
+              required: true,
+              additionalProperties: false,
+              properties: {
+                id: { type: 'string', required: true },
+                lesson: { type: 'integer', required: true },
+                turn: { type: 'integer', required: true },
+                kind: { type: 'string', required: true },
+              },
+            },
           },
         },
+        // 🔴 机器可读行的位置是**文本末尾单独一行**（契约 K2.1 第 2 条）：
+        //    它是兜底路径——舞台拿不到 `meta` 时就从这里抓（K2.3 的判据 2）。
         render: (_args, value) => [
           {
             type: 'text',
             text:
               `板书图已落盘：${value.file}（${value.kind} → ${value.diagramType}｜${value.lines} 行 / ${value.bytes} B）｜` +
               `第 ${value.lesson} 讲 · 第 ${value.turn} 回合 · ${value.time}｜` +
-              `索引 ${value.indexFile} 现共 ${value.rows} 行${value.title === '' ? '' : `｜标题：${value.title}`}`,
+              `索引 ${value.indexFile} 现共 ${value.rows} 行${value.title === '' ? '' : `｜标题：${value.title}`}` +
+              `\n${renderBoardLine(value.board ?? { id: value.diagramId, lesson: value.lesson, turn: value.turn, kind: value.kind })}`,
           },
         ],
+        // 🔴 0.2.1 的事实（契约 K2.1 开头那条）：工具结果进会话事件时 `content` 是 render 的产物，
+        //    结构化 `value` **不进事件**；要带结构化数据的**唯一出口**就是这里 —— 舞台优先读 `meta.board`。
+        presentationMeta: (_args, value) => ({ board: value.board }),
       },
-      execute: async (args) => {
+      execute: async (args, exec) => {
         // 编排主体在 lib/diagramstore.mjs 的 drawDiagram（三段：结构校验 → 真解析 → 落盘），
         // 抽出去是为了让这段逻辑不依赖宿主即可单测（见 test/diagram.test.mjs）。
         // 🔴 任何一段不过都**抛错**（工具报错 = 模型看得到，且什么都没落盘），不静默放行。
@@ -1027,6 +957,8 @@ export async function apply(
           runtimeDir: join(current.dir, 'runtime'),
           lesson: currentLesson,
           turn: phase.turnCount,
+          // 会话 id：写进索引的「会话」列，也是舞台判"这节课的板书"的依据
+          session: exec?.agent?.session?.id ?? null,
           parser: getMermaidParser(),
         })
         log(`板书图落盘：${result.file}（${result.kind} → ${result.diagramType}，${result.bytes} B）`)
@@ -1042,6 +974,146 @@ export async function apply(
           bytes: result.bytes,
           rows: result.rows,
           time: result.time,
+          diagramId: result.diagramId,
+          boardRoute: result.boardRoute,
+          board: result.board,
+        }
+      },
+    }),
+  )
+
+  // ---- 6.5) classroom_note 工具（A：课上记录 → 确定性落盘，契约 K3）----
+  // 🔴 分工（用户已定的设计，开发文档 §四 A）：
+  //    **判断在课上做，落盘是确定性的**。老师当场判断"这是误解 / 卡点 / 掌握证据"，
+  //    调一次本工具；引擎只做三件事：校验入参 → 追加 `runtime/notes.jsonl` → 机械重算三份
+  //    投影（`mistake_log.md` / `review_queue.md` / `knowledge_points.md` 的状态位）。
+  //    **不加**课后另调一次 LLM 做总结——引擎红线：不许用 LLM 生成式改写教学事实。
+  // 🔴 红线的落点：`[x]` 的唯一来源是 `type: evidence` 的记录，而记录要求 `quote` 是**学生原话**。
+  //    "老师讲过"在这条链路上**不产生任何记录**（没有任何按讲解行为推断掌握的路径）。
+  // 🔴 幂等：同一回合（session + turn）里 type/kp/原话三样都相同 → 视为同一条记录，
+  //    返回既有 id、不重复追加。身份用的就是 postclass 的 turnMarker 编码的同一对字段
+  //    （`lib/notestore.mjs` 的 findDuplicateNote 注释里写了为什么**不新造键**）。
+  // 🔴 报错一律**抛**（工具报错＝模型看得到，且什么都没落盘）：kp 不存在、quote 为空、
+  //    runtime/ 不可写，都不静默。
+  ctx.tools.register(
+    defineTool({
+      name: 'classroom_note',
+      description: NOTE_TOOL_DESCRIPTION,
+      parameters: {
+        type: {
+          type: 'string',
+          required: true,
+          enum: NOTE_TYPES,
+          description:
+            'Which kind of record this is. ' +
+            '`misconception` = the student said something that is wrong in a specific way (a wrong model of a ' +
+            'mechanism, not a slip of the tongue); `blocker` = the student is stuck on one identifiable step and ' +
+            'cannot get past it even after help; `evidence` = the student explained the mechanism in their own ' +
+            'words or used it correctly in a new case (this is the ONLY thing that can ever mark a knowledge ' +
+            'point as mastered); `group_question` = a knowledge question the student asked in the group chat, to ' +
+            'be picked up in the next lesson (no kp needed).',
+        },
+        kp: {
+          type: 'string',
+          description:
+            'The knowledge point this belongs to, exactly as it appears in knowledge_points.md: "KP-<lesson>.<n>", ' +
+            'e.g. "KP-3.2". Required for every type except group_question. Read knowledge_points.md first — an id ' +
+            'that does not exist in that file is refused and nothing is written.',
+        },
+        quote: {
+          type: 'string',
+          required: true,
+          description:
+            'The student\'s own words, verbatim — the evidence for this record, not your summary of it. ' +
+            'Copy the sentence they actually said (a short clause is fine); never invent or paraphrase it. ' +
+            'An empty quote is refused: without the student\'s words there is no record to make. ' +
+            'Emotion markers and markdown are stripped before saving.',
+        },
+        note: {
+          type: 'string',
+          description:
+            'Optional one sentence from you: which step they went wrong at, or what they just demonstrated. ' +
+            'This is the useful part for the next lesson — "错了" is useless, "把平均当成了每个" is not. ≤ 500 characters.',
+        },
+      },
+      output: {
+        schema: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            id: { type: 'string', required: true },
+            time: { type: 'string', required: true },
+            type: { type: 'string', required: true },
+            kp: { type: 'string', required: true },
+            quote: { type: 'string', required: true },
+            note: { type: 'string', required: true },
+            lesson: { type: 'integer', required: true },
+            turn: { type: 'integer', required: true },
+            origin: { type: 'string', required: true },
+            duplicate: { type: 'boolean', required: true },
+            kpChanged: { type: 'integer', required: true },
+            unresolved: { type: 'integer', required: true },
+            due: { type: 'integer', required: true },
+            files: { type: 'string', required: true },
+            note_: { type: 'string', required: true },
+          },
+        },
+        render: (_args, value) => [
+          {
+            type: 'text',
+            text:
+              (value.duplicate
+                ? `这一条本回合已经记过了（${value.id}），没有重复追加。\n`
+                : `课堂记录已写入：${value.id}｜${value.type}${value.kp === '' ? '' : ` · ${value.kp}`}｜` +
+                  `第 ${value.lesson === 0 ? '（无讲次）' : `${value.lesson} 讲`} · 第 ${value.turn} 回合 · ${value.time}\n`) +
+              `原话：${value.quote}\n` +
+              `现行状态：未解决的卡点/误解 ${value.unresolved} 条｜到期复习 ${value.due} 项｜` +
+              `知识点状态位改动 ${value.kpChanged} 处\n` +
+              `投影已重算：${value.files === '' ? '（无）' : value.files}（真源 runtime/notes.jsonl，投影请勿手改）` +
+              (value.note_ === '' ? '' : `\n${value.note_}`),
+          },
+        ],
+      },
+      execute: async (args, exec) => {
+        const runtimeDir = join(current.dir, 'runtime')
+        // 🔴 先确认真实可写（不许"报了成功其实没落盘"）；不可写直接抛，模型看得到
+        await assertRuntimeDir(runtimeDir)
+        const session = exec?.agent?.session?.id ?? 'unknown'
+        const store = createNoteStore({
+          classroomDir: current.dir,
+          runtimeDir,
+          log,
+        })
+        const result = await store.append(args, {
+          session,
+          lesson: currentLesson,
+          turn: phase.turnCount,
+          origin: 'teacher',
+        })
+        const record = result.record
+        log(
+          `课堂记录 ${record.id}：${record.type}${record.kp === null ? '' : ` ${record.kp}`}` +
+            `（第 ${record.lesson} 讲 · 第 ${record.turn} 回合）` +
+            (result.duplicate ? '｜重复调用，未追加' : `｜投影重算：状态位 ${result.kpChanged} 处`),
+        )
+        return {
+          id: record.id,
+          time: record.ts,
+          type: record.type,
+          kp: record.kp ?? '',
+          quote: record.quote,
+          note: record.note,
+          lesson: record.lesson,
+          turn: record.turn,
+          origin: record.origin,
+          duplicate: result.duplicate === true,
+          kpChanged: result.kpChanged,
+          unresolved: result.unresolved,
+          due: result.due,
+          files: result.files.join(' / '),
+          note_: result.duplicate
+            ? '`[x]` 只来自 evidence 记录；同一回合重复调用不会重复记。'
+            : '`[x]` 只来自 evidence 记录；「老师讲过」永远不产生 `[x]`（本文件的状态位由记录推导）。',
         }
       },
     }),
