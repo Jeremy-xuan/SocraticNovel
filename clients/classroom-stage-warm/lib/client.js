@@ -60,6 +60,12 @@ window.__ModuleLoader__.load({
     const H = React.createElement
     const BUILD_ID = 'stage-warm-v0.1.0'
     const ROUTE = '/stage-static'
+    /** 板书闭环与情绪通道的宿主路由前缀（契约 K2.2、K1.4）。 */
+    const BOARD_ROUTE = '/stage-board'
+    /** 情绪通道轮询间隔（契约 K1.4：250ms，不做长轮询）。 */
+    const EMOTION_POLL_MS = 250
+    /** 一条情绪事件的有效期：超过它就回落到"平静"（情绪引擎接进来之前的舞台侧兜底）。 */
+    const EMOTION_HOLD_MS = 4000
     const KILL_KEY = 'stage-warm:kill'
     const ROOT_ID = 'stage-warm-root'
 
@@ -701,6 +707,311 @@ window.__ModuleLoader__.load({
     }
 
     // ======================================================================
+    // §3.6 纯函数区（K0 挂载点 / K1.3 防御性剥离 / K2.3 板书事件 / 口型源）
+    //
+    // 🔴 [STAGE-PURE-BEGIN] … [STAGE-PURE-END] 之间**只许放纯函数**：
+    //    · 只依赖入参和 globalThis，**不引用本闭包里的任何变量**（store / live / ROUTE …）
+    //    · 不碰 React / DOM / PIXI
+    //    check.sh §7 把这一段逐字抽到 /tmp 变成 ESM 模块跑单测（test/20-stage-pure.mjs）。
+    //    违反这条约束会立刻在单测里炸出来（ReferenceError），这正是要的：纯函数区不许长毛。
+    // ======================================================================
+  // ── [STAGE-PURE-BEGIN] ────────────────────────────────────────────────
+
+  /**
+   * K0 · 舞台的全局挂载点工厂。
+   *
+   * 为什么要有它：舞台的浏览器半边是一个闭包（`__ModuleLoader__.load({factory})`），
+   * `module.exports` 与 `__test` 都**不上 window** —— 独立的「表情驱动模块」
+   * （另一个 .js 文件，走 ensureStageModule 加载）拿不到 React / store / PIXI。
+   * 所以在这里开一个稳定、只读、有明确销毁顺序的全局对象。
+   *
+   * 纪律（契约 K0 逐条）：
+   *   · `subscribe/getSnapshot` 是**只读订阅**：驱动模块不改舞台 store
+   *   · `screen()` 让驱动知道现在是 live 还是 board（它不许自己切屏）
+   *   · `app` 是**活引用**（getter）：Live2D 未就绪／应用重建后自动反映最新值
+   *   · `setExpressionDriver(driver)` 是唯一写入口；`null` ＝ 交还静态待机
+   *   · `dispose()` 的顺序写死：**先** driver.dispose() → **再**摘全局
+   *
+   * @param {{global?:object, React:object, subscribe:Function, getSnapshot:Function,
+   *          getScreen:Function, getApp:Function, getModel:Function, getMouthSource:Function}} deps
+   */
+  function createStageBridge(deps) {
+    const d = deps || {}
+    const g = d.global || globalThis
+    const box = { driver: null }
+    const api = {
+      version: 1,
+      React: d.React || null,
+      /** 只读订阅：每次 store.set 后调用 fn()；返回 unsubscribe。 */
+      subscribe: function (fn) { return d.subscribe(fn) },
+      /** 只读快照：{ sessionId, running, title, messages, hasChatHook, phase } */
+      getSnapshot: function () { return d.getSnapshot() },
+      /** 舞台已解析出的屏幕状态：'live' | 'board'（驱动只读，不许切屏） */
+      screen: function () { return d.getScreen() },
+      /** 当前的口型源（可替换：将来接音频只换这个源，不动混合层） */
+      mouthSource: function () { return d.getMouthSource() },
+      /** 舞台当前注册的表情驱动（供舞台自己的帧循环取用；也便于单测断言） */
+      driver: function () { return box.driver },
+      /**
+       * 注册表情驱动。`driver = { drive(state, ctx), dispose?() }` 或 `null`。
+       * 传 null／不合法对象 ＝ 交回舞台的静态待机（现有动作层照常跑）。
+       * 换驱动时**先把旧的 dispose 掉**（否则旧驱动挂在 app.ticker 上的回调会泄漏）。
+       * @returns {object|null} 实际生效的驱动
+       */
+      setExpressionDriver: function (driver) {
+        const prev = box.driver
+        const next = (driver && typeof driver.drive === 'function') ? driver : null
+        if (prev && prev !== next && typeof prev.dispose === 'function') {
+          try { prev.dispose() } catch (e) { /* 旧驱动清理失败不该拦住新驱动 */ }
+        }
+        box.driver = next
+        if (typeof d.onDriverChange === 'function') {
+          try { d.onDriverChange(next) } catch (e) { /* 舞台自己的回落逻辑失败不该拦住注册 */ }
+        }
+        return next
+      },
+      /**
+       * 销毁：① 先 driver.dispose() ② 再清空引用 ③ 最后摘掉全局键。
+       * 顺序反了会出现"驱动还在跑、舞台已经不在了"（它下一帧就去碰 null 的 app）。
+       */
+      dispose: function () {
+        const drv = box.driver
+        box.driver = null
+        if (drv && typeof drv.dispose === 'function') {
+          try { drv.dispose() } catch (e) { /* ignore */ }
+        }
+        if (g.__SOCRATIC_STAGE__ === api) {
+          try { delete g.__SOCRATIC_STAGE__ } catch (e) { g.__SOCRATIC_STAGE__ = undefined }
+        }
+      },
+    }
+    // `app` 必须是活引用：Live2D 应用可能晚于挂载点创建，也可能被销毁重建
+    Object.defineProperty(api, 'app', {
+      enumerable: true,
+      get: function () { return d.getApp() },
+    })
+    api.model = function () { return d.getModel() }
+    return api
+  }
+
+  // ── K1.3 · 防御性剥离 ──────────────────────────────────────────────────
+  // 正常路径下 `llm/stream` 已经剥净（契约 K1.2），这里只兜底：
+  // 引擎没装／版本不匹配时，纸带不能把 `〔emo:shy:0.60〕` 原样显示出来。
+  const EMO_LABELS = ['calm', 'happy', 'shy', 'puzzled', 'excited']
+  const EMO_RE = /^〔emo:([a-z]+):(\d\.\d{2})〕$/
+  /** 标记的开头 5 个字符（`〔` ＋ `emo:`）——先认这个前缀，再谈"整个标记剥掉"。 */
+  const EMO_HEAD = '〔emo:'
+  const SENTENCE_END = '。？！」…\n'
+
+  /**
+   * 剥掉情绪标记。**纯函数**（K1.3 的 push 语义，不是流式对象）。
+   *
+   * 规则逐条照 K1.3：
+   *   1. 看到 `〔` 但还没有 `〕` → 这一段先不下传（`final=false` 时）；`final=true` 原样交回（宁可显示半截，不吞正文）
+   *   2. 非法标签 / 强度越界 / 缺两位小数 → 整个标记剥掉，不发事件，不报错
+   *   3. 一句（到 。？！… 或换行为止）多个标记 → 只认第一个，其余剥掉
+   *
+   * @param {string} text
+   * @param {{final?:boolean}} [opts]
+   * @returns {{text:string, events:Array<{label:string,intensity:number}>}}
+   */
+  function stripEmotionMarkers(text, opts) {
+    const src = String(text == null ? '' : text)
+    const isFinal = !!(opts && opts.final)
+    const events = []
+    let out = ''
+    let i = 0
+    let seenInSentence = false
+    while (i < src.length) {
+      const ch = src.charAt(i)
+      if (ch === '〔') {
+        // 🔴 只把 `〔emo:` 当标记开头。别的全角方括号（老师可能真用〔〕强调）原样保留 ——
+        //    「防御性剥离」不该顺手吃掉正文；引擎侧的 K1.3 解析器负责"整个标记剥掉"那一半。
+        if (src.substr(i, 5) !== EMO_HEAD) {
+          const rest = src.slice(i)
+          if (!isFinal && rest.length < EMO_HEAD.length && EMO_HEAD.indexOf(rest) === 0) break
+          out += ch
+          i += 1
+          continue
+        }
+        const close = src.indexOf('〕', i + 1)
+        if (close === -1) {
+          if (isFinal) out += src.slice(i)   // 规则 1：flush 时仍不完整 → 原样交回
+          break
+        }
+        const marker = src.slice(i, close + 1)
+        const m = EMO_RE.exec(marker)
+        if (m) {
+          const label = m[1]
+          const intensity = Number(m[2])
+          const legal = EMO_LABELS.indexOf(label) !== -1 && intensity >= 0 && intensity <= 1
+          if (legal && !seenInSentence) {
+            events.push({ label: label, intensity: intensity })
+            seenInSentence = true
+          }
+        }
+        i = close + 1                        // 规则 2/3：合法与非法标记都从正文里剥掉
+        continue
+      }
+      out += ch
+      if (SENTENCE_END.indexOf(ch) !== -1) seenInSentence = false
+      i += 1
+    }
+    return { text: out, events: events }
+  }
+
+  // ── K2.3 · 板书事件识别 ────────────────────────────────────────────────
+
+  /** 把 Chat 节点的 `content`（数组 or 字符串）拼成纯文本。 */
+  function contentTextOf(content) {
+    if (typeof content === 'string') return content
+    if (!Array.isArray(content)) return ''
+    const out = []
+    for (const part of content) {
+      if (typeof part === 'string') { out.push(part); continue }
+      if (part && typeof part.text === 'string') out.push(part.text)
+    }
+    return out.join('\n')
+  }
+
+  /**
+   * 一个 Chat 节点是不是「刚画完一张板书」的成功结果（契约 K2.3 的唯一判据）：
+   *   `kind === 'tool-result' && name === 'classroom_draw' && isError !== true`
+   * 命中后 id 的取法：① `meta.board.id` ② 文本里的 `[board] id=… lesson=… turn=… kind=…`
+   * 都没有 → `{ id: null }`（调用方不切屏，只记一条 warn）。
+   *
+   * @returns {null | {id:string|null, lesson:number|null, turn:number|null, kind:string, from:'meta'|'text'|'none'}}
+   */
+  function boardEventOf(node) {
+    if (!node || typeof node !== 'object') return null
+    const root = (node.data && node.data.root) ? node.data.root : ((node.data && node.data.kind) ? node.data : node)
+    const kind = root.kind || root.type || ''
+    if (kind !== 'tool-result') return null
+    if (String(root.name || '') !== 'classroom_draw') return null
+    if (root.isError === true) return null
+    const meta = root.meta
+    const board = meta && meta.board
+    if (board && typeof board.id === 'string' && board.id) {
+      return {
+        id: board.id,
+        lesson: Number.isFinite(Number(board.lesson)) ? Number(board.lesson) : null,
+        turn: Number.isFinite(Number(board.turn)) ? Number(board.turn) : null,
+        kind: String(board.kind || ''),
+        from: 'meta',
+      }
+    }
+    const m = /\n\[board\] id=(\S+) lesson=(\d+) turn=(\d+) kind=(\S+)/.exec('\n' + contentTextOf(root.content))
+    if (m) {
+      return { id: m[1], lesson: Number(m[2]), turn: Number(m[3]), kind: m[4], from: 'text' }
+    }
+    return { id: null, lesson: null, turn: null, kind: '', from: 'none' }
+  }
+
+  /** 消息列表里最后一张有 id 的板书（没有就 null）。 */
+  function latestBoardOf(messages) {
+    const arr = Array.isArray(messages) ? messages : []
+    for (let i = arr.length - 1; i >= 0; i--) {
+      const b = arr[i] && arr[i].board
+      if (b && b.id) return b
+    }
+    return null
+  }
+
+  // ── W-s · mermaid 产出的 svg 归一化 ─────────────────────────────────────
+  /**
+   * 把 mermaid 渲染出来的 svg 归一化成"装进画布"的形态。**纯函数**。
+   *
+   * 为什么需要：mermaid 的产物是
+   *   `<svg id=… width="100%" style="max-width: 343px;" viewBox="0 0 343 454">`
+   * 内联 max-width 会被层叠规则拿去跟 CSS 打架（不用 !important 就压不住），
+   * 而 width/height 属性又会跟画布的 100% 冲突。与其在 CSS 里博弈，不如在**插入前**
+   * 把这三样去掉、补上 preserveAspectRatio=meet —— 剩下的由画布的 width/height:100% 决定，
+   * 图按比例居中，既不裁也不变形。
+   *
+   * @param {string} svg
+   * @returns {string}
+   */
+  function normalizeMermaidSvg(svg) {
+    let out = String(svg == null ? '' : svg)
+    if (out.indexOf('<svg') === -1) return out
+    // 只动开标签那一截（正文里可能有同样形状的字符串）
+    const end = out.indexOf('>')
+    if (end === -1) return out
+    let head = out.slice(0, end + 1)
+    const rest = out.slice(end + 1)
+    head = head.replace(/\sstyle="[^"]*max-width[^"]*"/i, '')
+    head = head.replace(/\swidth="[^"]*"/i, '')
+    head = head.replace(/\sheight="[^"]*"/i, '')
+    head = head.replace(/\spreserveAspectRatio="[^"]*"/i, '')
+    head = head.replace(/<svg/i, '<svg preserveAspectRatio="xMidYMid meet"')
+    return head + rest
+  }
+
+  // ── C · 口型源（本阶段没有音频：用「纸带逐字显现」的节奏）─────────────────
+  /**
+   * 口型源接口（可替换的三件套）：
+   *   `feed(text, done)`  喂当前这句 + 是否已说完
+   *   `advance(dtMs)`     推进时钟（舞台是唯一时钟持有者，别让驱动自己计时）
+   *   `current()`         → `{ open: 0..1, speaking, revealed, total, kind }`
+   * 将来接音频：换一个 `createAudioMouth()` 实现同样三件套即可，混合层不动。
+   *
+   * 「逐字显现」的节奏模型：按 `charsPerSecond` 推进"已显现字数"，还有字要出就按
+   * `syllablesPerSecond` 摆开合；一句显示完（且已 done）→ `open` 归 0，嘴闭上。
+   */
+  function createTextCadenceMouth(opts) {
+    const o = opts || {}
+    const cps = Number.isFinite(o.charsPerSecond) && o.charsPerSecond > 0 ? o.charsPerSecond : 14
+    const syll = Number.isFinite(o.syllablesPerSecond) && o.syllablesPerSecond > 0 ? o.syllablesPerSecond : 5.2
+    const st = { text: '', done: false, revealed: 0, clock: 0, open: 0, speaking: false }
+    return {
+      kind: 'text-cadence',
+      note: '本阶段无音频：口型由纸带逐字显现的节奏驱动，一句显示完即闭嘴',
+      feed: function (text, done) {
+        const t = String(text == null ? '' : text)
+        if (t !== st.text) {
+          st.revealed = Math.min(st.revealed, t.length)
+          st.text = t
+        }
+        st.done = !!done
+      },
+      advance: function (dtMs) {
+        const dt = Math.max(0, Math.min(Number(dtMs) || 0, 250))
+        st.clock += dt
+        if (st.text) st.revealed = Math.min(st.text.length, st.revealed + (cps / 1000) * dt)
+        const pending = st.text.length - st.revealed
+        if (!st.text || pending <= 0.5) {
+          st.speaking = false
+          st.open = 0
+        } else {
+          st.speaking = true
+          const phase = (st.clock / 1000) * syll * Math.PI * 2
+          st.open = 0.16 + 0.84 * Math.abs(Math.sin(phase))
+        }
+        return st.open
+      },
+      current: function () {
+        return {
+          kind: 'text-cadence',
+          open: st.open,
+          speaking: st.speaking,
+          revealed: Math.floor(st.revealed),
+          total: st.text.length,
+        }
+      },
+      reset: function () {
+        st.text = ''
+        st.done = false
+        st.revealed = 0
+        st.clock = 0
+        st.open = 0
+        st.speaking = false
+      },
+    }
+  }
+
+  // ── [STAGE-PURE-END] ──────────────────────────────────────────────────
+
+    // ======================================================================
     // §4 设置、素材与宿主报到
     // ======================================================================
     const DEFAULTS = { enabled: true, character: 'teacher', showSprite: true, showBand: true }
@@ -768,6 +1079,29 @@ window.__ModuleLoader__.load({
         throw err
       })
       return l2dLibsPromise
+    }
+
+    /**
+     * K0 · 第 5 条：**新增静态 JS 的独立加载通道**。
+     *
+     * 为什么不复用 `ensureL2dLibs(phases)`：`listLibs()` 的 phases 会被
+     * `if (!window.PIXI) throw` 连带门控（第一组必须只有 pixi），而表情驱动模块 /
+     * mermaid 与 Live2D 彼此独立 —— 塞进 phases 会让"Live2D 挂了"连累"板书渲染"。
+     *
+     * @param {string} file - 文件名（如 `mermaid.min.js`、`emotion-driver.js`）
+     * @param {string} [subdir] - `assets/` 下的子目录，默认 `l2d`（X 车道的表情驱动模块放这里）
+     * @returns {Promise<boolean>} 脚本执行完成即 resolve；失败可重试（不缓存失败）
+     */
+    const stageModulePromises = Object.create(null)
+    function ensureStageModule(file, subdir) {
+      const url = ROUTE + '/' + (subdir || 'l2d') + '/' + String(file)
+      if (stageModulePromises[url]) return stageModulePromises[url]
+      const p = loadOneScript(url).then(function () { return true }).catch(function (err) {
+        delete stageModulePromises[url]     // 失败不缓存：网络抖一下还能重试
+        throw err
+      })
+      stageModulePromises[url] = p
+      return p
     }
 
     function fetchJson(url) {
@@ -938,6 +1272,94 @@ window.__ModuleLoader__.load({
       const settings = props.settings || DEFAULTS
       const enabled = settings.enabled !== false
 
+      // K0 挂载点 / 口型源 / 屏幕状态 的活引用（effect 里读，不进依赖）
+      const bridgeRef = React.useRef(null)
+      const mouthRef = React.useRef(null)
+      const screenRef = React.useRef('live')
+      // 情绪通道：seq 游标 / 当前生效情绪（含过期时间）
+      const emoSeqRef = React.useRef(0)
+      const emoRef = React.useRef(null)
+
+      if (!mouthRef.current) mouthRef.current = createTextCadenceMouth()
+      screenRef.current = boardScreen ? 'board' : 'live'
+
+      // ── K0 · 全局挂载点（契约 §K0）──────────────────────────────────────────
+      // 🔴 这个 effect 必须写在 Live2D 那个 **之前**：React 按声明顺序执行 cleanup，
+      //    而销毁顺序被契约写死了 —— ① driver.dispose()（清它挂在 app.ticker 上的东西）
+      //    ② 摘 window.__SOCRATIC_STAGE__ ③ Live2D effect 的 cleanup 才 destroy PIXI 应用。
+      //    顺序反了，驱动会有一帧去碰已经 destroy 的 app。
+      React.useEffect(function () {
+        if (!enabled) return undefined
+        // 关闭态（Ctrl+Shift+M）：舞台不在，挂载点也不该在 —— 否则驱动会对着空舞台跑
+        if (killed) return undefined
+        if (bridgeRef.current) return undefined
+        let bridge = null
+        try {
+          bridge = createStageBridge({
+            React: React,
+            subscribe: function (fn) { return store.subscribe(fn) },
+            getSnapshot: function () {
+              return {
+                sessionId: live.sessionId,
+                running: live.running,
+                title: live.title,
+                messages: live.messages,
+                hasChatHook: live.hasChatHook,
+                // 相位在引擎侧，舞台如实留 null（**不编一个值**骗驱动）
+                phase: null,
+              }
+            },
+            getScreen: function () { return screenRef.current },
+            getApp: function () { return l2dAppRef.current },
+            getModel: function () { return l2dModelRef.current },
+            getMouthSource: function () { return mouthRef.current },
+          })
+          window.__SOCRATIC_STAGE__ = bridge
+          bridgeRef.current = bridge
+        } catch (err) {
+          pushWarning('K0 挂载点建立失败（表情驱动将不可用）：' + String((err && err.message) || err))
+        }
+        return function () {
+          const b = bridgeRef.current
+          bridgeRef.current = null
+          if (b && typeof b.dispose === 'function') {
+            try { b.dispose() } catch (err) { /* 销毁路径不许抛 */ }
+          } else {
+            try { delete window.__SOCRATIC_STAGE__ } catch { window.__SOCRATIC_STAGE__ = undefined }
+          }
+        }
+      }, [enabled, killed])
+
+      // ── 帧循环：口型源推进 ＋ 把当前情绪交给表情驱动 ───────────────────────
+      // 挂在**舞台自己的 PIXI app.ticker** 上 ⇒ app 销毁时 ticker 一起死（10-19 那个
+      // 「关掉再打开」的坑就是这么修的）；app 重建时这里会重新挂一份。
+      const stageFrame = React.useCallback(function (dtMs) {
+        const mouth = mouthRef.current
+        if (mouth) {
+          try {
+            const msgs = live.messages || []
+            let lastTeacher = null
+            for (let i = msgs.length - 1; i >= 0; i--) {
+              if (msgs[i] && msgs[i].role === 'teacher') { lastTeacher = msgs[i]; break }
+            }
+            const text = lastTeacher ? stripEmotionMarkers(lastTeacher.text, { final: !lastTeacher.running }).text : ''
+            mouth.feed(text, !live.running)
+            mouth.advance(dtMs)
+          } catch (err) { /* 口型算错不该影响画面 */ }
+        }
+        const bridge = bridgeRef.current
+        const drv = bridge && typeof bridge.driver === 'function' ? bridge.driver() : null
+        if (!drv) return
+        // 情绪自然回落：超过 HOLD 没有新事件就交 null（C5 的"回到平静"在引擎接进来之前的兜底）
+        const cur = emoRef.current
+        const active = (cur && (Date.now() - cur.at) < EMOTION_HOLD_MS)
+          ? { label: cur.label, intensity: cur.intensity }
+          : null
+        try { drv.drive({ active: active, dt: (Number(dtMs) || 0) / 1000 }, bridge) } catch (err) {
+          pushWarning('表情驱动 drive() 抛错（已隔离，舞台照常）：' + String((err && err.message) || err))
+        }
+      }, [])
+
       // ── Live2D：库就绪 → 建 PIXI 应用 → 载模型 ─────────────────────────────
       // 🔴 规矩：这个 effect 必须在所有 return 之前（hooks 顺序铁律），且**失败要能降级**：
       //   任何一步出错都 setL2dFailed(true)，渲染时回落静态 <img>，绝不因为 Live2D 挂了而没有立绘。
@@ -975,6 +1397,11 @@ window.__ModuleLoader__.load({
             // 必须再显式 resize 一次渲染器。
             try { app.renderer.resize(hostW, hostH) } catch (e) { /* 旧版没有 resize 就跳过 */ }
             l2dAppRef.current = app
+            // 帧循环挂到 app.ticker 上：**app 销毁 ⇒ ticker 一起死**（不泄漏，10-19 那个坑的口径）。
+            // PIXI v6 的 ticker 回调参数是"帧增量"（1 = 60fps），这里换算成毫秒。
+            try {
+              app.ticker.add(function (delta) { stageFrame((Number(delta) || 1) * (1000 / 60)) })
+            } catch (e) { pushWarning('帧循环挂载失败（表情/口型不会动）：' + String((e && e.message) || e)) }
             setLibReady(true)
             const entry = models[0]
             return window.PIXI.live2d.Live2DModel.from(ROUTE + '/models/' + entry.model3, { autoInteract: false })
@@ -1030,7 +1457,7 @@ window.__ModuleLoader__.load({
         // 🔴 props.killed 必须进依赖：关掉舞台（Ctrl+Shift+M）时组件返回 null、canvas 被销毁，
         //    再打开（Ctrl+Shift+U）时 React 重建出一个**新的** canvas —— 依赖没变 effect 就不会重跑，
         //    新 canvas 上没有 PIXI 应用，立绘消失。实测踩过。
-      }, [enabled, data, props.l2d, props.models, props.killed])
+      }, [enabled, data, props.l2d, props.models, props.killed, stageFrame])
 
       // ── Live2D：状态 → 动作 ────────────────────────────────────────────────
       // 模型只有两组动作：`Idle`（1 段）与 `Anima`（0=speak / 1=thinkend / 2=thinking）。
@@ -1588,6 +2015,14 @@ window.__ModuleLoader__.load({
       // 供离线自检用（不参与运行时）
       __test: {
         readMessages: readMessages,
+        // K0 / K1.3 / K2.3 / 口型源（纯函数区的入口，test/20 用它们跑单测）
+        createStageBridge: createStageBridge,
+        stripEmotionMarkers: stripEmotionMarkers,
+        boardEventOf: boardEventOf,
+        latestBoardOf: latestBoardOf,
+        createTextCadenceMouth: createTextCadenceMouth,
+        contentTextOf: contentTextOf,
+        normalizeMermaidSvg: normalizeMermaidSvg,
         classifyBlocks: classifyBlocks,
         readUserText: readUserText,
         titleOf: titleOf,

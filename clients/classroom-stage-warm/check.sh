@@ -52,7 +52,6 @@ for r in "'/manifest.json'" "'/assets'" "'/board'" "'/anim'" "'/health'"; do
 done
 grep -qF "listBoards" "$PKG/lib/index.js" && ok "板书清单函数存在" || bad "缺 listBoards"
 grep -qF "listAnimations" "$PKG/lib/index.js" && ok "动画清单函数存在" || bad "缺 listAnimations"
-
 sec "5 · 素材与文件签名"
 n_assets=$(ls "$PKG/assets/stage"/*.png 2>/dev/null | wc -l | tr -d ' ')
 [ "$n_assets" -ge 1 ] && ok "舞台素材 $n_assets 张" || bad "舞台素材缺失"
@@ -101,6 +100,37 @@ fs.writeFileSync("/tmp/_unit.mjs", t);' \
   || { bad "选项解析器单测未全绿"; tail -4 /tmp/_unit.out 2>/dev/null | sed 's/^/      /'; }
 else
   bad "缺 test/17-unit-parse-options.mjs"
+fi
+
+sec "7b · 纯函数区单测（K0 挂载点 / K1.3 剥离 / K2.3 板书事件 / 口型源）"
+# 🔴 从真源码里逐字抽出 [STAGE-PURE-BEGIN]…[STAGE-PURE-END] 再跑 —— 测的是产品代码本身
+if node -e '
+const fs=require("fs");
+const src=fs.readFileSync(process.argv[1],"utf8");
+const i=src.indexOf("// ── [STAGE-PURE-BEGIN]");
+const j=src.indexOf("// ── [STAGE-PURE-END]");
+if(i<0||j<0||j<=i){console.error("找不到纯函数区标记");process.exit(1)}
+fs.writeFileSync("/tmp/_stage-pure.mjs", src.slice(i,j)+"\nexport { createStageBridge, stripEmotionMarkers, boardEventOf, latestBoardOf, createTextCadenceMouth, contentTextOf, normalizeMermaidSvg }\n");
+' "$PKG/lib/client.js"; then
+  if node "$PKG/test/20-stage-pure.mjs" >/tmp/_stage-pure.out 2>&1; then
+    ok "纯函数区单测：$(grep -E '通过' /tmp/_stage-pure.out | tail -1)"
+  else
+    bad "纯函数区单测未全绿"; tail -6 /tmp/_stage-pure.out | sed 's/^/      /'
+  fi
+else
+  bad "纯函数区抽取失败（[STAGE-PURE-BEGIN] 标记被破坏？）"
+fi
+
+sec "7d · 契约 K0 第 5 条：新模块不许塞进 listLibs() 的 phases"
+if grep -qF "function ensureStageModule" "$PKG/lib/client.js"; then
+  ok "ensureStageModule(file) 存在（复用 loadOneScript）"
+else
+  bad "缺 ensureStageModule"
+fi
+if grep -qE "const phases = \[\['pixi.min.js'\], \['live2d.min.js', 'live2dcubismcore.min.js', 'index.min.js'\]\]" "$PKG/lib/index.js"; then
+  ok "listLibs 的 phases 仍是「pixi 单独一组 + 其余一组」（没被塞进新模块）"
+else
+  bad "listLibs 的 phases 被改动了（新模块不该进 phases，见契约 K0 第 5 条）"
 fi
 
 if [ "${1:-}" = "--live" ]; then
