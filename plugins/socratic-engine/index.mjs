@@ -63,6 +63,7 @@ import { TEMPLATE_IDS, checkTemplateArgs, describeTemplates } from './lib/animte
 import { describeDeclaration, loadDeclaration } from './lib/declaration.mjs'
 import { describePrepPlan, prepItemsForLesson } from './lib/prep.mjs'
 import { cacheKeyForItem, prepPlan, warmUpPrep } from './lib/prepstore.mjs'
+import { enterLesson, formatLessonRanges } from './lib/lessonjump.mjs'
 
 export const name = 'socratic-engine'
 
@@ -155,6 +156,28 @@ export const NOTE_TOOL_DESCRIPTION =
   'used it, not that you covered it. A record whose `kp` does not exist in knowledge_points.md, or whose ' +
   '`quote` is empty, is refused and nothing is written.'
 
+
+// ── classroom_enter_lesson 的工具描述（J · 任意讲次进入）──────────────────────
+// 🔴 写法口径同上（动词优先、触发条件写成直接指令、不用"如果需要的话可以…"）。
+// 🔴 三条必须写进描述里的事实，不写模型就会猜：
+//    ① 跳过 ≠ 掌握（它决定模型会不会嘴上来一句"第 1–4 讲你已经会了"）；
+//    ② 返回值里已经带着机械摘录的前情提要（否则模型会自己去编前情）；
+//    ③ 落盘失败要如实说（否则模型会按旧讲次继续讲，学生以为已经换讲了）。
+export const ENTER_LESSON_TOOL_DESCRIPTION =
+  'Move the class to a different lesson because the student asked to start from lesson N. ' +
+  'Call it as soon as the student says they want to begin at another lesson ("从第 5 讲开始" / ' +
+  '"start from lesson 5" / "jump to the page about paging") and you have confirmed which number they mean. ' +
+  'The engine then writes runtime/progress.md in one atomic step: the machine line `current_lesson: N`, ' +
+  'the human 本轮要讲 row, and `skipped_lessons: …` listing every lesson passed over. A passed-over lesson ' +
+  'is recorded as SKIPPED, never as mastered: none of its knowledge points becomes [x], and you must not ' +
+  'tell the student they already know that material. ' +
+  'The call hands you back a recap assembled mechanically from the classroom files — story/overview.md, ' +
+  'story/ch01..ch{N-1}.md and the knowledge points those earlier lessons were meant to build: use it to open ' +
+  'the lesson, do not re-narrate it line by line, and do not treat it as the content of lesson N. ' +
+  'Nothing from lesson N+1 onward is included, and you must not bring that material forward either. ' +
+  'If the write fails you get persisted:false plus the reason and the lesson does NOT move — tell the ' +
+  'student the switch failed instead of teaching under the new number. ' +
+  'Do not use this tool to record that a lesson is finished: that is the after-class progress update.'
 
 export async function apply(
   ctx,
@@ -836,6 +859,91 @@ export async function apply(
           lesson: currentLesson ?? 0,
           persisted: persisted.persisted,
           note: persisted.note,
+        }
+      },
+    }),
+  )
+
+  // ---- 5.6) classroom_enter_lesson 工具（J · 任意讲次进入）----
+  // 🔴 为什么是**新工具**而不是扩 `classroom_set_phase`（J1 的落点选择，理由也写进 README）：
+  //    ① 写的是**另一组机器键**（`current_lesson` ＋ 新增的 `skipped_lessons` ＋ 人读表格），
+  //       而 set_phase 的契约是"只写 current_phase 一行、不动别的"（契约 K3.3.4）——
+  //       合体会把两条互不相干的写路径绑在一起，任一侧改判据都会牵动另一侧；
+  //    ② 返回值形态完全不同：跳讲要一次给出**几 KB 的机械摘录**（前情提要 ＋ 前置知识点），
+  //       set_phase 的返回值是给模型/面板看的短句；
+  //    ③ 触发条件不同（"从第 N 讲开始" vs "进入追问环节"）——本项目实证：条件措辞让模型犹豫，
+  //       工具就够不着（实现报告_T3a §4），所以两条触发各自写死在一份描述里更可靠。
+  // 🔴 落盘顺序是本条的硬要求：**先写盘成功，再改内存**。`enterLesson` 失败时把 `lesson` 原样
+  //    退回旧值，所以下面那行赋值在两种情况下都不会造出"内存说 5、盘上还是 1"。
+  ctx.tools.register(
+    defineTool({
+      name: 'classroom_enter_lesson',
+      description: ENTER_LESSON_TOOL_DESCRIPTION,
+      parameters: {
+        lesson: {
+          type: 'integer',
+          required: true,
+          description:
+            'The lesson number to move to (>= 1). Pass the number the student asked to start from; ' +
+            'the classroom declares its max in classroom.yaml, and a number outside 1..max is rejected ' +
+            'with the legal range in the error.',
+        },
+      },
+      output: {
+        schema: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            lesson: { type: 'integer', required: true },
+            previous: { type: 'integer', required: true },
+            title: { type: 'string', required: true },
+            skipped: { type: 'array', required: true, items: { type: 'integer' } },
+            persisted: { type: 'boolean', required: true },
+            note: { type: 'string', required: true },
+            recap: { type: 'string', required: true },
+          },
+        },
+        render: (_args, value) => [
+          {
+            type: 'text',
+            text:
+              (value.persisted
+                ? `已切到第 ${value.lesson} 讲${value.title === '' ? '' : ` · ${value.title}`}` +
+                  `（原第 ${value.previous} 讲）｜跳过的讲次：${formatLessonRanges(value.skipped)}｜` +
+                  `progress.md ${value.note}\n\n`
+                : `🔴 没有切讲成功：${value.note}\n\n` +
+                  `（本轮仍是第 ${value.previous} 讲——继续按第 ${value.previous} 讲上，或先修好 progress.md 再试。）`) +
+              value.recap,
+          },
+        ],
+      },
+      execute: async (args) => {
+        if (currentLesson === null) {
+          throw new Error(
+            '本教室没有讲次（classroom.yaml 里没有任何块用 lesson 讲次门，或未声明 runtime_store）' +
+              '——没有「第 N 讲」可跳。',
+          )
+        }
+        const result = await enterLesson({
+          classroomDir: current.dir,
+          manifest: current.manifest,
+          lesson: args.lesson,
+          log,
+        })
+        // 🔴 只在**写盘成功**之后改内存态：失败时 result.lesson 仍是旧值，这里不会误改。
+        if (result.persisted) currentLesson = result.lesson
+        log(
+          `跳讲：第 ${result.previous} 讲 → 第 ${result.lesson} 讲` +
+            `（persisted=${result.persisted}，跳过 ${result.skipped.join(',') || '无'}）`,
+        )
+        return {
+          lesson: result.lesson,
+          previous: result.previous,
+          title: result.title,
+          skipped: result.skipped,
+          persisted: result.persisted,
+          note: result.note,
+          recap: result.recap,
         }
       },
     }),
