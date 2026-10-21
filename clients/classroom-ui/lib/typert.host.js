@@ -16,10 +16,21 @@ import { z } from 'zod'
 //    **真的 zod v4 schema 实例**（它检查 `"_zod" in schema.schema`）。原先这里是 `undefined`，
 //    于是报 `invocation … parameter codec is not backed by a zod v4 schema`，整包装载失败、实例起不来。
 //    形状对照 `@deepseek-ai/dsh-api-workspace-files/lib/typert.host.js`。
+//
+// 🔴 2026-10-20（迁 0.2.1）：0.2.1-rc.2 的 dsh-typert-loader 改了口径——codec 里不再收 `schema`
+//    字段，改为要一个 **`create()` 工厂**（`requireSchemaProjection`：`typeof value.create !==
+//    "function"` → `… has no create() factory`）。参数 codec 与 result codec 都过这一条校验，
+//    缺一个就整包不激活（实测报错：`classroom-ui invocation "…/save" parameter codec has no
+//    create() factory`）。所以下面统一用 `_codec(typeSymbol, create, jsonSchema)` 产出：
+//    `create` 是返回 zod schema 的**惰性工厂**（与 0.2.1 官方清单同构），`jsonSchema` 是同一形状的
+//    JSON Schema 投影。
 const _scopeSchema = z.intersection(z.string(), z.unknown())
 const _numberSchema = z.number()
 const _stringSchema = z.string()
 const _unknownSchema = z.unknown()
+
+/** 0.2.1 strict codec：{mode, typeSymbol, create(), jsonSchema}。 */
+const _codec = (typeSymbol, create, jsonSchema) => ({ mode: 'strict', typeSymbol, create, jsonSchema })
 
 export const TYPERT = {
   package: 'classroom-ui',
@@ -38,13 +49,13 @@ export const TYPERT = {
           wire: 'workspaceFileScopeId',
           source: 'lookup',
           lookup: 'workspaceFileScope',
-          codec: { mode: 'strict', typeSymbol: '@deepseek-ai/dsh-session/types#SessionId', schema: _unknownSchema },
+          codec: _codec('@deepseek-ai/dsh-session/types#SessionId', () => _unknownSchema, { type: 'string' }),
         },
-        { name: 'lesson', wire: 'lesson', source: 'json', codec: { mode: 'strict', typeSymbol: 'number', schema: _numberSchema } },
-        { name: 'body', wire: 'body', source: 'json', codec: { mode: 'strict', typeSymbol: 'unknown', schema: _stringSchema } },
-        { name: 'baseRev', wire: 'baseRev', source: 'json', codec: { mode: 'strict', typeSymbol: 'number', schema: _stringSchema } },
+        { name: 'lesson', wire: 'lesson', source: 'json', codec: _codec('number', () => _numberSchema, { type: 'number' }) },
+        { name: 'body', wire: 'body', source: 'json', codec: _codec('unknown', () => _stringSchema, { type: 'string' }) },
+        { name: 'baseRev', wire: 'baseRev', source: 'json', codec: _codec('number', () => _stringSchema, { type: 'string' }) },
       ],
-      result: { mode: 'strict', typeSymbol: 'unknown', schema: _unknownSchema },
+      result: _codec('unknown', () => _unknownSchema, {}),
       // sourceLocation 仅作审计锚点（指向本仓库源码行）；不影响运行。
       sourceLocation: { file: 'clients/classroom-ui/lib/whiteboard-host.mjs', line: 90, column: 3 },
     },
@@ -60,11 +71,11 @@ export const TYPERT = {
           wire: 'workspaceFileScopeId',
           source: 'lookup',
           lookup: 'workspaceFileScope',
-          codec: { mode: 'strict', typeSymbol: '@deepseek-ai/dsh-session/types#SessionId', schema: _unknownSchema },
+          codec: _codec('@deepseek-ai/dsh-session/types#SessionId', () => _unknownSchema, { type: 'string' }),
         },
-        { name: 'lesson', wire: 'lesson', source: 'json', codec: { mode: 'strict', typeSymbol: 'number', schema: _numberSchema } },
+        { name: 'lesson', wire: 'lesson', source: 'json', codec: _codec('number', () => _numberSchema, { type: 'number' }) },
       ],
-      result: { mode: 'strict', typeSymbol: 'unknown', schema: _unknownSchema },
+      result: _codec('unknown', () => _unknownSchema, {}),
       sourceLocation: { file: 'clients/classroom-ui/lib/whiteboard-host.mjs', line: 132, column: 3 },
     },
     {
@@ -79,10 +90,10 @@ export const TYPERT = {
           wire: 'workspaceFileScopeId',
           source: 'lookup',
           lookup: 'workspaceFileScope',
-          codec: { mode: 'strict', typeSymbol: '@deepseek-ai/dsh-session/types#SessionId', schema: _unknownSchema },
+          codec: _codec('@deepseek-ai/dsh-session/types#SessionId', () => _unknownSchema, { type: 'string' }),
         },
       ],
-      result: { mode: 'strict', typeSymbol: 'unknown', schema: _unknownSchema },
+      result: _codec('unknown', () => _unknownSchema, {}),
       sourceLocation: { file: 'clients/classroom-ui/lib/whiteboard-host.mjs', line: 166, column: 3 },
     },
   ],
