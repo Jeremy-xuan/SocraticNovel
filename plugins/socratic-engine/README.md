@@ -175,6 +175,13 @@ node "$DSH_BIN" plugin --profile <profile> add "file:$HOME/SocraticNovel-wt/plug
   （K1.3 流式解析）。判据写死并按单测逐条覆盖：跨 chunk 拼接不吐半截、flush 时残留原样交回、
   非法标记整段剥掉且不发事件、一句只取第一个、**任意切分方式输出逐字节一致**（测试里对每段样本
   穷举 1/2/3 段切法）。
+  🔴 **"什么才算标记"的判据是：以 `emo:` 开头的括号对**（合法的剥掉并发事件；非法整段剥掉不发事件）。
+  其它成对的 `〔…〕`（如 `〔em〕`／`〔不是标记〕`／`〔EMO:…〕`）**原样保留**——那不是标记，是正文。
+- 🔴 **两份实现必须同判据**：舞台侧还有一份浏览器实现
+  `clients/classroom-stage-warm/assets/l2d/stage-emotion-parse.js`（防御性剥离）。引擎不许复制它的实现
+  各改各的；`test/emotion-parity.test.mjs` 用同一批语料 + 全部切点断言两边 `text`/`events` 逐字节相同
+  （舞台文件不在本分支时**响亮跳过**并说明"本条闸门未验"，可用环境变量
+  `SOCRATIC_STAGE_EMOTION_PARSER=<绝对路径>` 指过去跑）。
 - **接线层**（`lib/emotionchannel.mjs`）：`registerEmotionChannel(ctx)` 注册 `llm/stream` 监听器。
   🔴 监听器**同步**返回 async iterable（`llm.stream()` 直接把它交给 `for await`）；
   改的只有两处：`text-delta.text` 与 **`block-end` 里文本块的 `block.text`**，其余 chunk

@@ -101,10 +101,20 @@ test('stripEmotionMarkers：合法与非法标记都剥掉；未闭合的〔原�
   assert.equal(stripEmotionMarkers('你好。〔emo:calm:0.50〕'), '你好。')
   assert.equal(stripEmotionMarkers('a〔emo:angry:0.50〕b'), 'ab')
   assert.equal(stripEmotionMarkers('a〔emo:calm:0.5〕b'), 'ab')
-  assert.equal(stripEmotionMarkers('a〔不是标记〕b'), 'ab')
   assert.equal(stripEmotionMarkers('a〔emo:calm:0.50'), 'a〔emo:calm:0.50')
   assert.equal(stripEmotionMarkers('没有标记'), '没有标记')
   assert.equal(stripEmotionMarkersClean('a。〔emo:calm:0.50〕  b'), 'a。 b')
+})
+
+test('stripEmotionMarkers：**不是标记形状**的括号对原样保留（不把正文当标记吃掉）', () => {
+  // 判据与舞台版一致：只有以 `emo:` 开头的括号对才是标记候选
+  assert.equal(stripEmotionMarkers('a〔不是标记〕b'), 'a〔不是标记〕b')
+  assert.equal(stripEmotionMarkers('〔emo〕还是字'), '〔emo〕还是字')
+  assert.equal(stripEmotionMarkers('〔EMO:calm:0.50〕大写不算'), '〔EMO:calm:0.50〕大写不算')
+  assert.equal(stripEmotionMarkers('〔〕空括号'), '〔〕空括号')
+  // 但标记形状的非法内容照样剥（K1.3-3）
+  assert.equal(stripEmotionMarkers('a〔emo:〕b'), 'ab')
+  assert.equal(stripEmotionMarkers('a〔emo:calm〕b'), 'ab')
 })
 
 // ---------------------------------------------------------------- K1.3 解析器
@@ -156,6 +166,7 @@ const SAMPLES = [
   '未闭合的〔emo:calm:0.50',
   '没有标记的一段话，换行也算一句\n〔emo:calm:0.50〕下一句',
   '全角〔不是标记〕括号',
+  '括号里只有 em〔emo:ca',
 ]
 
 test('🔴 K1.3-5：任意切分方式，文本与事件序列都逐字节一致', () => {
@@ -188,7 +199,7 @@ test('K1.3-2 flush 时仍不完整 → 原样交回、不发事件', () => {
 })
 
 test('K1.3-3 非法标签 / 强度越界 / 缺两位小数 → 整段剥掉且不发事件', () => {
-  for (const bad of ['〔emo:angry:0.50〕', '〔emo:calm:1.50〕', '〔emo:calm:0.6〕', '〔随便什么〕']) {
+  for (const bad of ['〔emo:angry:0.50〕', '〔emo:calm:1.50〕', '〔emo:calm:0.6〕', '〔emo:〕']) {
     const r = feedWhole(createEmotionStreamParser(), `前${bad}后`)
     assert.equal(r.text, '前后', `${bad} 必须整段剥掉`)
     assert.deepEqual(r.events, [], `${bad} 不得发事件`)

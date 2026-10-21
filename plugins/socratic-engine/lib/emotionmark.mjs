@@ -43,12 +43,19 @@ export function parseEmotionBody(inner) {
   return { label, intensity: Number.parseFloat(m[2]) }
 }
 
+/** 标记的"形状前缀"：只有以 `emo:` 开头的括号对才是标记候选（与舞台版判据一致）。 */
+const MARKER_PREFIX = 'emo:'
+
 /**
- * 把一段文本里的**所有** `〔…〕` 标记剥掉。**纯函数**。
+ * 把一段文本里的**所有情绪标记**剥掉。**纯函数**。
  *
- * 口径：凡 `〔` 与 `〕` 成对的片段，无论是否合法，**整段剥掉**——
- * 合法的静默丢弃（整串场景不发事件），非法的也丢弃（K1.3-3：不显示、不报错）。
- * 未闭合的 `〔`（到文本末尾都没有 `〕`）原样保留：那是正文，不是标记（K1.3-2：不吞正文）。
+ * 口径（与舞台版 `stage-emotion-parse.js` 逐条一致，有专门的一致性测试）：
+ * - **只有以 `emo:` 开头的括号对**才是标记候选：合法 → 剥掉；非法（坏标签/越界/缺两位小数）→
+ *   也整段剥掉（K1.3-3：不显示、不报错、不发事件）。
+ * - **其它成对的 `〔…〕` 原样保留**：那不是标记，是正文（例如老师在正文里写了个 〔？〕）。
+ *   为什么不再"凡是括号就剥"：那会把正文当标记吃掉——数据丢失比留一个括号更糟，而且契约 K1.3-3
+ *   说的是"非法**标记**要剥"，不是"所有全角括号都剥"。
+ * - 未闭合的 `〔emo:…`（到文本末尾都没有 `〕`）原样保留（K1.3-2：不吞正文）。
  *
  * @param {string} text
  * @returns {string} 剥净的文本
@@ -64,14 +71,21 @@ export function stripEmotionMarkers(text) {
       out += s.slice(i)
       break
     }
-    const close = s.indexOf(MARK_CLOSE, open + 1)
+    const rest = s.slice(open + 1)
+    if (!rest.startsWith(MARKER_PREFIX)) {
+      // 不是标记候选：把 `〔` 当普通文字，继续往后找（不消费后面的 `〕`）
+      out += `${s.slice(i, open)}${MARK_OPEN}`
+      i = open + 1
+      continue
+    }
+    const close = rest.indexOf(MARK_CLOSE)
     if (close === -1) {
-      // 没有闭括号：后面全是正文，原样保留
+      // 没闭合：后面全是正文，原样保留
       out += s.slice(i)
       break
     }
     out += s.slice(i, open)
-    i = close + 1
+    i = open + 1 + close + 1
   }
   return out
 }
@@ -141,19 +155,35 @@ export function createEmotionStreamParser() {
         }
         // `〔` 之前的正文照常下发（它不可能被切掉）
         emit(pending.slice(0, open))
-        const close = pending.indexOf(MARK_CLOSE, open + 1)
-        if (close === -1) {
-          // 还没闭合：整段先扣住，等后续 chunk（K1.3-1）
+        const rest = pending.slice(open + 1)
+
+        // ① 已经是标记形状（以 `emo:` 开头）：等 `〕`，然后按语法判定并整段剥掉
+        if (rest.startsWith(MARKER_PREFIX)) {
+          const close = rest.indexOf(MARK_CLOSE)
+          if (close === -1) {
+            // 还没闭合：先扣住，等后续 chunk（K1.3-1）
+            pending = pending.slice(open)
+            break
+          }
+          const event = parseEmotionBody(rest.slice(0, close))
+          if (event !== null && !sentenceHasEvent) {
+            events.push(event)
+            sentenceHasEvent = true
+          }
+          // 合法与非法的标记都整段剥掉（K1.3-3）；合法但本句已有事件也剥掉（K1.3-4）
+          pending = rest.slice(close + 1)
+          continue
+        }
+
+        // ② 还没收够字符、但**有可能**长成 `emo:`（例如 chunk 边界正好切在 `〔em`）→ 扣住等
+        if (rest.length < MARKER_PREFIX.length && MARKER_PREFIX.startsWith(rest)) {
           pending = pending.slice(open)
           break
         }
-        const event = parseEmotionBody(pending.slice(open + 1, close))
-        if (event !== null && !sentenceHasEvent) {
-          events.push(event)
-          sentenceHasEvent = true
-        }
-        // 合法与非法的标记都**整段剥掉**（K1.3-3）；合法但本句已有事件 → 也剥掉（K1.3-4）
-        pending = pending.slice(close + 1)
+
+        // ③ 不是标记候选：`〔` 当普通文字发出去，**不消费**后面的 `〕`
+        emit(MARK_OPEN)
+        pending = rest
       }
       return { text: out, events }
     },

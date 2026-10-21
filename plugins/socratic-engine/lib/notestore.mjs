@@ -120,8 +120,9 @@ export function stripMarkdown(text) {
 /**
  * 落盘前的完整清洗：**先按 K1 剥情绪标记，再去 markdown 格式**。**纯函数**。
  *
- * 为什么顺序固定：情绪标记是 `〔emo:label:intensity〕`（全角括号），不是 markdown，
- * 先剥它能避免它被 markdown 规则误伤成"半截"；两步都是幂等的（对同一输入重复调用结果不变）。
+ * 为什么顺序固定：情绪标记是 `〔emo:label:intensity〕`（全角括号，且只有以 `emo:` 开头的括号对
+ * 才是标记），不是 markdown；先剥它能避免它被 markdown 规则误伤成"半截"。两步都是幂等的
+ * （对同一输入重复调用结果不变）。
  * 防御性：`classroom_note` 的原话可能来自历史会话或别的写入者（K1.2 末、K1.5）。
  *
  * @param {unknown} text
