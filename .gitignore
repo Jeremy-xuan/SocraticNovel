@@ -63,8 +63,13 @@ AP_Physics_EM/materials/讲义/
 
 # 第三方资产（各自按各目录 README 里的「官方出处」获取）
 # ⚠️ 例外：classroom-ui 的 vendor/mermaid 是**运行必需**（右栏面板渲染要用），必须入库
+# ⚠️ 例外：classroom-stage-warm 的 vendor/soullink 是**运行必需**（舞台表情驱动要用的浏览器构建），
+#    同样必须入库。用显式例外而不是 `git add -f`：`-f` 能过这一次，却把决定藏起来，
+#    下一个人加文件时还得再想起来一次。入库的是**构建产物 + LICENSE + NOTICE**，
+#    不是上游源码树（源码按 vendor/soullink/BUILD-INFO 或实现报告里记的出处取）。
 **/vendor/
 !clients/classroom-ui/vendor/
+!clients/classroom-stage-warm/assets/l2d/vendor/
 
 # 参考素材：用户 2026-10-20 决定不进仓库（1.1 GB，其中 423M 是他人同人作品，版权归原作者）
 reference/
