@@ -3,7 +3,8 @@
 > **这是全仓库唯一的状态源。** 其他任何文档里写的「已完成／半成品／能用了」都只是**当时的记录**，
 > 与这里冲突时**以本文件为准**；要改状态，只改这里。
 >
-> 上次核对：**2026-10-20**（核对人：DSH 会话，命令与输出见每行的「证据」）。
+> 上次核对：**2026-10-21**（核对人：DSH 会话，命令与输出见每行的「证据」）。
+> 本轮批量变更的原始证据在 `docs/证据图/迁移0.2.1/`，实现报告在 `docs/历史报告/实现报告_{B,A,S,P,X}_*.md`。
 
 ---
 
@@ -27,20 +28,33 @@
 
 | # | 能力 | 代码在哪 | 状态 | 证据（2026-10-20 实测） | 差什么才能升级 |
 |---|---|---|---|---|---|
-| 1 | 教学引擎（相位、注入、工具、课后更新） | `plugins/socratic-engine/`（77 文件） | 🟡 L1 | `node check.mjs` 第 ⑧ 步：**429/429** 通过 | 一次完整 `acceptance/run.sh`（L3），目前从未跑过 |
-| 2 | 教室包（操作系统 14 讲） | `classrooms/cs-os/`（55 文件） | 🟡 L1 | `check.mjs` 第 ① 步：17 个必需文件齐全、48 条声明路径全在盘、14 讲正文齐全、29 个讲次门全在 1–14 内 | 没有 `preset.yml`／`agent.cordis.yml` → 预设选择器里选不到它（L2 装配） |
-| 3 | 技能包（装上就能用的分发形态） | `skills/socratic-classroom/` | 🟡 L1 | `check.mjs` ①②：`validate` 退出码 0；与教室真源 **54 文件 sha256 全一致** | L2 安装＋被发现（09-24 记录做过，迁移后未复验） |
-| 4 | 整屏舞台（暖色教室界面） | `clients/classroom-stage-warm/`（29 MB 素材） | 🟡 L2（部分） | 2026-10-20 今天实测：`./check.sh` **20/20**；`./check.sh --live` **24/24**——隔离 harness 里建好 profile、**插件真的装进去了**、`--dump-config` 预检 exit 0 | 浏览器渲染段没跑（要另起服拿 token 跑 `test/13–16` 号脚本）；真机截图／交互仍是空白 |
-| 5 | 右栏面板（课程表／立绘／板书图） | `clients/classroom-ui/` | 🟡 L1 | `check.mjs` 第 ⑤ 步：panel ＋ 白板服务端 **69** ＋ 白板路由 **44** 全绿 | 面板进真 UI 只在 09-24/09-30 记录里；迁移后未复验（L2） |
-| 6 | 白板（**学生能看到的那种**） | `clients/classroom-ui/lib/whiteboard*.mjs` | 🔴 不可用 | 服务端 113 条断言绿，但 `lib/client.js` 里 **0 处** `whiteboard` → **没有学生可见的 pane** | 一个可见面板 ＋ 保存/读回的端到端证据 |
-| 7 | 立绘（Live2D 渲染宿主） | `clients/live2d-host/` | 🔴 本仓库跑不起来 | `check.mjs` 第 ③ 步：只能做语法与脚本目标检查；**`vendor/`、`samples/` 不随仓库分发** → `npm run build` 不可执行 | 按 README 的官方出处补资产，才能到 L1 真跑 |
-| 8 | 注入隐藏（引擎上下文不显示给学生） | `clients/inject-hide/` | 🟡 L1 | `check.mjs` 第 ④ 步：**21/21**（1 项 N/A：本机没找到安装版宿主源码） | 装进 profile 看真实会话里注入消失（L2） |
-| 9 | 教学动画（课前预渲染 ＋ 课上放） | `plugins/socratic-engine/lib/animation*`、`tools/animation-gate/` | 🔴 当前不可跑 | 引擎侧单测覆盖模板/闸门/缓存键；但渲染环境（manim venv）**随旧工作区删除**，路径已不存在 | 自建 venv 装 ManimCE，再跑 `acceptance --skip-session` |
-| 10 | 验收流水线 | `acceptance/` | 🟡 L1 | `check.mjs` 第 ⑦ 步：写足迹守卫、白名单、频率比对、动态块 4 项全绿 | **完整跑（真实会话＋六条断言）在本仓库从未执行**；最近一次是 09-30 的 `--skip-session` |
-| 11 | 部署（服务器上的 stage 实例） | `tools/deploy/` | ⬜ 未验证 | 本仓库无服务器访问能力；10-17 的部署记录未复验 | 一次从零部署并留下可核的地址与日志 |
-| 12 | v1 参考教室（AP 物理） | `AP_Physics_EM/`、`META_PROMPT.md` | 🟡 静态内容 | 内容完整，是 v1 框架的产物 | 未在 v2 引擎下跑过；**不是当前主线** |
+| 1 | 教学引擎（相位、注入、工具、课后更新） | `plugins/socratic-engine/` | 🟡 L1 | `node check.mjs` 第 ⑧ 步：**461/461** 通过 | 一次完整 `acceptance/run.sh`（L3），卡在验收流水线的「铁律③ vs 0.2.1」冲突（见 §二之二） |
+| 2 | 教室包（操作系统 14 讲） | `classrooms/cs-os/` | 🟡 L1 | `check.mjs` 第 ① 步：17 个必需文件齐全、声明路径全在盘、14 讲正文齐全；第 ② 步与技能镜像 **54 文件 sha256 全一致** | 已在 stage 实例上做成 0.2.1 的插件行形态预设且真浏览器可选（`docs/证据图/迁移0.2.1/stage-preset-picker-0.2.1.json`），L2 装配过 |
+| 3 | 技能包（装上就能用的分发形态） | `skills/socratic-classroom/` | 🟡 L1 | `check.mjs` ①②：`validate` 退出码 0；与教室真源 sha256 全一致 | L2 安装＋被发现（09-24 做过，迁移后未复验） |
+| 4 | 整屏舞台（暖色教室界面） | `clients/classroom-stage-warm/` | 🟡 L2 | `./check.sh` **35/35**（原 20 项）；`--live` 33/33；真浏览器（swiftshader）里 canvas `399x546`、**立绘画出来了**、`pageerror` 0、K0 挂载点 11 键齐全 | 无崩溃交互回归；完整课堂对话属 M4-T |
+| 5 | 右栏面板（课程表／立绘／板书历史） | `clients/classroom-ui/` | 🟡 L2 | `check.mjs` 第 ⑤ 步：panel ＋ 白板服务端 **69** ＋ 白板路由 **44** 全绿；真浏览器里 tab 能开、`data-cui-portrait-mode="pixi-idle"`、15.0 fps、舞台打开时 0 帧 | 「没装舞台」的 profile 里静态立绘读不到（面板只能读工作区相对路径，插件包内没有读通道） |
+| 6 | 板书闭环（老师画 → 舞台自动切屏 → 面板只读历史） | `clients/classroom-stage-warm` ＋ `classroom-ui` ＋ 引擎 `classroom_draw` | 🟡 L1 | 路由四条拒绝规则、mermaid 真渲染、索引「会话」列、面板只读列表都有测试与真机截图（`docs/证据图/舞台_Ws_板书屏_mermaid真渲染_2026-10-20.png`） | **自动切屏的端到端缺**：需要一个真实的 `classroom_draw` 工具结果事件（本阶段不跑课堂对话） |
+| 7 | 课堂记录（第一节课的卡点，第二节课被引用） | 引擎 `lib/notestore.mjs` ＋ `runtime/notes.jsonl` ＋ 三份机械投影 | 🟡 L1 | `test/notestore.test.mjs` + `postclass` 覆盖：三档状态推导、跳讲不算掌握、review +1/+3/+7、幂等、(lesson,turn,id) 定序、resolved 推导 | **stage 上的真实两节课验证**（要真实模型与两次会话） |
+| 8 | 立绘（Live2D 渲染宿主） | `clients/live2d-host/` | 🔴 本仓库跑不起来 | `check.mjs` 第 ③ 步：只做语法与脚本目标检查；`vendor/`、`samples/` 不随仓库分发 | 已确定**不再是主路径**：舞台与面板都改用 `assets/l2d/` 的 pixi+cubism 那套（见技术债） |
+| 9 | 表情驱动（老师的脸跟着语气变） | `clients/classroom-stage-warm/assets/l2d/stage-emotion*.js` ＋ `vendor/soullink/` ＋ 引擎 `llm/stream` 剥离 | 🟡 L2 | 解析器 14/14（任意切分逐字节一致）、驱动 16/16、真机 driver 已注册且每帧写 16 个参数、`pageerror` 0、五态截图 | **情绪轮询端到端缺**：需要引擎写出 `runtime/emotions.jsonl` ＋ 一个 running 回合 |
+| 10 | 注入隐藏（引擎上下文不显示给学生） | `clients/inject-hide/` | 🟡 L1 | `check.mjs` 第 ④ 步：**21/21**（1 项 N/A） | 装进 profile 看真实会话里注入消失（L2） |
+| 11 | 教学动画（课前预渲染 ＋ 课上放） | `plugins/socratic-engine/lib/animation*`、`tools/animation-gate/` | 🟡 L1 | 引擎单测覆盖模板/闸门/缓存键；**渲染环境其实在本机**：`/Library/Frameworks/Python.framework/Versions/3.13/bin/manim` = Manim Community v0.20.1，`acceptance` 的 `stage0Preflight` 带上三个环境变量即通过 | 跑一次真正渲片（L3） |
+| 12 | 验收流水线 | `acceptance/` | 🔴 被前提冲突卡住 | 第 ⑦ 步 4 项机核全绿；`--skip-session` 走过 preflight 后卡在第 02 步「铁律③」 | 见 §二之二：铁律③ 假定「宿主包由安装版回退目录提供」，而 0.2.1 删了那个回退 |
+| 13 | 部署（服务器上的 stage 实例） | `tools/deploy/` ＋ 服务器 | 🟡 L2 | stage 已升 **0.2.1-rc.2**：`NRestarts=0`、端口 10 秒 listen、装载零告警、教室预设真浏览器可选且默认；`deploy-stage.sh` 已补预设自动转换与端口轮询 | 一次从零部署；u001–u005 的同类迁移未做（未授权） |
+| 14 | v1 参考教室（AP 物理） | `AP_Physics_EM/`、`META_PROMPT.md` | 🟡 静态内容 | 内容完整 | 不是当前主线 |
 
-**门槛覆盖率**：`node check.mjs` 现在 8 步，覆盖 ①②③④⑤⑥⑦⑧，合计 **429（引擎）＋ 69＋44（白板）＋ 21（注入隐藏）＋ 20（舞台）** 条断言，退出码 0。
+**§二之二 · 本轮查明的两个「卡点不是 bug，是前提过期」**
+
+1. **验收流水线 vs 0.2.1**：第 02 步的「铁律③」禁止把 `@deepseek-ai/*` 装进 profile/插件
+   `node_modules`，理由是「会造成双实例与 Symbol 失配」，而它的前提注释写着「宿主包由**安装版回退目录**提供」
+   ——**0.2.1 把这个回退删掉了**（`@deepseek-ai/dsh/lib/bin.js` 里 `NODE_PATH`/`registerHooks`/`modulePaths`
+   全部 0 命中）。所以「插件 import 宿主包」与「铁律③」在 0.2.1 上不可兼得。三条出路（含我倾向的那条）写在
+   `docs/历史报告/实现报告_B_迁移0.2.1_2026-10-20.md` §5.1，**需要人来定**，我没有擅自放宽检查。
+2. **`STATUS.md` 旧说法「渲染环境随旧工作区删除」不准**：Manim 0.20.1 就在本机
+   `/Library/Frameworks/Python.framework/Versions/3.13/bin/`，`tools/animation-gate/animation_gate.py` 也在盘。
+
+**门槛覆盖率**：`node check.mjs` 现在 8 步，覆盖 ①②③④⑤⑥⑦⑧，合计 **461（引擎）＋ 69＋44（白板）＋ 21（注入隐藏）＋ 35（舞台 check.sh）** 条断言，退出码 0。
+舞台另有 `./check.sh --live` 33 项（建隔离 profile、真装进去、`--dump-config` 预检）。
 
 ---
 
@@ -59,8 +73,8 @@
 
 | 项 | 冻结理由 | 解冻条件 |
 |---|---|---|
-| 白板（学生可见） | 只有服务端，没有界面；文档长期写「半成品」 | 有人愿意做 pane ＋ 端到端证据，排期 ≥ 2 周 |
-| 完整课堂（M4／M4-T） | 从未跑过，缺预设封装与一次 L3 验收 | §二 第 1、2、10 行都到 L3 |
+| 白板（学生**在板上写字**） | 产品决定：学生不写；实时白板只由老师在舞台板书屏上产出，面板只做只读历史 | 产品决定改变 |
+| 完整课堂（M4／M4-T） | 从未跑过；预设封装已就（stage 上可选），缺一次 L3 验收 | §二 第 1、2、12 行都到 L3 |
 | 多角色同台（AI 同学） | 设计已定，实现未开工；依赖 turn 语义取证 | 单角色课堂先到 L3 |
 | 语音、出题、复习调度、教材导入 | 功能清单里都是「⬜ 没开始」 | 不在当前主线，需要时单独立项 |
 
