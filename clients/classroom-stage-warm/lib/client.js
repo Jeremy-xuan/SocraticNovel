@@ -619,6 +619,25 @@ window.__ModuleLoader__.load({
           if (kind === 'tool-call') {
             const root = data.root || {}
             const cid = String(root.callId || '')
+            // 🔴 W2（2026-10-21）：板书信号的**真实入口**就在这一支 —— 0.2.1 把工具结果
+            //    折进 `tool-call` 节点的 `data.root`（root.kind 才是 'tool-result'），
+            //    外层根本没有独立的 tool-result 节点。所以先在这里判一次。
+            //    顺序也很重要：**先推 board 条目，再做 callId 去重** —— 否则这个 call
+            //    已经由 assistant-step 里画过时（seenToolCall 命中），切屏信号会被一起吞掉。
+            const ev = boardEventOf(node)
+            if (ev && ev.id) {
+              out.push({
+                id: String(node.id || key || ('board' + out.length)),
+                role: 'board',
+                text: '',
+                reasoning: '',
+                tools: [],
+                board: ev,
+              })
+            } else if (ev && !ev.id) {
+              // 两个来源都没给出 id：不切屏，只留一条 warn（契约 K2.3 第 3 条）
+              pushWarning('classroom_draw 结果里没有 board id（meta.board.id 与 [board] 行都缺），不切屏')
+            }
             if (cid && seenToolCall.has(cid)) continue      // 已在 assistant-step 里画过
             out.push({
               id: String(node.id || key || out.length),
@@ -629,10 +648,8 @@ window.__ModuleLoader__.load({
             })
             continue
           }
-          // 🔴 2026-10-20 新增（契约 K2.3）：工具**结果**节点。原来这里一律跳过，
-          //    舞台因此"看不到任何工具结果"——板书闭环就无从触发。
-          //    只为 classroom_draw 的成功结果留一条 role:'board' 的条目（不进纸带正文，
-          //    纸带只画对话；这条只是**给切屏用的信号**）。
+          // 独立 `tool-result` 节点这一形状在 0.2.1 的 Chat 快照里不出现（见 boardEventOf 的注释），
+          // 但契约 K2.3 写的就是这个形状 —— 留着，将来宿主改了形状也照样接得上。
           if (kind === 'tool-result') {
             const ev = boardEventOf(node)
             if (ev && ev.id) {
@@ -961,7 +978,18 @@ window.__ModuleLoader__.load({
    * 命中后 id 的取法：① `meta.board.id` ② 文本里的 `[board] id=… lesson=… turn=… kind=…`
    * 都没有 → `{ id: null }`（调用方不切屏，只记一条 warn）。
    *
-   * @returns {null | {id:string|null, lesson:number|null, turn:number|null, kind:string, from:'meta'|'text'|'none'}}
+   * 🔴 2026-10-21（W2 真机定性，改的是取值路径不是判据）：0.2.1 的 Chat 快照里**不存在**
+   *    独立的 `tool-result` 节点。工具结果被折进 **`tool-call` 节点**的 `data.root`，
+   *    那个 root 才是 `{ kind:'tool-result', name, content, isError, meta, time, … }`
+   *    （`dsh-client-ui-chat` 的 `rootResult()` 造的就是它，`buildViewNode` 再把它
+   *    包成 `{ root }` 挂在 `tool-call` 节点上）。所以「是不是板书结果」认的是**结果对象**，
+   *    不是外层节点的 kind —— 外层叫 `tool-call` 也照样命中（下面先找 `data.root` 就是为了这个）。
+   *    真机实测：`getSnapshot().messages` 里只有 you / tool / teacher，正因为原来这条
+   *    只认外层 `kind === 'tool-result'`，永远进不来。
+   *
+   * `time` = 事件时间（epoch ms），给「刷新的老图不自动弹」用（见 `shouldAutoOpenBoard`）。
+   *
+   * @returns {null | {id:string|null, lesson:number|null, turn:number|null, kind:string, time:number|null, from:'meta'|'text'|'none'}}
    */
   function boardEventOf(node) {
     if (!node || typeof node !== 'object') return null
@@ -970,6 +998,8 @@ window.__ModuleLoader__.load({
     if (kind !== 'tool-result') return null
     if (String(root.name || '') !== 'classroom_draw') return null
     if (root.isError === true) return null
+    const time = Number(root.time)
+    const at = Number.isFinite(time) ? time : null
     const meta = root.meta
     const board = meta && meta.board
     if (board && typeof board.id === 'string' && board.id) {
@@ -978,14 +1008,36 @@ window.__ModuleLoader__.load({
         lesson: Number.isFinite(Number(board.lesson)) ? Number(board.lesson) : null,
         turn: Number.isFinite(Number(board.turn)) ? Number(board.turn) : null,
         kind: String(board.kind || ''),
+        time: at,
         from: 'meta',
       }
     }
     const m = /\n\[board\] id=(\S+) lesson=(\d+) turn=(\d+) kind=(\S+)/.exec('\n' + contentTextOf(root.content))
     if (m) {
-      return { id: m[1], lesson: Number(m[2]), turn: Number(m[3]), kind: m[4], from: 'text' }
+      return { id: m[1], lesson: Number(m[2]), turn: Number(m[3]), kind: m[4], time: at, from: 'text' }
     }
-    return { id: null, lesson: null, turn: null, kind: '', from: 'none' }
+    return { id: null, lesson: null, turn: null, kind: '', time: at, from: 'none' }
+  }
+
+  /**
+   * 「这张板书要不要自动切屏」——契约 K2.4 的**唯一**判定，纯函数。
+   *
+   * 三条都要成立：① 有 id；② 不是上一张已经处理过的（`seenId`）；
+   * ③ 事件时间**不早于**挂载时刻（`mountedAt`）。
+   *
+   * 为什么要 ③：Chat 快照是**异步**到达的，刷新页面时历史里的板书会"晚一步出现"。
+   * 只靠"首帧记下当前 id"挡不住它（首帧往往一条消息都还没有），结果就是**每次刷新都弹板书屏**。
+   * 时间未知（老事件没带 `time`）时按**新事件**处理：宁可多弹一次，也不静默吞掉课上画的图。
+   */
+  function shouldAutoOpenBoard(mountedAt, seenId, board) {
+    if (!board || !board.id) return false
+    const id = String(board.id)
+    if (id === seenId) return false
+    const t = board.time
+    // 只认真正的数字：`Number(null)===0`，用 Number() 转会把"没时间"当成 1970 年
+    if (typeof t === 'number' && Number.isFinite(t)
+      && typeof mountedAt === 'number' && Number.isFinite(mountedAt) && t < mountedAt) return false
+    return true
   }
 
   /** 消息列表里最后一张有 id 的板书（没有就 null）。 */
@@ -1882,11 +1934,14 @@ window.__ModuleLoader__.load({
       // ── K2.4 自动切屏：老师刚画完一张 → 播拉出节拍、渲染这一张 ──────────────
       const boardReq = latestBoardOf(data.messages)
       const boardReqId = boardReq && boardReq.id ? String(boardReq.id) : ''
-      // 挂载时已经存在的板书**不**自动弹（刷新页面后先看 live 屏）；只对"新出现的"响应
-      const seenBoardIdRef = React.useRef(boardReqId)
+      // 挂载时已经存在的板书**不**自动弹（刷新页面后先看 live 屏）：判据是**事件时间**
+      // 早于挂载时刻（见 shouldAutoOpenBoard）。不用"首帧记下当前 id"那种做法 ——
+      // Chat 快照异步到达，首帧往往一条消息都没有，那样每次刷新都会弹一次板书屏。
+      const mountedAtRef = React.useRef(Date.now())
+      const seenBoardIdRef = React.useRef('')
       React.useEffect(function () {
         if (!boardReqId) return
-        if (boardReqId === seenBoardIdRef.current) return
+        if (!shouldAutoOpenBoard(mountedAtRef.current, seenBoardIdRef.current, boardReq)) return
         seenBoardIdRef.current = boardReqId
         // 🔴 舞台关着的时候画了图：**不自动打开舞台**，只进历史（P 车道列它）
         if (!enabled || killed) return
@@ -2414,6 +2469,7 @@ window.__ModuleLoader__.load({
         stripEmotionMarkers: stripEmotionMarkers,
         boardEventOf: boardEventOf,
         latestBoardOf: latestBoardOf,
+        shouldAutoOpenBoard: shouldAutoOpenBoard,
         createTextCadenceMouth: createTextCadenceMouth,
         normalizeMermaidSvg: normalizeMermaidSvg,
         contentTextOf: contentTextOf,
