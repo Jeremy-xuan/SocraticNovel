@@ -1,6 +1,6 @@
 // lib/manifest.mjs — classroom.yaml 解析与校验（P1 骨架，零 DSH 依赖，纯函数可测）
 //
-// 依据：开源线/DSH定制/教室manifest格式_草案_v0.md（M1，2026-09-23）
+// 依据：docs/架构/教室manifest格式_草案_v0.md（M1，2026-09-23）
 // 本骨架实现其 schema 的 v0 子集：format / classroom / runtime_store / phases[] / blocks[]，
 // 每块支持 layer / position{target,order|depth} / frequency{every,n} /
 // phase{phases,except} / render{enabled,vars} / wrap{style} / path|text。

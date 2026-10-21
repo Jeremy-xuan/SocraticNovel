@@ -158,5 +158,5 @@ ch11＝14371B、ch12＝15481B、ch13＝14177B、ch14＝16450B）。**ch08–ch14
 
 - **没有改 `classroom.yaml`**（按任务纪律：另一路也在写同一个文件，改动会互相覆盖）。
 - **没有改** `knowledge_points.md`、`curriculum.md`、`story/**`、`AGENTS.md`、`system_core.md`。
-- **没有碰** `code/plugins/**`、任何 profile 目录、`~/SocraticNovel-wt/`、`~/SocraticNovel-GitHub仓库/`。
+- **没有碰** `plugins/**`、任何 profile 目录、`~/SocraticNovel-wt/`、`~/SocraticNovel-GitHub仓库/`。
 - **没有** git commit／push，**没有**新增依赖。

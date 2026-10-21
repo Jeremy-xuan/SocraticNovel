@@ -26,7 +26,7 @@
 ## 手动核对命令
 
 ```bash
-cd 开源线/DSH定制/code/plugins/socratic-engine
+cd plugins/socratic-engine
 /opt/homebrew/bin/node --input-type=module -e "
 import { discoverClassrooms, formatDiscovery } from './lib/discovery.mjs'
 import { resolve } from 'node:path'

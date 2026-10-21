@@ -2,7 +2,7 @@
 //
 // 目的：把「每个 turn 注入恰好一次」从「依赖 step 号巧合」变成**可证明的幂等门**。
 //
-// ── 取证依据（见 开源线/DSH定制/取证_S3_headless多turn与注入去重_2026-09-23.md）──
+// ── 取证依据（见 取证_S3_headless多turn与注入去重_2026-09-23.md）──
 // ① `agent/pre-step` 的 payload 由宿主确定性地带 `{ agent, messages, turn, step, signal }`：
 //      tmp/dsh-installed/dsh-agent-loop/lib/index.js:894  dispatch.waterfall("agent/pre-step", { messages, ...position, signal })
 //      tmp/dsh-installed/dsh-agent-loop/lib/index.js:937  this.preStep(target, { turn, step })

@@ -15,7 +15,7 @@
 ## 〇 · 先跑这一条：**唯一验收入口**
 
 ```bash
-cd code/clients/classroom-stage-warm
+cd clients/classroom-stage-warm
 ./check.sh                 # 离线自检：20 项（不装 profile、不起服务、不联网）
 PORT=4498 ./check.sh --live    # 再加真机冒烟 4 项（自克隆隔离 harness → 建 profile → 装插件 → 预检）
 # 退出码 0 = 全绿
@@ -151,11 +151,11 @@ http://127.0.0.1:<port>/?token=<本次 token>#stagegallery=1
 ## 五 · 素材
 
 `assets/stage/` 5 张 PNG（教室广角／夜／老师／两位学生），来源是本项目**自产的生成素材**
-（样稿目录 `开源线/DSH定制/code/mockups/stage-modern/assets/gen/`），不是任何原作解包物。
+（样稿目录 `code/mockups/stage-modern/assets/gen/`），不是任何原作解包物。
 
 > 📌 参照物 Avalon 皮肤**不含任何图像／音频**（`.gitignore` 明写 `skin/assets/*`），
 > 它的视觉要靠使用者从原著解包产物自行装配 —— 所以我们**借它的骨架与机制，不借它的皮**。
-> 详见 `开源线/DSH定制/实测_Avalon皮肤装载链路_2026-09-30.md`。
+> 详见 `docs/历史报告/实测_Avalon皮肤装载链路_2026-09-30.md`。
 
 ---
 
@@ -189,6 +189,6 @@ node <本包>/test/09-flow-submit.cjs         "…?token=…" "测试消息"    
 ## 七 · 出处
 
 - 契约取证（座目录／标准 kit／快照结构／种子模块白名单）：见项目根的会话记录与
-  `开源线/DSH定制/` 下 2026-09-30 的实测件
-- 装载链路与三层保险：`开源线/DSH定制/实测_Avalon皮肤装载链路_2026-09-30.md`
-- 样式令牌与逐条 CSS：`开源线/DSH定制/规格_舞台样式令牌_2026-09-30.md`
+  `` 下 2026-09-30 的实测件
+- 装载链路与三层保险：`docs/历史报告/实测_Avalon皮肤装载链路_2026-09-30.md`
+- 样式令牌与逐条 CSS：`docs/架构/规格_舞台样式令牌_2026-09-30.md`

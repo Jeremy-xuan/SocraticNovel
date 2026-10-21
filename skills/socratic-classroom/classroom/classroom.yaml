@@ -1,6 +1,6 @@
 # ============================================================================
 # cs-os 教室包 · 注入元数据（classroom.yaml）
-# 格式权威：开源线/DSH定制/教室manifest格式_草案_v0.md（M1，2026-09-23）
+# 格式权威：docs/架构/教室manifest格式_草案_v0.md（M1，2026-09-23）
 # format 标识：socratic-classroom/0
 # 产出：S4 数据/格式子代理，2026-09-23。本文件是**新增**产物，未改动任何既有 .md。
 #
@@ -295,7 +295,7 @@ blocks:
   #       🔴 为什么不写成不带 `phase:` 的裸 `every: phase`：那种写法 phaseGate 恒真
   #       （`if (!phase) return true`）＝每轮注入、与相位无关，正是本项目禁止的
   #       "看起来配了门、其实门恒开"；要收窄/换相位只需改这一行 `phase:`。
-  # 🔴 频率语义在**验收侧有第二份独立实现**（`code/acceptance/lib/asserts.mjs` 的
+  # 🔴 频率语义在**验收侧有第二份独立实现**（`acceptance/lib/asserts.mjs` 的
   #   `predictTurnBlocks`，逐条复刻 once/turn/n_turns/phase/on_demand 的判定）
   #   → **动这里的频率语义＝两处必须同改**，否则验收仍按旧语义推期望块清单。
   # ⚠️ 讲次门**不加**在这四块上：它们是**跨讲常驻的纪律**，不随讲次变化

@@ -16,8 +16,8 @@
 | `引擎对HEAD内容的加载实测.txt` | 拿 HEAD 版 `progress.md` 跑 `loadManifest`＋`readRuntimeLesson` → **抛 `ManifestError`** | `/opt/homebrew/bin/node -e "…"`（见文件内命令） |
 | `预热缓存键_当前值.txt` | 4 份教材 sha256 ＋ 5 条备课声明的**现算**缓存键 ＋ 历史键 | `import('./lib/prepstore.mjs').cacheKeyForItem` |
 | `格式禁令扫描.txt` | `<sub>`／"你可以怎么回答"／括号旁白式写法／客户端是否渲染注入块 | `grep -rn …`（见文件内命令） |
-| `HEAD原文/` | **`git archive e961ef1` 的冻结副本**（本报告 V1–V11 锚点的落点） | `git archive e961ef1 \| tar -x -C HEAD原文` |
-| `前一版_e961ef1_prev/` | **`git archive e961ef1^` 的冻结副本**（旧口径原文，V12–V15） | `git archive e961ef1^ \| tar -x -C 前一版_e961ef1_prev` |
+| `HEAD原文/` | **`git archive e961ef1` 的冻结副本**（本报告 V1–V11 锚点的落点）。🔴 **2026-10-20 整顿已移出仓库**（旧代码副本不再入库）；`e961ef1` 与 `e961ef1^` 都在本仓库历史里，按右列命令可逐字节重建 | `git archive e961ef1 \| tar -x -C HEAD原文` |
+| `前一版_e961ef1_prev/` | **`git archive e961ef1^` 的冻结副本**（旧口径原文，V12–V15）。🔴 **同上，已移出仓库** | `git archive e961ef1^ \| tar -x -C 前一版_e961ef1_prev` |
 | `repo工作树旧版备份/` | ⚠️ **不是本报告建的**：14:56 由**另一条并发线**写入——它把真仓库工作树里那三个"我们的旧版"文件（`AGENTS.md`／`system_core.md`／`runtime/progress.md`）先备份到这里。三个备份的 sha256 与工作树**逐字相同**（`4029fd12…`／`5ca3e1dd…`／`4ad94cb6…`），说明那条线也判出了同一件事（见正文 §1.2 与 §6.3 U3）。**本报告不删它**（它是有用的证据）。 | `sha256sum` 对照 |
 
 ## 两个必须记住的局限

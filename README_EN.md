@@ -16,6 +16,11 @@
   <b>English</b> | <a href="./README.md">简体中文</a>
 </p>
 
+> ⚠️ **Translation status**: this English README translates an earlier version of the project.
+> For what actually works right now, read [`STATUS.md`](./STATUS.md) (Chinese);
+> the Chinese [`README.md`](./README.md) is the up-to-date version.
+>
+
 > Its purpose is simple — **make learning less lonely.**
 >
 > Textbooks and thick reference volumes are impossible to power through. Public lectures are too one-directional. Ask AI for help? It slaps a full page of formulas in your face — no matter how you study, you're always grinding alone. SocraticNovel is an open-source framework for creating **immersive AI tutoring systems**: the AI chooses questions, explanations, and demonstrations based on what you actually understand; teaching doesn't happen in a blank chatbox, but in a light novel world with characters, scenes, and everyday life.

@@ -223,7 +223,7 @@ globalThis.__DSH_CLASSROOM_UI_CONFIG__ = {
 但那条的 `replaceRisk` 是 `shadows-shipped-ui` —— **注册它就等于接管「所有工具调用」的显示**，
 官方 `ToolCallTree`（含 `tool.call.images`、子调用树、`tool.call.toolview` 的派发）全被盖掉。
 `tool.call.toolview` 则是**加法**：只认自己那一个键，其它工具名一个都不碰。
-（取证结论见 `开源线/DSH定制/取证_P3_客户端槽位与派发语义_2026-09-24.md` §2.4。）
+（取证结论见 `取证_P3_客户端槽位与派发语义_2026-09-24.md` §2.4。）
 
 ### 4.6.2 图从哪来：**源码在工具调用的入参里**，客户端自己渲染
 
@@ -335,8 +335,8 @@ globalThis.__DSH_CLASSROOM_UI_CONFIG__ = { skin: 'library' }   // 目前唯一�
 | `<style>` 注入方式 | **[借官方]** `document.querySelector("style[data-plugin-css=…]")` 去重 + `tag.dataset.plugin` | 官方逐字 `ui-sidebar-right/lib/client.js` |
 | 圆角、间距、字距、行高、区块成形、舞台尺寸 | **[自己定]** | 官方没有 token 通路：它的圆角/间距/字距都散在各包 CSS Module 的字面量里（实测 radius 6/12/24/28/999、gap 3/14、padding 6/14/20、**零 letter-spacing**） |
 | 立绘舞台底＝白 | **[自己定]**，理由见下 | 不是设计偏好，是渲染事实逼出来的 |
-| **衬线字面 `SERIF`** | **[自己定]**（SKIN-2 新增） | 🔴 **宿主没有 serif token**：把 `dsh-client-ui-theme/lib/client.js` 里所有 `--dsw-font-*font-family` 列出来，只有 sans 与 mono 两族。而 STAGE-3 的 C 方向把衬线当作纸面材质的一部分（`prototypes/stage3/stage3.css` 的 `--font-serif`）→ 这里**逐字搬同一份字面栈**，不是新选字体。故本表里 sans/mono 一律引宿主 token，**serif 是明写的自定栈**，测试按这个口径守 |
-| **書庫材质四色**（木框 / 金褐 / 纸面 / 既读橙） | **[自己定]**（SKIN-2 新增） | 逐条对 `prototypes/stage3/stage3.css`：`.v-c .frame` 的木色渐变、`--lib-gold #c9a86a`、`.v-c .paper` 的 `#FBF7E4/#F1EAD4`、`.spines i.cur::after` 的 `#e0603a`。它们走 `--cui-*` 变量写在面板根上（深浅两套），故换主题不用重建样式表 |
+| **衬线字面 `SERIF`** | **[自己定]**（SKIN-2 新增） | 🔴 **宿主没有 serif token**：把 `dsh-client-ui-theme/lib/client.js` 里所有 `--dsw-font-*font-family` 列出来，只有 sans 与 mono 两族。而 STAGE-3 的 C 方向把衬线当作纸面材质的一部分（`archive/design-stage3/stage3.css` 的 `--font-serif`）→ 这里**逐字搬同一份字面栈**，不是新选字体。故本表里 sans/mono 一律引宿主 token，**serif 是明写的自定栈**，测试按这个口径守 |
+| **書庫材质四色**（木框 / 金褐 / 纸面 / 既读橙） | **[自己定]**（SKIN-2 新增） | 逐条对 `archive/design-stage3/stage3.css`：`.v-c .frame` 的木色渐变、`--lib-gold #c9a86a`、`.v-c .paper` 的 `#FBF7E4/#F1EAD4`、`.spines i.cur::after` 的 `#e0603a`。它们走 `--cui-*` 变量写在面板根上（深浅两套），故换主题不用重建样式表 |
 
 ### 4.7.3 🔴 立绘舞台的底**必须是白的**（实测事实，不是选择）
 
@@ -426,7 +426,7 @@ M2_URL="..." /opt/homebrew/bin/node .../tools/mermaid-wiring-followup.cjs gif   
 M2_URL="..." /opt/homebrew/bin/node .../tools/mermaid-wiring-followup.cjs none   # 开关回退（带对照页）
 ```
 
-证据在 `evidence/mermaid2/`，逐图"该看什么"见实现报告 `开源线/DSH定制/实现报告_MERMAID2_接进客户端_2026-09-24.md`。
+证据在 `evidence/mermaid2/`，逐图"该看什么"见实现报告 `实现报告_MERMAID2_接进客户端_2026-09-24.md`。
 
 ## 5 · 装载与运行
 

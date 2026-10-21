@@ -3,10 +3,10 @@
   <p>不是教你知识，是让你自己走到答案面前。</p>
 
   <p>
-    <img src="https://img.shields.io/badge/Version-v2.2-brightgreen.svg" alt="Version">
+    <img src="https://img.shields.io/badge/Version-v2.3-brightgreen.svg" alt="Version">
     <img src="https://img.shields.io/badge/Socratic_Method-苏格拉底教学-ff69b4.svg" alt="Socratic Method">
     <img src="https://img.shields.io/badge/Narrative_Layer-轻小说叙事-9b59b6.svg" alt="Narrative Layer">
-    <img src="https://img.shields.io/badge/Platform-Claude_Code-blue.svg" alt="Platform">
+    <img src="https://img.shields.io/badge/Platform-Claude_Code_/_DSH-blue.svg" alt="Platform">
     <img src="https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-purple.svg" alt="License">
     <img src="https://img.shields.io/badge/PRs-Welcome-orange.svg" alt="PRs Welcome">
   </p>
@@ -28,6 +28,23 @@
 <br>
 
 > *"好的老师知道什么时候该问，什么时候该讲清楚。"*
+
+---
+
+## 📍 现在到哪了（先看这条，别被历史文档误导）
+
+这个仓库有**两代形态**，走的是同一条路：
+
+- **v1 · 内容框架**：一份文件夹里的 markdown 教室（角色／教学法／教材／课程表／故事线／状态），交给 AI 就能上课。生成器是 `META_PROMPT.md`（v2.3），现成教室在 `classrooms/`。
+- **v2 · 教室运行时**：把同一份教室内容装进 DSH——教学引擎（按相位注入材料、课后更新）、整屏舞台、右栏面板、Live2D 立绘、可安装的技能包。代码在 `plugins/`、`clients/`、`skills/`。
+
+🔴 **哪些能用、到什么程度、差什么**，只看 [`STATUS.md`](./STATUS.md)——那里按「机核（本地一条命令）／真机／端到端」三级标了每一件能力。历史报告、计划、盘点里的状态都是当时的快照。
+
+想先确认代码没坏，跑一条命令：
+
+```bash
+node check.mjs
+```
 
 ---
 
@@ -317,6 +334,33 @@ node check.mjs --node <exe>    # 指定运行 node 可执行文件（默认 proc
 ---
 
 ## 📂 项目架构
+
+**先看这两行，知道自己在哪：**
+
+```
+SocraticNovel/
+├── 📄 STATUS.md                        # ★ 唯一状态源：哪些能用、到哪一级、差什么
+├── 📄 AGENTS.md                        # 仓库入口（给 AI 读的目录约定与红线）
+│
+├── 【v2 · 教室运行时】当前主线
+│   ├── plugins/socratic-engine/        # 教学引擎：相位推进 / 材料注入 / classroom_* 工具 / 课后更新
+│   ├── clients/                        # 整屏舞台 · 右栏面板 · Live2D 宿主 · 注入隐藏
+│   ├── skills/socratic-classroom/      # 可安装的技能包（classroom/ 是教室的生成镜像）
+│   ├── acceptance/                     # 端到端验收流水线
+│   └── classrooms/cs-os/               # 教室内容（引擎加载的那份数据）
+│
+├── 【v1 · 内容框架】
+│   ├── META_PROMPT.md                  # 生成新教室的引擎 v2.3
+│   ├── classrooms/                     # 现成教室（cs-os）
+│   └── AP_Physics_EM/                  # 最早的参考教室（物理）
+│
+├── tools/                              # 支撑工具（动画闸门 / 行锚机核 / 部署）
+├── research/                           # 一次性实验（自动分层、立绘转模型……）不是产品
+├── archive/                            # 已废弃实现，只留结论与截图
+└── docs/                               # 架构 · 历史报告 · 证据图（状态不在这里）
+```
+
+下面是 **v1 教室**内部长什么样（v2 引擎读的就是这个形状）：
 
 ```
 SocraticNovel/

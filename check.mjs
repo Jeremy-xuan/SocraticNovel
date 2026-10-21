@@ -13,8 +13,10 @@
  *        · `build` / `capability` 需要的 vendor/ 与 samples/ **未随仓库分发** →
  *          这两条**明确记 N/A**（不是通过，也不算失败）。
  *   ④ 客户端插件测试（clients/inject-hide/test/hide.test.mjs，＝ `npm test`）；
- *   ⑤ 客户端面板测试（clients/classroom-ui/test/panel.test.mjs）；
- *   ⑥ STAGE-3 原型静态自检（prototypes/stage3/tools_selfcheck.mjs，零依赖）；
+ *   ⑤ 客户端面板测试（clients/classroom-ui）：
+ *        · test/panel.test.mjs（＝ `npm test`）；
+ *        · test/whiteboard.test.mjs ＋ test/whiteboard-route.test.mjs（白板服务端，两个独立断言集）；
+ *   ⑥ 舞台离线自检（clients/classroom-stage-warm/check.sh，20 项、不装 profile、不联网）；
  *   ⑦ 验收流水线的不花钱机核（acceptance/）：
  *        · 静态三守卫：footprint-self-test / whitelist-self-test / frequency-parity；
  *        · A2 运行期动态块单测：dynamic-blocks.test.mjs；
@@ -23,10 +25,6 @@
  * 用法：
  *   node check.mjs                     # 跑全部（①②③④⑤⑥⑦⑧）
  *   node check.mjs --skill             # 只跑 ①②（纯本地，不需要引擎依赖）
- *   node check.mjs --stage3-shots      # 额外跑 STAGE-3 的 12 屏浏览器断言
- *                                      #（**显式开关**：它需要 playwright，
- *                                      # 不把全局 playwright 当默认前提；
- *                                      # 只断言不落图，不写 shots/）
  *   node check.mjs --node <exe>        # 指定运行 node 可执行文件（默认 process.execPath）
  *
  * 退出码：0 = 全部通过（N/A 项不算通过也不算失败）；1 = 有任一检查失败。
@@ -49,7 +47,6 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)))
 const onlySkill = process.argv.includes('--skill')
-const stage3Shots = process.argv.includes('--stage3-shots')
 
 // 解析 --node <exe> 参数（若有）。
 let NODE = process.execPath
@@ -358,41 +355,47 @@ if (onlySkill) {
     }
   }
 
-  // ── ⑤ 客户端面板测试 ────────────────────────────────────────────────────────
-  section('⑤ 客户端面板测试 clients/classroom-ui/test/panel.test.mjs')
-  {
-    const t = join(ROOT, 'clients/classroom-ui/test/panel.test.mjs')
-    const r = runNode(t, [])
-    log(r.stdout.trim())
-    if (r.status !== 0) {
-      failures++
-      log(`  ✗ 退出码 ${r.status}`)
-    } else {
-      log('  ✓ 退出码 0')
-    }
-  }
-
-  // ── ⑥ STAGE-3 原型静态自检（+ 可选 12 屏浏览器断言）─────────────────────────
-  section('⑥ STAGE-3 原型 prototypes/stage3')
+  // ── ⑤ 客户端面板测试（含白板服务端两个独立断言集）────────────────────────────
+  section('⑤ 客户端面板测试 clients/classroom-ui')
   {
     runCheckStep({
-      label: '静态自检 tools_selfcheck.mjs',
-      entry: join(ROOT, 'prototypes/stage3/tools_selfcheck.mjs'),
+      label: '面板 panel.test.mjs',
+      entry: join(ROOT, 'clients/classroom-ui/test/panel.test.mjs'),
     })
+    runCheckStep({
+      label: '白板服务端 whiteboard.test.mjs',
+      entry: join(ROOT, 'clients/classroom-ui/test/whiteboard.test.mjs'),
+    })
+    runCheckStep({
+      label: '白板路由 whiteboard-route.test.mjs',
+      entry: join(ROOT, 'clients/classroom-ui/test/whiteboard-route.test.mjs'),
+    })
+  }
 
-    if (!stage3Shots) {
-      log(
-        '  ⚠ 未跑：12 屏浏览器断言（tools_shots.cjs）。它是**可选显式开关** —— ' +
-          '需要 playwright，故不把全局 playwright 当默认前提。要跑就加 `--stage3-shots`。' +
-          '（N/A：不算通过，也不算失败。）',
-      )
+  // ── ⑥ 舞台离线自检（不装 profile、不起服务、不联网）─────────────────────────
+  section('⑥ 舞台离线自检 clients/classroom-stage-warm (check.sh)')
+  {
+    const pkgDir = join(ROOT, 'clients/classroom-stage-warm')
+    const script = join(pkgDir, 'check.sh')
+    if (!existsSync(script)) {
+      failures++
+      log('  ✗ clients/classroom-stage-warm/check.sh 不存在')
     } else {
-      // 只断言不落图：不写 shots/，不给版本库留运行产物。
-      runCheckStep({
-        label: '12 屏浏览器断言 tools_shots.cjs --no-shots',
-        entry: join(ROOT, 'prototypes/stage3/tools_shots.cjs'),
-        args: ['--no-shots'],
+      const r = spawnSync('bash', ['check.sh'], {
+        cwd: pkgDir,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
       })
+      if (r.error) throw r.error
+      const out = (r.stdout ?? '').trim()
+      if (out) log(out)
+      if (r.status !== 0) {
+        failures++
+        log(`  ✗ 退出码 ${r.status}`)
+        if ((r.stderr ?? '').trim()) log((r.stderr ?? '').trim())
+      } else {
+        log('  ✓ 退出码 0')
+      }
     }
   }
 

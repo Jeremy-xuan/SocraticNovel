@@ -1,8 +1,8 @@
 # 锚点表 · 接线说明_materials_ch02-07
 
-> 旁挂文件（约定见 `code/tools/anchors/check-anchors.mjs` 文件头）：正文只写锚点 `〔Axx〕`，行号与 sha256 集中在这里。
-> 机核：`node 开源线/DSH定制/code/tools/anchors/check-anchors.mjs 开源线/DSH定制/code/classrooms/cs-os/接线说明_materials_ch02-07.md --list`
-> 路径基准：仓库根（`开源线/DSH定制/`）。
+> 旁挂文件（约定见 `tools/anchors/check-anchors.mjs` 文件头）：正文只写锚点 `〔Axx〕`，行号与 sha256 集中在这里。
+> 机核：`node tools/anchors/check-anchors.mjs classrooms/cs-os/接线说明_materials_ch02-07.md --list`
+> 路径基准：仓库根（``）。
 > 🔴 版本哈希的语义：**这一条锚点引用的是这个版本**。`classroom.yaml` 再被改动（无论谁改）→ 哈希对不上 → 机核响亮报错，而不是静默失准。
 > 📌 **为什么本文件会有锚点表**：初版正文散写了 `classroom.yaml` 的行号（`391–399`／`384–390`／`35–37`），
 > 那些行号在"合入用户新版内容"与"接线 ch08–14"两次改动后**已全部失效**——这正是锚点纪律要治的病。
@@ -11,7 +11,7 @@
 
 | V | 文件 | sha256 前 16 位 |
 |---|---|---|
-| V1 | code/classrooms/cs-os/classroom.yaml | 7849899ca79b0bee |
+| V1 | classrooms/cs-os/classroom.yaml | 7849899ca79b0bee |
 
 ## 锚点表
 

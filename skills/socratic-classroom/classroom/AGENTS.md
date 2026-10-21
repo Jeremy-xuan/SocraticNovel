@@ -80,7 +80,7 @@
 > **人读**标题 `### 第 K 回合 · <时间> · 相位 … · 第 N 讲`（老记录可能没有 `lesson=`，那是升级前写的，不影响新记录）。
 > → **要回顾历史就直接读它**；**不要往里写"本课摘要"**——手写会与引擎的逐回合记录撞车（真实会话里已撞出 `edit` 失败），而且粒度本来就不同：**引擎是"每回合一条"，不是"每课一条"**。
 > 📌 **数字口径（与引擎实际行为对齐）**：引擎的课后更新器**只挂一个 updater**，目标就是 `session_log.md`
-> （判据：`code/plugins/socratic-engine/lib/postclass.mjs` 的 `SESSION_LOG_UPDATER`，默认 `updaters = [SESSION_LOG_UPDATER]`）。
+> （判据：`plugins/socratic-engine/lib/postclass.mjs` 的 `SESSION_LOG_UPDATER`，默认 `updaters = [SESSION_LOG_UPDATER]`）。
 > → 所以**"课后更新"要分两层说**：**引擎写 1 个**（`session_log.md`，逐回合）、**模型写 4 个**（上面 1–4），**合计 5 个文件**。
 > 本文件、`system_core.md` 的课后更新段与容错段说的"那 4 个文件"都是**模型这一层**的数；两处写出的**总数都是 5**。
 > 判据来源：新版 `META_PROMPT.md` 的课后更新清单列了 8 项（那是三老师 + 群聊 + 日记的完整框架），新版教室 `AGENTS.md` 按本教室实际列了 **5 项**（`progress.md`／`session_log.md`／`knowledge_points.md`／`review_queue.md`／`mistake_log.md`）——本教室没有日记、群聊与角色文档更新，故以 5 为准；其中 `session_log.md` 由引擎逐回合写，模型不写。

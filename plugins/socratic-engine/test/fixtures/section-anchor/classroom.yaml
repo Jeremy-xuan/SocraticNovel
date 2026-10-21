@@ -7,7 +7,7 @@
 #   ③ `## 教学取向` 这种带前缀的写法容错。
 #
 # 🔴 本 fixture 的 _anchor.md 是**为测试另写的**，不是 cs-os 的真实文件；
-#    真实教室的四块见 code/classrooms/cs-os/classroom.yaml。
+#    真实教室的四块见 classrooms/cs-os/classroom.yaml。
 # ============================================================================
 format: socratic-classroom/0
 

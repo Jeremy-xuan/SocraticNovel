@@ -2,13 +2,14 @@
 # 与 classroom-ui 的 `m2-patch.yml` 同形，只把教室目录指到本轮自己的副本，
 # 免得与别的轮次的副本互相踩。
 #
-# 为什么要它：引擎的教室发现是「显式指定 → <工作区根>/classrooms/*/ → 工作区下深度 ≤3 的深扫」，
-# 而教室在 `开源线/DSH定制/code/classrooms/cs-os`（相对工作区根深度 5）→ 三条路都够不着，
-# 引擎会打印「0 候选…插件空转」，于是**一条注入都不会产生**，本轮就测不出东西。
+# 为什么要它：引擎会在会话里写教室的 `runtime/`（session_log / diagrams / progress …），
+# 那是真教室的**状态真源**，不拿它当试验场。副本生成（在仓库根执行）：
+#      rsync -a classrooms/cs-os/ /tmp/hide-classroom-copy/
 #
-# 🔴 指向 /tmp 的**副本**：引擎会在会话里写教室的 `runtime/`（session_log / diagrams / progress …），
-#    那是真教室的**状态真源**，不拿它当试验场。副本生成：
-#      rsync -a 开源线/DSH定制/code/classrooms/cs-os/ /tmp/hide-classroom-copy/
+# 🔴 渲染环境要自己填：下面四条动画路径原先指向旧工作区里的 `poc_动画可写性/env`，
+#    那个 venv 已随工作区清理删除，本仓库也不分发第三方渲染环境。
+#    自建一个装了 ManimCE 的 venv，把前两条与 `gatePython` 改成它的绝对路径；
+#    `gate` 在仓库内，改成仓库根的绝对路径即可。
 - id: socratic-engine
   name: socratic-engine
   config:
@@ -16,8 +17,8 @@
     # 教室 `classroom.yaml` 声明了 `animation: enabled: true`，渲染器路径是**部署事实**、
     # 必须由 profile/patch 提供，否则引擎装载时就报错。路径抄自 `m2-patch.yml`（同一条实测过的组合）。
     animation:
-      python: /Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_动画可写性/env/bin/python
-      manim: /Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_动画可写性/env/bin/manim
-      gate: /Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/code/tools/animation-gate/animation_gate.py
-      gatePython: /Users/wujunjie/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_动画可写性/env/bin/python
+      python: /path/to/manim-venv/bin/python
+      manim: /path/to/manim-venv/bin/manim
+      gate: /path/to/SocraticNovel-GitHub仓库/tools/animation-gate/animation_gate.py
+      gatePython: /path/to/manim-venv/bin/python
       quality: l

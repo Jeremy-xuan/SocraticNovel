@@ -1,9 +1,0 @@
-# socratic-test bundle patch: mount the minimal loading-drill plugin.
-# 安装方式（独立测试 profile，勿装进 web）：
-#   dsh plugin --profile socratic-dev add /Users/wujunjie/SocraticNovel-wt/plugins/socratic-test
-# 然后在 socratic-dev 的 cordis.patch.yml 顶部 insert 列表加：
-#   - id: socratic-test
-#     name: socratic-test
-- insert:
-    - id: socratic-test
-      name: socratic-test

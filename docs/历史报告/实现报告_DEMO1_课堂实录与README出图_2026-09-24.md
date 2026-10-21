@@ -1,5 +1,9 @@
 # 实现报告 · DEMO-1 课堂实录（录屏）＋ README 出图
 
+> 📌 **2026-10-20 路径变更**：文中 `demo/`、`demo/images/`、`demo/raw/` 现已移到
+> [`docs/证据图/课堂实录_2026-09-24/`](../证据图/课堂实录_2026-09-24/)（成片与截图）；
+> `raw/`、`logs/` 等中间产物未随仓库分发。`开源线/DSH定制/...` 是旧工作区路径，已迁入本仓库。
+
 > **任务代号**：DEMO-1 ｜ **日期**：2026-09-24 ｜ **工作目录**：`/Users/wujunjie/Documents/ChatGPT/大学申请`
 > **一句话**：把"这套东西在做什么"变成**别人能一眼看懂的图与录屏**——一张真流程图、一节真课、34 秒实录，并接进产品仓 README。
 > **纪律自述**：未做任何 git commit / push；未新增任何依赖（Playwright 1.63 与 ffmpeg 8.0.1 均为本机已有）；未碰 `code/clients/classroom-ui/lib/**`、`code/plugins/socratic-engine/**`、`code/classrooms/**`（只读）、`code/skills/**`、`code/acceptance/**`、任何 profile 的安装内容、安装版 app、`$DSH_HOME`（见 §6 的例外说明）。

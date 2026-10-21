@@ -340,10 +340,15 @@ APP='/Applications/DSH Desktop.app/Contents/Resources/app.asar.unpacked'
 env -u DSH_HOME \
   ACCEPT_NODE="$APP/node_modules/node/bin/node" \
   DSH_BIN="$APP/node_modules/@deepseek-ai/dsh/lib/bin.js" \
-  SOCRATIC_ANIMATION_ENV_DIR="$HOME/Documents/ChatGPT/大学申请/开源线/DSH定制/poc_动画可写性/env/bin" \
+  SOCRATIC_ANIMATION_ENV_DIR="<你自己的 manim venv>/bin" \
   SOCRATIC_ANIMATION_GATE=tools/animation-gate/animation_gate.py \
   ./acceptance/run.sh --skip-session
 ```
+
+> 🔴 **`SOCRATIC_ANIMATION_ENV_DIR` 必须换成你自己的路径。** 这段命令原先指向旧工作区里的
+> `poc_动画可写性/env`，那个 venv 已随工作区清理删除（本仓库不分发第三方渲染环境）。
+> 自建一个 venv 装上 ManimCE（项目实测用的是 0.21.0，见 `docs/历史报告/` 的动画实测报告），
+> 把它的 `bin` 目录填进来即可。不填这一项，引擎装载时会直接报错（**有意的，不静默降级**）。
 
 - `env -u DSH_HOME` 不能省：本流水线**只许写隔离目录**，`DSH_HOME` 必须落在它自建的隔离根之下，
   否则第一步就 `✖ 拒绝运行`（这是有意设的硬闸，实测有效）。

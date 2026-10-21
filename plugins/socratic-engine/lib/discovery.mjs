@@ -10,7 +10,7 @@
 // 🔴 歧义处理：发现多个候选时**不静默选一个**。返回完整候选表 + 确定性排序键 +
 //    选中理由 + 未选中的其余候选（全部暴露给调用方/模型）。
 //
-// 取证依据（逐字片段见 开源线/DSH定制/取证_S2_教室发现与运行时路径_2026-09-23.md）：
+// 取证依据（逐字片段见 取证_S2_教室发现与运行时路径_2026-09-23.md）：
 //   A4  —— 宿主官方模式：ctx.get("fs") → 判 undefined → fs.resolve + fs.stat 探测存在性
 //   C1  —— fs-sandbox 只围栏 writeText/editText；resolve/stat/lstat/readText/listDir 原样透传
 //   C3  —— resolve() 会 realpath 跟随符号链接；lstat() 不会 → 拒绝符号链接必须用 lstat

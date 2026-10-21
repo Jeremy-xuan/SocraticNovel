@@ -9,7 +9,7 @@
 //    事实一律逐字取自 session log 的持久事件，不做概括、不做润色、不做改写。
 //
 // 取证依据（全部来自 tmp/dsh-installed/，与安装版 dsh 0.1.5-rc.2 逐字节相同；
-// 详见 开源线/DSH定制/取证_S1_turn-stopping与sessionProjections_2026-09-23.md）：
+// 详见 docs/历史报告/取证_S1_turn-stopping与sessionProjections_2026-09-23.md）：
 //   ① `agent/turn-stopping` 是 turn 自然停止边界上的唯一 awaited 通知：
 //      dsh-agent-loop/lib/index.js:967 `await this.dispatch.serial("agent/turn-stopping", { turn, signal })`
 //      派发在 `turn/end` 之前、`step/end` 之后 → 本回合的 user/assistant/tool 事件
@@ -46,7 +46,7 @@ const EMPTY_PLACEHOLDER = /^（尚无。[^\n]*）[ \t]*\n?/m
  * 幂等去重标记。写前先读文件，命中该标记即视为本回合已写过。
  *
  * 🔴 **讲次字段（DRAW-2）**：讲次作为**同一行上的第二个注释**追加，`session=… turn=…`
- *   这一截**逐字不变**——理由：既有解析方（`code/acceptance/lib/asserts.mjs` 的
+ *   这一截**逐字不变**——理由：既有解析方（`acceptance/lib/asserts.mjs` 的
  *   `/<!-- socratic-engine:session=(\S+) turn=(\d+) -->/`）钉的是旧形式，改成一格内含
  *   `lesson=` 会让它一条都匹配不到（而 acceptance 树不在本轮可改范围内）。
  *   两个注释都在同一行上，所以"逐回合标记带讲次"成立，老解析方不受影响。

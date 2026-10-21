@@ -186,7 +186,7 @@ OUT_DIR="$RESEARCH/out" IDLE_EVID="/tmp/idle-evidence" MODEL=Haru DUR=10000 SEED
 
 ### 3.1 事实（两个来源都要看）
 
-**面板侧（不是我改的，只读引用）**：`code/clients/classroom-ui/lib/client.js`
+**面板侧（不是我改的，只读引用）**：`clients/classroom-ui/lib/client.js`
 - `PHASE_STATES` 的 6 个相位**按下标取表情**（`open:0 / probe:1 / answer:2 / check:3 / review:4 / close:5`）【源码】
 - `applyPhase()` 里逐字有一句 `if (expressions.length === 0) return;` —— **静默什么都不做，不报错、不提示**【源码】
 
@@ -308,11 +308,11 @@ phaseExpression: capability.phaseExpression === undefined ? null : capability.ph
 
 | # | 要改的文件 | 改什么 | 依据 |
 |---|---|---|---|
-| 1 | `code/classrooms/<教室>/characters/<新角色>.md` | **新建**人格文件（格式照 `characters/komari.md`）。`komari.md` 自己写着这是设计好的替换机制：*"提供**替换角色机制**（换掉本文件即可换老师，教学法不受影响）"* | `〔A10〕`【源码】 |
-| 2 | `code/classrooms/<教室>/classroom.yaml` 的 `blocks[]` 里那条 `path: characters/komari.md` | 改成新人格文件路径 | `〔A07〕`【源码】 |
+| 1 | `classrooms/<教室>/characters/<新角色>.md` | **新建**人格文件（格式照 `characters/komari.md`）。`komari.md` 自己写着这是设计好的替换机制：*"提供**替换角色机制**（换掉本文件即可换老师，教学法不受影响）"* | `〔A10〕`【源码】 |
+| 2 | `classrooms/<教室>/classroom.yaml` 的 `blocks[]` 里那条 `path: characters/komari.md` | 改成新人格文件路径 | `〔A07〕`【源码】 |
 | 3 | `classroom.yaml` 的 `classroom.license` | 注释里写明它依据的是"`characters/<新角色>.md` 按项目契约（内容 CC BY-NC-SA）发布" | `〔A08〕`【源码】 |
-| 4 | `code/classrooms/<教室>/runtime/progress.md` 的「当课老师」 | 改成新角色名（**面板读它显示**） | 面板 `tableValue(text, "当课老师")`【源码】 |
-| 5 | `code/classrooms/<教室>/_anchor.md` 的「角色声音速查」段 | 换角色声音要点（它被当**常驻系统段**注入） | `〔A09〕`【源码】 |
+| 4 | `classrooms/<教室>/runtime/progress.md` 的「当课老师」 | 改成新角色名（**面板读它显示**） | 面板 `tableValue(text, "当课老师")`【源码】 |
+| 5 | `classrooms/<教室>/_anchor.md` 的「角色声音速查」段 | 换角色声音要点（它被当**常驻系统段**注入） | `〔A09〕`【源码】 |
 | 6 | 立绘资源目录 | `<live2dRoot>/models/<新模型名>/`，且**目录名必须 = `<新模型名>.model3.json` 的文件名基名** | `〔A06〕`【源码】＋§五【实测】 |
 | 7 | `globalThis.__DSH_CLASSROOM_UI_CONFIG__.model` | 改成新模型名（**面板走配置，不走 demo 的 MODELS 数组**） | `〔A06〕`【源码】＋ 面板 README §4.5.5 |
 | 8 | 面板 `PHASE_STATES` 的 6 个 `expressionIndex` | **重标**（新模型的表情**个数与语义都变了**；`F01…` / `exp_01…` / `Angry,Sad,Smile…` 各不相同） | `〔A03〕`【源码】 |

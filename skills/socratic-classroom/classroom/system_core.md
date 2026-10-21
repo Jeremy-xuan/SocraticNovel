@@ -72,7 +72,7 @@
 ### 课后更新（学习者说"今天到这"时自动执行）
 按 `AGENTS.md`「课后更新」的清单写。**课后更新共涉及 5 个文件**：**模型写 4 个**（`runtime/progress.md`／`knowledge_points.md`／`runtime/review_queue.md`／`runtime/mistake_log.md`，固定顺序，**一个都不能漏**）、**引擎自动写 1 个**（`runtime/session_log.md`）。
 > 🔴 **`runtime/session_log.md` 不在这份清单里**——它由**引擎**自动维护（逐回合追加），模型只读不写。
-> 判据（引擎实际行为）：引擎的课后更新器只有**一个** updater，目标就是 `session_log.md`（`code/plugins/socratic-engine/lib/postclass.mjs` 的 `SESSION_LOG_UPDATER`，默认 `updaters = [SESSION_LOG_UPDATER]`）。所以**"课后更新"这个词有两个层面**：引擎写 1 个（`session_log.md`），**模型写 4 个**——**合计 5 个文件**，与 `AGENTS.md` 写的是同一个数。
+> 判据（引擎实际行为）：引擎的课后更新器只有**一个** updater，目标就是 `session_log.md`（`plugins/socratic-engine/lib/postclass.mjs` 的 `SESSION_LOG_UPDATER`，默认 `updaters = [SESSION_LOG_UPDATER]`）。所以**"课后更新"这个词有两个层面**：引擎写 1 个（`session_log.md`），**模型写 4 个**——**合计 5 个文件**，与 `AGENTS.md` 写的是同一个数。
 
 ---
 

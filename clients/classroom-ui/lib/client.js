@@ -82,7 +82,7 @@ window.__ModuleLoader__.load({
 		 *    → 画布的可绘区**在深浅两种配色下都是白的**，CSS 改不了（那是帧缓冲里的像素）。
 		 *    所以三个方向都把舞台底做成"白纸/白板"，让这块白成为设计的一部分
 		 *    （改前是白方块直接压在深色面板上，很刺眼）。
-		 *    真正的修法在渲染宿主那一侧（`code/clients/live2d-host/**`，不在本插件可改范围）。
+		 *    真正的修法在渲染宿主那一侧（`clients/live2d-host/**`，不在本插件可改范围）。
 		 */
 		const PORTRAIT_PAPER = "#ffffff";
 
@@ -122,7 +122,7 @@ window.__ModuleLoader__.load({
 		 * 🔴 EXPR-5：**部署声明**在工作区里的相对路径——本插件自己包里的那份文件。
 		 *
 		 * 它同时声明两件事，**面板与教学引擎都读它**（引擎按绝对路径读同一份，见
-		 * `code/plugins/socratic-engine/lib/declaration.mjs`）：
+		 * `plugins/socratic-engine/lib/declaration.mjs`）：
 		 *   · `classroomRoot` —— 教室包在工作区里的相对路径（面板读它；引擎拿它核对"我写盘的目录"）；
 		 *   · `portraitModel` —— 立绘模型名（**改模型名只改这一处**，两侧同时生效）。
 		 * 🔴 为什么面板读得到：客户端读工作区文件走现成通道 `ctx.remote.workspaceFiles.read(sessionId, path)`
@@ -157,14 +157,14 @@ window.__ModuleLoader__.load({
 		const DEFAULT_MERMAID_PATH = "clients/classroom-ui/vendor/mermaid-11.17.2/mermaid.min.js";
 
 		// ── mermaid 主题配置（MERMAID-2 接入）─────────────────────────────────
-		// 来源：`开源线/DSH定制/code/tools/mermaid-pretty/claude-mermaid-theme.mjs`
+		// 来源：`research/mermaid-pretty/claude-mermaid-theme.mjs`
 		// （MERMAID-1 PoC 产物，**整段抄进来**，不改一个色值；理由：客户端产物是手写的
 		//  惰性 CJS 表，没有打包器，跑时再去工作区读一份 .mjs 会多一条 IO 与一条失败路径，
 		//  而主题是**纯数据**，随包走最稳。换色值＝改这里，并同时 +1 `DIAGRAM_THEME_REV`）。
 		//
 		// ⚠️ 事实边界（不许含糊）：色值/圆角/字号是**按 Claude 界面观感定的设计推断**，
 		//    证据是 Anthropic 官方博客截图（暖米底 ＋ 极低饱和色块 ＋ 发丝描边 ＋ 大圆角 ＋ 无投影，
-		//    见 `code/tools/mermaid-pretty/out/evidence-claude-blog/`）。**没有任何一手证据表明
+		//    见 `research/mermaid-pretty/out/evidence-claude-blog/`）。**没有任何一手证据表明
 		//    Anthropic 的 mermaid 渲染器用了这组色值**——公开资料里找不到 Claude 的 mermaid
 		//    主题配置。变量名则逐个对着本仓库那份 mermaid 11.17.2 产物核过。
 		// 🔴 只对 mermaid 11.17.2 验证过。换版本＝重新验证，不得外推。
@@ -475,7 +475,7 @@ window.__ModuleLoader__.load({
 		/**
 		 * 官方框架按 `shaderBaseUrl + <文件名>` 逐个 `fetch` 这 13 个着色器。
 		 * 文件名逐字抄自本地 vendored 源码（可 grep 复现）：
-		 * `code/clients/live2d-host/vendor/CubismWebFramework/src/rendering/cubismshader_webgl.ts:22-39`。
+		 * `clients/live2d-host/vendor/CubismWebFramework/src/rendering/cubismshader_webgl.ts:22-39`。
 		 */
 		const SHADER_FILES = [
 			"vertshadersrc.vert",
@@ -1160,7 +1160,7 @@ window.__ModuleLoader__.load({
 		 *
 		 * 🔴 为什么可以自己定：`dsh-client-ui-theme` 里 **没有 serif token**（实测把该包所有
 		 *    `--dsw-font-*font-family` 列出来，只有 sans 与 mono 两族）。而 STAGE-3 的 C 方向
-		 *    （書庫）把**衬线**当作纸面材质的一部分（`prototypes/stage3/stage3.css` 的
+		 *    （書庫）把**衬线**当作纸面材质的一部分（`archive/design-stage3/stage3.css` 的
 		 *    `--font-serif:"Songti SC","Source Han Serif SC","Noto Serif CJK SC",Georgia,serif`），
 		 *    这里是**同一份字面栈**逐字搬过来，不是新选的字体。
 		 *    → 故本表里 sans/mono 一律引宿主 token，serif 是明写的自定栈（测试按这个口径守）。
@@ -1259,7 +1259,7 @@ window.__ModuleLoader__.load({
 				},
 				section: "rule",
 				/**
-				 * 書庫纸面。取色逐条对 `prototypes/stage3/stage3.css` 的 C 方向：
+				 * 書庫纸面。取色逐条对 `archive/design-stage3/stage3.css` 的 C 方向：
 				 *   · 纸面 `linear-gradient(180deg,#FBF7E4,#F1EAD4)`（同 `.v-c .paper`）
 				 *   · 内发丝 `#F2E9A8`（同 `box-shadow:inset 0 0 0 1px #F2E9A8`）
 				 *   · 木框 `linear-gradient(180deg,#7a4f28,#4a2c17 42%,#3a2210)`（同 `.v-c .frame`）
@@ -1409,7 +1409,7 @@ window.__ModuleLoader__.load({
 				},
 				varsFor: paperVars,
 				/**
-				 * 面板根：**C 書庫的木框 ＋ 纸面**（`prototypes/stage3/stage3.css` 的 `.v-c .frame`
+				 * 面板根：**C 書庫的木框 ＋ 纸面**（`archive/design-stage3/stage3.css` 的 `.v-c .frame`
 				 * ＋ `.v-c .paper` 搬进右栏）。
 				 *   · 木框＝`border` 透明 ＋ `border-image` 木色渐变（与 STAGE-3 同一手法：
 				 *     `border-image:linear-gradient(...) 1`，1px 切片被拉伸铺满整条边框）；
@@ -1621,7 +1621,7 @@ window.__ModuleLoader__.load({
 		 *   · 页面注入（`__DSH_CLASSROOM_UI_CONFIG__.model`）保持最高：它是**显式的、单页的**覆盖，
 		 *     取证脚本与 `test/panel.test.mjs` 都用它切模型（`modelName()` 要立刻返回注入值）；
 		 *   · 其次读**部署声明**（`portraitModel`）——这一档才是"生产里改模型名只改一处"：
-		 *     引擎也读同一份声明（`code/plugins/socratic-engine/lib/declaration.mjs`），
+		 *     引擎也读同一份声明（`plugins/socratic-engine/lib/declaration.mjs`），
 		 *     于是"引擎挑清单用的模型"与"脸上装载的模型"**不可能各改各的**；
 		 *   · 最后才是代码里的 `DEFAULT_MODEL`（声明读不到时的兜底）。
 		 * 注入值若与声明不一致，面板会**出声**（见 `checkDeployment` 的 `modelOk`）——
@@ -2606,7 +2606,7 @@ window.__ModuleLoader__.load({
 		//
 		// 🔴 为什么源码从**入参**拿，而不是从工具结果拿：
 		//    `classroom_draw` 的 `render()` 返回的是一句**人读中文摘要**（逐字取自
-		//    `code/plugins/socratic-engine/index.mjs:479-489`）：
+		//    `plugins/socratic-engine/index.mjs:479-489`）：
 		//      「板书图已落盘：diagrams/L01-T01-….mmd（flowchart → flowchart-v2｜3 行 / 41 B）｜…」
 		//    —— 里面**没有** mermaid 源码。而 `tool/call` 事件的 `arguments` 是**完整入参 JSON**，
 		//    `source` 字段就是逐字的 mermaid 正文（服务端 schema 已校验过 ≤20000 字符、无围栏、
@@ -2846,7 +2846,7 @@ window.__ModuleLoader__.load({
 		}
 
 		// ── 6.8 · 板书图动画：渲染完成后「逐层长出」（MERMAID-2 接入，候选 B）──────────
-		// 来源：`开源线/DSH定制/code/tools/mermaid-pretty/claude-mermaid-anim.mjs` 的 `animateStagger`
+		// 来源：`research/mermaid-pretty/claude-mermaid-anim.mjs` 的 `animateStagger`
 		// （MERMAID-1 PoC 产物，**整段抄进来**；候选 C 的 `streamRender` **不抄** —— 本轮不做 C）。
 		//
 		// 🔴 **为什么动画必须发生在挂载之后、而不能放进 `renderDiagram`**：

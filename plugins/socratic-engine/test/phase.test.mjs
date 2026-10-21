@@ -43,7 +43,7 @@ import { createPhaseStore } from '../lib/phasestore.mjs'
 import { planTurnInjections } from '../lib/injector.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
-// 真教室路径：test/ → socratic-engine/ → plugins/ → code/classrooms/cs-os
+// 真教室路径：test/ → socratic-engine/ → plugins/ → classrooms/cs-os
 const CS_OS = join(here, '..', '..', '..', 'classrooms', 'cs-os')
 /** 教室的 yaml 本体（F3b 要读它取行号与 sha256，用来把"两处"指到具体位置）。 */
 const CLASSROOM_YAML = join(CS_OS, 'classroom.yaml')
@@ -820,7 +820,7 @@ test('🔴 F3b cs-os：教室频率语义 vs 引擎侧签署表 —— 不一致
     '🔴 教室的频率语义与引擎侧签署表**不一致（＝两处不同步）** —— 「动这里的频率语义＝两处必须同改」',
     '',
     '这两处分别是：',
-    `  ① 教室侧：code/classrooms/cs-os/classroom.yaml（现盘 sha256 ${sha.slice(0, 16)}…）`,
+    `  ① 教室侧：classrooms/cs-os/classroom.yaml（现盘 sha256 ${sha.slice(0, 16)}…）`,
     '  ② 引擎侧：本文件（test/phase.test.mjs）的 SIGNED_FREQUENCY_GATES 签署表',
     '',
   ]
