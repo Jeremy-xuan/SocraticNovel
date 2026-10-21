@@ -507,3 +507,54 @@ $ grep -c "presets-private" /tmp/b3-dump.txt   (0.2.1 dump)                     
 - 「不要用仓库原版教室覆盖线上裁剪版」那段完全没碰
 
 ⚠️ **提交状态说明**：我按要求**没有 commit**，改动当时留在工作树。但主代理在并行提交，`82ce769`（主题是「右栏面板 tab 实测…」）把我这两行一起带走了 —— 现在 `git diff -- tools/deploy/deploy-stage.sh` 是空的，内容已在 HEAD 里。**该提交的 message 没有提到这个文件**，主代理如需按主题拆分，可考虑把这两行单独提一次。除本报告外，我没有对仓库做别的写入。
+
+---
+
+## 6. 主代理补做：§4.1 的预设迁移（本轮已解决）
+
+> 追加于 2026-10-20 23:5x（美国东部）。上面 §4.1 记的「唯一未达成项」**已经补做并验证**，本节是它的结论。
+
+**做法**：用班级服务器既有的转换脚本，把 stage 的目录形态预设内联成 0.2.1 的插件行：
+
+```bash
+# 先体检（不改文件）
+python3 /opt/dsh-class/dsh-convert-presets-021.py \
+  --presets-root /srv/dsh-users/stage/home/presets-private --report
+# → cs-os-classroom  insert  order=9  18 插件行  1 个技能目录
+
+# 再应用（--apply 自己留 .bak-presets-021-<stamp>，YAML 复核不过会还原并非零退出）
+python3 /opt/dsh-class/dsh-convert-presets-021.py \
+  --presets-root /srv/dsh-users/stage/home/presets-private \
+  --default cs-os-classroom \
+  --apply /srv/dsh-users/stage/home/cordis.patch.yml
+# → 替换旧块（第 3–11 行，原 9 行 → 新 290 行）；文件 171 → 453 行；属主/权限保持 dsh-stage:0600
+```
+
+**生成结果的三道体检**（都是「0 命中」，也就是三处坑都没漏）：
+
+| 检查 | 结果 |
+|---|---|
+| `workflow-worker-thread`（0.2.1 已删的包） | 0 |
+| `{{cwd}}`（0.2.1 未注册的 prompt 变量） | 0 |
+| `name: ./`（相对路径插件行） | 0 |
+| 技能目录 `customSkillDirs` | `/srv/dsh-users/stage/home/presets-private/cs-os-classroom/skills`（**绝对路径**，不是 `baseUrl` 相对） |
+
+**验证**：
+
+- `--dump-config` 退出码 0；树里出现 `- id: preset-cs-os-classroom`（第 1411 行）与
+  `- id: agent-preset-registry` 的 `config.default: cs-os-classroom`；
+  `patch: entry "agent-presets" not found` 这条**消失了**。
+- `systemctl restart dsh-web@stage` 之后：端口 **t+10s** listen（401）、`active`、`NRestarts=0`、
+  `did not activate|failed to import|never started|invalid` 命中 **0**。
+- **真浏览器**（经 SSH 隧道 + Playwright）打开「Choose the agent preset」，
+  四个选项：Standard mode / Minimal mode / Creator mode / **计算机系教室 · 操作系统**。
+  证据：`docs/证据图/迁移0.2.1/stage-preset-picker-0.2.1.json`。
+- 合成后的 preset persona 里逐字带教室声明（「…都来自工作区里的教室包（classrooms/cs-os），
+  由教学引擎按 classroom.yaml 的声明注入给你」）。**`_anchor` 纪律未验**——它由引擎按 manifest
+  的 `anchor.*` 块在回合里注入，要一个真实回合才能看到，属 M4-T。
+
+**未做（有意）**：没有把这次迁移推广到 `u001`–`u005`。那是班级服务器的运维动作，不在本任务授权范围内；
+真要推广，照上面两条命令换 `--presets-root` 与 `--apply` 的目标即可，且**必须先在一个实例上 dump + 真启动验过**。
+
+**仓库侧同步**：`tools/deploy/deploy-stage.sh` 第 8 步已经会调用这个脚本（脚本缺失时大声告警，
+不再静默留下死预设）；第 9 步的 `sleep 30` + `is-active` 也按要求改成了端口轮询。
