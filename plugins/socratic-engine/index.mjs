@@ -36,7 +36,7 @@ import {
   resolveProgressFile,
   usesLessonGate,
 } from './lib/manifest.mjs'
-import { planTurnInjections } from './lib/injector.mjs'
+import { isBlockDue, planTurnInjections } from './lib/injector.mjs'
 import { createPhaseStore, PHASES } from './lib/phasestore.mjs'
 import { registerDiscovery } from './lib/discovery.mjs'
 import { registerDedup, sessionIdOf } from './lib/dedup.mjs'
@@ -64,10 +64,28 @@ import { describeDeclaration, loadDeclaration } from './lib/declaration.mjs'
 import { describePrepPlan, prepItemsForLesson } from './lib/prep.mjs'
 import { cacheKeyForItem, prepPlan, warmUpPrep } from './lib/prepstore.mjs'
 import { enterLesson, formatLessonRanges } from './lib/lessonjump.mjs'
+import {
+  createTurnLedger,
+  fireDiary,
+  narrativeOf,
+  resolveDynamicBlocks,
+} from './lib/narrativebridge.mjs'
 
 export const name = 'socratic-engine'
 
 export const inject = ['systemPrompt', 'tools']
+
+// ── 叙事层（socratic-narrative）的接法（N 车道接线，2026-10-21）──────────────
+// 🔴 **不把 `'narrative'` 写进上面那个 `export const inject`**，虽然 README §7 第 1 条
+//    就是这么写的——原因是一条实测事实，不是口味：
+//    cordis 4.0.5 的 `inject` 全是**硬依赖**（`fiber.ts` 的 `_refresh()`：任一 inject 名字
+//    不在 store 里 → epoch=INACTIVE → 插件**永远 PENDING**）。叙事层是可选插件（没装它时
+//    教室照样要能上），把名字列进顶层 inject 就等于「没装叙事层 → 引擎 never started」，
+//    正是任务书点名禁止的形态。
+//    → 做法：引擎照常用 `ctx.get('narrative')` **判空**取值（lib/narrativebridge.mjs 的
+//      narrativeOf），另用一个**嵌套** `ctx.inject(['narrative'], …)` 把服务键登记在案
+//      （装了就起一段只在日志里出现的探针；没装就一直 PENDING，不影响引擎本体）。
+//      两条路取到的是同一个服务实例（`ctx.get` 走的是同一张 store）。
 
 // ── classroom_draw 的工具描述（T3a）────────────────────────────────────────────
 // 🔴 写法口径（本项目旧仓库的实测教训）：**动词优先**——第一句就是"画"，把触发条件写成
@@ -197,6 +215,57 @@ export async function apply(
       ctx.logger?.(LOGGER_NAME).info(...args)
     } catch {
       /* logger 不可用不致命 */
+    }
+  }
+
+  // ---- 1.02) 叙事层接线（N2.1 / N2.4 / N3.5，2026-10-21）----
+  // 🔴 服务是可选的：`narrativeOf(ctx)` 取不到就返回 null（没装叙事层照样上课）。
+  //    文件头写了为什么不能把 'narrative' 放进 `export const inject`（cordis 4.0.5 没有可选依赖）。
+  // 🔴 服务键**登记在案**：嵌套 inject 在叙事层出现时起一段探针（只做日志）。它没装就一直
+  //    PENDING —— 那是子 fiber 的状态，不影响引擎本体（这也是「装没装」在日志里能一眼看到的原因）。
+  ctx.inject(['narrative'], (nctx) => {
+    const service = narrativeOf(nctx)
+    log(
+      '叙事层已接上（narrative）：下一节课注入最近一条日记与最近群聊、收课相位触发日记都可用' +
+        (service === null ? '（⚠️ 服务取值为空，异常）' : ''),
+    )
+  })
+  /** 收课触发日记的**回合级**记账（同一回合连点两次 close 不重复调；见 narrativebridge 注释）。 */
+  const closeDiaryLedger = createTurnLedger()
+  /** `classroom.yaml` 顶层 `narrative.models.diary`（manifest 已校验形状）；缺席＝null。 */
+  const diaryModelOf = () => current?.manifest?.narrative?.models?.diary ?? null
+
+  /**
+   * 收课相位 → 起一次日记（N2.1 的主规则）。
+   * 🔴 调用点必须在 `persistPhase` **写盘之后**（顺序见 classroom_set_phase 的 execute）。
+   * 🔴 **不 await 日记**：课堂回合不等它（N1.3）；结果在 handle.done 里落地（失败进日志与 status）。
+   * 🔴 同一回合只触发一次：模型可能在同一回合里连点两次 close / close→x→close；
+   *    再跑一次只是白花一次模型调用（真正的"每节课一条"由叙事服务的 session+lesson 账本保证）。
+   * @param {{sessionId: string|null, turn: number, persisted: boolean}} input
+   */
+  function triggerCloseDiary({ sessionId, turn, persisted }) {
+    const key = `${sessionId ?? '<unknown>'}#${turn}`
+    if (!closeDiaryLedger.claim(key)) {
+      log(`日记：本回合已触发过（${key}），不重复调用`)
+      return
+    }
+    if (sessionId === null) {
+      log(`日记：取不到 sessionId（回合 ${turn}），不触发（叙事服务需要它做幂等键的一半）`)
+      return
+    }
+    fireDiary({
+      narrative: narrativeOf(ctx),
+      sessionId,
+      classroomDir: current?.dir ?? null,
+      lesson: currentLesson,
+      trigger: 'close',
+      model: diaryModelOf(),
+      log,
+    })
+    if (persisted === false) {
+      // 内存态已经是 close（课上确实收课了），只是镜像没写进 progress 文件——日记照跑，
+      // 但这条日志必须留痕：否则"相位没落盘"会和"日记没触发"混在一起看不出来。
+      log(`日记：相位落盘未成功，但收课事实已成立（回合 ${turn}），日记照常触发`)
     }
   }
 
@@ -334,6 +403,11 @@ export async function apply(
     //    模型在回合内把 progress.md 改成下一讲，不影响本回合记录归属（记录的是"当时"）。
     //    教室没有讲次门 → currentLesson 为 null → 标记与标题都不带讲次（行为同升级前）。
     getLesson: () => currentLesson,
+    // 🔴 N2.1 兜底（闲置 ≥2h）：判据与触发都在叙事服务里，引擎只提供三样上下文。
+    //    getNarrative 每次现取（服务可能后装/重载）；没装 → 返回 null，闲置兜底自动不做。
+    getNarrative: () => narrativeOf(ctx),
+    getClassroomDir: () => current?.dir ?? null,
+    getDiaryModel: () => diaryModelOf(),
     log,
   })
 
@@ -639,7 +713,6 @@ export async function apply(
     if (gate.mode !== 'turn') log(`去重门退化（${gate.reason}）`)
 
     phase.noteTurnStart()
-    const blocks = current.manifest.blocks
 
     // 讲次门：每个回合开始前重读 progress 文件（课后更新会把讲次 +1）。
     // 🔴 读不到/值非法 → 报错（不静默）。宿主钩子报错会打断用户这一轮，故先拦一层记日志。
@@ -648,7 +721,21 @@ export async function apply(
       if (usesLessonGate(current.manifest)) {
         currentLesson = readRuntimeLesson(current.manifest, { baseDir: current.dir })
       }
-      due = planTurnInjections(blocks, { ...phase, currentLesson }, { classroom: current.manifest.classroom.id })
+      // 🔴 N 接线（2026-10-21）：**先取动态块的正文，再规划注入**。
+      //    动态块（`dynamic: {kind: diary|wechat}`）的内容不在文件里，得在注入时现取：
+      //    · 只给「本回合到点」的块取（isBlockDue 是只读判定，不记账）；
+      //    · 取内容的失败一律在 narrativebridge 里变成占位行（不抛，不然这一轮就断了）；
+      //    · 记账仍归 planTurnInjections —— 内容取早了不等于注入过。
+      const turnState = { ...phase, currentLesson }
+      const blocks = await resolveDynamicBlocks(current.manifest.blocks, {
+        state: turnState,
+        narrative: narrativeOf(ctx),
+        classroomDir: current.dir,
+        runtimeDir: join(current.dir, 'runtime'),
+        log,
+        isBlockDue,
+      })
+      due = planTurnInjections(blocks, turnState, { classroom: current.manifest.classroom.id })
     } catch (cause) {
       log(`🔴 注入计划失败（本回合不注入任何块）：${cause?.message ?? cause}`)
       throw cause
@@ -845,12 +932,24 @@ export async function apply(
           },
         ],
       },
-      execute: async (args) => {
+      execute: async (args, exec) => {
         const previous = phase.phase
         // 🔴 不在枚举内 → setPhase 抛错并列出合法 id（不静默忽略、不回落默认值）
         phase.setPhase(args.phase)
         const persisted = await persistPhase(phase.phase)
         log(`相位切换：${previous} → ${phase.phase}（persisted=${persisted.persisted}）`)
+        // 🔴 N2.1：相位**切到 close** 且写盘调用已经返回之后，起一次日记。
+        //    · 位置：persistPhase 之后（不是之前）——课上收课时，进度文件先落定，日记再读它；
+        //    · 不 await：日记在后台跑（fireDiary 立刻返回），课堂回合不等它；
+        //    · 只认"切进来"（previous !== 'close'）：close → close 是 no-op，不是一次收课；
+        //    · 同一回合只触发一次（triggerCloseDiary 里的回合级记账）。
+        if (phase.phase === 'close' && previous !== 'close') {
+          triggerCloseDiary({
+            sessionId: exec?.agent?.session?.id ?? null,
+            turn: phase.turnCount,
+            persisted: persisted.persisted,
+          })
+        }
         return {
           phase: phase.phase,
           previous,

@@ -153,6 +153,65 @@ SocraticNovel 的**宿主侧教学引擎**：读教室包 manifest，按 `positi
 3. **不放宽 `story.arc_gate` 的门**（它写死 `lesson: {list: [1]}`）。那道门的设计就是"只在第 1 讲
    开场放一次弧线总览"；跳讲后由 recap 的「人物弧前三格」补上她此刻的约束，够用。放宽门＝每讲重放总览。
 
+## 叙事层接线（N · 日记与群聊，2026-10-21）
+
+叙事能力在 **`plugins/socratic-narrative`**（车道 N），本引擎只做四件接线，**全部不阻塞课堂回合**：
+
+### 1 · 服务是**可选**的：`ctx.get('narrative')` 判空
+
+引擎的顶层 `export const inject` **没有**加 `'narrative'`。原因是一条实测事实：cordis 4.0.5 的
+`inject` 全是**硬依赖**（任一名字不在 store 里 → fiber 永远 PENDING＝插件 never started），
+而没装叙事层的教室照样要能上课。所以：
+
+- 取值一律走 `ctx.get('narrative')` ＋ 判空（`lib/narrativebridge.mjs` 的 `narrativeOf`）；
+- 服务键另外用一个**嵌套** `ctx.inject(['narrative'], …)` 登记在案（装了就起一段只做日志的探针，
+  没装就一直 PENDING）——所以「装没装」在日志里一眼能看到：
+  `叙事层已接上（narrative）：…`。
+
+### 2 · 收课触发日记（N2.1 主规则）
+
+`classroom_set_phase` 切到 `close`、且 `persistPhase` **写盘调用返回之后**，调
+`narrative.runDiary({ sessionId, classroomDir, lesson, trigger: 'close', model })`：
+
+- **不 await `done`**：日记在后台跑完（日志里 `日记已排队` → `日记跑完`），课堂回合不等它；
+- **只认「切进来」**：`close → close` 是 no-op，不算一次收课；
+- **同一回合只调一次**（回合级记账，`lib/narrativebridge.mjs` 的 `createTurnLedger`）——
+  跨回合的「每节课一条」由叙事服务自己的 `sessionId + lesson` 账本保证，引擎不重复实现；
+- `model` 来自 `classroom.yaml` 顶层的 `narrative.models.diary`（可选；缺席就交给叙事插件按实例默认模型解析）。
+
+### 3 · 闲置兜底（N2.1 兜底）
+
+`agent/turn-stopping` 里每回合扫一次：`narrative.isLessonIdleClosed({ studentTurns, lastActivityAt, now })`
+（判据在叙事包里，引擎不另写阈值）。**学生 ≥5 个回合发言 且 闲置 >2 小时** → 起一次
+`runDiary({ trigger: 'idle' })`。
+
+- 放在「空回合早退」**之前**：学生走了、这一轮没有内容，正是它要覆盖的形状；
+- 同一回合 turn-stopping 被派发两次 → 回合级记账只扫一次；
+- 🔴 **任何异常都只记日志、绝不外抛**（turn-stopping 抛错会打断整个 turn）。
+- 已知边界：本判据只在**回合边界**上扫；学生走了之后宿主不再产生回合时，这一轮扫描不会自己发生
+  （定时器不归本模块）。
+
+### 4 · 下节课注入（N2.4 / N3.5）
+
+`classrooms/cs-os/classroom.yaml` 里两块**动态块**（内容不在文件里，注入时现取）：
+
+| 块 id | 内容 | 频率 |
+|---|---|---|
+| `state.diary.recent` | 叙事服务 `readRecentDiaries({limit:1})` 的**最后一条** | `every: once, anchor: lesson_start` ＋ `phase: {phases:[open]}`（＝**下节课开头**） |
+| `state.wechat.recent` | `runtime/wechat_group.jsonl` 的**最后 8 条**（契约 K4.2；N=8，可在块上改 `limit`） | 同上 |
+
+- 去重走**现有**记账（`injectedOnce` / `injectedLesson`），没有新造表；讲次一变重新注入。
+- 🔴 **不加 `lesson:` 讲次门**：这是跨讲常驻块（每讲开头都读"最近"），属于某一讲就错了。
+- 服务没装 / 群聊还没有消息 / 读失败 → 注入一行**诚实的占位行**（如「（你还没有写过日记。）」），
+  **不是报错、也不是整块消失**（整块消失会让验收侧独立推导与生产侧分叉，A2 立刻红）。
+- 频率语义**没有新增**——`acceptance/lib/asserts.mjs` 的第二份实现不需要改，`frequency-parity` 逐格一致。
+
+### 5 · 失败怎么算「大声」
+
+引擎侧只记日志（`日记未触发（原因）` / `日记跑完（…）：failed｜错误 CODE`），**绝不把课堂弄坏**。
+面板要展示的**错误状态**由叙事包自己的 `narrative.status()` 提供（`lastError` / `recent`），
+引擎不复制一份状态（详见实现报告 `docs/历史报告/实现报告_NE_引擎接线_2026-10-21.md` §给面板接线）。
+
 ## 安装（🔴 两个坑，务必照做）
 
 ```bash

@@ -208,3 +208,125 @@ blocks:
 test('YAML 语法错误 → 包装为 ManifestError', () => {
   assert.throws(() => parseManifest('format: [unclosed'), ManifestError)
 })
+
+// ══════════════════════════════════════════════════════════════════════════════
+// N 接线（2026-10-21）：块级 `dynamic:`（diary / wechat）＋ 顶层 `narrative:`
+// ══════════════════════════════════════════════════════════════════════════════
+
+const dynamicYaml = (block, { narrative = '' } = {}) => `format: socratic-classroom/0
+classroom: { id: x }
+phases: [open, close]
+${narrative}blocks:
+${block}`
+
+const CHAT_BLOCK = `  - id: state.diary.recent
+    dynamic: { kind: diary }
+    position: { target: chat, depth: 0 }
+    frequency: { every: once, anchor: lesson_start }
+    phase: { phases: [open] }
+`
+
+test('dynamic diary：解析成 {kind: diary}，text 为空、source 为 null，且**只有它挂 dynamic 键**', () => {
+  const m = parseManifest(
+    dynamicYaml(
+      `${CHAT_BLOCK}  - id: plain
+    text: 静态
+    position: { target: chat, depth: 0 }
+    frequency: { every: turn }
+`,
+      ),
+    { baseDir: FIXTURE },
+  )
+  const diary = m.blocks.find((b) => b.id === 'state.diary.recent')
+  assert.deepEqual(diary.dynamic, { kind: 'diary' })
+  assert.equal(diary.text, '')
+  assert.equal(diary.source, null)
+  assert.deepEqual(diary.frequency, { every: 'once', anchor: 'lesson_start' })
+  assert.deepEqual(diary.phase, { phases: ['open'] })
+  assert.equal(diary.lesson, null)
+  assert.ok(!('dynamic' in m.blocks.find((b) => b.id === 'plain')), '没有 dynamic 的块不挂这个键（老教室形状逐字不变）')
+})
+
+test('dynamic wechat：limit 缺省 8、显式 3 生效、非整数/越界报错', () => {
+  const block = (limit) => `  - id: g
+    dynamic: { kind: wechat${limit === undefined ? '' : `, limit: ${limit}`} }
+    position: { target: chat, depth: 0 }
+    frequency: { every: once, anchor: lesson_start }
+`
+  assert.deepEqual(parseManifest(dynamicYaml(block(undefined))).blocks[0].dynamic, { kind: 'wechat', limit: 8 })
+  assert.deepEqual(parseManifest(dynamicYaml(block(3))).blocks[0].dynamic, { kind: 'wechat', limit: 3 })
+  assert.throws(() => parseManifest(dynamicYaml(block(0))), /limit 必须是 1\.\.50 的整数/)
+  assert.throws(() => parseManifest(dynamicYaml(block(51))), /limit 必须是 1\.\.50 的整数/)
+  assert.throws(() => parseManifest(dynamicYaml(block(3.5))), /limit 必须是 1\.\.50 的整数/)
+})
+
+test('dynamic：与 path/text 互斥；section 无效；未知 kind / 未知键 / 非映射都报错', () => {
+  const withBody = (body) => `  - id: d
+    dynamic: { kind: diary }
+${body}    position: { target: chat, depth: 0 }
+    frequency: { every: turn }
+`
+  assert.throws(() => parseManifest(dynamicYaml(withBody('    text: 手写内容\n'))), /dynamic 与 path\/text 互斥/)
+  assert.throws(() => parseManifest(dynamicYaml(withBody('    path: runtime/diary.md\n'))), /dynamic 与 path\/text 互斥/)
+  assert.throws(
+    () => parseManifest(dynamicYaml(withBody('    section: 未解决\n'))),
+    /section 只对 path 有效/,
+  )
+  assert.throws(
+    () => parseManifest(dynamicYaml('  - id: d\n    dynamic: { kind: pager }\n    position: { target: chat, depth: 0 }\n    frequency: { every: turn }\n')),
+    /dynamic\.kind 必须是 diary\/wechat/,
+  )
+  assert.throws(
+    () => parseManifest(dynamicYaml('  - id: d\n    dynamic: { kind: diary, limit: 2 }\n    position: { target: chat, depth: 0 }\n    frequency: { every: turn }\n')),
+    /limit 只对 kind: wechat 有效/,
+  )
+  assert.throws(
+    () => parseManifest(dynamicYaml('  - id: d\n    dynamic: { kind: diary, limit2: 2 }\n    position: { target: chat, depth: 0 }\n    frequency: { every: turn }\n')),
+    /无法识别的键/,
+  )
+  assert.throws(
+    () => parseManifest(dynamicYaml('  - id: d\n    dynamic: diary\n    position: { target: chat, depth: 0 }\n    frequency: { every: turn }\n')),
+    /dynamic 必须是映射/,
+  )
+})
+
+test('dynamic 只能用在 target: chat（system 段没有"注入时"）', () => {
+  const text = dynamicYaml(`  - id: d
+    dynamic: { kind: diary }
+    position: { target: system, order: 100 }
+    frequency: { every: once }
+`)
+  assert.throws(() => parseManifest(text), /dynamic 只能用于 position\.target: chat/)
+})
+
+test('顶层 narrative.models.diary：解析成路由；缺席不挂键；写一半/未知键/未知任务报错', () => {
+  const block = `  - id: a
+    text: t
+    position: { target: chat, depth: 0 }
+    frequency: { every: turn }
+`
+  const m = parseManifest(
+    dynamicYaml(block, {
+      narrative: `narrative:
+  models:
+    diary: { provider: deepseek-official, model: deepseek-v4-flash }
+`,
+    }),
+  )
+  assert.deepEqual(m.narrative, { models: { diary: { provider: 'deepseek-official', model: 'deepseek-v4-flash' } } })
+
+  assert.ok(!('narrative' in parseManifest(dynamicYaml(block))), '没写 narrative: → manifest 不挂键（老教室形状逐字不变）')
+
+  assert.throws(
+    () => parseManifest(dynamicYaml(block, { narrative: 'narrative:\n  models:\n    diary: { provider: deepseek-official }\n' })),
+    /必须是非空字符串/,
+  )
+  assert.throws(
+    () => parseManifest(dynamicYaml(block, { narrative: 'narrative:\n  models:\n    group: { provider: a, model: b }\n' })),
+    /无法识别的键/,
+  )
+  assert.throws(
+    () => parseManifest(dynamicYaml(block, { narrative: 'narrative:\n  timeoutMs: 10\n' })),
+    /无法识别的键/,
+  )
+})

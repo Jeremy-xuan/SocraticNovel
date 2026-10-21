@@ -538,12 +538,13 @@ blocks:
 // F · 真实教室 cs-os 回归（钉住本报告 §2／§3 的数字）
 // ══════════════════════════════════════════════════════════════════════════════
 
-test('F1 cs-os：49 块 / 6 相位 / lessons=14', () => {
+test('F1 cs-os：51 块 / 6 相位 / lessons=14', () => {
   const m = loadManifest(CS_OS)
   // 34→47 是因为教材 1–14 讲全部落盘后 classroom.yaml 新增 13 条 material.current.*；
-  // 47→49 是 A（课堂记录 K3.4）新增的两条「下一节课开头」块：state.mistakes.due / state.review.due。
+  // 47→49 是 A（课堂记录 K3.4）新增的两条「下一节课开头」块：state.mistakes.due / state.review.due；
+  // 49→51 是 N 接线（2026-10-21）新增的两条动态块：state.diary.recent / state.wechat.recent。
   // 本条是快照钉，不是不变量。
-  assert.equal(m.blocks.length, 49)
+  assert.equal(m.blocks.length, 51)
   // 🔴 结构性断言（长期正确的那条）：教材块数 === 教室声明的讲数。
   //   讲数按本文件既有读法取 lessonsDeclaredBy(m.classroom)，不新造机制 → 以后加讲不再假红。
   assert.equal(
@@ -741,6 +742,13 @@ const SIGNED_FREQUENCY_GATES = {
   //    去重靠现有的 (sessionId, turn) 幂等门，没有新造去重表。
   'state.mistakes.due': 'chat · turn · phase(phases=open)',
   'state.review.due': 'chat · turn · phase(phases=open)',
+  // 🔴 2026-10-21（N 接线 · N2.4 / N3.5）：新增两块**动态**块——注入时现取内容
+  //    （`dynamic: {kind: diary}` / `{kind: wechat, limit: 8}`，见 lib/narrativebridge.mjs）。
+  //    频率语义：`once + anchor: lesson_start` 管「每讲一次」，`phase: { phases: [open] }`
+  //    管「只在开场相位」——合起来＝**下节课开头**。**有意变更**，逐条登记。
+  //    🔴 必须带 `phase:`（裸 `every: phase` 是假门）；**不加 lesson 讲次门**（跨讲常驻块）。
+  'state.diary.recent': 'chat · once(lesson_start) · phase(phases=open)',
+  'state.wechat.recent': 'chat · once(lesson_start) · phase(phases=open)',
   'state.session_log': 'chat · on_demand',
   'state.archive': 'chat · on_demand',
   'state.diary': 'chat · on_demand · phase(phases=close)',

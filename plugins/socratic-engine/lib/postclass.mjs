@@ -27,6 +27,7 @@
 import { readFile, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import { stripEmotionMarkersClean } from './emotionmark.mjs'
+import { createTurnLedger, fireDiary } from './narrativebridge.mjs'
 
 /** 本插件自有注入的 source.kind（index.mjs 注入 classroom 块时使用）。 */
 export const ENGINE_SOURCE_KIND = 'socratic-engine'
@@ -201,6 +202,32 @@ export function extractTurnFacts(events, { turn } = {}) {
 }
 
 /**
+ * 从整段会话事件里统计「学生发言回合数」与「学生最后一次发言的时刻」。**纯函数**。
+ *
+ * 🔴 为什么起点取**学生最后一次发言**（不是最后一个事件）：闲置兜底要回答的是
+ *    「学生是不是已经走了」——引擎自己的注入块、工具调用、按计划起的一轮都不算学生还在。
+ *    （诚实边界：本判据在**回合边界**上扫；如果学生走了之后宿主再也没有产生回合，
+ *     这一轮扫描不会自己发生。定时器不归本模块，见实现报告的"已知边界"。）
+ *
+ * @param {readonly object[]} events - `session.snapshotEvents()` 的结果
+ * @returns {{studentTurns: number, lastActivityAt: number|null}}
+ */
+export function summarizeStudentActivity(events) {
+  const list = Array.isArray(events) ? events : []
+  let studentTurns = 0
+  let lastActivityAt = null
+  for (const event of list) {
+    if (event?.type !== 'user/message') continue
+    if (event.data?.source?.kind !== STUDENT_SOURCE_KIND) continue
+    studentTurns += 1
+    if (typeof event.time === 'number' && (lastActivityAt === null || event.time > lastActivityAt)) {
+      lastActivityAt = event.time
+    }
+  }
+  return { studentTurns, lastActivityAt }
+}
+
+/**
  * 渲染 `session_log.md` 的一条追加记录。**纯函数**。
  * 只写确定性事实：回合号、时间、相位、**当时的讲次**、学生原话、工具名与成败。
  * 🔴 讲次（DRAW-2）：有讲次时写进标题（人读，`第 N 讲`）＋ 标记（机读，`lesson=N`）；
@@ -276,6 +303,12 @@ export const SESSION_LOG_UPDATER = {
  *        缺省或取不到值 → 标记与标题都不带讲次，行为与升级前逐字节相同）
  * @param {() => number} [opts.now] - 取当前时间（默认 Date.now）
  * @param {(ms:number) => string} [opts.formatTime] - 时间格式化（默认 formatLocalTime）
+ * @param {() => object|null} [opts.getNarrative] - 取叙事服务（N2.1 闲置兜底的判据与触发入口）；
+ *        缺省/取不到 → 闲置兜底**不做**（其余课后更新照旧）
+ * @param {() => string|null} [opts.getClassroomDir] - 取教室目录（日记要它做落盘根与幂等键的一半）；
+ *        缺省 → 闲置兜底命中也不触发（服务需要它）
+ * @param {() => object|null} [opts.getDiaryModel] - 取 `classroom.yaml` 的 `narrative.models.diary`
+ *        （引擎读出来传进去；没声明 → null，由叙事插件按自己的规则解析路由）
  * @param {{writeFileAtomic:Function, withFileLock:Function}} [opts.atomicWrite] - 注入 IO（测试用）
  * @param {(...args:any[])=>void} [opts.log]
  * @returns {{enabled: boolean, reason?: string}}
@@ -296,7 +329,12 @@ export function registerPostClass(ctx, opts = {}) {
   const getLesson = opts.getLesson ?? (() => null)
   const now = opts.now ?? (() => Date.now())
   const formatTime = opts.formatTime ?? formatLocalTime
+  const getNarrative = opts.getNarrative ?? (() => null)
+  const getClassroomDir = opts.getClassroomDir ?? (() => null)
+  const getDiaryModel = opts.getDiaryModel ?? (() => null)
   const injectedIo = opts.atomicWrite ?? null
+  /** 闲置兜底的回合级记账（同一回合 turn-stopping 被派发两次 → 只扫一次）。 */
+  const idleLedger = createTurnLedger()
   let ioPromise = null
 
   function resolveIo() {
@@ -309,6 +347,44 @@ export function registerPostClass(ctx, opts = {}) {
   function resolveRuntimeDir() {
     const value = typeof runtimeDirOpt === 'function' ? runtimeDirOpt() : runtimeDirOpt
     return typeof value === 'string' && value !== '' ? value : null
+  }
+
+  /**
+   * N2.1 的**兜底触发**：学生至少 5 个回合发言、且会话闲置超过 2 小时 → 也算一节课结束。
+   *
+   * 🔴 判据用叙事服务的纯函数 `isLessonIdleClosed`（不在引擎里另写一套阈值）。
+   * 🔴 **绝不抛**：本函数在 `agent/turn-stopping` 通知钩子里跑，抛错会打断整个 turn（既有红线）。
+   * 🔴 同一回合只扫一次；跨回合重复扫是安全的——日记本身按 session+lesson 幂等。
+   * @param {{sessionId: string|null, turn: number, events: readonly object[]}} input
+   */
+  async function scanIdleClosure({ sessionId, turn, events }) {
+    if (typeof sessionId !== 'string' || sessionId === '') {
+      log(`turn ${turn}：取不到 sessionId，闲置兜底跳过`)
+      return
+    }
+    const narrative = getNarrative()
+    if (narrative === null) return
+    if (typeof narrative.isLessonIdleClosed !== 'function') {
+      log(`turn ${turn}：叙事服务没有 isLessonIdleClosed，闲置兜底跳过`)
+      return
+    }
+    if (!idleLedger.claim(`${sessionId}#${turn}`)) {
+      log(`turn ${turn}：闲置扫描本回合已跑过，跳过`)
+      return
+    }
+    const { studentTurns, lastActivityAt } = summarizeStudentActivity(events)
+    const verdict = narrative.isLessonIdleClosed({ studentTurns, lastActivityAt, now: now() })
+    if (verdict?.closed !== true) return
+    log(`turn ${turn}：闲置兜底命中（${verdict.reason}）→ 起一次日记（trigger=idle）`)
+    fireDiary({
+      narrative,
+      sessionId,
+      classroomDir: getClassroomDir(),
+      lesson: normalizeLesson(getLesson()),
+      trigger: 'idle',
+      model: getDiaryModel(),
+      log,
+    })
   }
 
   /**
@@ -373,7 +449,21 @@ export function registerPostClass(ctx, opts = {}) {
         return
       }
 
-      const facts = extractTurnFacts(session.snapshotEvents(), { turn })
+      // 🔴 N2.1 兜底（闲置 ≥2h）：判定放在**空回合早退之前**——
+      //    「学生走了、这一轮没有内容」正是它要覆盖的形状（空回合早退会把它挡掉）。
+      //    本段自己吞掉所有异常：turn-stopping 是通知钩子，抛错会打断整个 turn。
+      const events = session.snapshotEvents()
+      try {
+        await scanIdleClosure({
+          sessionId: typeof session.id === 'string' && session.id !== '' ? session.id : null,
+          turn,
+          events,
+        })
+      } catch (cause) {
+        log(`闲置兜底扫描异常（已吞掉，不影响本回合）：${cause?.message ?? cause}`)
+      }
+
+      const facts = extractTurnFacts(events, { turn })
       if (!facts.hasContent) {
         log(`turn ${turn}：空回合（无学生消息、无工具调用），不写`)
         return

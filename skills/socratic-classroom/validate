@@ -229,6 +229,17 @@ if (manifestError !== null) {
       else seenIds.add(id)
       const where = id === null ? at : `${at}(${id})`
 
+      // 🔴 `dynamic:` 块（N 接线，2026-10-21）：内容不在文件里——引擎在注入时现取
+      //    （日记读叙事服务、群聊读 runtime/wechat_group.jsonl）。它们**没有 path**，
+      //    这不是"漏写"，所以不按"声明材料"校验；kind 不在值域内仍然报错（写错不许静默）。
+      if (block.dynamic !== undefined && block.dynamic !== null) {
+        const kind = typeof block.dynamic === 'object' && block.dynamic !== null ? block.dynamic.kind : undefined
+        if (kind !== 'diary' && kind !== 'wechat') {
+          add('② 声明材料', `${where} 的 dynamic.kind 必须是 diary/wechat（得到 ${JSON.stringify(kind)}）`)
+        }
+        continue
+      }
+
       if (typeof block.path !== 'string' || !block.path) {
         add('② 声明材料', `${where} 缺 path（非空字符串）`)
         continue
