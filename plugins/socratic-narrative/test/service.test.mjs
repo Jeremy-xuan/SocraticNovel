@@ -252,3 +252,54 @@ test('输入真的进了提示词：课堂记录、角色声音、群聊都在�
   assert.doesNotMatch(prompt, /学生是否知道我刚问的是什么/)
 })
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 2026-10-21：`config.models` 的键是**开放集合**，未知键必须报错而不是忽略
+//   （被静默忽略时实际生效的是实例默认模型，人只会在事后发现"怎么调了模型没变"）
+// ─────────────────────────────────────────────────────────────────────────────
+
+test('models 任务名是开放集合：diary / group / review 都能配', () => {
+  for (const task of ['diary', 'group', 'review']) {
+    assert.doesNotThrow(() =>
+      createNarrativeService({
+        llm: () => fakeLlm({}),
+        instanceModel: fakeInstanceModel(),
+        config: { models: { [task]: { provider: 'p', model: 'm' } } },
+        now: () => 1,
+        log: () => {},
+      }),
+    )
+  }
+})
+
+test('🔴 models 里出现没实现的任务名 → INVALID_CONFIG（不静默忽略）', () => {
+  assert.throws(
+    () =>
+      createNarrativeService({
+        llm: () => fakeLlm({}),
+        instanceModel: fakeInstanceModel(),
+        config: { models: { diaryy: { provider: 'p', model: 'm' } } },
+        now: () => 1,
+        log: () => {},
+      }),
+    (error) => {
+      assert.equal(error.code, ERROR_CODES.INVALID_CONFIG)
+      assert.equal(error.detail.reason, 'UNKNOWN_TASK')
+      assert.deepEqual(error.detail.known, ['diary', 'group', 'review'])
+      return true
+    },
+  )
+})
+
+test('🔴 models.<task> 不是 {provider, model} → INVALID_CONFIG', () => {
+  assert.throws(
+    () =>
+      createNarrativeService({
+        llm: () => fakeLlm({}),
+        instanceModel: fakeInstanceModel(),
+        config: { models: { diary: { provider: 'p' } } },
+        now: () => 1,
+        log: () => {},
+      }),
+    (error) => error.code === ERROR_CODES.INVALID_CONFIG && error.detail.reason === 'BAD_ROUTE',
+  )
+})

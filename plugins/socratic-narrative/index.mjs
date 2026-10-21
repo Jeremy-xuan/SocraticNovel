@@ -43,6 +43,45 @@ export const inject = ['llm']
  * @param {() => number} [options.now]
  * @param {object} [options.io] - 测试注入：`{read, write, exists, append}`（见 lib/atomic.mjs、lib/runlog.mjs）
  */
+/**
+ * 已经**实现**的模型路由任务集合（`config.models.<task>` 与 `classroom.yaml` 的
+ * `narrative.models.<task>` 共用这套名字）。
+ *
+ * 🔴 这是**开放集合**：新增一个任务（例如 N4 上线时的 `group`）只要在这里加一个键，
+ * 并在 `resolveRoute` 的调用点用同一个名字。**未知键一律报错，绝不忽略**——写错的键
+ * 被静默忽略时，实际生效的是实例默认模型，人只会在事后发现"怎么调了模型没变"。
+ */
+export const NARRATIVE_TASKS = Object.freeze(['diary', 'group', 'review'])
+
+/**
+ * 校验 `config.models`：键必须在 {@link NARRATIVE_TASKS} 里，值必须是 `{provider, model}`。
+ * @param {object} models
+ * @throws {NarrativeError} INVALID_CONFIG
+ */
+function validateModelsConfig(models) {
+  if (models === undefined) return
+  if (models === null || typeof models !== 'object' || Array.isArray(models)) {
+    throw new NarrativeError(ERROR_CODES.INVALID_CONFIG, 'config.models 必须是对象（形如 { diary: { provider, model } }）', {
+      detail: { reason: 'MODELS_NOT_OBJECT' },
+    })
+  }
+  for (const [task, route] of Object.entries(models)) {
+    if (!NARRATIVE_TASKS.includes(task)) {
+      throw new NarrativeError(
+        ERROR_CODES.INVALID_CONFIG,
+        `config.models 里有未实现的任务名 "${task}"；目前只有 ${NARRATIVE_TASKS.join(' / ')}。` +
+          '写错的键会被当成"没配过"，实际生效的是实例默认模型——所以这里直接报错，不忽略。',
+        { detail: { reason: 'UNKNOWN_TASK', task, known: NARRATIVE_TASKS } },
+      )
+    }
+    if (route === null || typeof route !== 'object' || typeof route.provider !== 'string' || typeof route.model !== 'string') {
+      throw new NarrativeError(ERROR_CODES.INVALID_CONFIG, `config.models.${task} 必须是 { provider, model }（两个都是字符串）`, {
+        detail: { reason: 'BAD_ROUTE', task },
+      })
+    }
+  }
+}
+
 export function createNarrativeService({
   llm = () => undefined,
   instanceModel = () => undefined,
@@ -51,6 +90,7 @@ export function createNarrativeService({
   now = () => Date.now(),
   io = {},
 } = {}) {
+  validateModelsConfig(config?.models)
   const registry = createRunRegistry({ now })
   /** @type {Map<string, ReturnType<typeof createRunLog>>} */
   const runLogs = new Map()
