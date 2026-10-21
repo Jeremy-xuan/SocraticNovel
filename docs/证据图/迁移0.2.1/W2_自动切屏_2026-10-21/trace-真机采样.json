@@ -1,0 +1,1801 @@
+{
+ "A1": {
+  "rows": [
+   {
+    "ms": 246,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 0,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 484,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 0,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 607,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 0,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 730,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 0,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 852,
+    "screen": "board",
+    "board": "turn",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 1008,
+    "screen": "board",
+    "board": "turn",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 1131,
+    "screen": "board",
+    "board": "pull",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 1254,
+    "screen": "board",
+    "board": "pull",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 1376,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   }
+  ],
+  "hit": {
+   "ms": 1881,
+   "snap": {
+    "screen": "board",
+    "board": "settle",
+    "killed": null,
+    "bpTx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "svg": true,
+    "pre": false,
+    "bpText": "长任务占着 CPU 短任务只能等",
+    "boards": [
+     "L01-T22-20261021-020015-flowchart"
+    ],
+    "lastBoard": {
+     "id": "L01-T22-20261021-020015-flowchart",
+     "lesson": 1,
+     "turn": 22,
+     "kind": "flowchart",
+     "time": 1792562415556,
+     "from": "meta"
+    }
+   }
+  },
+  "all": [
+   {
+    "ms": 246,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 0,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 484,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 0,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 607,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 0,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 730,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 0,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 852,
+    "screen": "board",
+    "board": "turn",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 1008,
+    "screen": "board",
+    "board": "turn",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 1131,
+    "screen": "board",
+    "board": "pull",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 1254,
+    "screen": "board",
+    "board": "pull",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 1376,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   }
+  ]
+ },
+ "A2": {
+  "rows": [
+   {
+    "ms": 123,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 245,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 368,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 490,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 614,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 738,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 861,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 985,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 1109,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 1231,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 1356,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 1479,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 1603,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 1725,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 1850,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 1974,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 2098,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 2220,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 2342,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 2464,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 2587,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 2710,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 2834,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 3042,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 3167,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020019-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   }
+  ],
+  "hit": {
+   "ms": 3449,
+   "snap": {
+    "screen": "board",
+    "board": "settle",
+    "killed": null,
+    "bpTx": "板 书 · L01-T22-20261021-020019-flowchart",
+    "svg": true,
+    "pre": false,
+    "bpText": "长任务占着 CPU 短任务只能等",
+    "boards": [
+     "L01-T22-20261021-020019-flowchart"
+    ],
+    "lastBoard": {
+     "id": "L01-T22-20261021-020019-flowchart",
+     "lesson": 1,
+     "turn": 22,
+     "kind": "flowchart",
+     "time": 1792562419595,
+     "from": "meta"
+    }
+   }
+  },
+  "all": [
+   {
+    "ms": 123,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 245,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 368,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 490,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 614,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 738,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 861,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 985,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 1109,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 1231,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 1356,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 1479,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 1603,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 1725,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 1850,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 1974,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 2098,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 2220,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 2342,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 2464,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 2587,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 2710,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 2834,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 3042,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020015-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 3167,
+    "screen": "board",
+    "board": "settle",
+    "tx": "板 书 · L01-T22-20261021-020019-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   }
+  ]
+ },
+ "B": {
+  "rows": [
+   {
+    "ms": 263,
+    "screen": "board",
+    "board": "turn",
+    "tx": "板 书 · L01-T22-20261021-020019-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 385,
+    "screen": "board",
+    "board": "turn",
+    "tx": "板 书 · L01-T22-20261021-020019-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 507,
+    "screen": "board",
+    "board": "turn",
+    "tx": "板 书 · L01-T22-20261021-020019-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 629,
+    "screen": "board",
+    "board": "turn",
+    "tx": "板 书 · L01-T22-20261021-020019-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 753,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   }
+  ],
+  "hit": {
+   "ms": 1000,
+   "snap": {
+    "screen": "live",
+    "board": "off",
+    "killed": null,
+    "bpTx": null,
+    "svg": false,
+    "pre": false,
+    "bpText": null,
+    "boards": [
+     "L01-T22-20261021-020019-flowchart"
+    ],
+    "lastBoard": {
+     "id": "L01-T22-20261021-020019-flowchart",
+     "lesson": 1,
+     "turn": 22,
+     "kind": "flowchart",
+     "time": 1792562419595,
+     "from": "meta"
+    }
+   }
+  },
+  "all": [
+   {
+    "ms": 263,
+    "screen": "board",
+    "board": "turn",
+    "tx": "板 书 · L01-T22-20261021-020019-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 385,
+    "screen": "board",
+    "board": "turn",
+    "tx": "板 书 · L01-T22-20261021-020019-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 507,
+    "screen": "board",
+    "board": "turn",
+    "tx": "板 书 · L01-T22-20261021-020019-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 629,
+    "screen": "board",
+    "board": "turn",
+    "tx": "板 书 · L01-T22-20261021-020019-flowchart",
+    "n": 1,
+    "svg": true,
+    "pre": false
+   },
+   {
+    "ms": 753,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   }
+  ]
+ },
+ "C": {
+  "rows": [
+   {
+    "ms": 302,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 0,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 427,
+    "screen": "board",
+    "board": "turn",
+    "tx": "板 书 · L01-T24-20261021-020021-flowchart",
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 551,
+    "screen": "board",
+    "board": "turn",
+    "tx": "板 书 · L01-T24-20261021-020021-flowchart",
+    "n": 1,
+    "svg": false,
+    "pre": true
+   }
+  ],
+  "hit": {
+   "ms": 851,
+   "snap": {
+    "screen": "board",
+    "board": "turn",
+    "killed": null,
+    "bpTx": "板 书 · L01-T24-20261021-020021-flowchart",
+    "svg": false,
+    "pre": true,
+    "bpText": "这张图渲染失败 W2 注入：渲染器故意报错 flowchart TD A[长任务占着 CPU] --> B[短任务只能等] ",
+    "boards": [
+     "L01-T24-20261021-020021-flowchart"
+    ],
+    "lastBoard": {
+     "id": "L01-T24-20261021-020021-flowchart",
+     "lesson": 1,
+     "turn": 24,
+     "kind": "flowchart",
+     "time": 1792562421777,
+     "from": "meta"
+    }
+   }
+  },
+  "all": [
+   {
+    "ms": 302,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 0,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 427,
+    "screen": "board",
+    "board": "turn",
+    "tx": "板 书 · L01-T24-20261021-020021-flowchart",
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 551,
+    "screen": "board",
+    "board": "turn",
+    "tx": "板 书 · L01-T24-20261021-020021-flowchart",
+    "n": 1,
+    "svg": false,
+    "pre": true
+   }
+  ]
+ },
+ "D": {
+  "rows": [
+   {
+    "ms": 130,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 251,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 375,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 498,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 621,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 744,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 873,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 994,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 1118,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 1241,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 1365,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 1488,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 1609,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 1732,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 1855,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 1978,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 2101,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 2224,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 2348,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 2471,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 2594,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 2717,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 2840,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 2964,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 3086,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 3210,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 3334,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 3456,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 3579,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 3702,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 3824,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 3947,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 4070,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 4193,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 4315,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 4438,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 4560,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 4681,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 4804,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 4926,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 5048,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 5171,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 5294,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 5417,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 5540,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 5664,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 5787,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 5908,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 6030,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 6152,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   }
+  ],
+  "hit": null,
+  "all": [
+   {
+    "ms": 130,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 251,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 375,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 498,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 621,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 744,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 873,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 994,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 1118,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 1241,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 1365,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 1488,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 1609,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 1732,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 1855,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 1978,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 2101,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 2224,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 2348,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 2471,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 2594,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 2717,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 2840,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 2964,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 3086,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 3210,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 3334,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 3456,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 3579,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 3702,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 3824,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 3947,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 4070,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 4193,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 4315,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 4438,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 4560,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 4681,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 4804,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 4926,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 5048,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 5171,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 5294,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 5417,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 5540,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 5664,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 5787,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 5908,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 6030,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   },
+   {
+    "ms": 6152,
+    "screen": "live",
+    "board": "off",
+    "tx": null,
+    "n": 1,
+    "svg": false,
+    "pre": false
+   }
+  ],
+  "end": {
+   "screen": "live",
+   "board": "off",
+   "killed": null,
+   "bpTx": null,
+   "svg": false,
+   "pre": false,
+   "bpText": null,
+   "boards": [
+    "L01-T25-20261021-020023-flowchart"
+   ],
+   "lastBoard": {
+    "id": "L01-T25-20261021-020023-flowchart",
+    "lesson": 1,
+    "turn": 25,
+    "kind": "flowchart",
+    "time": 1792562423720,
+    "from": "meta"
+   }
+  }
+ }
+}
