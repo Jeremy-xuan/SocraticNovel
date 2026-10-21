@@ -1760,6 +1760,37 @@ window.__ModuleLoader__.load({
 				boardRowMeta: Object.assign({ flex: "0 0 auto", color: ink[4] }, t.meta),
 				/** 点开后的那一块：像一张"翻开的书页"（内页边界 ＋ 画布底），与消息流里那张图同一材质。 */
 				boardViewer: { display: "flex", flexDirection: "column", gap: space.sm, border: line.box, borderRadius: radius.block, padding: space.lg, background: fill.plate },
+
+				// ── 「日记」tab（P2 / N2.5）────────────────────────────────────────────
+				//    一条日记＝「日期 · 第 N 讲」（等宽＋标签字）＋正文（散文体）。
+				//    左侧一条金褐发丝当书签边，与「数据来源」的既读橙竖线同一语汇（不新增色）。
+				diaryList: { display: "flex", flexDirection: "column" },
+				diaryItem: { display: "flex", flexDirection: "column", gap: space.xs, padding: space.md + " 0 " + space.md + " " + space.md, borderBottom: line.hair, borderLeft: "2px solid var(--cui-gold-rule)" },
+				diaryHead: Object.assign({ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: space.md, color: ink[3] }, t.meta),
+				diaryDate: { fontFamily: MONO, color: ink[3] },
+				diaryLesson: { color: ink[4] },
+				diaryText: Object.assign({ color: ink[2], whiteSpace: "pre-wrap", overflowWrap: "anywhere" }, t.prose),
+
+				// ── 「群聊」tab（P2 / N3.1）────────────────────────────────────────────
+				//    版式照 `templates/wechat-chat.html` 的视觉语言：别人在左（带名字＋浅底气泡），
+				//    自己在右（暖底气泡），系统提示居中成一行小字。全部用本面板的样式体系表达，
+				//    **不塞原生 HTML**（那个模板的 CSS 与渲染脚本一个字都没搬进来）。
+				chatThread: { display: "flex", flexDirection: "column", gap: space.md, marginTop: space.md },
+				chatRow: { display: "flex", flexDirection: "column", gap: space.xxs, alignSelf: "flex-start", maxWidth: "92%" },
+				chatRowOut: { alignSelf: "flex-end", alignItems: "flex-end" },
+				chatName: Object.assign({ color: ink[4], paddingLeft: space.sm }, t.meta),
+				chatBubble: Object.assign({ background: fill.canvas, border: line.box, borderRadius: radius.block, padding: space.md + " " + space.lg, color: ink[2], whiteSpace: "pre-wrap", overflowWrap: "anywhere" }, t.prose),
+				chatBubbleOut: { background: "var(--cui-board-fill)", border: line.hair, color: ink[1] },
+				chatSys: Object.assign({ alignSelf: "center", color: ink[4], background: fill.plate, borderRadius: radius.pill, padding: space.xxs + " " + space.md, textAlign: "center", overflowWrap: "anywhere" }, t.meta),
+				chatMetaRow: Object.assign({ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: space.md, color: ink[4] }, t.meta),
+				chatTyping: Object.assign({ color: ink[3], borderLeft: "2px solid var(--cui-gold)", padding: space.xxs + " 0 " + space.xxs + " " + space.md, marginTop: space.md, overflowWrap: "anywhere" }, t.meta),
+				chatComposer: { display: "flex", gap: space.sm, alignItems: "center", borderTop: line.hair, marginTop: space.lg, paddingTop: space.md },
+				chatInput: Object.assign({ flex: "1 1 auto", minWidth: 0, background: fill.canvas, border: line.box, borderRadius: radius.pill, color: ink[1], padding: space.xs + " " + space.lg, margin: 0 }, t.body),
+				chatSend: Object.assign({ flex: "0 0 auto", background: "transparent", border: line.gold, borderRadius: radius.pill, color: ink[2], cursor: "pointer", padding: space.xs + " " + space.lg }, t.label),
+				/** 发送中：只压透明度、指针变默认（**不改字色**——那会让"按钮不可用"与"层级更浅"混成一件事）。 */
+				chatSendBusy: { opacity: 0.6, cursor: "default" },
+				/** 未读数：既读橙竖线＋暖底（与错误告示同一族色，但**不是**错误——它只是"还没看"）。 */
+				chatBadge: Object.assign({ alignSelf: "flex-start", color: ink[1], background: "var(--cui-alert-fill)", borderLeft: "2px solid var(--cui-read)", borderRadius: radius.inner, padding: space.xxs + " " + space.md }, t.meta),
 			};
 			/** `body` 是 `root` 的别名（两处都指面板根；保留旧键名以免渲染代码与测试两处各改各的）。 */
 			styles.body = styles.root;
@@ -4930,9 +4961,13 @@ window.__ModuleLoader__.load({
 				]);
 			}
 
-			// ── tab 栏（面板内部）：教室 ／ 板书 ────────────────────────────────────
+			// ── tab 栏（面板内部）：教室 ／ 板书 ／ 日记 ／ 群聊 ───────────────────────
 			//    只换"看哪一页"，不动任何数据、不新增侧栏 tab 类型（见上面 `tab` 的说明）。
-			const tabs = [["classroom", "教室"], ["board", "板书"]];
+			//    2026-10-21（P2）：新增「日记」（N2.5）与「群聊」（N3.1）两页——
+			//      · 「日记」只读、只走 `remote.classroomNarrative`；
+			//      · 「群聊」走 `remote.classroomGroup`（K4 的四个方法）。
+			//    两页的数据都在**各自挂载时**才读，切走就停（与「板书」同一取舍：省一次读盘/轮询）。
+			const tabs = [["classroom", "教室"], ["board", "板书"], ["diary", "日记"], ["group", "群聊"]];
 			const tabBar = React.createElement("div", { style: S.tabBar, key: "tabs", "data-cui-tabs": "1" },
 				tabs.map((entry) => React.createElement("button", {
 					type: "button",
@@ -4943,14 +4978,20 @@ window.__ModuleLoader__.load({
 					"data-active": tab === entry[0] ? "true" : "false",
 					onClick: () => { setTab(entry[0]); },
 				}, entry[1])));
+			/** 三页共用同一份 `ctx.remote` 与 sessionId（都从 `portrait` 面取，与板书那条一致）。 */
+			const remote = props.portrait === undefined || props.portrait === null ? undefined : props.portrait.ctx.remote;
+			const sessionId = props.portrait === undefined || props.portrait === null ? null : props.portrait.sessionId;
 			const boardNode = React.createElement(BoardHistory, {
 				key: "board",
-				remote: props.portrait === undefined || props.portrait === null ? undefined : props.portrait.ctx.remote,
-				sessionId: props.portrait === undefined || props.portrait === null ? null : props.portrait.sessionId,
+				remote: remote,
+				sessionId: sessionId,
 				currentLesson: data === null ? null : data.currentLesson,
 			});
-			// 课堂那一页保持**原样**（所有区块一个不少）；板书那一页只放板书历史。
-			const shown = tab === "board" ? [boardNode] : children;
+			const diaryNode = React.createElement(DiaryView, { key: "diary", remote: remote, sessionId: sessionId });
+			const groupNode = React.createElement(GroupChatView, { key: "group", remote: remote, sessionId: sessionId });
+			// 课堂那一页保持**原样**（所有区块一个不少）；其它三页只放各自那一块。
+			const pages = { classroom: children, board: [boardNode], diary: [diaryNode], group: [groupNode] };
+			const shown = Object.prototype.hasOwnProperty.call(pages, tab) ? pages[tab] : children;
 
 			return React.createElement("div", {
 				style: Object.assign({}, S.root, S.vars, S.varsFor(theme)),
@@ -5183,6 +5224,949 @@ window.__ModuleLoader__.load({
 			}, children);
 		}
 
+		// ════════════════════════════════════════════════════════════════════
+		// 6.10 · 「日记」tab（N2.5）—— 只走 `ctx.remote.classroomNarrative`
+		//
+		// 数据来源（宿主半边 `lib/narrative-host.mjs` 转出来的两个只读方法）：
+		//   · `status()`  —— 最近一次跑完的运行有没有失败；顶部一行只在 `lastError` 非空时出现，
+		//                    写清 `code + message`。这是 N1.4「错误必须在面板可见」的消费方。
+		//   · `diaries()` —— `[{ date, lesson, text }]`，服务给的是时间顺序，这一页倒序展示。
+		//
+		// 🔴 不读 `runtime/.narrative/` 里的账本与运行日志：那是运行过程，不是展示内容
+		//    （NE 报告 §7.4）。历史跨重启要读也只能走叙事服务自己的出口。
+		// 🔴 叙事包没装时：两个方法回 `{ ok:false, reason:'narrative-absent' }`，
+		//    这一页显示**一句中性说明**（不是报错、不白屏）——「能力缺席」与「读失败」是两件事。
+		// ════════════════════════════════════════════════════════════════════
+
+		/** 日记一次取多少条（够翻看，又不至于把右栏撑成长卷）。 */
+		const DIARY_LIMIT = 20;
+
+		// ── 6.10.0 客户端 Remote 的**两层**返回：外层是"调用通没通"，内层是"服务说行不行" ──
+		//
+		// 🔴 这一层是实测出来的（不是猜）：`dsh-api-gateway` 的 client 面把宿主方法的返回值
+		//    **包进 `value`**：`ctx.remote.<ns>.<method>(...)` → `{ ok:true, value:<宿主返回值> }`
+		//    ／ `{ ok:false, error:{ code, message } }`（`gateway-client.js` 的 `invoke`：
+		//    `return { ok: true, value: ... }`）。而本插件宿主的两个方法**自己也**回
+		//    `{ ok:false, reason }`（叙事包缺席 / 找不到教室 / 读失败）——
+		//    两层 `ok` 各管一件事，混为一谈就会把"网关不通"说成"叙事包没装"。
+		//    现有 `readText`（§2 的 workspaceFiles 通道）用的是同一个外层形状，这里保持一致。
+		/**
+		 * 拆外层：`{ ok:true, value }` ／ `{ ok:false, error }` → 统一的 `{ ok, value | error }`。
+		 * **永不抛**（形状不对也归一成 `REMOTE_FAILED`）。
+		 * @param result - remote 调用的原始返回
+		 * @returns {{ok: true, value: unknown} | {ok: false, error: {code: string, message: string}}}
+		 */
+		function unwrapRemoteResult(result) {
+			if (result === null || result === undefined || typeof result !== "object") {
+				return { ok: false, error: { code: "REMOTE_FAILED", message: "Remote 返回了空结果" } };
+			}
+			if (result.ok === false) {
+				const error = result.error !== null && typeof result.error === "object" ? result.error : {};
+				return {
+					ok: false,
+					error: {
+						code: typeof error.code === "string" && error.code.length > 0 ? error.code : "REMOTE_FAILED",
+						message: typeof error.message === "string" && error.message.length > 0 ? error.message : "Remote 调用失败",
+					},
+				};
+			}
+			return { ok: true, value: result.value };
+		}
+
+		// ── 6.10.1 🔴 客户端 Remote 的挂载（契约 K4.1 没写的一步，实测补上）──
+		//
+		// `ctx.remote.<ns>` 的命名空间**不是**按宿主侧 `ctx.typert` 自动长出来的：
+		//   浏览器侧的 `ctx.remote` 由 `dsh-api-remotes` 的那份**静态装配表**逐个
+		//   `ctx.remote.$mount(contribution)` 挂出来（`dsh-api-remotes/lib/types/client/index.js`
+		//   只 import 了官方包各自的 `remote` 产物）。第三方包里没有 client 面的
+		//   `typert.remote-client` 产物，于是 `ctx.remote.classroomGroup` 在浏览器里**根本不存在**
+		//   （活体实测：面板两页都落到"没有服务"的中性说明，宿主日志一句错都没有）。
+		// 修法只有一条：由**消费方**用公开的 `ctx.remote.$mount(contribution)` 自己挂一份清单。
+		//   本插件就是这两个命名空间唯一的消费方，所以清单写在这里；挂载失败只记一条警告，
+		//   面板照旧显示"能力缺席"（不白屏、不把槽位崩成占位）。
+		// 🔴 清单里的 codec 是**手写的 strict codec**（`{mode:'strict', typeSymbol, create()}`）：
+		//   客户端产物不经打包器、`require` 只认 `react`，所以拿不到 zod；而 `$mount` 的校验只要求
+		//   `mode === 'strict'` ＋ `create` 是函数（`gateway-client.js` 的 `requireStrictCodec`）。
+		//   真正的编解码在宿主侧（它有完整清单），这里只负责"形状对得上"。
+
+		/**
+		 * 插件激活时记下的客户端根 Context。
+		 * 🔴 为什么要它：`remote.<ns>` 是 cordis 的**服务键**（`remoteServiceKey` → `remote.<namespace>`），
+		 *    读 `ctx.remote.classroomNarrative` 要求本插件在 `inject` 里声明过它；
+		 *    可这两个命名空间**是本插件自己在 apply 里挂的**——声明进 `inject` 就成了死锁
+		 *    （服务没挂 → 插件不激活 → 服务永远挂不上）。实测报错逐字：
+		 *    `cannot get property "remote.classroomNarrative" without inject`。
+		 *    `ctx.get(name)` 是"读服务但不要求 inject"的那条路（cordis 的服务存储直读），
+		 *    所以这里留一份 ctx，用 `ctx.get` 取命名空间；取不到就是"没挂上"。
+		 */
+		let clientContext = null;
+
+		/** 手写 strict codec（客户端只过 `$mount` 的结构校验，不做真编解码）。 */
+		function passThroughCodec(typeSymbol, jsonSchema) {
+			return {
+				mode: "strict",
+				typeSymbol: typeSymbol,
+				jsonSchema: jsonSchema === undefined ? {} : jsonSchema,
+				create: () => ({ parse: (value) => value }),
+			};
+		}
+
+		/** `workspaceFileScope` lookup 那一条（与宿主 `typert.host.js` 的 wire 逐字一致）。 */
+		function scopeParameter() {
+			return {
+				name: "scope",
+				wire: "workspaceFileScopeId",
+				source: "lookup",
+				lookup: "workspaceFileScope",
+				codec: passThroughCodec("@deepseek-ai/dsh-session/types#SessionId", { type: "string" }),
+			};
+		}
+
+		/** 一条 JSON 参数（可选的那些显式 `acceptsUndefined`，与宿主清单一致）。 */
+		function jsonParameter(name, optional) {
+			return {
+				name: name,
+				wire: name,
+				source: "json",
+				...(optional === true ? { acceptsUndefined: true } : {}),
+				codec: passThroughCodec("json", {}),
+			};
+		}
+
+		/**
+		 * 两个命名空间的客户端清单：`classroomNarrative`（status / diaries）
+		 * ＋ `classroomGroup`（history / send / poll / markRead）。
+		 * @returns {{package: string, descriptors: Array<object>}}
+		 */
+		function narrativeRemoteContribution() {
+			const resultCodec = () => passThroughCodec("unknown", {});
+			const endpoint = (namespace, method, parameters) => ({
+				id: "classroom-ui#" + namespace + "/" + method,
+				service: namespace,
+				namespace: namespace,
+				method: method,
+				invocation: { kind: "direct" },
+				parameters: parameters,
+				result: resultCodec(),
+			});
+			return {
+				// 一份贡献里可以带多个命名空间（`mountContribution` 按 namespace 分组装）。
+				package: "classroom-ui",
+				descriptors: [
+					endpoint("classroomNarrative", "status", [scopeParameter()]),
+					endpoint("classroomNarrative", "diaries", [scopeParameter(), jsonParameter("limit", true)]),
+					endpoint("classroomGroup", "history", [scopeParameter(), jsonParameter("limit", true)]),
+					endpoint("classroomGroup", "send", [scopeParameter(), jsonParameter("text", false), jsonParameter("clientId", true)]),
+					endpoint("classroomGroup", "poll", [scopeParameter(), jsonParameter("afterSeq", true), jsonParameter("waitMs", true)]),
+					endpoint("classroomGroup", "markRead", [scopeParameter(), jsonParameter("seq", false)]),
+				],
+			};
+		}
+
+		/**
+		 * 取一个 Remote 命名空间服务。
+		 * 顺序：① `ctx.get('remote.<name>')`（免 inject，浏览器里的正路）；
+		 *       ② 传入的 `remote` 对象上的同名属性（node 侧测试直接喂假 remote 时走这条）。
+		 * **永不抛**：两条都不通就是 `null`（＝能力缺席，不是故障）。
+		 * @param remote - `ctx.remote`（可能为 undefined）
+		 * @param name - 命名空间名，如 `classroomNarrative`
+		 * @returns {object|null}
+		 */
+		function remoteNamespaceOf(remote, name) {
+			if (clientContext !== null && clientContext !== undefined) {
+				try {
+					const service = clientContext.get("remote." + name);
+					if (service !== null && service !== undefined) return service;
+				} catch {
+					// ctx.get 在极端情况下（上下文已销毁）会抛 —— 当作"没挂上"，继续走第二条。
+				}
+			}
+			try {
+				const service = remote === null || remote === undefined ? undefined : remote[name];
+				return service === null || service === undefined ? null : service;
+			} catch {
+				// 读 `remote.<ns>` 在没 inject 时会抛（cordis 的 accessor 会拦）——同样当缺席。
+				return null;
+			}
+		}
+
+		/**
+		 * 把一个"异步挂载"接成 `ctx.effect` 的同步形状：effect 立刻返回一个卸载器，
+		 * 挂载完成（或失败）后再补上真正的 dispose。
+		 * @param ctx - 客户端根 Context
+		 * @returns {() => void} 卸载器（幂等）
+		 */
+		function mountNarrativeRemotesEffect(ctx) {
+			let dispose = null;
+			let dead = false;
+			const remote = ctx === null || ctx === undefined ? undefined : ctx.remote;
+			const mount = remote === null || remote === undefined ? undefined : remote.$mount;
+			if (typeof mount !== "function") {
+				// 宿主版本没有 `$mount`（或 remote 没注入）：两页会落到"缺席"说明，这是对的形状。
+				return () => {};
+			}
+			Promise.resolve(mount.call(remote, narrativeRemoteContribution())).then(
+				(fn) => { if (dead) { if (typeof fn === "function") fn(); return; } dispose = fn; },
+				(error) => {
+					// 最可能的两种：命名空间已被别处挂过（未来的叙事包自带 client 面）、清单形状被新版拒收。
+					// 两种都不该让面板崩，只留一条可查的警告。
+					if (typeof console !== "undefined" && console !== null && typeof console.warn === "function") {
+						console.warn("[classroom-ui] 叙事/群聊 Remote 挂载失败：", messageOf(error));
+					}
+				},
+			);
+			return () => {
+				dead = true;
+				if (dispose !== null && typeof dispose === "function") {
+					dispose();
+					dispose = null;
+				}
+			};
+		}
+
+		/**
+		 * 一条日记的排序键（缺字段也给确定值，**不猜**）。
+		 * @param entry - `{ date, lesson, text }`
+		 * @returns {{date: string, lesson: number}}
+		 */
+		function diarySortKey(entry) {
+			const date = entry !== null && entry !== undefined && typeof entry.date === "string" ? entry.date : "";
+			const raw = entry === null || entry === undefined ? null : entry.lesson;
+			const lesson = typeof raw === "number" && Number.isFinite(raw) ? raw : -1;
+			return { date: date, lesson: lesson };
+		}
+
+		/**
+		 * 日记按**时间倒序**（近的在上）。
+		 * 服务返回的是文件顺序（＝时间顺序），这里复制后倒排——不改服务手里那一份。
+		 * 同一天多条（补写/复写）时按讲次倒序；日期缺失的排在最后（不给它们编一个日期）。
+		 * @param entries - 服务返回的 `entries`
+		 * @returns {Array<object>}
+		 */
+		function sortDiariesDesc(entries) {
+			const list = Array.isArray(entries) ? entries.slice() : [];
+			list.sort((left, right) => {
+				const a = diarySortKey(left);
+				const b = diarySortKey(right);
+				if (a.date !== b.date) return a.date < b.date ? 1 : -1;
+				return b.lesson - a.lesson;
+			});
+			return list;
+		}
+
+		/**
+		 * 把叙事服务的失败形状翻成**人话**（reason 是稳定的，message 是给人看的）。
+		 * @param result - `{ ok:false, reason, message? }`
+		 * @returns {string}
+		 */
+		function describeNarrativeFailure(result) {
+			const reason = result !== null && result !== undefined && typeof result.reason === "string" ? result.reason : "unknown";
+			const message = result !== null && result !== undefined && typeof result.message === "string" ? result.message : "";
+			const head = {
+				"narrative-absent": "叙事服务未部署",
+				"no-classroom": "找不到教室目录",
+				"read-failed": "读日记失败",
+				"status-failed": "读叙事状态失败",
+			}[reason];
+			return (head === undefined ? "叙事服务回了失败（" + reason + "）" : head) + (message === "" ? "" : "：" + message);
+		}
+
+		/**
+		 * 读「日记」页的全部数据：`status` ＋ `diaries`。
+		 * **永不抛**——四种终态各有明确出口：`absent` / `ready` / `failed` / `empty`（empty 由 ready＋空表推出）。
+		 * @param remote - `ctx.remote`
+		 * @param sessionId - 会话 id（网关据此解析 `workspaceFileScope`）
+		 * @param limit - 条数
+		 * @returns {Promise<{kind: string, entries: Array<object>, bad: number, lastError: object|null, message: string|null}>}
+		 */
+		async function loadDiaryPage(remote, sessionId, limit) {
+			const service = remoteNamespaceOf(remote, "classroomNarrative");
+			if (service === null || typeof service.status !== "function") {
+				return { kind: "absent", entries: [], bad: 0, lastError: null, message: null };
+			}
+			/** 常见终态构造器（四处一样，写一次）。 */
+			const absent = () => ({ kind: "absent", entries: [], bad: 0, lastError: null, message: null });
+			const failed = (message) => ({ kind: "failed", entries: [], bad: 0, lastError: null, message: message });
+			try {
+				// ① 状态：外层 `{ok,value}` → 内层 `{ok,status}` / `{ok:false,reason}`
+				const statusOuter = unwrapRemoteResult(typeof service.status === "function" ? await service.status(sessionId) : null);
+				if (!statusOuter.ok) return failed(describeRemoteFailure(statusOuter.error));
+				const status = statusOuter.value;
+				if (status !== null && status !== undefined && status.ok === false && status.reason === "narrative-absent") return absent();
+				if (status === null || status === undefined || status.ok !== true) return failed(describeNarrativeFailure(status));
+
+				// ② 条目：同样两层
+				const listedOuter = unwrapRemoteResult(await service.diaries(sessionId, limit));
+				if (!listedOuter.ok) return failed(describeRemoteFailure(listedOuter.error));
+				const listed = listedOuter.value;
+				if (listed !== null && listed !== undefined && listed.ok === false && listed.reason === "narrative-absent") return absent();
+				if (listed === null || listed === undefined || listed.ok !== true) return failed(describeNarrativeFailure(listed));
+
+				const inner = status.status;
+				const lastError = inner !== null && inner !== undefined && inner.lastError !== null && inner.lastError !== undefined
+					? inner.lastError
+					: null;
+				return {
+					kind: "ready",
+					entries: sortDiariesDesc(listed.entries),
+					bad: typeof listed.bad === "number" ? listed.bad : 0,
+					lastError: lastError,
+					message: null,
+				};
+			} catch (error) {
+				return failed(messageOf(error));
+			}
+		}
+
+		/**
+		 * 外层失败（网关/传输）→ 人话。`code` 原样保留（它比文案稳定）。
+		 * @param error - `{ code, message }`
+		 * @returns {string}
+		 */
+		function describeRemoteFailure(error) {
+			const code = error !== null && error !== undefined && typeof error.code === "string" ? error.code : "REMOTE_FAILED";
+			const message = error !== null && error !== undefined && typeof error.message === "string" ? error.message : "";
+			return message === "" ? code : code + " — " + message;
+		}
+
+		/**
+		 * 一行 `lastError` 的文字：`code — message`（两个都可能缺，缺哪个就少哪个，不编）。
+		 * @param error - `{ code, message }`
+		 * @returns {string}
+		 */
+		function describeLastError(error) {
+			if (error === null || error === undefined) return "";
+			const code = typeof error.code === "string" ? error.code : "";
+			const message = typeof error.message === "string" ? error.message : "";
+			if (code === "" && message === "") return "（叙事服务没给出原因）";
+			if (code === "") return message;
+			return message === "" ? code : code + " — " + message;
+		}
+
+		/**
+		 * 「日记」tab：按时间倒序的条目列 ＋ 顶部错误状态。
+		 * @param props - `{ remote, sessionId }`
+		 */
+		function DiaryView(props) {
+			const S = styles();
+			const remote = props.remote;
+			const sessionId = props.sessionId;
+			const [page, setPage] = React.useState({ kind: "loading", entries: [], bad: 0, lastError: null, message: null });
+			const [reloadSeq, setReloadSeq] = React.useState(0);
+
+			React.useEffect(() => {
+				let live = true;
+				setPage((previous) => Object.assign({}, previous, { kind: "loading" }));
+				loadDiaryPage(remote, sessionId, DIARY_LIMIT).then(
+					(result) => { if (live) setPage(result); },
+					(error) => { if (live) setPage({ kind: "failed", entries: [], bad: 0, lastError: null, message: messageOf(error) }); },
+				);
+				return () => { live = false; };
+			}, [sessionId, reloadSeq]);
+
+			const children = [];
+			children.push(React.createElement("div", { style: S.sectionLabel, key: "label" }, "日记 · 时间倒序"));
+
+			if (page.kind === "absent") {
+				// 中性说明：没装叙事包不是故障，是"这个教室还没有这个能力"。
+				children.push(React.createElement("div", {
+					style: S.note,
+					key: "absent",
+					"data-cui-diary-absent": "1",
+				}, "这个工作区没有叙事服务（没装叙事包），所以还没有日记。装上之后，每上完一节课它会自己写一条。"));
+			}
+
+			if (page.kind === "failed") {
+				children.push(React.createElement("div", {
+					style: S.error,
+					key: "failed",
+					"data-cui-diary-error": "1",
+				}, "读日记失败：" + String(page.message)));
+			}
+
+			// 🔴 顶部错误状态：**只在有错时出现**（N1.4 的消费方）。
+			//    「后来成功了」不清空 lastError（服务端的语义就是"最近一次失败"，见 README §3）。
+			if (page.lastError !== null) {
+				children.push(React.createElement("div", {
+					style: S.error,
+					key: "last-error",
+					"data-cui-diary-status-error": "1",
+				}, "上次写日记失败：" + describeLastError(page.lastError)));
+			}
+
+			if (page.kind === "ready" && page.entries.length === 0) {
+				children.push(React.createElement("div", {
+					style: S.note,
+					key: "empty",
+					"data-cui-diary-empty": "1",
+				}, "还没有日记。上完一节课（收课）后，这里会出现那节课的一条。"));
+			}
+
+			if (page.entries.length > 0) {
+				const rows = page.entries.map((entry, index) => {
+					const key = diarySortKey(entry);
+					const lesson = key.lesson < 0 ? "讲次未定" : "第 " + String(key.lesson) + " 讲";
+					const text = entry !== null && entry !== undefined && typeof entry.text === "string" ? entry.text : "";
+					return React.createElement("div", {
+						style: S.diaryItem,
+						key: "d" + String(index) + "-" + key.date,
+						"data-cui-diary-item": key.date === "" ? "" : key.date,
+						"data-cui-diary-lesson": key.lesson < 0 ? "" : String(key.lesson),
+					}, [
+						React.createElement("div", { style: S.diaryHead, key: "head" }, [
+							React.createElement("span", { style: S.diaryDate, key: "date" }, key.date === "" ? "日期未记" : key.date),
+							React.createElement("span", { style: S.diaryLesson, key: "lesson" }, lesson),
+						]),
+						React.createElement("div", { style: S.diaryText, key: "text" }, text),
+					]);
+				});
+				children.push(React.createElement("div", {
+					style: S.diaryList,
+					key: "list",
+					"data-cui-diary-list": String(page.entries.length),
+				}, rows));
+			}
+
+			if (page.bad > 0) {
+				children.push(React.createElement("div", { style: S.note, key: "bad", "data-cui-diary-bad": String(page.bad) },
+					"另有 " + String(page.bad) + " 条日记格式不完整，已跳过（叙事服务报的计数，不是猜的）。"));
+			}
+
+			children.push(React.createElement("button", {
+				type: "button",
+				className: "cui-act",
+				key: "refresh",
+				style: S.button,
+				"data-cui-diary-refresh": "1",
+				onClick: () => { setReloadSeq((value) => value + 1); },
+			}, page.kind === "loading" ? "读取中…" : "重新读盘"));
+
+			return React.createElement("div", {
+				style: S.sectionFor(false),
+				"data-classroom-ui-section": "1",
+				"data-classroom-ui-diary": "1",
+			}, children);
+		}
+
+		// ════════════════════════════════════════════════════════════════════
+		// 6.11 · 「群聊」tab（N3.1）—— 只走 `ctx.remote.classroomGroup`
+		//
+		// 契约 K4：`history` / `send` / `poll` / `markRead` 四个方法，第一参数都是 `sessionId`
+		// （网关用 `workspaceFileScope` lookup 解析成会话作用域）。服务的**实现**在叙事包里，
+		// 这一页只认 wire 形状：
+		//   · `history(limit)`  → `{ messages, nextSeq, unread }`
+		//   · `send(text, clientId)` → `{ ok:true, message, unread }` ／ `{ ok:false, error:{code,message} }`
+		//                          🔴 **不抛**：失败形状就是为了让学生能重试
+		//   · `poll(afterSeq, waitMs)` → `{ messages, typing, nextSeq, unread, serverTime }`
+		//   · `markRead(seq)` → `{ unread }`
+		// 版式照 `templates/wechat-chat.html`：别人在左（名字＋浅底气泡）、自己在右（暖底气泡）、
+		// 系统提示居中一行；「对方正在输入」与未读数都摆在消息区上方。
+		// 🔴 数据只走 remote：这一页**不读** `runtime/wechat_group.jsonl` 与它的 md 投影。
+		// ════════════════════════════════════════════════════════════════════
+
+		/** 群聊轮询间隔（`poll` 的 `waitMs` 传 0＝立即返回，靠这个间隔控制节奏）。 */
+		const GROUP_POLL_MS = 3000;
+		/** 首次拉多少条历史。 */
+		const GROUP_HISTORY_LIMIT = 50;
+		/** 「她正在输入」的固定说法（K4.4 只定状态出口，措辞由面板定）。 */
+		const GROUP_TYPING_TEXT = "她正在输入…";
+
+		/** 幂等键的进程内序号（同一条消息重试复用同一个 id，见 `pendingClientRef`）。 */
+		let groupClientSeq = 0;
+
+		/**
+		 * 造一个 `clientId`（K4.2 的幂等键）。
+		 * 用时间 ＋ 进程内序号 ＋ 随机尾；**不依赖 `crypto.randomUUID`**（老环境下没有）。
+		 * @returns {string}
+		 */
+		function groupClientId() {
+			groupClientSeq += 1;
+			return "c-" + Date.now().toString(36) + "-" + groupClientSeq.toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+		}
+
+		/**
+		 * 叙事包到底在不在？—— 用**本插件自己的** `classroomNarrative.status()` 问一句。
+		 *
+		 * 🔴 为什么群聊页要问日记的服务：叙事包没装时 `classroomGroup` 这个命名空间**仍被挂上了**
+		 *    （清单是本插件提供的），但宿主侧没有对应服务 → 每次调用都是
+		 *    `gateway/internal … HTTP 404`。活体实测：群聊页因此显示"读群聊失败：… 404"，
+		 *    而验收要求是"没装叙事包时显示一句中性说明（不是报错）"。
+		 *    唯一权威的判据在 `classroomNarrative`（它总是被 provide，缺席时自己回
+		 *    `{ ok:false, reason:'narrative-absent' }`），所以这里借它判一次。
+		 * 只在**调用失败之后**才问（成功路径不多付一次往返）。
+		 * @returns {Promise<'absent'|'present'|'unknown'>}
+		 */
+		async function narrativePresence(remote, sessionId) {
+			const service = remoteNamespaceOf(remote, "classroomNarrative");
+			if (service === null || typeof service.status !== "function") return "absent";
+			try {
+				const outer = unwrapRemoteResult(await service.status(sessionId));
+				if (!outer.ok) return "unknown";
+				const value = outer.value;
+				if (value !== null && value !== undefined && value.ok === false && value.reason === "narrative-absent") return "absent";
+				return "present";
+			} catch {
+				return "unknown";
+			}
+		}
+
+		/** 群聊不可用的形状（与日记那边同一族：`absent`＝能力缺席，不是故障）。 */
+		function groupServiceOf(remote) {
+			return remoteNamespaceOf(remote, "classroomGroup");
+		}
+
+		/**
+		 * 一条群聊消息的**稳定归一**（形状不对也不抛，缺字段就留空）。
+		 * @param message - 服务返回的单条消息
+		 * @returns {{seq:number|null, id:string, role:string, speaker:string, text:string, ts:string}}
+		 */
+		function normalizeGroupMessage(message) {
+			const source = message !== null && typeof message === "object" ? message : {};
+			const seq = typeof source.seq === "number" && Number.isFinite(source.seq) ? source.seq : null;
+			return {
+				seq: seq,
+				id: typeof source.id === "string" ? source.id : "",
+				role: typeof source.role === "string" ? source.role : "character",
+				speaker: typeof source.speaker === "string" ? source.speaker : "",
+				text: typeof source.text === "string" ? source.text : "",
+				ts: typeof source.ts === "string" ? source.ts : "",
+			};
+		}
+
+		/**
+		 * 一批消息里**最大的 seq**（`poll` 的游标就是它）。
+		 *
+		 * 🔴 为什么不用 `nextSeq`：契约 K4.3 的 `nextSeq` 是**下一个要分配的序号**（服务端
+		 *    `maxSeq + 1`）。把它当 `afterSeq` 用会**跳过下一条**——下一条正好会占这个号。
+		 *    活体实测（lane-p2）：历史有 seq 1–2 → `nextSeq` 3 → 拿 3 去 poll → 她的回复拿到
+		 *    seq 3 → `seq > 3` 过滤掉 → 回复永远不进面板（而 `typing`、未读都正常，所以看起来
+		 *    "像在忙"，只是不回话）。游标必须是**已见到的最大 seq**。
+		 * @param messages - 归一后的消息数组
+		 * @returns {number} 0 表示还没有任何一条
+		 */
+		function lastSeqOf(messages) {
+			let last = 0;
+			for (const message of Array.isArray(messages) ? messages : []) {
+				const seq = message === null || message === undefined ? null : message.seq;
+				if (typeof seq === "number" && Number.isFinite(seq) && seq > last) last = seq;
+			}
+			return last;
+		}
+
+		/**
+		 * 把新消息并进线程：按 `seq` 去重（`send` 的乐观追加与随后 `poll` 拉到的同一条只留一份），
+		 * 再按 `seq` 升序（服务端分配，K4.2「seq 是排序的唯一依据」）。
+		 * @param list - 现有消息（归一后的）
+		 * @param incoming - 新消息（原始形状）
+		 * @returns {Array<object>}
+		 */
+		function mergeGroupMessages(list, incoming) {
+			const merged = Array.isArray(list) ? list.slice() : [];
+			const seen = new Set(merged.map((entry) => (entry.seq === null ? entry.id : "s" + String(entry.seq))));
+			for (const raw of Array.isArray(incoming) ? incoming : []) {
+				const entry = normalizeGroupMessage(raw);
+				const key = entry.seq === null ? entry.id : "s" + String(entry.seq);
+				if (key !== "" && seen.has(key)) continue;
+				if (key !== "") seen.add(key);
+				merged.push(entry);
+			}
+			merged.sort((left, right) => {
+				const a = left.seq === null ? Number.MAX_SAFE_INTEGER : left.seq;
+				const b = right.seq === null ? Number.MAX_SAFE_INTEGER : right.seq;
+				return a - b;
+			});
+			return merged;
+		}
+
+		/**
+		 * 首次读历史。**永不抛**。
+		 * @returns {Promise<{kind: string, messages: Array<object>, nextSeq: number, unread: number, message: string|null}>}
+		 */
+		async function loadGroupPage(remote, sessionId, limit) {
+			const service = groupServiceOf(remote);
+			if (service === null || typeof service.history !== "function") {
+				return { kind: "absent", messages: [], nextSeq: 0, unread: 0, message: null };
+			}
+			const failed = (message) => ({ kind: "failed", messages: [], nextSeq: 0, unread: 0, message: message });
+			try {
+				const outer = unwrapRemoteResult(await service.history(sessionId, limit));
+				if (!outer.ok) {
+					// 失败**先别喊错**：如果叙事包根本没装，这次失败是"能力缺席"的正常形状（见 `narrativePresence`）。
+					const presence = await narrativePresence(remote, sessionId);
+					if (presence === "absent") return { kind: "absent", messages: [], nextSeq: 0, unread: 0, message: null };
+					return failed(describeRemoteFailure(outer.error));
+				}
+				const value = outer.value;
+				if (value === null || value === undefined || typeof value !== "object") return failed("群聊服务返回了空结果");
+				return {
+					kind: "ready",
+					messages: mergeGroupMessages([], value.messages),
+					nextSeq: typeof value.nextSeq === "number" && Number.isFinite(value.nextSeq) ? value.nextSeq : 0,
+					unread: typeof value.unread === "number" && Number.isFinite(value.unread) ? value.unread : 0,
+					message: null,
+				};
+			} catch (error) {
+				return failed(messageOf(error));
+			}
+		}
+
+		/**
+		 * 发一条。**永不抛**：失败回 `{ ok:false, error:{ code, message } }`。
+		 *
+		 * 三层要分清（K4.3 的 `send` 自己就是"不抛、回错误形状"）：
+		 *   ① 传输/网关层：外层 `{ ok:false, error:{code} }`；
+		 *   ② 服务层：`value = { ok:false, error:{ code: EMPTY|TOO_LONG|RATE_LIMITED|AGENT_FAILED|STORE_CORRUPT } }`；
+		 *   ③ 成功：`value = { ok:true, message, unread }`。
+		 * 三种都归一成同一个返回形状，`code` 原样保留（学生要看到稳定标识）。
+		 * @returns {Promise<{ok: true, message: object, unread: number} | {ok: false, error: {code: string, message: string}}>}
+		 */
+		async function sendGroupMessage(remote, sessionId, text, clientId) {
+			const service = groupServiceOf(remote);
+			if (service === null || typeof service.send !== "function") {
+				return { ok: false, error: { code: "GROUP_ABSENT", message: "这个工作区没有群聊服务" } };
+			}
+			try {
+				const outer = unwrapRemoteResult(await service.send(sessionId, text, clientId));
+				if (!outer.ok) return { ok: false, error: outer.error };
+				const value = outer.value;
+				if (value === null || value === undefined || typeof value !== "object") {
+					return { ok: false, error: { code: "REMOTE_FAILED", message: "群聊服务返回了空结果" } };
+				}
+				if (value.ok === false) {
+					const error = value.error !== null && typeof value.error === "object" ? value.error : {};
+					return {
+						ok: false,
+						error: {
+							code: typeof error.code === "string" && error.code.length > 0 ? error.code : "UNKNOWN",
+							message: typeof error.message === "string" ? error.message : "发送失败",
+						},
+					};
+				}
+				return {
+					ok: true,
+					message: value.message,
+					unread: typeof value.unread === "number" && Number.isFinite(value.unread) ? value.unread : 0,
+				};
+			} catch (error) {
+				return { ok: false, error: { code: "REMOTE_FAILED", message: messageOf(error) } };
+			}
+		}
+
+		/**
+		 * 长轮询一次。**永不抛**。
+		 * @returns {Promise<{ok: boolean, messages: Array<object>, typing: boolean, nextSeq: number, unread: number, error: object|null}>}
+		 */
+		async function pollGroup(remote, sessionId, afterSeq, waitMs) {
+			const service = groupServiceOf(remote);
+			const absent = { ok: false, messages: [], typing: false, nextSeq: 0, unread: 0, error: { code: "GROUP_ABSENT", message: "这个工作区没有群聊服务" } };
+			if (service === null || typeof service.poll !== "function") return absent;
+			try {
+				const outer = unwrapRemoteResult(await service.poll(sessionId, afterSeq, waitMs));
+				if (!outer.ok) return { ok: false, messages: [], typing: false, nextSeq: 0, unread: 0, error: outer.error };
+				const value = outer.value;
+				if (value === null || value === undefined || typeof value !== "object") {
+					return { ok: false, messages: [], typing: false, nextSeq: 0, unread: 0, error: { code: "REMOTE_FAILED", message: "群聊服务返回了空结果" } };
+				}
+				return {
+					ok: true,
+					messages: Array.isArray(value.messages) ? value.messages : [],
+					typing: value.typing === true,
+					nextSeq: typeof value.nextSeq === "number" && Number.isFinite(value.nextSeq) ? value.nextSeq : 0,
+					unread: typeof value.unread === "number" && Number.isFinite(value.unread) ? value.unread : 0,
+					error: null,
+				};
+			} catch (error) {
+				return { ok: false, messages: [], typing: false, nextSeq: 0, unread: 0, error: { code: "REMOTE_FAILED", message: messageOf(error) } };
+			}
+		}
+
+		/**
+		 * 把已读游标推到 `seq`。**永不抛**（读不到就保持原样，下次再推）。
+		 * @returns {Promise<{ok: boolean, unread: number}>}
+		 */
+		async function markGroupRead(remote, sessionId, seq) {
+			const service = groupServiceOf(remote);
+			if (service === null || typeof service.markRead !== "function") return { ok: false, unread: 0 };
+			try {
+				const outer = unwrapRemoteResult(await service.markRead(sessionId, seq));
+				if (!outer.ok) return { ok: false, unread: 0 };
+				const value = outer.value;
+				return { ok: true, unread: value !== null && value !== undefined && typeof value.unread === "number" ? value.unread : 0 };
+			} catch {
+				return { ok: false, unread: 0 };
+			}
+		}
+
+		/**
+		 * 一条群聊消息画成什么（纯函数：测试直接对形状断言，组件不再各自判一遍角色）。
+		 * @param message - 归一后的消息
+		 * @returns {{kind: string, own: boolean, role: string, speaker: string, text: string}}
+		 */
+		function groupRowModel(message) {
+			const role = message === null || message === undefined ? "" : String(message.role);
+			const speaker = message === null || message === undefined ? "" : String(message.speaker);
+			const text = message === null || message === undefined ? "" : String(message.text);
+			if (role === "system") return { kind: "sys", own: false, role: role, speaker: "", text: text };
+			if (role === "student") return { kind: "self", own: true, role: role, speaker: speaker === "" ? "我" : speaker, text: text };
+			return { kind: "peer", own: false, role: role, speaker: speaker, text: text };
+		}
+
+		/**
+		 * 「群聊」tab。
+		 * @param props - `{ remote, sessionId }`
+		 */
+		function GroupChatView(props) {
+			const S = styles();
+			const remote = props.remote;
+			const sessionId = props.sessionId;
+			const [thread, setThread] = React.useState({ kind: "loading", messages: [], unread: 0, typing: false, message: null });
+			const [draft, setDraft] = React.useState("");
+			const [outbox, setOutbox] = React.useState({ kind: "idle", error: null });
+			const [reloadSeq, setReloadSeq] = React.useState(0);
+			/** 已收到的最大 seq（`poll` 的 afterSeq；用 ref 避免把轮询 effect 的依赖搅乱）。 */
+			const nextSeqRef = React.useRef(0);
+			/** 失败待重试的那条消息的幂等键（复用 → 服务端不会写第二遍）。 */
+			const pendingClientRef = React.useRef(null);
+
+			// ① 首次／重读历史
+			React.useEffect(() => {
+				let live = true;
+				setThread((previous) => Object.assign({}, previous, { kind: "loading" }));
+				loadGroupPage(remote, sessionId, GROUP_HISTORY_LIMIT).then(
+					(page) => {
+						if (!live) return;
+						// 游标＝已见到的最大 seq（不是 `nextSeq`，见 `lastSeqOf` 的说明）。
+						nextSeqRef.current = lastSeqOf(page.messages);
+						setThread({ kind: page.kind, messages: page.messages, unread: page.unread, typing: false, message: page.message });
+						// 打开这一页＝把这些消息看过了：把已读游标推到最后一条。
+						if (page.kind === "ready" && nextSeqRef.current > 0 && page.unread > 0) {
+							markGroupRead(remote, sessionId, nextSeqRef.current).then((read) => {
+								if (live && read.ok) setThread((previous) => Object.assign({}, previous, { unread: read.unread }));
+							}, () => {});
+						}
+					},
+					(error) => {
+						if (!live) return;
+						setThread({ kind: "failed", messages: [], unread: 0, typing: false, message: messageOf(error) });
+					},
+				);
+				return () => { live = false; };
+			}, [sessionId, reloadSeq]);
+
+			// ② 轮询（挂载期间）：新消息 / 「她正在输入」/ 未读
+			const absent = thread.kind === "absent";
+			React.useEffect(() => {
+				if (absent) return undefined;
+				if (groupServiceOf(remote) === null) return undefined;
+				const timer = setInterval(() => {
+					pollGroup(remote, sessionId, nextSeqRef.current, 0).then((result) => {
+						if (result.ok !== true) {
+							const error = result.error === null ? null : result.error;
+							setThread((previous) => Object.assign({}, previous, {
+								kind: previous.kind === "ready" ? "ready" : "failed",
+								message: error === null ? previous.message : describeGroupFailure(error),
+							}));
+							return;
+						}
+						nextSeqRef.current = Math.max(nextSeqRef.current, lastSeqOf(result.messages));
+						setThread((previous) => {
+							const messages = mergeGroupMessages(previous.messages, result.messages);
+							return Object.assign({}, previous, { kind: "ready", messages: messages, typing: result.typing, unread: result.unread, message: null });
+						});
+						if (result.unread > 0 && nextSeqRef.current > 0) {
+							markGroupRead(remote, sessionId, nextSeqRef.current).then((read) => {
+								if (read.ok) setThread((previous) => Object.assign({}, previous, { unread: read.unread }));
+							}, () => {});
+						}
+					}, () => {});
+				}, GROUP_POLL_MS);
+				return () => { clearInterval(timer); };
+			}, [sessionId, reloadSeq, absent]);
+
+			/** 发送（首次与「重试」走同一条路：失败时复用 pendingClientRef 里的幂等键）。 */
+			const submit = () => {
+				const text = draft.trim();
+				if (text === "") return;
+				if (pendingClientRef.current === null) pendingClientRef.current = groupClientId();
+				const clientId = pendingClientRef.current;
+				setOutbox({ kind: "sending", error: null });
+				sendGroupMessage(remote, sessionId, text, clientId).then((result) => {
+					if (result !== null && result.ok === true) {
+						pendingClientRef.current = null;
+						setDraft("");
+						setOutbox({ kind: "idle", error: null });
+						setThread((previous) => {
+							const messages = mergeGroupMessages(previous.messages, [result.message]);
+							nextSeqRef.current = Math.max(nextSeqRef.current, lastSeqOf(messages));
+							return Object.assign({}, previous, {
+								kind: "ready",
+								messages: messages,
+								unread: typeof result.unread === "number" ? result.unread : previous.unread,
+								message: null,
+							});
+						});
+						return;
+					}
+					setOutbox({ kind: "failed", error: result !== null && result !== undefined && result.error !== null && typeof result.error === "object" ? result.error : { code: "REMOTE_FAILED", message: "发送失败（服务没有给出原因）" } });
+				}, (error) => {
+					setOutbox({ kind: "failed", error: { code: "REMOTE_FAILED", message: messageOf(error) } });
+				});
+			};
+
+			const children = [];
+			children.push(React.createElement("div", { style: S.sectionLabel, key: "label" }, "群聊"));
+
+			if (thread.kind === "absent") {
+				children.push(React.createElement("div", {
+					style: S.note,
+					key: "absent",
+					"data-cui-group-absent": "1",
+				}, "这个工作区没有群聊服务（没装叙事包），所以这里还没有群可以聊。装上之后她会在这里回话。"));
+			}
+
+			if (thread.kind === "failed") {
+				children.push(React.createElement("div", {
+					style: S.error,
+					key: "failed",
+					"data-cui-group-error": "1",
+				}, "读群聊失败：" + String(thread.message)));
+			}
+
+			// 消息区上方的状态行：未读数 ＋「她正在输入」
+			children.push(React.createElement("div", { style: S.chatMetaRow, key: "meta" }, [
+				React.createElement("span", { key: "count" }, thread.kind === "ready" ? "共 " + String(thread.messages.length) + " 条" : (thread.kind === "loading" ? "读取中…" : "没读到消息")),
+				thread.unread > 0
+					? React.createElement("span", { style: S.chatBadge, key: "unread", "data-cui-group-unread": String(thread.unread) }, String(thread.unread) + " 条未读")
+					: React.createElement("span", { key: "read", "data-cui-group-unread": "0" }, ""),
+			]));
+
+			// 「她正在输入」只在真的在输入时才出现。
+			// 🔴 不渲染一个空占位行：`chatTyping` 带一条 2px 金褐竖线，空内容会在消息区顶端
+			//    留下一小截"点"（活体截图里看到的那颗），既不是信息也不是分隔。
+			if (thread.typing === true) {
+				children.push(React.createElement("div", {
+					style: S.chatTyping,
+					key: "typing",
+					"data-cui-group-typing": "true",
+				}, GROUP_TYPING_TEXT));
+			}
+
+			if (thread.kind === "ready" && thread.messages.length === 0) {
+				children.push(React.createElement("div", { style: S.note, key: "empty", "data-cui-group-empty": "1" },
+					"群里还一条消息都没有（她在等你说第一句话）。"));
+			}
+
+			if (thread.messages.length > 0) {
+				const rows = thread.messages.map((message, index) => {
+					const model = groupRowModel(message);
+					const key = "m" + (message.seq === null ? "x" + String(index) : String(message.seq));
+					if (model.kind === "sys") {
+						return React.createElement("div", {
+							style: S.chatSys,
+							key: key,
+							"data-cui-group-system": "1",
+						}, model.text);
+					}
+					return React.createElement("div", {
+						style: model.own ? Object.assign({}, S.chatRow, S.chatRowOut) : S.chatRow,
+						key: key,
+						"data-cui-group-message": String(message.seq === null ? "" : message.seq),
+						"data-cui-group-own": model.own ? "true" : "false",
+						"data-cui-group-role": model.role,
+					}, [
+						model.own ? null : React.createElement("div", { style: S.chatName, key: "name" }, model.speaker === "" ? "对方" : model.speaker),
+						React.createElement("div", {
+							style: model.own ? Object.assign({}, S.chatBubble, S.chatBubbleOut) : S.chatBubble,
+							key: "bubble",
+						}, model.text),
+					]);
+				});
+				children.push(React.createElement("div", {
+					style: S.chatThread,
+					key: "thread",
+					"data-cui-group-thread": String(thread.messages.length),
+				}, rows));
+			}
+
+			// 发送失败：把服务端给的 `error.code` 原样显示出来，并允许重试（复用同一个幂等键）。
+			if (outbox.kind === "failed" && outbox.error !== null) {
+				children.push(React.createElement("div", {
+					style: S.error,
+					key: "outbox-error",
+					"data-cui-group-send-error": String(outbox.error.code === undefined ? "" : outbox.error.code),
+				}, [
+					React.createElement("div", { key: "why" }, "没发出去：" + describeGroupFailure(outbox.error)),
+					React.createElement("button", {
+						type: "button",
+						className: "cui-act",
+						key: "retry",
+						style: S.button,
+						"data-cui-group-retry": "1",
+						onClick: () => { submit(); },
+					}, "重试发送"),
+				]));
+			}
+
+			const busy = outbox.kind === "sending";
+			children.push(React.createElement("div", { style: S.chatComposer, key: "composer" }, [
+				React.createElement("input", {
+					type: "text",
+					key: "input",
+					style: S.chatInput,
+					"data-cui-group-input": "1",
+					value: draft,
+					placeholder: thread.kind === "absent" ? "没有群聊服务，发不出去" : "说点什么…",
+					disabled: thread.kind === "absent" || busy,
+					onChange: (event) => {
+						const value = event !== null && event !== undefined && event.target !== null && event.target !== undefined ? event.target.value : "";
+						setDraft(typeof value === "string" ? value : "");
+					},
+					onKeyDown: (event) => {
+						if (event !== null && event !== undefined && event.key === "Enter") submit();
+					},
+				}),
+				React.createElement("button", {
+					type: "button",
+					className: "cui-act",
+					key: "send",
+					style: busy ? Object.assign({}, S.chatSend, S.chatSendBusy) : S.chatSend,
+					"data-cui-group-send": "1",
+					disabled: thread.kind === "absent" || busy,
+					onClick: () => { submit(); },
+				}, busy ? "发送中…" : "发送"),
+			]));
+
+			children.push(React.createElement("button", {
+				type: "button",
+				className: "cui-act",
+				key: "refresh",
+				style: S.button,
+				"data-cui-group-refresh": "1",
+				onClick: () => { setReloadSeq((value) => value + 1); },
+			}, thread.kind === "loading" ? "读取中…" : "重新读盘"));
+
+			return React.createElement("div", {
+				style: S.sectionFor(false),
+				"data-classroom-ui-section": "1",
+				"data-classroom-ui-group": "1",
+			}, children);
+		}
+
+		/**
+		 * 群聊失败形状 → 人话（`code` **原样保留**：`AGENT_FAILED` / `EMPTY` / `TOO_LONG`
+		 * / `RATE_LIMITED` / `STORE_CORRUPT` 是学生该看到的稳定标识，不许翻成人话就丢掉）。
+		 * @param error - `{ code, message }`
+		 * @returns {string}
+		 */
+		function describeGroupFailure(error) {
+			if (error === null || error === undefined) return "（服务没有给出原因）";
+			const code = typeof error.code === "string" ? error.code : "";
+			const message = typeof error.message === "string" ? error.message : "";
+			if (code === "" && message === "") return "（服务没有给出原因）";
+			if (code === "") return message;
+			return message === "" ? code : code + " — " + message;
+		}
+
 		// ── 6.7 的视图：`classroom_draw` 那一条工具调用 ──────────────────────────
 
 		/**
@@ -5402,6 +6386,12 @@ window.__ModuleLoader__.load({
 			// 皮肤里那几条只有 CSS 能表达的规则（`:hover` / `:focus-visible` / `summary::marker`）。
 			// 幂等；规则只引 `--cui-*` 变量，故换方向不用重插。
 			installSkinCss();
+			clientContext = ctx;
+
+			// ── 叙事/群聊两个 Remote 命名空间：**由本插件自己挂**（见 §6.10.1 的说明）──
+			// 客户端 `ctx.remote` 的命名空间来自静态装配表，第三方包没有 client 面的 remote 产物，
+			// 所以不挂这两个命名空间，面板就只能显示"没有服务"。挂载是异步的，effect 同步返回卸载器。
+			ctx.effect(() => mountNarrativeRemotesEffect(ctx), "classroom-ui: 叙事 Remote（日记 / 群聊）");
 
 			ctx.effect(() => ctx.sidebarRightTabs.register({
 				id: TYPE_ID,
@@ -5594,6 +6584,35 @@ window.__ModuleLoader__.load({
 		exports.ClassroomTitle = ClassroomTitle;
 		exports.Field = Field;
 		exports.PortraitStage = PortraitStage;
+		// ── 「日记」（N2.5）与「群聊」（N3.1）：纯函数与读盘器一并导出，
+		//    供 node 侧测试直接驱动同一份代码（排序、归并、失败归一都不在组件里另写一遍）──
+		exports.narrativeRemoteContribution = narrativeRemoteContribution;
+		exports.mountNarrativeRemotesEffect = mountNarrativeRemotesEffect;
+		exports.unwrapRemoteResult = unwrapRemoteResult;
+		exports.remoteNamespaceOf = remoteNamespaceOf;
+		exports.describeRemoteFailure = describeRemoteFailure;
+		exports.passThroughCodec = passThroughCodec;
+		exports.DiaryView = DiaryView;
+		exports.sortDiariesDesc = sortDiariesDesc;
+		exports.diarySortKey = diarySortKey;
+		exports.loadDiaryPage = loadDiaryPage;
+		exports.describeNarrativeFailure = describeNarrativeFailure;
+		exports.describeLastError = describeLastError;
+		exports.DIARY_LIMIT = DIARY_LIMIT;
+		exports.GroupChatView = GroupChatView;
+		exports.GROUP_POLL_MS = GROUP_POLL_MS;
+		exports.GROUP_TYPING_TEXT = GROUP_TYPING_TEXT;
+		exports.groupClientId = groupClientId;
+		exports.normalizeGroupMessage = normalizeGroupMessage;
+		exports.mergeGroupMessages = mergeGroupMessages;
+		exports.lastSeqOf = lastSeqOf;
+		exports.groupRowModel = groupRowModel;
+		exports.loadGroupPage = loadGroupPage;
+		exports.narrativePresence = narrativePresence;
+		exports.sendGroupMessage = sendGroupMessage;
+		exports.pollGroup = pollGroup;
+		exports.markGroupRead = markGroupRead;
+		exports.describeGroupFailure = describeGroupFailure;
 
 		return module.exports;
 	},

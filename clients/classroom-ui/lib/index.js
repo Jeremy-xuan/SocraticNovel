@@ -8,9 +8,14 @@
  * 同构 —— 通过 `@deepseek-ai/dsh-typert-protocol` 暴露 `whiteboardStore` 服务，浏览器半边
  * 经 `ctx.remote.whiteboardStore` 调用（save / load / index）。服务的 host face 清单在
  * `lib/typert.host.js`，由 `dsh-typert-loader` 自动注册进 `ctx.typert`。
+ *
+ * 2026-10-21（P2）：再挂一个**只读**服务 `classroomNarrative`（status / diaries），给面板
+ * 「日记」tab 用。它把叙事包的公开出口转成 Remote，**不读**叙事包的内部账本；
+ * 叙事包没装时两个方法回 `{ ok: false, reason: 'narrative-absent' }`（不抛、不让面板崩）。
  */
 
 import { WhiteboardStore } from './whiteboard-host.mjs'
+import { ClassroomNarrative } from './narrative-host.mjs'
 
 /**
  * Mount the host half.
@@ -40,4 +45,24 @@ export function apply(ctx) {
       throw error
     }
   }, 'classroom-ui: whiteboardStore')
+
+  // 注册叙事只读服务（「日记」tab）。
+  //
+  // 🔴 它**总是**被 provide，即使叙事包没装：面板要能拿到 `ctx.remote.classroomNarrative`
+  //    这个命名空间，才知道"叙事服务在不在"；如果缺席时连服务都不 provide，浏览器侧只会看到
+  //    `remote.classroomNarrative` 是 undefined —— 那样也判得出缺席，但每加一个消费点就要多
+  //    一处 `typeof` 防御，且日志里没有一句"为什么没有"。这里统一在一个地方回答。
+  //
+  // 幂等注册的理由与白板那条完全一致（本包在 profile 里会被加载两次）。
+  ctx.effect(() => {
+    let existing = null
+    try { existing = ctx.classroomNarrative } catch { existing = null }
+    if (existing) return
+    try {
+      return ctx.provide('classroomNarrative', new ClassroomNarrative(ctx))
+    } catch (error) {
+      if (/has been registered/.test(String(error && error.message))) return
+      throw error
+    }
+  }, 'classroom-ui: classroomNarrative')
 }
